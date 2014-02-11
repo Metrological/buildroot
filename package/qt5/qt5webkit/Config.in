@@ -2,7 +2,11 @@ config BR2_PACKAGE_QT5WEBKIT
 	bool "qt5webkit"
 	select BR2_PACKAGE_QT5BASE
 	select BR2_PACKAGE_QT5BASE_ICU
+	select BR2_PACKAGE_QT5BASE_NETWORK
+	select BR2_PACKAGE_QT5BASE_SQL
 	select BR2_PACKAGE_QT5BASE_GUI
+	select BR2_PACKAGE_QT5BASE_WIDGETS
+	select BR2_PACKAGE_QT5BASE_PRINTSUPPORT
 	select BR2_PACKAGE_SQLITE
 	select BR2_PACKAGE_XLIB_LIBXEXT if BR2_PACKAGE_QT5BASE_XCB
 	select BR2_PACKAGE_XLIB_LIBXRENDER if BR2_PACKAGE_QT5BASE_XCB
@@ -16,3 +20,17 @@ config BR2_PACKAGE_QT5WEBKIT
 	  This package corresponds to the qt5webkit module.
 
 	  http://qt-project.org
+
+menu "Extra options"
+
+config BR2_PACKAGE_MINIBROWSER
+	bool "minibrowser"
+	depends on BR2_PACKAGE_QT5DECLARATIVE
+
+config BR2_PACKAGE_TESTBROWSER
+	bool "testbrowser"
+
+config BR2_PACKAGE_DUMPRENDERTREE
+	bool "dumprendertree"
+
+endmenu
