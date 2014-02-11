@@ -1,0 +1,25 @@
+--- a/gtk/gtkapplication.c	2013-11-15 23:06:24.000000000 +0100
++++ b/gtk/gtkapplication.c	2013-12-26 22:57:24.564630104 +0100
+@@ -647,6 +647,22 @@
+ 
+ #endif
+ 
++#ifdef GDK_WINDOWING_WAYLAND
++
++const gchar *
++gtk_application_get_app_menu_object_path (GtkApplication *application)
++{
++  return NULL;
++}
++
++const gchar *
++gtk_application_get_menubar_object_path (GtkApplication *application)
++{
++  return NULL;
++}
++
++#endif
++
+ #ifdef GDK_WINDOWING_QUARTZ
+ 
+ typedef struct {

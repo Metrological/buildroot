@@ -1,0 +1,148 @@
+--- a/configure.ac	2013-11-19 02:30:55.000000000 +0100
++++ b/configure.ac	2013-12-26 21:23:36.016508109 +0100
+@@ -308,12 +308,17 @@
+               [AS_HELP_STRING([--enable-wayland-backend],
+                               [enable the wayland gdk backend])],
+ 			      [backend_set=yes])
++AC_ARG_ENABLE(none-backend,
++              [AS_HELP_STRING([--enable-none-backend],
++                              [enable the none gdk backend])],
++            [backend_set=yes])
+ 
+ if test -z "$backend_set"; then
+   if test "$platform_win32" = yes; then
+     enable_win32_backend=yes
+   else
+-    enable_x11_backend=yes
++    enable_none_backend=yes
++    enable_x11_backend=maybe
+     enable_wayland_backend=maybe
+   fi
+ fi
+@@ -431,6 +436,12 @@
+   AM_CONDITIONAL(USE_WAYLAND, false)
+ fi
+ 
++if test "$enable_none_backend" = "yes"; then
++  GDK_BACKENDS="$GDK_BACKENDS none"
++  have_gio_unix=yes
++  PANGO_PACKAGES=""
++fi
++
+ # strip leading space
+ GDK_BACKENDS=${GDK_BACKENDS#* }
+ 
+@@ -523,14 +534,8 @@
+ ## annoying to construct
+ PKG_CHECK_MODULES(BASE_DEPENDENCIES,
+   [glib-2.0 >= glib_required_version dnl
+-   atk >= atk_required_version dnl
+-   pango >= pango_required_version dnl
+-   cairo >= cairo_required_version dnl
+-   cairo-gobject >= cairo_required_version dnl
+    gdk-pixbuf-2.0 >= gdk_pixbuf_required_version])
+ 
+-PKG_CHECK_MODULES(CAIRO_BACKEND, [$cairo_backends])
+-
+ PKG_CHECK_MODULES(GMODULE, [gmodule-2.0])
+ 
+ dnl ******************************************************
+@@ -1259,65 +1264,6 @@
+   GDK_GIO_PACKAGE=gio-2.0
+ fi
+ 
+-# Check for Pango flags
+-
+-AC_MSG_CHECKING(Pango flags)
+-if $PKG_CONFIG --exists $PANGO_PACKAGES ; then
+-        PANGO_CFLAGS=`$PKG_CONFIG --cflags $PANGO_PACKAGES`
+-        PANGO_LIBS=`$PKG_CONFIG --libs $PANGO_PACKAGES`
+-
+-        AC_MSG_RESULT($PANGO_CFLAGS $PANGO_LIBS)
+-else
+-        AC_MSG_ERROR([
+-*** Pango not found. Pango built with Cairo support is required
+-*** to build GTK+. See http://www.pango.org for Pango information.
+-])
+-fi
+-
+-CFLAGS="$CFLAGS $PANGO_CFLAGS"
+-
+-if $PKG_CONFIG --uninstalled $PANGO_PACKAGES; then
+-        :
+-else
+-	gtk_save_LIBS="$LIBS"
+-        LIBS="$PANGO_LIBS $LIBS"
+-        AC_TRY_LINK_FUNC(pango_context_new, :, AC_MSG_ERROR([
+-*** Can't link to Pango. Pango is required to build
+-*** GTK+. For more information see http://www.pango.org]))
+-        LIBS="$gtk_save_LIBS"
+-fi
+-
+-# Check for cairo_set_device_scale, as we don't want to depend hard on
+-# this until there is a stable release with it
+-CAIRO_CFLAGS=`$PKG_CONFIG --cflags cairo`
+-CAIRO_LIBS=`$PKG_CONFIG --libs cairo`
+-CFLAGS="$CFLAGS $CAIRO_CFLAGS"
+-gtk_save_LIBS="$LIBS"
+-LIBS="$CAIRO_LIBS $LIBS"
+-AC_CHECK_FUNCS(cairo_surface_set_device_scale)
+-LIBS="$gtk_save_LIBS"
+-
+-
+-CFLAGS="$saved_cflags"
+-LDFLAGS="$saved_ldflags"
+-
+-GDK_PACKAGES="$PANGO_PACKAGES gdk-pixbuf-2.0 cairo cairo-gobject"
+-GDK_PRIVATE_PACKAGES="$GDK_GIO_PACKAGE $X_PACKAGES $WAYLAND_PACKAGES $cairo_backends"
+-if test "x$enable_x11_backend" = xyes; then
+-  GDK_PRIVATE_PACKAGES="$GDK_PRIVATE_PACKAGES pangoft2"
+-fi
+-
+-PKG_CHECK_MODULES(GDK_DEP, $GDK_PACKAGES $GDK_PRIVATE_PACKAGES)
+-GDK_DEP_LIBS="$GDK_EXTRA_LIBS $GDK_DEP_LIBS $MATH_LIB"
+-GDK_DEP_CFLAGS="$GDK_DEP_CFLAGS $GDK_EXTRA_CFLAGS"
+-#
+-# If we aren't writing explicit dependencies, then don't put the extra libraries we need
+-# into the pkg-config files
+-#
+-if test $enable_explicit_deps != yes ; then
+-  GDK_EXTRA_LIBS=
+-fi
+-
+ AC_SUBST(GDK_PACKAGES)
+ AC_SUBST(GDK_PRIVATE_PACKAGES)
+ AC_SUBST(GDK_EXTRA_LIBS)
+@@ -1336,10 +1282,7 @@
+    ATK_PACKAGES="atk"
+ fi
+ 
+-PKG_CHECK_MODULES(ATK, $ATK_PACKAGES)
+-
+-GTK_PACKAGES="atk cairo cairo-gobject gdk-pixbuf-2.0 gio-2.0"
+-GTK_PRIVATE_PACKAGES="$ATK_PACKAGES"
++GTK_PACKAGES="gdk-pixbuf-2.0 gio-2.0"
+ if test "x$enable_x11_backend" = xyes; then
+   GTK_PRIVATE_PACKAGES="$GTK_PRIVATE_PACKAGES pangoft2"
+ fi
+@@ -1511,20 +1454,6 @@
+ gtk_save_cppflags="$CPPFLAGS"
+ CPPFLAGS="$CPPFLAGS $GTK_DEP_CFLAGS $GDK_DEP_CFLAGS"
+ 
+-AC_CHECK_HEADER(cairo-pdf.h,,AC_MSG_ERROR([
+-*** Can't find cairo-pdf.h. You must build Cairo with the pdf
+-*** backend enabled.]))
+-
+-if test "$os_win32" != "yes"; then
+-  AC_CHECK_HEADER(cairo-ps.h,,AC_MSG_ERROR([
+-*** Can't find cairo-ps.h. You must build Cairo with the
+-*** postscript backend enabled.]))
+-
+-  AC_CHECK_HEADER(cairo-svg.h,,AC_MSG_ERROR([
+-*** Cannot find cairo-svg.h. You must build Cairo with the
+-*** svg backend enabled.]))
+-fi
+-
+ CPPFLAGS="$gtk_save_cppflags"
+ 
+ 
