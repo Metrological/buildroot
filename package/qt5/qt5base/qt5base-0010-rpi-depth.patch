@@ -1,0 +1,30 @@
+--- a/mkspecs/devices/linux-rasp-pi-g++/qeglfshooks_pi.cpp
++++ b/mkspecs/devices/linux-rasp-pi-g++/qeglfshooks_pi.cpp
+@@ -146,7 +146,7 @@
+     virtual EGLNativeWindowType createNativeWindow(QPlatformWindow *window, const QSize &size, const QSurfaceFormat &format);
+     virtual void destroyNativeWindow(EGLNativeWindowType window);
+     virtual bool hasCapability(QPlatformIntegration::Capability cap) const;
+-
++    virtual QSurfaceFormat surfaceFormatFor(const QSurfaceFormat &inputFormat) const;
+ };
+ 
+ void QEglFSPiHooks::platformInit()
+@@ -196,6 +196,18 @@
+     }
+ }
+ 
++QSurfaceFormat QEglFSPiHooks::surfaceFormatFor(const QSurfaceFormat &inputFormat) const
++{
++    QSurfaceFormat format = inputFormat;
++    format.setDepthBufferSize(24);
++    format.setStencilBufferSize(8);
++    format.setRedBufferSize(8);
++    format.setGreenBufferSize(8);
++    format.setBlueBufferSize(8);
++    format.setAlphaBufferSize(8);
++    return format;
++}
++
+ QEglFSPiHooks eglFSPiHooks;
+ QEglFSHooks *platformHooks = &eglFSPiHooks;
+ 

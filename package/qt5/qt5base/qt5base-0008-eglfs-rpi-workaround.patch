@@ -1,0 +1,11 @@
+--- a/src/plugins/platforms/eglfs/qeglfswindow.cpp
++++ b/src/plugins/platforms/eglfs/qeglfswindow.cpp
+@@ -112,7 +112,7 @@
+ #if !defined(Q_OS_ANDROID) || defined(Q_OS_ANDROID_NO_SDK)
+         // We can have either a single OpenGL window or multiple raster windows.
+         // Other combinations cannot work.
+-        qFatal("EGLFS: OpenGL windows cannot be mixed with others.");
++        //qFatal("EGLFS: OpenGL windows cannot be mixed with others.");
+ #endif
+ 
+         return;

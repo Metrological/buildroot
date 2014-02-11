@@ -1,0 +1,105 @@
+--- a/src/gui/painting/qdrawhelper.cpp	2013-12-08 18:09:52.000000000 +0100
++++ b/src/gui/painting/qdrawhelper.cpp	2014-01-29 10:12:58.000000000 +0100
+@@ -2254,8 +2254,94 @@
+     }
+ }
+ 
++/* MUCH HACK */
++#if defined(QT_ARCH_ARM) || defined(QT_ARCH_ARMV6)
++static __attribute__((always_inline)) void hack_preload(const uint *start)
++{
++    asm __volatile__("pld [%[addr]]\n"
++            :
++            : [addr] "r"(start));
++}
++#endif
++#define HACK_UNROLL_4_TIMES(block) block block block block
++#define HACK_UNROLL_8_TIMES(block) HACK_UNROLL_4_TIMES(block) HACK_UNROLL_4_TIMES(block)
++#define HACK_UNROLL_LOOP_WITH_PLD(block)                         \
++    int i = 0;                                              \
++    int end = length & ~7;                                  \
++    while (i < end) {                                       \
++        hack_preload(&src[i] + 32);                              \
++        hack_preload(&dest[i]+ 32);                              \
++        HACK_UNROLL_8_TIMES(block)                               \
++    }                                                       \
++    hack_preload(&src[i] + 32);                                  \
++    hack_preload(&dest[i]+ 32);                                  \
++    while (i < length) {                                    \
++        block                                               \
++    }
++
++
++// TODO: on Cortex-A8 this is 64.
++static const uint H_L2CacheLineLength = 32;
++static const uint H_L2CacheLineLengthInInts = H_L2CacheLineLength/sizeof(uint);
++#define HACK_PRELOAD_INIT2(x,y) hack_preload(x); hack_preload(y);
++// Two consecutive preloads stall, so space them out a bit by using different modulus.
++// -- I could not verify this on a Cortex-A8 with the above UNROLL_LOOP_WITH_PLD
++#define HACK_PRELOAD_COND2(x,y) if (((uint)&x[i])%H_L2CacheLineLength == 0) hack_preload(&x[i] + H_L2CacheLineLengthInInts); \
++         if (((uint)&y[i])%H_L2CacheLineLength == 16) hack_preload(&y[i] + H_L2CacheLineLengthInInts);
++
++static Q_ALWAYS_INLINE uint HACK_BYTE_MUL_ARM(uint x, uint a) {
++    switch (a) {
++    case 255:
++        return x;
++    case 0:
++        return 0;
++    default: {
++        uint t = (x & 0xff00ff) * a;
++        t = (t + ((t >> 8) & 0xff00ff) + 0x800080) >> 8;
++        t &= 0xff00ff;
++
++        x = ((x >> 8) & 0xff00ff) * a;
++        x = (x + ((x >> 8) & 0xff00ff) + 0x800080);
++        x &= 0xff00ff00;
++        x |= t;
++        return x;
++    }
++    }
++}
++
++/* SUCH WOW */
++
+ void QT_FASTCALL comp_func_SourceOver(uint *Q_DECL_RESTRICT dest, const uint *Q_DECL_RESTRICT src, int length, uint const_alpha)
+ {
++
++#if defined(QT_ARCH_ARM) || defined(QT_ARCH_ARMV6)
++/* MUCH HACK */
++
++    HACK_PRELOAD_INIT2(dest, src)
++    if (const_alpha == 255) {
++        HACK_UNROLL_LOOP_WITH_PLD(
++            {
++                if ((src[i] & 0xff000000) == 0x00000000) {
++                    ; // nothing
++                } else if ((src[i] & 0xff000000) == 0xff000000) {
++                    dest[i] = src[i];
++                } else {
++                    uint s = src[i];
++                    dest[i] = s + HACK_BYTE_MUL_ARM(dest[i], qAlpha(~s));
++                }
++
++                ++i;
++            });
++    } else {
++        int i = 0;
++        while (i < length) {
++            uint s = BYTE_MUL(src[i], const_alpha);
++            dest[i] = s + HACK_BYTE_MUL_ARM(dest[i], qAlpha(~s));
++            HACK_PRELOAD_COND2(dest, src)
++            ++i;
++        }
++    }
++#else
+     PRELOAD_INIT2(dest, src)
+     if (const_alpha == 255) {
+         for (int i = 0; i < length; ++i) {
+@@ -2273,6 +2359,7 @@
+             dest[i] = s + BYTE_MUL(dest[i], qAlpha(~s));
+         }
+     }
++#endif
+ }
+ 
+ /*
