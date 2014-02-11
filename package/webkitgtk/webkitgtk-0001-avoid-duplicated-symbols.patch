@@ -1,0 +1,28 @@
+diff --git a/Source/WebCore/plugins/PluginPackageNone.cpp b/Source/WebCore/plugins/PluginPackageNone.cpp
+index 55b6066..5f82658 100644
+--- a/Source/WebCore/plugins/PluginPackageNone.cpp
++++ b/Source/WebCore/plugins/PluginPackageNone.cpp
+@@ -42,13 +42,14 @@ bool PluginPackage::load()
+     return false;
+ }
+ 
+-#if ENABLE(NETSCAPE_PLUGIN_API)
+ uint16_t PluginPackage::NPVersion() const
+ {
+     return 0;
+ }
+-#endif
+ 
++// FIXME: The EFL port doesn't build PluginPackage.cpp when ENABLE_NETSCAPE_PLUGIN_API
++// is disabled, so these stub implementations are placed here.
++#if !ENABLE(NETSCAPE_PLUGIN_API)
+ PassRefPtr<PluginPackage> PluginPackage::createPackage(const String&, const time_t&)
+ {
+     return 0;
+@@ -72,5 +73,6 @@ int PluginPackage::compare(const PluginPackage&) const
+ PluginPackage::~PluginPackage()
+ {
+ }
++#endif // !ENABLE(NETSCAPE_PLUGIN_API)
+ 
+ }
