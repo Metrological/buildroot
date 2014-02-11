@@ -4,8 +4,8 @@
 #
 ################################################################################
 
-WEBKITNIX_VERSION = 5e295afed5eb08ee7f313fa9233cff2b18d6f1de
-WEBKITNIX_SITE = http://github.com/WebKitNix/webkitnix/tarball/master
+WEBKITNIX_VERSION = 30f632f6e1aa9c4068005f430d8dfc10cf70e083
+WEBKITNIX_SITE = $(call github,WebKitNix,webkitnix,$(WEBKITNIX_VERSION))
 WEBKITNIX_INSTALL_STAGING = YES
 WEBKITNIX_DEPENDENCIES = host-pkgconf host-ruby host-flex host-bison host-gperf \
 	icu harfbuzz jpeg libsoup libxml2 libxslt libglib2 cairo sqlite
