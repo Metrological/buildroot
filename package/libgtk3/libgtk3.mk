@@ -161,6 +161,12 @@ else
 LIBGTK3_CONF_OPT += --disable-cups
 endif
 
+define LIBGTK3_COPY_EXTRACT_STRINGS
+	cp $(HOST_DIR)/usr/bin/gtk-extract-strings $(@D)/gtk/extract-strings
+endef
+
+LIBGTK3_POST_CONFIGURE_HOOKS += LIBGTK3_COPY_EXTRACT_STRINGS
+
 # We do not build a full version of libgtk3 for the host, because that
 # requires compiling Cairo, Pango, ATK and X.org for the
 # host. Therefore, we patch it to remove dependencies, and we hack the
@@ -191,10 +197,12 @@ HOST_LIBGTK3_POST_PATCH_HOOKS += HOST_LIBGTK3_PATCH_REDUCE_DEPENDENCIES_HOOK
 
 define HOST_LIBGTK3_BUILD_CMDS
 	$(HOST_MAKE_ENV) make -C $(@D)/gtk gtk-update-icon-cache
+	$(HOST_MAKE_ENV) make -C $(@D)/gtk extract-strings
 endef
 
 define HOST_LIBGTK3_INSTALL_CMDS
 	cp $(@D)/gtk/gtk-update-icon-cache $(HOST_DIR)/usr/bin
+	cp $(@D)/gtk/extract-strings $(HOST_DIR)/usr/bin/gtk-extract-strings
 endef
 
 $(eval $(autotools-package))
