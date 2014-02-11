@@ -1,0 +1,11 @@
+--- a/Source/cmake/OptionsNix.cmake
++++ b/Source/cmake/OptionsNix.cmake
+@@ -112,7 +112,7 @@
+ # to keep common CMake files working as desired for us
+ set(WTF_USE_ICU_UNICODE ON)
+ set(WTF_USE_LEVELDB ON)
+-set(ENABLE_API_TESTS ON)
++#set(ENABLE_API_TESTS ON)
+ 
+ WEBKIT_OPTION_DEFAULTS("NIX")
+ WEBKIT_OPTION_DEFINE(WTF_USE_OPENGL_ES_2 "Use EGL + OpenGLES2" OFF)

@@ -1,0 +1,25 @@
+--- a/Source/WebCore/platform/nix/support/MultiChannelPCMData.cpp
++++ b/Source/WebCore/platform/nix/support/MultiChannelPCMData.cpp
+@@ -32,10 +32,12 @@
+ 
+ namespace Nix {
+ 
++#if ENABLE(WEB_AUDIO)
+ static WebCore::AudioBus* toAudioBus(void* data)
+ {
+     return static_cast<WebCore::AudioBus*>(data);
+ }
++#endif
+ 
+ MultiChannelPCMData::MultiChannelPCMData(unsigned numberOfChannels, size_t length, double sampleRate)
+ {
+@@ -53,7 +53,9 @@
+ 
+ MultiChannelPCMData::~MultiChannelPCMData()
+ {
++#if ENABLE(WEB_AUDIO)
+     delete toAudioBus(m_data);
++#endif
+ }
+ 
+ void* MultiChannelPCMData::getInternalData()

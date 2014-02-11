@@ -1,0 +1,31 @@
+From b6a2a1ff67b8f0a65de7c809527e3cfde14efa54 Mon Sep 17 00:00:00 2001
+From: Julien Isorce <julien.isorce@collabora.co.uk>
+Date: Thu, 1 Aug 2013 12:24:59 +0000
+Subject: [PATCH 03/16] accelerated_canvas: if gles2 enabled then look for
+ cairo-glesv2.pc
+
+Conflicts:
+	Source/autotools/FindDependencies.m4
+---
+ Source/autotools/FindDependencies.m4 | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+Index: webkitgtk-2.1.4/Source/autotools/FindDependencies.m4
+===================================================================
+--- webkitgtk-2.1.4.orig/Source/autotools/FindDependencies.m4	2013-08-30 16:04:11.679305256 +0200
++++ webkitgtk-2.1.4/Source/autotools/FindDependencies.m4	2013-08-30 16:04:11.679305256 +0200
+@@ -463,7 +463,13 @@
+ 
+ enable_accelerated_canvas=no
+ if test "$enable_accelerated_compositing" = "yes" && test "$found_opengl" = "yes"; then
+-    CAIRO_GL_LIBS="cairo-gl"
++
++    if test "$enable_gles2" = "yes"; then
++        CAIRO_GL_LIBS="cairo-glesv2"
++    else
++        CAIRO_GL_LIBS="cairo-gl"
++    fi
++
+     if test "$enable_glx" = "yes"; then
+         CAIRO_GL_LIBS="$CAIRO_GL_LIBS cairo-glx"
+     fi
