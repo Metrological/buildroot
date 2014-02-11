@@ -1,0 +1,22 @@
+--- a/deps/v8/build/common.gypi
++++ b/deps/v8/build/common.gypi
+@@ -64,7 +64,7 @@
+     'v8_use_mips_abi_hardfloat%': 'true',
+ 
+     # Default arch variant for MIPS.
+-    'mips_arch_variant%': 'mips32r2',
++    'mips_arch_variant%': 'mips32r1',
+ 
+     'v8_enable_debugger_support%': 1,
+ 
+--- a/deps/v8/SConstruct
++++ b/deps/v8/SConstruct
+@@ -1139,7 +1139,7 @@
+   },
+   'mips_arch_variant': {
+     'values': ['mips32r2', 'mips32r1', 'loongson'],
+-    'default': 'mips32r2',
++    'default': 'mips32r1',
+     'help': 'mips variant'
+   },
+   'compress_startup_data': {
