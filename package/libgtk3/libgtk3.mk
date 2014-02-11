@@ -184,7 +184,7 @@ HOST_LIBGTK3_CONF_OPT = \
 	--without-x
 
 define HOST_LIBGTK3_PATCH_REDUCE_DEPENDENCIES_HOOK
-	support/scripts/apply-patches.sh $(@D) $($(PKG)_DIR_PREFIX)/$(RAWNAME) host/*.patch
+	support/scripts/apply-patches.sh $(@D) $(PKGDIR) host/*.patch
 endef
 
 HOST_LIBGTK3_POST_PATCH_HOOKS += HOST_LIBGTK3_PATCH_REDUCE_DEPENDENCIES_HOOK
