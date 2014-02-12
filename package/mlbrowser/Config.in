@@ -1,0 +1,8 @@
+config BR2_PACKAGE_MLBROWSER
+	bool "mlbrowser"
+	help
+	  Metrological's simple (accelerated) browser implementation
+	  http://www.metrological.com
+
+comment "mlbrowser needs qt or qt5"
+	depends on !BR2_PACKAGE_QT || !BR2_PACKAGE_QT5
