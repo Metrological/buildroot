@@ -1,8 +1,10 @@
 config BR2_PACKAGE_MLBROWSER
 	bool "mlbrowser"
+	depends on BR2_PACKAGE_QT || BR2_PACKAGE_QT5
 	help
 	  Metrological's simple (accelerated) browser implementation
 	  http://www.metrological.com
 
 comment "mlbrowser needs qt or qt5"
-	depends on !BR2_PACKAGE_QT || !BR2_PACKAGE_QT5
+	depends on !BR2_PACKAGE_QT
+	depends on !BR2_PACKAGE_QT5
