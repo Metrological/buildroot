@@ -24,12 +24,13 @@ QT5BASE_CONFIGURE_OPTS += \
 	-no-cups \
 	-no-nis \
 	-no-iconv \
+	-no-gtkstyle \
 	-system-zlib \
 	-system-pcre \
 	-no-pch
 
 ifeq ($(BR2_ENABLE_DEBUG),y)
-QT5BASE_CONFIGURE_OPTS += -debug
+QT5BASE_CONFIGURE_OPTS += -debug -no-qml-debug
 else
 QT5BASE_CONFIGURE_OPTS += -release
 endif
@@ -93,7 +94,18 @@ ifeq ($(BR2_PACKAGE_QT5BASE_WIDGETS),y)
 QT5BASE_DEPENDENCIES   += xlib_libXext
 endif
 else
-QT5BASE_CONFIGURE_OPTS += -no-xcb
+QT5BASE_CONFIGURE_OPTS += \
+ 	-no-xcb \
+ 	-no-xinerama \
+ 	-no-xshape \
+ 	-no-xvideo \
+ 	-no-xsync \
+ 	-no-xinput2 \
+ 	-no-xinput \
+ 	-no-xcursor \
+ 	-no-xfixes \
+ 	-no-xrandr \
+ 	-no-xrender
 endif
 
 ifeq ($(BR2_PACKAGE_QT5BASE_EGLFS),y)
@@ -104,6 +116,7 @@ QT5BASE_EGLFS_PLATFORM_HOOKS_SOURCES = \
 	$(@D)/mkspecs/devices/linux-imx6-g++/qeglfshooks_imx6.cpp
 endif
 ifeq ($(BR2_PACKAGE_RPI_USERLAND),y)
+QT5BASE_CONFIGURE_OPTS += -no-neon
 QT5BASE_EGLFS_PLATFORM_HOOKS_SOURCES = \
 	$(@D)/mkspecs/devices/linux-rasp-pi-g++/qeglfshooks_pi.cpp
 endif
