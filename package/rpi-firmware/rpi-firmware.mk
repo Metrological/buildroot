@@ -15,6 +15,11 @@ define RPI_FIRMWARE_INSTALL_TARGET_CMDS
 	$(INSTALL) -D -m 0644 $(@D)/boot/fixup$(BR2_PACKAGE_RPI_FIRMWARE_BOOT).dat $(BINARIES_DIR)/rpi-firmware/fixup.dat
 	$(INSTALL) -D -m 0644 package/rpi-firmware/config.txt $(BINARIES_DIR)/rpi-firmware/config.txt
 	$(INSTALL) -D -m 0644 package/rpi-firmware/cmdline.txt $(BINARIES_DIR)/rpi-firmware/cmdline.txt
+	grep -q 'eth0' $(TARGET_DIR)/etc/network/interfaces || \
+		echo -e 'auto eth0\niface eth0 inet dhcp' >> $(TARGET_DIR)/etc/network/interfaces
+	mkdir -p $(TARGET_DIR)/boot
+	grep -q '^/dev/mmcblk0p1' $(TARGET_DIR)/etc/fstab || \
+		echo -e '/dev/mmcblk0p1 /boot vfat defaults 0 0' >> $(TARGET_DIR)/etc/fstab
 endef
 
 $(eval $(generic-package))
