@@ -65,6 +65,7 @@ define BCM_REFSW_INSTALL_STAGING_CMDS
 	$(INSTALL) -m 755 -d $(STAGING_DIR)/usr/include/GLES
 	$(INSTALL) -m 755 -d $(STAGING_DIR)/usr/include/GLES2
 	$(INSTALL) -m 755 -d $(STAGING_DIR)/usr/include/EGL
+	$(INSTALL) -m 644 $(@D)/rockford/middleware/platform/nexus/*.h $(STAGING_DIR)/usr/include/nexus
 	$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/interface/khronos/include/GLES/*.h $(STAGING_DIR)/usr/include/GLES/
 	$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/interface/khronos/include/GLES2/*.h $(STAGING_DIR)/usr/include/GLES2/
 	$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/interface/khronos/include/EGL/*.h $(STAGING_DIR)/usr/include/EGL/
