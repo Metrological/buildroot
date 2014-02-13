@@ -1,0 +1,8 @@
+config BR2_PACKAGE_GST_FLUDASH
+	bool "gst-fludash"
+	depends on BR2_PACKAGE_GST_FLUCODECPACK
+	select BR2_PACKAGE_LIBXML2
+	help
+	  GStreamer RPI DASH plug-in.
+
+	  http://www.metrological.com

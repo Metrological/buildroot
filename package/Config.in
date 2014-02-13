@@ -27,6 +27,7 @@ source "package/vlc/Config.in"
 source "package/vorbis-tools/Config.in"
 source "package/wavpack/Config.in"
 source "package/yavta/Config.in"
+source "package/omxplayer/Config.in"
 endmenu
 
 menu "Compressors and decompressors"

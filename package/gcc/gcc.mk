@@ -155,6 +155,14 @@ ifeq ($(BR2_arc),y)
 HOST_GCC_COMMON_DEPENDENCIES += host-flex host-bison
 endif
 
+ifeq ($(BR2_PACKAGE_HOST_FLEX),y)
+HOST_GCC_COMMON_DEPENDENCIES += host-flex 
+endif
+
+ifeq ($(BR2_PACKAGE_HOST_BISON),y)
+HOST_GCC_COMMON_DEPENDENCIES += host-bison
+endif
+
 ifeq ($(BR2_SOFT_FLOAT),y)
 # only mips*-*-*, arm*-*-* and sparc*-*-* accept --with-float
 # powerpc seems to be needing it as well

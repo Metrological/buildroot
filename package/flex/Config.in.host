@@ -1,0 +1,7 @@
+config BR2_PACKAGE_HOST_FLEX
+       bool "flex"
+       help
+         A fast lexical analyser generator.  A tool for generating
+         programs that perform pattern-matching on text.
+
+         http://flex.sourceforge.net/
