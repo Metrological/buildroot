@@ -73,7 +73,7 @@ define BCM_REFSW_INSTALL_STAGING_CMDS
 	$(call BCM_REFSW_INSTALL_LIBS,$(STAGING_DIR))
 endef
 
-define BCM_NEXUS_INSTALL_TARGET_CMDS
+define BCM_REFSW_INSTALL_TARGET_CMDS
 	$(INSTALL) -m 644 -D $(@D)/bin/bcmdriver.ko $(TARGET_DIR)/lib/modules/bcmdriver.ko
 	$(call BCM_REFSW_INSTALL_LIBS,$(TARGET_DIR))
 endef
