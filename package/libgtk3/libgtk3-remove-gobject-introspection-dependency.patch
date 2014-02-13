@@ -1,6 +1,25 @@
+diff --git a/configure.ac b/configure.ac
+index 2be9ac6..1b3d1b5 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -1582,12 +1582,6 @@ fi
+ GLIB_GSETTINGS
+ 
+ ##################################################
+-# GObject introspection
+-##################################################
+-
+-GOBJECT_INTROSPECTION_CHECK(introspection_required_version)
+-
+-##################################################
+ # colord module
+ #################################################
+ 
+diff --git a/gdk/Makefile.am b/gdk/Makefile.am
+index 3fcc35c..5b3be18 100644
 --- a/gdk/Makefile.am
 +++ b/gdk/Makefile.am
-@@ -191,85 +191,6 @@ if USE_WAYLAND
+@@ -191,96 +191,6 @@ if USE_WAYLAND
  libgdk_3_la_LIBADD += wayland/libgdk-wayland.la
  endif
  
@@ -33,6 +52,7 @@
 -	x11/gdkdevicemanager-xi2.c	\
 -	x11/gdkdevice-xi2.c		\
 -	x11/gdkdisplay-x11.c		\
+-	x11/gdkdisplaymanager-x11.c	\
 -	x11/gdkdnd-x11.c		\
 -	x11/gdkeventsource.c		\
 -	x11/gdkeventtranslator.c	\
@@ -50,8 +70,18 @@
 -	x11/gdkxid.c			\
 -	x11/xsettings-client.c		\
 -	x11/gdkx.h			\
+-	x11/gdkx11applaunchcontext.h	\
 -	x11/gdkx11cursor.h		\
+-	x11/gdkx11device.h		\
+-	x11/gdkx11device-core.h		\
+-	x11/gdkx11device-xi2.h		\
+-	x11/gdkx11devicemanager.h	\
+-	x11/gdkx11devicemanager-core.h	\
+-	x11/gdkx11devicemanager-xi2.h	\
 -	x11/gdkx11display.h		\
+-	x11/gdkx11displaymanager.h	\
+-	x11/gdkx11dnd.h			\
+-	x11/gdkx11keys.h		\
 -	x11/gdkx11property.h		\
 -	x11/gdkx11screen.h		\
 -	x11/gdkx11selection.h		\
@@ -87,10 +117,10 @@
  install-def-file: gdk.def
  	mkdir -p $(DESTDIR)$(libdir)
 diff --git a/gtk/Makefile.am b/gtk/Makefile.am
-index b4ec377..579ce82 100644
+index adc655b..7013be0 100644
 --- a/gtk/Makefile.am
 +++ b/gtk/Makefile.am
-@@ -1314,58 +1314,6 @@ LDADDS =								\
+@@ -1322,58 +1322,6 @@ LDADDS =								\
  	$(top_builddir)/gdk/libgdk-3.la				\
  	$(GTK_DEP_LIBS)
  
@@ -149,18 +179,3 @@ index b4ec377..579ce82 100644
  #
  # Installed tools
  #
---- a/configure.ac
-+++ b/configure.ac
-@@ -1497,12 +1497,6 @@ fi
- GLIB_GSETTINGS
- 
- ##################################################
--# GObject introspection
--##################################################
--
--GOBJECT_INTROSPECTION_CHECK(introspection_required_version)
--
--##################################################
- # Packagekit module
- #################################################
- 
