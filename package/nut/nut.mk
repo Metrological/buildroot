@@ -14,10 +14,14 @@ NUT_DEPENDENCIES = host-pkgconf
 # Our patch changes m4 macros, so we need to autoreconf
 NUT_AUTORECONF = YES
 
+# Disable parallel builds
+NUT_MAKE = $(MAKE1)
+
 # Put the PID files in a read-write place (/var/run is a tmpfs)
 # since the default location (/var/state/ups) maybe readonly.
 NUT_CONF_OPT = \
-	--with-altpidpath=/var/run/upsd
+	--with-altpidpath=/var/run/upsd \
+	--without-hal
 
 NUT_CONF_ENV = \
 	GDLIB_CONFIG=$(STAGING_DIR)/usr/bin/gdlib-config \
