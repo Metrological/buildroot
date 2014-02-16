@@ -11,8 +11,6 @@ GST1_OMX_SITE = http://raspberrypi.collabora.com/pool/web/g/gst-omx1.0/
 GST1_OMX_LICENSE = LGPLv2.1
 GST1_OMX_LICENSE_FILES = COPYING
 
-GST1_OMX_AUTORECONF = YES
-
 GST1_OMX_DEPENDENCIES = gstreamer1 gst1-plugins-base libopenmax
 
 ifeq ($(BR2_PACKAGE_GST1_PLUGINS_BAD_PLUGIN_EGLGLES),y)
