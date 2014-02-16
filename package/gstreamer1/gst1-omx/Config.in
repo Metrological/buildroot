@@ -1,5 +1,5 @@
-config BR2_PACKAGE_GST_OMX
-	bool "gst-omx"
+config BR2_PACKAGE_GST1_OMX
+	bool "gst1-omx"
 	depends on BR2_PACKAGE_HAS_OPENMAX
 	select BR2_PACKAGE_GST1_PLUGINS_BASE
 	help
@@ -7,5 +7,5 @@ config BR2_PACKAGE_GST_OMX
 
 	  http://cgit.freedesktop.org/gstreamer/gst-omx
 
-comment "gst-omx requires a OpenMAX implementation"
+comment "gst1-omx requires a OpenMAX implementation"
 	depends on !BR2_PACKAGE_HAS_OPENMAX

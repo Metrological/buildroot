@@ -51,7 +51,7 @@ Index: gst-omx-1.0.0/config/rpi/gstomx.conf
 -core-name=/opt/vc/lib/libopenmaxil.so
 +core-name=/usr/lib/libopenmaxil.so
  component-name=OMX.broadcom.video_decode
- rank=256
+ rank=257
  in-port-index=130
 @@ -9,7 +9,7 @@
  
@@ -60,7 +60,7 @@ Index: gst-omx-1.0.0/config/rpi/gstomx.conf
 -core-name=/opt/vc/lib/libopenmaxil.so
 +core-name=/usr/lib/libopenmaxil.so
  component-name=OMX.broadcom.video_decode
- rank=256
+ rank=257
  in-port-index=130
 @@ -18,7 +18,7 @@
  
@@ -69,7 +69,7 @@ Index: gst-omx-1.0.0/config/rpi/gstomx.conf
 -core-name=/opt/vc/lib/libopenmaxil.so
 +core-name=/usr/lib/libopenmaxil.so
  component-name=OMX.broadcom.video_decode
- rank=256
+ rank=257
  in-port-index=130
 @@ -27,7 +27,7 @@
  
@@ -78,7 +78,7 @@ Index: gst-omx-1.0.0/config/rpi/gstomx.conf
 -core-name=/opt/vc/lib/libopenmaxil.so
 +core-name=/usr/lib/libopenmaxil.so
  component-name=OMX.broadcom.video_decode
- rank=256
+ rank=257
  in-port-index=130
 @@ -36,7 +36,7 @@
  
@@ -87,7 +87,7 @@ Index: gst-omx-1.0.0/config/rpi/gstomx.conf
 -core-name=/opt/vc/lib/libopenmaxil.so
 +core-name=/usr/lib/libopenmaxil.so
  component-name=OMX.broadcom.video_decode
- rank=256
+ rank=257
  in-port-index=130
 @@ -45,7 +45,7 @@
  
@@ -96,7 +96,7 @@ Index: gst-omx-1.0.0/config/rpi/gstomx.conf
 -core-name=/opt/vc/lib/libopenmaxil.so
 +core-name=/usr/lib/libopenmaxil.so
  component-name=OMX.broadcom.video_decode
- rank=256
+ rank=257
  in-port-index=130
 @@ -54,7 +54,7 @@
  
@@ -105,7 +105,7 @@ Index: gst-omx-1.0.0/config/rpi/gstomx.conf
 -core-name=/opt/vc/lib/libopenmaxil.so
 +core-name=/usr/lib/libopenmaxil.so
  component-name=OMX.broadcom.video_decode
- rank=256
+ rank=257
  in-port-index=130
 @@ -63,7 +63,7 @@
  
@@ -113,8 +113,9 @@ Index: gst-omx-1.0.0/config/rpi/gstomx.conf
  type-name=GstOMXWMVDec
 -core-name=/opt/vc/lib/libopenmaxil.so
 +core-name=/usr/lib/libopenmaxil.so
- component-name=OMX.broadcom.video_encode
- rank=256
+-component-name=OMX.broadcom.video_encode
++component-name=OMX.broadcom.video_decode
+ rank=257
  in-port-index=130
 @@ -73,7 +73,7 @@
  
@@ -123,5 +124,5 @@ Index: gst-omx-1.0.0/config/rpi/gstomx.conf
 -core-name=/opt/vc/lib/libopenmaxil.so
 +core-name=/usr/lib/libopenmaxil.so
  component-name=OMX.broadcom.video_encode
- rank=256
+ rank=257
  in-port-index=200
