@@ -50,8 +50,9 @@ define QT5WEBKIT_CONFIGURE_CMDS
 	(cd $(@D); \
 		$(TARGET_MAKE_ENV) \
 		$(HOST_DIR)/usr/bin/qmake \
+			WEBKIT_CONFIG-=svg \
+			WEBKIT_CONFIG+=accelerated_2d_canvas \
 			CONFIG+=release \
-			CONFIG+=use_gstreamer010 \
 			$(QT5WEBKIT_DEBUG_CONFIG) \
 	)
 endef
