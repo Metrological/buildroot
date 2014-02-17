@@ -1,0 +1,5 @@
+config BR2_PACKAGE_CA_BUNDLE
+	bool "ca-bunle"
+	select BR2_PACKAGE_OPENSSL
+	help
+	  Generate CA bundle
