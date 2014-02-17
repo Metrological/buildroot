@@ -108,7 +108,11 @@ QT5BASE_CONFIGURE_OPTS += \
  	-no-xrender
 endif
 
+QT5BASE_DEPENDENCIES   += $(if $(BR2_PACKAGE_OPENSSL),ca-bundle)
+
 ifeq ($(BR2_PACKAGE_QT5BASE_EGLFS),y)
+QT5BASE_CONFIGURE_OPTS += \
+	-device-option QT_QPA_DEFAULT_PLATFORM="eglfs"
 QT5BASE_CONFIGURE_OPTS += -opengl es2 -eglfs
 QT5BASE_DEPENDENCIES   += libgles libegl
 ifeq ($(BR2_PACKAGE_GPU_VIV_BIN_MX6Q),y)
@@ -220,12 +224,20 @@ define QT5BASE_INSTALL_TARGET_PLUGINS
 	fi
 endef
 
+
+ifeq ($(BR2_PACKAGE_FONTCONFIG),y)
+define QT5BASE_INSTALL_TARGET_FONTS
+	mkdir -p $(TARGET_DIR)/usr/share/fonts
+	cp -dpfr $(@D)/lib/fonts/* $(TARGET_DIR)/usr/share/fonts
+endef
+else
 define QT5BASE_INSTALL_TARGET_FONTS
 	if [ -d $(STAGING_DIR)/usr/lib/fonts/ ] ; then \
 		mkdir -p $(TARGET_DIR)/usr/lib/fonts ; \
 		cp -dpfr $(STAGING_DIR)/usr/lib/fonts/* $(TARGET_DIR)/usr/lib/fonts ; \
 	fi
 endef
+endif
 
 define QT5BASE_INSTALL_TARGET_EXAMPLES
 	if [ -d $(STAGING_DIR)/usr/lib/qt/examples/ ] ; then \
