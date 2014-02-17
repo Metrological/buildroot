@@ -1,0 +1,6 @@
+#!/bin/sh
+
+if  [ `rdate -s ntp.xs4all.nl` ]; then
+	echo "rdate: success"
+fi
+
