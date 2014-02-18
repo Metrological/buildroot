@@ -1,0 +1,22 @@
+diff --git a/Tools/GtkLauncher/GNUmakefile.am b/Tools/GtkLauncher/GNUmakefile.am
+index 31ca2fb..7fcb684 100644
+--- a/Tools/GtkLauncher/GNUmakefile.am
++++ b/Tools/GtkLauncher/GNUmakefile.am
+@@ -1,5 +1,5 @@
+ if ENABLE_WEBKIT1
+-noinst_PROGRAMS += \
++bin_PROGRAMS += \
+ 	Programs/GtkLauncher
+ endif
+ 
+diff --git a/Tools/MiniBrowser/gtk/GNUmakefile.am b/Tools/MiniBrowser/gtk/GNUmakefile.am
+index 8bdbdd3..38635e5 100644
+--- a/Tools/MiniBrowser/gtk/GNUmakefile.am
++++ b/Tools/MiniBrowser/gtk/GNUmakefile.am
+@@ -1,5 +1,5 @@
+ if ENABLE_WEBKIT2
+-noinst_PROGRAMS += \
++bin_PROGRAMS += \
+ 	Programs/MiniBrowser
+ endif
+ 
