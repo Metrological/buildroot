@@ -17,8 +17,11 @@ ifeq ($(BR2_PACKAGE_GST1_PLUGINS_BAD_PLUGIN_EGLGLES),y)
 GST1_OMX_DEPENDENCIES += gst1-plugins-bad
 endif
 
-ifeq ($(BR2_PACKAGE_RPI_USERLAND),y)
 GST1_OMX_CONF_OPT = \
+	--disable-examples
+
+ifeq ($(BR2_PACKAGE_RPI_USERLAND),y)
+GST1_OMX_CONF_OPT += \
 	--with-omx-target=rpi
 GST1_OMX_CONF_ENV = \
 	CFLAGS="$(TARGET_CFLAGS) \
@@ -28,7 +31,7 @@ GST1_OMX_CONF_ENV = \
 endif
 
 ifeq ($(BR2_PACKAGE_BELLAGIO),y)
-GST1_OMX_CONF_OPT = \
+GST1_OMX_CONF_OPT += \
 	--with-omx-target=bellagio
 GST1_OMX_CONF_ENV = \
 	CFLAGS="$(TARGET_CFLAGS) \
