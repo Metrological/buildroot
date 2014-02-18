@@ -1,0 +1,9 @@
+config BR2_PACKAGE_LIBCEC_UINPUT
+	select BR2_PACKAGE_LIBCEC
+	select BR2_PACKAGE_LIBCEC_RPI if BR2_PACKAGE_RPI_USERLAND
+	select BR2_PACKAGE_BOOST
+	select BR2_PACKAGE_BOOST_PROGRAM_OPTIONS
+	select BR2_PACKAGE_LOG4CPLUS
+	bool "libcec-uinput"
+	help
+	  libcec uinput deamon.

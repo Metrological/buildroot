@@ -1,0 +1,35 @@
+#!/bin/sh
+
+start() {
+ 	echo -n "Starting cecd: "
+	/usr/bin/cecd -q &
+	touch /var/lock/cecd
+	echo "OK"
+}	
+stop() {
+	echo -n "Stopping cecd: "
+	killall cecd
+	rm -f /var/lock/cecd
+	echo "OK"
+}
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+	;;
+	restart|reload)
+		restart
+		;;
+	*)
+		echo "Usage: $0 {start|stop|restart}"
+		exit 1
+esac
+
+exit $?
