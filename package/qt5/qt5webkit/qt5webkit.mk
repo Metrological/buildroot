@@ -34,6 +34,14 @@ else
 	QT5WEBKIT_DEBUG_CONFIG = "CONFIG-=debug"
 endif
 
+ifeq ($(BR2_PACKAGE_GSTREAMER),y)
+	QT5WEBKIT_GST_CONFIG = "CONFIG+=use_gstreamer010"
+endif
+
+ifeq ($(BR2_PACKAGE_GSTREAMER1),y)
+	QT5WEBKIT_GST_CONFIG = "CONFIG+=use_gstreamer"
+endif
+
 ifeq ($(BR2_PACKAGE_MINIBROWSER),y)
 	QT5WEBKIT_POST_BUILD_HOOKS += QT5WEBKIT_BUILD_MINIBROWSER
 endif
@@ -53,6 +61,7 @@ define QT5WEBKIT_CONFIGURE_CMDS
 			WEBKIT_CONFIG-=svg \
 			WEBKIT_CONFIG+=accelerated_2d_canvas \
 			CONFIG+=release \
+			$(QT5WEBKIT_GST_CONFIG) \
 			$(QT5WEBKIT_DEBUG_CONFIG) \
 	)
 endef
