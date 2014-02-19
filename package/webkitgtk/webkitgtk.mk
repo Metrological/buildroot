@@ -4,9 +4,9 @@
 #
 ################################################################################
 
-WEBKITGTK_VERSION = 2.3.5
-WEBKITGTK_SOURCE = webkitgtk-$(WEBKITGTK_VERSION).tar.xz
-WEBKITGTK_SITE = http://www.webkitgtk.org/releases
+WEBKITGTK_VERSION = master
+WEBKITGTK_SITE_METHOD = git
+WEBKITGTK_SITE = https://github.com/Metrological/webkitgtk.git
 WEBKITGTK_INSTALL_STAGING = YES
 WEBKITGTK_DEPENDENCIES = host-flex host-bison host-gperf host-ruby \
 	icu libxml2 libxslt libgtk3 sqlite enchant libsoup jpeg webp
