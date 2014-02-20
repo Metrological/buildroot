@@ -1,0 +1,8 @@
+config BR2_PACKAGE_GST_OMX
+	bool "gst-omx"
+	depends on BR2_PACKAGE_GSTREAMER
+	select BR2_PACKAGE_GST_PLUGINS_BASE
+	help
+	  GStreamer plug-in to access OpenMAX IL.
+
+	  http://cgit.freedesktop.org/gstreamer/gst-omx/

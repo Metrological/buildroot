@@ -34,12 +34,8 @@ else
 	QT5WEBKIT_DEBUG_CONFIG = "CONFIG-=debug"
 endif
 
-ifeq ($(BR2_PACKAGE_GSTREAMER),y)
-	QT5WEBKIT_GST_CONFIG = "CONFIG+=use_gstreamer010"
-endif
-
-ifeq ($(BR2_PACKAGE_GSTREAMER1),y)
-	QT5WEBKIT_GST_CONFIG = "CONFIG+=use_gstreamer"
+ifeq ($(BR2_USE_DEPRECATED_GSTREAMER),y)
+	QT5WEBKIT_GST_CONFIG = "WEBKIT_CONFIG+=use_gstreamer010"
 endif
 
 ifeq ($(BR2_PACKAGE_MINIBROWSER),y)
@@ -59,6 +55,8 @@ define QT5WEBKIT_CONFIGURE_CMDS
 		$(TARGET_MAKE_ENV) \
 		$(HOST_DIR)/usr/bin/qmake \
 			WEBKIT_CONFIG+=accelerated_2d_canvas \
+			WEBKIT_CONFIG+=video \
+			WEBKIT_CONFIG+=use_gstreamer \
 			CONFIG+=release \
 			$(QT5WEBKIT_GST_CONFIG) \
 			$(QT5WEBKIT_DEBUG_CONFIG) \

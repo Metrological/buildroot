@@ -24,6 +24,20 @@ config BR2_PACKAGE_QT5WEBKIT
 
 menu "Extra options"
 
+config BR2_USE_DEPRECATED_GSTREAMER
+	bool "deprecated-gstreamer"
+	depends on BR2_PACKAGE_GSTREAMER
+	depends on !BR2_USE_GSTREAMER
+	help
+	  Use GStreamer 0.10 for media playback support.
+
+config BR2_USE_GSTREAMER
+	bool "gstreamer"
+	depends on BR2_PACKAGE_GSTREAMER1
+	default y
+	help
+	  Use GStreamer 1.x for media playback support. Recommended option.
+
 config BR2_PACKAGE_MINIBROWSER
 	bool "minibrowser"
 	depends on BR2_PACKAGE_QT5DECLARATIVE

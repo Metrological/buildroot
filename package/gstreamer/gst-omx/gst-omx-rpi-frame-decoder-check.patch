@@ -1,0 +1,14 @@
+--- a/omx/video/gstvideodecoder.c	2013-08-23 12:29:57.641125799 +0200
++++ b/omx/video/gstvideodecoder.c	2013-08-23 12:46:38.981136932 +0200
+@@ -2531,7 +2531,11 @@
+   gst_video_codec_frame_ref (frame);
+   priv->frames = g_list_append (priv->frames, frame);
+ 
++#ifdef USE_OMX_TARGET_RPI
++  if (g_list_length (priv->frames) > 60) {
++#else
+   if (g_list_length (priv->frames) > 10) {
++#endif
+     GST_DEBUG_OBJECT (decoder, "decoder frame list getting long: %d frames, "
+         "possible internal leaking?", g_list_length (priv->frames));
+   }
