@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-MLBROWSER_VERSION = ebf6586ed9f2d38ac0486c2797eaa885d18df303
+MLBROWSER_VERSION = 7f9e851995a6f74f981bac22cc8a5ab9f3d309b2
 MLBROWSER_SITE = $(call github,albertd,mlbrowser,$(MLBROWSER_VERSION))
 
 ifeq ($(BR2_PACKAGE_QT5WEBKIT),y)
