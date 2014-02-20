@@ -1,0 +1,51 @@
+From d777e04be06cdfda89ebcd46d9684898a132196e Mon Sep 17 00:00:00 2001
+From: "commit-queue@webkit.org"
+ <commit-queue@webkit.org@268f45cc-cd09-0410-ab3c-d52691b4dbfc>
+Date: Tue, 17 Dec 2013 18:45:54 +0000
+Subject: [PATCH] [Win] Fixed linker error with GStreamer.
+ https://bugs.webkit.org/show_bug.cgi?id=124861
+
+Patch by Alex Christensen <achristensen@webkit.org> on 2013-12-17
+Reviewed by Martin Robinson.
+
+* wtf/gobject/GOwnPtr.cpp:
+(WTF::GError):
+* wtf/gobject/GOwnPtr.h:
+Added WTF_EXPORT_PRIVATE to freeOwnedGPtr<GError> declaration and definition.
+
+git-svn-id: http://svn.webkit.org/repository/webkit/trunk@160716 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+---
+ Source/WTF/ChangeLog               | 12 ++++++++++++
+ Source/WTF/wtf/gobject/GOwnPtr.cpp |  2 +-
+ Source/WTF/wtf/gobject/GOwnPtr.h   |  2 +-
+ 3 files changed, 14 insertions(+), 2 deletions(-)
+
+diff --git a/Source/WTF/wtf/gobject/GOwnPtr.cpp b/Source/WTF/wtf/gobject/GOwnPtr.cpp
+index 312dcff..59356d6 100644
+--- a/Source/WTF/wtf/gobject/GOwnPtr.cpp
++++ b/Source/WTF/wtf/gobject/GOwnPtr.cpp
+@@ -26,7 +26,7 @@
+ 
+ namespace WTF {
+ 
+-template <> void freeOwnedGPtr<GError>(GError* ptr)
++template <> WTF_EXPORT_PRIVATE void freeOwnedGPtr<GError>(GError* ptr)
+ {
+     if (ptr)
+         g_error_free(ptr);
+diff --git a/Source/WTF/wtf/gobject/GOwnPtr.h b/Source/WTF/wtf/gobject/GOwnPtr.h
+index 0241302..cd2623b 100644
+--- a/Source/WTF/wtf/gobject/GOwnPtr.h
++++ b/Source/WTF/wtf/gobject/GOwnPtr.h
+@@ -33,7 +33,7 @@ extern "C" void g_free(void*);
+ namespace WTF {
+ 
+ template <typename T> inline void freeOwnedGPtr(T* ptr);
+-template<> void freeOwnedGPtr<GError>(GError*);
++template<> WTF_EXPORT_PRIVATE void freeOwnedGPtr<GError>(GError*);
+ template<> void freeOwnedGPtr<GList>(GList*);
+ template<> void freeOwnedGPtr<GSList>(GSList*);
+ template<> void freeOwnedGPtr<GPatternSpec>(GPatternSpec*);
+-- 
+1.8.4.3
+
