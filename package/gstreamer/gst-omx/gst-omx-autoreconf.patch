@@ -1,0 +1,37 @@
+--- a/configure.ac	2013-04-18 16:53:58.000000000 +0200
++++ b/configure.ac	2013-04-30 14:53:16.502500645 +0200
+@@ -14,12 +14,6 @@
+ dnl initialize automake
+ AM_INIT_AUTOMAKE([-Wno-portability 1.10])
+ 
+-dnl define PACKAGE_VERSION_* variables
+-AS_VERSION
+-
+-dnl check if this is a release version
+-AS_NANO(GST_GIT="no", GST_GIT="yes")
+-
+ dnl can autoconf find the source ?
+ AC_CONFIG_SRCDIR([omx/gstomx.c])
+ 
+@@ -58,9 +52,6 @@
+ 
+ dnl *** autotools stuff ****
+ 
+-dnl allow for different autotools
+-AS_AUTOTOOLS_ALTERNATE
+-
+ dnl Add parameters for aclocal
+ AC_SUBST(ACLOCAL_AMFLAGS, "-I m4 -I common/m4")
+ 
+@@ -107,11 +98,6 @@
+ AC_PATH_PROG(VALGRIND_PATH, valgrind, no)
+ AM_CONDITIONAL(HAVE_VALGRIND, test ! "x$VALGRIND_PATH" = "xno")
+ 
+-dnl check for documentation tools
+-GTK_DOC_CHECK([1.3])
+-AS_PATH_PYTHON([2.1])
+-AG_GST_PLUGIN_DOCS([1.3],[2.1])
+-
+ dnl *** checks for libraries ***
+ 
+ dnl libm, for sin() etc.

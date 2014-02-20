@@ -1,0 +1,11 @@
+--- a/omx/video/gstvideodecoder.c	2013-08-23 12:03:52.345108396 +0200
++++ b/omx/video/gstvideodecoder.c	2013-08-23 12:28:26.173124782 +0200
+@@ -2532,7 +2532,7 @@
+   priv->frames = g_list_append (priv->frames, frame);
+ 
+   if (g_list_length (priv->frames) > 10) {
+-    GST_WARNING_OBJECT (decoder, "decoder frame list getting long: %d frames,"
++    GST_DEBUG_OBJECT (decoder, "decoder frame list getting long: %d frames, "
+         "possible internal leaking?", g_list_length (priv->frames));
+   }
+ 

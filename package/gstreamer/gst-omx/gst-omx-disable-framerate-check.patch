@@ -1,0 +1,15 @@
+--- a/omx/gstomxvideodec.c	2013-05-20 12:28:04.000000000 +0200
++++ b/omx/gstomxvideodec.c	2013-08-23 12:01:49.657107032 +0200
+@@ -1885,10 +1885,10 @@
+    */
+   is_format_change |= port_def.format.video.nFrameWidth != info->width;
+   is_format_change |= port_def.format.video.nFrameHeight != info->height;
+-  is_format_change |= (port_def.format.video.xFramerate == 0
++/*  is_format_change |= (port_def.format.video.xFramerate == 0
+       && info->fps_n != 0)
+       || (port_def.format.video.xFramerate !=
+-      (info->fps_n << 16) / (info->fps_d));
++      (info->fps_n << 16) / (info->fps_d));*/
+   is_format_change |= (self->codec_data != state->codec_data);
+   if (klass->is_format_change)
+     is_format_change |=

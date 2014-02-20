@@ -1,0 +1,15 @@
+--- a/examples/egl/testegl.c
++++ b/examples/egl/testegl.c
+@@ -574,6 +574,11 @@ create_pool (APP_STATE_T * state, gint size, gint width, gint height)
+   gint i;
+   EGLint error;
+
++  if (!width && !height) {
++    width = 320;
++    height = 200;
++  }
++
+   TRACE_VC_MEMORY ("before pool creation");
+   pool = gst_egl_image_memory_pool_new (size, state->gst_display, state,
+       destroy_pool_resources);
+

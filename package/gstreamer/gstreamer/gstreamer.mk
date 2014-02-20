@@ -19,6 +19,23 @@ ifeq ($(BR2_aarch64),y)
 GSTREAMER_CONF_ENV = as_cv_unaligned_access=yes
 endif
 
+GSTREAMER_COMMON_VERSION = 2585de990f508fc7fbe13a4b7c9fb08c68a10aed
+GSTREAMER_COMMON_SOURCE = common-$(GSTREAMER_COMMON_VERSION).tar.gz
+GSTREAMER_COMMON_SITE = http://cgit.freedesktop.org/gstreamer/common/snapshot/
+
+define GSTREAMER_COMMON_DOWNLOAD
+        $(call DOWNLOAD,$(GSTREAMER_COMMON_SITE)$(GSTREAMER_COMMON_SOURCE),$(GSTREAMER_COMMON_SOURCE))
+endef
+
+define GSTREAMER_COMMON_EXTRACT
+        $(INFLATE.gz) $(DL_DIR)/$(GSTREAMER_COMMON_SOURCE) | \
+                $(TAR) $(TAR_STRIP_COMPONENTS)=1 \
+                -C $(@D)/common $(TAR_OPTIONS) -
+        touch $(@D)/ABOUT-NLS
+        touch $(@D)/config.rpath
+endef
+
+
 GSTREAMER_CONF_OPT = \
 		--disable-examples \
 		--disable-tests \
