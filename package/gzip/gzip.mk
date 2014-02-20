@@ -11,3 +11,4 @@ GZIP_LICENSE = GPLv3+
 GZIP_LICENSE_FILES = COPYING
 
 $(eval $(autotools-package))
+$(eval $(host-autotools-package))

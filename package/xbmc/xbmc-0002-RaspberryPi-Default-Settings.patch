@@ -1,0 +1,168 @@
+From 2541772a3ed71402a620466feb6a337b40f08880 Mon Sep 17 00:00:00 2001
+From: Maxime Hadjinlian <maximeh.hadjinlian@gmail.com>
+Date: Sat, 15 Dec 2012 23:41:06 +0100
+Subject: [PATCH] RaspberryPi Default Settings
+
+Add some default settings if the target platform is the RaspberryPi.
+Avoid the fact that the user _MUST_ have an advandcedsettings.xml to be able
+to use XBMC properly.
+
+Signed-off-by: Maxime Hadjinlian <maxime.hadjinlian@gmail.com>
+---
+ xbmc/settings/AdvancedSettings.cpp          |   31 +++++++++++++++++++++++++++
+ xbmc/settings/GUISettings.cpp               |    8 +++----
+ xbmc/settings/GUIWindowSettingsCategory.cpp |    4 ++--
+ 3 files changed, 37 insertions(+), 6 deletions(-)
+
+diff --git a/xbmc/settings/AdvancedSettings.cpp b/xbmc/settings/AdvancedSettings.cpp
+index 2cbbf98..42ccabd 100644
+--- a/xbmc/settings/AdvancedSettings.cpp
++++ b/xbmc/settings/AdvancedSettings.cpp
+@@ -72,7 +72,11 @@ void CAdvancedSettings::Initialize()
+   m_karaokeAlwaysEmptyOnCdgs = 1;
+   m_karaokeUseSongSpecificBackground = 0;
+
++  #if defined(TARGET_RASPBERRY_PI)
++  m_audioDefaultPlayer = "omxplayer";
++  #else
+   m_audioDefaultPlayer = "paplayer";
++  #endif
+   m_audioPlayCountMinimumPercent = 90.0f;
+   m_audioHost = "default";
+
+@@ -93,8 +97,14 @@ void CAdvancedSettings::Initialize()
+   m_videoBlackBarColour = 0;
+   m_videoPPFFmpegDeint = "linblenddeint";
+   m_videoPPFFmpegPostProc = "ha:128:7,va,dr";
++
++  #if defined(TARGET_RASPBERRY_PI)
++  m_videoDefaultPlayer = "omxplayer";
++  m_videoDefaultDVDPlayer = "omxplayer";
++  #else
+   m_videoDefaultPlayer = "dvdplayer";
+   m_videoDefaultDVDPlayer = "dvdplayer";
++  #endif
+   m_videoIgnoreSecondsAtStart = 3*60;
+   m_videoIgnorePercentAtEnd   = 8.0f;
+   m_videoPlayCountMinimumPercent = 90.0f;
+@@ -287,7 +297,11 @@ void CAdvancedSettings::Initialize()
+   m_alwaysOnTop = false;
+ #endif
+
++  #if defined(TARGET_RASPBERRY_PI)
++  m_bgInfoLoaderMaxThreads = 2;
++  #else
+   m_bgInfoLoaderMaxThreads = 5;
++  #endif
+
+   m_iPVRTimeCorrection             = 0;
+   m_iPVRInfoToggleInterval         = 3000;
+@@ -299,7 +313,12 @@ void CAdvancedSettings::Initialize()
+
+   m_measureRefreshrate = false;
+
++  #if defined(TARGET_RASPBERRY_PI)
++  m_cacheMemBufferSize = 1024 * 1024 * 10;
++  #else
+   m_cacheMemBufferSize = 1024 * 1024 * 20;
++  #endif
++
+   m_addonPackageFolderSize = 200;
+
+   m_jsonOutputCompact = true;
+@@ -509,11 +528,17 @@ void CAdvancedSettings::ParseSettingsFile(const CStdString &file)
+         RefreshOverride override = {0};
+
+         float fps;
++        #if defined(TARGET_RASPBERRY_PI)
++          fps = 23.976;
++          override.fpsmin = fps - 0.01f;
++          override.fpsmax = fps + 0.01f;
++        #else
+         if (XMLUtils::GetFloat(pRefreshOverride, "fps", fps))
+         {
+           override.fpsmin = fps - 0.01f;
+           override.fpsmax = fps + 0.01f;
+         }
++        #endif
+
+         float fpsmin, fpsmax;
+         if (XMLUtils::GetFloat(pRefreshOverride, "fpsmin", fpsmin) &&
+@@ -524,11 +549,17 @@ void CAdvancedSettings::ParseSettingsFile(const CStdString &file)
+         }
+
+         float refresh;
++        #if defined(TARGET_RASPBERRY_PI)
++          refresh = 24.0;
++          override.refreshmin = refresh - 0.01f;
++          override.refreshmax = refresh + 0.01f;
++        #else
+         if (XMLUtils::GetFloat(pRefreshOverride, "refresh", refresh))
+         {
+           override.refreshmin = refresh - 0.01f;
+           override.refreshmax = refresh + 0.01f;
+         }
++        #endif
+
+         float refreshmin, refreshmax;
+         if (XMLUtils::GetFloat(pRefreshOverride, "refreshmin", refreshmin) &&
+diff --git a/xbmc/settings/GUISettings.cpp b/xbmc/settings/GUISettings.cpp
+index c1820a7..c00fb18 100644
+--- a/xbmc/settings/GUISettings.cpp
++++ b/xbmc/settings/GUISettings.cpp
+@@ -537,11 +537,11 @@ void CGUISettings::Initialize()
+   AddInt(NULL, "input.appleremotesequencetime", 13603, 500, 50, 50, 1000, SPIN_CONTROL_INT_PLUS, MASK_MS, TEXT_OFF);
+   AddSeparator(in, "input.sep1");
+ #endif
+-  AddBool(in, "input.remoteaskeyboard", 21449, false);
++  AddBool(in, "input.remoteaskeyboard", 21449, true);
+ #if defined(TARGET_DARWIN_IOS)
+   AddBool(NULL, "input.enablemouse", 21369, true);
+ #else
+-  AddBool(in, "input.enablemouse", 21369, true);
++  AddBool(in, "input.enablemouse", 21369, false);
+ #endif
+ #if defined(HAS_SDL_JOYSTICK)
+   AddBool(in, "input.enablejoystick", 35100, true);
+@@ -831,7 +831,7 @@ void CGUISettings::Initialize()
+
+ #ifdef HAS_WEB_SERVER
+   CSettingsCategory* srvWeb = AddCategory(SETTINGS_SERVICE, "webserver", 33101);
+-  AddBool(srvWeb,  "services.webserver",        263, false);
++  AddBool(srvWeb,  "services.webserver",        263, true);
+   AddString(srvWeb,"services.webserverport",    730, CUtil::CanBindPrivileged()?"80":"8080", EDIT_CONTROL_NUMBER_INPUT, false, 730);
+   AddString(srvWeb,"services.webserverusername",1048, "xbmc", EDIT_CONTROL_INPUT);
+   AddString(srvWeb,"services.webserverpassword",733, "", EDIT_CONTROL_HIDDEN_INPUT, true, 733);
+@@ -881,7 +881,7 @@ void CGUISettings::Initialize()
+   AddInt(laf, "lookandfeel.startupwindow",512,1, WINDOW_HOME, 1, WINDOW_PYTHON_END, SPIN_CONTROL_TEXT);
+   AddString(laf, "lookandfeel.soundskin",15108,"SKINDEFAULT", SPIN_CONTROL_TEXT);
+   AddSeparator(laf, "lookandfeel.sep2");
+-  AddBool(laf, "lookandfeel.enablerssfeeds",13305,  true);
++  AddBool(laf, "lookandfeel.enablerssfeeds",13305,  false);
+   AddString(laf, "lookandfeel.rssedit", 21450, "", BUTTON_CONTROL_STANDARD);
+
+   CSettingsCategory* loc = AddCategory(SETTINGS_APPEARANCE, "locale", 14090);
+diff --git a/xbmc/settings/GUIWindowSettingsCategory.cpp b/xbmc/settings/GUIWindowSettingsCategory.cpp
+index b4cee69..a9bcb7a 100644
+--- a/xbmc/settings/GUIWindowSettingsCategory.cpp
++++ b/xbmc/settings/GUIWindowSettingsCategory.cpp
+@@ -1271,7 +1271,7 @@ void CGUIWindowSettingsCategory::OnSettingChanged(CBaseSettingControl *pSettingC
+       if (!g_application.StartWebServer())
+       {
+         CGUIDialogOK::ShowAndGetInput(g_localizeStrings.Get(33101), "", g_localizeStrings.Get(33100), "");
+-        g_guiSettings.SetBool("services.webserver", false);
++        g_guiSettings.SetBool("services.webserver", true);
+       }
+   }
+   else if (strSetting.Equals("services.webserverusername") || strSetting.Equals("services.webserverpassword"))
+@@ -1292,7 +1292,7 @@ void CGUIWindowSettingsCategory::OnSettingChanged(CBaseSettingControl *pSettingC
+     else
+     {
+       g_application.StopAirplayServer(true);
+-      g_guiSettings.SetBool("services.airplay", false);
++      g_guiSettings.SetBool("services.airplay", true);
+       CZeroconf::GetInstance()->Stop();
+     }
+ #endif
+--
+1.7.10.4

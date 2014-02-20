@@ -1,0 +1,41 @@
+#!/bin/sh
+#
+# Starts XBMC.
+#
+
+BIN_NAME=xbmc.bin
+XBMC=/usr/lib/xbmc/$BIN_NAME
+XBMC_ARGS="--standalone -fs -n"
+PIDFILE=/var/run/xbmc.pid
+
+start() {
+    echo -n "Starting XBMC: "
+    start-stop-daemon -S -q -p $PIDFILE --exec $XBMC -- $XBMC_ARGS
+    [ $? == 0 ] && echo "OK" || echo "FAIL"
+}
+stop() {
+    echo -n "Stopping XBMC: "
+    start-stop-daemon -K -q -p $PIDFILE
+    [ $? == 0 ] && echo "OK" || echo "FAIL"
+}
+restart() {
+    stop
+    start
+}
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  restart|reload)
+    restart
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart}"
+    exit 1
+esac
+
+exit $?

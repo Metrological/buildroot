@@ -18,8 +18,10 @@ define SDL_RUN_AUTOGEN
 endef
 
 SDL_POST_PATCH_HOOKS += SDL_RUN_AUTOGEN
-SDL_DEPENDENCIES += host-automake host-autoconf host-libtool
+HOST_SDL_POST_PATCH_HOOKS += SDL_RUN_AUTOGEN
 
+SDL_DEPENDENCIES += host-automake host-autoconf host-libtool
+HOST_SDL_DEPENDENCIES =
 
 ifeq ($(BR2_PACKAGE_SDL_FBCON),y)
 SDL_CONF_OPT += --enable-video-fbcon=yes
@@ -80,3 +82,4 @@ endef
 SDL_POST_INSTALL_STAGING_HOOKS += SDL_FIXUP_SDL_CONFIG
 
 $(eval $(autotools-package))
+$(eval $(host-autotools-package))
