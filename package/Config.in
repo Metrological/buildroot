@@ -127,6 +127,10 @@ source "package/vala/Config.in"
 source "package/yasm/Config.in"
 endmenu
 
+menu "Digital rights management"
+source "package/dxdrm/Config.in"
+endmenu
+
 menu "Filesystem and flash utilities"
 source "package/cifs-utils/Config.in"
 source "package/cramfs/Config.in"

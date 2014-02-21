@@ -1,0 +1,9 @@
+config BR2_PACKAGE_DXDRM
+	bool "dxdrm"
+	depends on BR2_INSTALL_LIBSTDCPP
+	depends on BR2_LARGEFILE
+	depends on BR2_TOOLCHAIN_HAS_THREADS
+	help
+	  Discretix PlayReady DRM implementation
+
+	  http://www.metrological.com
