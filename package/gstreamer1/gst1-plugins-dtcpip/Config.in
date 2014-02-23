@@ -1,0 +1,10 @@
+config BR2_PACKAGE_GST1_PLUGINS_DTCPIP
+	bool "gst1-plugins-dtcpip"
+	select BR2_PACKAGE_GST1_PLUGINS_BASE
+	select BR2_PACKAGE_GST1_PLUGINS_GOOD
+	select BR2_PACKAGE_GST1_PLUGINS_GOOD_PLUGIN_RTP
+	select BR2_PACKAGE_GST1_PLUGINS_GOOD_PLUGIN_RTSP
+	help
+	  GStreamer plugin for decrypting DTCP/IP encrypted content.
+
+	  http://github.com/cablelabs/gst-plugins-dtcpip
