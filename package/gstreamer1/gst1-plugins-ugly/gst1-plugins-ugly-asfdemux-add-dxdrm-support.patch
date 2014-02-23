@@ -1,0 +1,230 @@
+--- a/gst/asfdemux/asfpacket.c
++++ b/gst/asfdemux/asfpacket.c
+@@ -267,6 +267,30 @@
+   }
+ }
+ 
++#if DXDRM_DEBUG
++static void dump_frame (const guint8* p_data, const guint columns, const guint rows)
++{
++    static char conversionArray[] = "0123456789ABCDEF"; 
++    char textLine[columns * 3];
++
++    GST_WARNING ("Frame dump (%dx%d):", columns, rows);
++
++    for (guint rowCount = 0; rowCount != rows; rowCount++)
++    {
++        for (guint columnCount = 0; columnCount != columns; columnCount++)
++        {
++            guint8 display = p_data[((rowCount * columns) + columnCount)];
++            textLine[(columnCount * 3) + 0] = conversionArray[(display >> 4)];  
++            textLine[(columnCount * 3) + 1] = conversionArray[(display & 0x0F)];  
++            textLine[(columnCount * 3) + 2] = ' ';
++        }
++
++        textLine[columns *3] = '\0';
++        GST_WARNING (textLine);
++    }
++}
++#endif
++
+ static gboolean
+ gst_asf_demux_parse_payload (GstASFDemux * demux, AsfPacket * packet,
+     gint lentype, const guint8 ** p_data, guint * p_size)
+@@ -504,7 +528,7 @@
+ {
+   AsfPacket packet = { 0, };
+   GstMapInfo map;
+-  const guint8 *data;
++  const guint8 *data;
+   gboolean has_multiple_payloads;
+   GstAsfDemuxParsePacketError ret = GST_ASF_DEMUX_PARSE_PACKET_ERROR_NONE;
+   guint8 ec_flags, flags1;
+@@ -515,6 +539,26 @@
+   size = map.size;
+   GST_LOG_OBJECT (demux, "Buffer size: %u", size);
+ 
++#if HAS_DXDRM
++  if (demux->fileIsDrmProtected == DX_TRUE) {
++    unsigned long output = size;
++    int errorCode;
++
++    if (demux->drmFileOpened != DX_TRUE) {
++      GST_WARNING_OBJECT (demux, "DX: ERROR content is encrypted but DRM stream is not opened");
++      return FALSE;
++    }
++
++    if ((errorCode = DxDrmStream_ProcessPacket(demux->drmStream, 1, data, size, (guint8 *)data, &output)) != DX_DRM_SUCCESS) {
++#if DXDRM_DEBUG
++      dump_frame (data, 16, 3);
++#endif
++      GST_WARNING_OBJECT (demux, "DX: ERROR - packet decryption failed [%d]", errorCode);
++      return FALSE;
++    }
++  }
++#endif
++
+   /* need at least two payload flag bytes, send time, and duration */
+   if (G_UNLIKELY (size < 2 + 4 + 2)) {
+     GST_WARNING_OBJECT (demux, "Packet size is < 8");
+--- a/gst/asfdemux/gstasfdemux.c
++++ b/gst/asfdemux/gstasfdemux.c
+@@ -46,6 +46,16 @@
+ #include "asfheaders.h"
+ #include "asfpacket.h"
+ 
++#ifdef HAS_DXDRM
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <fcntl.h>
++#include <unistd.h>
++#include "DxDrmDebugApi.h"
++int DxDrmOpenStream (GstASFDemux * demux, guint8 * data, guint64 size);
++#endif
++
++
+ static GstStaticPadTemplate gst_asf_demux_sink_template =
+ GST_STATIC_PAD_TEMPLATE ("sink",
+     GST_PAD_SINK,
+@@ -292,6 +302,27 @@
+ 
+   /* set initial state */
+   gst_asf_demux_reset (demux, FALSE);
++
++#ifdef HAS_DXDRM
++  GST_INFO_OBJECT (demux, "DX: initializiang Discretix DRM client ");
++  demux->lastResult = DX_SUCCESS;
++  demux->drmFileOpened = DX_FALSE;
++  demux->clientInitialized = DX_TRUE;
++  demux->fileIsDrmProtected = DX_FALSE;
++
++  demux->lastResult = DxLoadConfigFile("/etc/dxdrm/.config");
++  if (demux->lastResult != DX_SUCCESS) {
++    GST_WARNING_OBJECT (demux, "DX: ERROR - Discretix configuration file not found");
++  }
++
++  demux->lastResult = DxDrmClient_Init();
++  if (demux->lastResult == DX_SUCCESS) {
++    demux->clientInitialized = DX_TRUE;
++    GST_INFO_OBJECT (demux, "DX: Discretix client intialized successfully");
++  } else {
++    GST_WARNING_OBJECT (demux, "DX: ERROR - Discretix client initialization failed with error: %d", (int)demux->lastResult);
++  }
++#endif
+ }
+ 
+ static gboolean
+@@ -3208,6 +3239,53 @@
+   }
+ }
+ 
++#ifdef HAS_DXDRM
++int DxDrmOpenStream(GstASFDemux * demux, guint8 * data, guint64 size)
++{
++  EDxDrmStatus result = DX_SUCCESS;
++
++  demux->drmFileOpened = DX_FALSE;
++
++  GST_INFO_OBJECT (demux, "DX: Opening drm stream ( DxDrmOpenStream)");
++  if (demux->clientInitialized != DX_TRUE) {
++    GST_WARNING_OBJECT (demux, "DX: ERROR - Discretix DRM client not initialized");
++    goto error;
++  }
++
++  result = DxDrmClient_OpenDrmStreamFromData(&(demux->drmStream),data ,size );
++
++  if (result != DX_SUCCESS) {
++    GST_WARNING ("DX: ERROR - error while opening stream" );
++    return -1;
++  }
++
++  GST_INFO_OBJECT (demux, "DX: stream opened successfully");
++
++  result = DxDrmStream_SetIntent(demux->drmStream, DX_INTENT_AUTO_PLAY, DX_AUTO_NO_UI);
++
++  if (result != DX_SUCCESS) {
++    GST_WARNING ("DX: ERROR - opening stream failed because there are no rights (license) to play the content " );
++    goto error;
++  }
++  GST_INFO_OBJECT (demux, "DX: playback rights found");
++
++  result = DxDrmFile_HandleConsumptionEvent(demux->drmStream, DX_EVENT_START);
++  if (result != DX_SUCCESS) {
++    GST_WARNING ("DX: Content consumption failed" );
++    goto error;
++  }
++
++  GST_INFO_OBJECT (demux, "DX: Stream was opened and is ready for playback");
++  demux->drmFileOpened = DX_TRUE;
++  return 0;
++
++error:
++  demux->drmFileOpened = DX_FALSE;
++  DxDrmStream_Close(&(demux->drmStream));
++  return -1;
++}
++#endif
++
+ static GstFlowReturn
+ gst_asf_demux_process_header (GstASFDemux * demux, guint8 * data, guint64 size)
+ {
+@@ -3970,6 +4048,17 @@
+     return ASF_FLOW_NEED_MORE_DATA;
+ 
+   asf_demux_peek_object (demux, *p_data, ASF_OBJECT_HEADER_SIZE, &obj, TRUE);
++
++#ifdef HAS_DXDRM
++    if (obj.id == ASF_OBJ_HEADER) {
++      int value;
++      if ((value = DxDrmOpenStream( demux,*p_data,*p_size )) != DX_SUCCESS) {
++        GST_WARNING ("DX: ERROR - DxDrmOpenStream failed [%d]", value);
++        goto error_encrypted;
++      }
++    }
++#endif
++
+   gst_asf_demux_skip_bytes (ASF_OBJECT_HEADER_SIZE, p_data, p_size);
+ 
+   obj_data_size = obj.size - ASF_OBJECT_HEADER_SIZE;
+@@ -4037,7 +4126,13 @@
+     case ASF_OBJ_EXT_CONTENT_ENCRYPTION:
+     case ASF_OBJ_DIGITAL_SIGNATURE_OBJECT:
+     case ASF_OBJ_UNKNOWN_ENCRYPTION_OBJECT:
++#ifdef HAS_DXDRM
++      demux->fileIsDrmProtected = DX_TRUE;
++      ret = GST_FLOW_OK;
++      break;
++#else
+       goto error_encrypted;
++#endif
+     case ASF_OBJ_CONCEAL_NONE:
+     case ASF_OBJ_HEAD2:
+     case ASF_OBJ_UNDEFINED:
+--- a/gst/asfdemux/gstasfdemux.h
++++ b/gst/asfdemux/gstasfdemux.h
+@@ -26,6 +26,10 @@
+ 
+ #include "asfheaders.h"
+ 
++#ifdef HAS_DXDRM
++#include "DxDrmClient.h"
++#endif
++
+ G_BEGIN_DECLS
+   
+ #define GST_TYPE_ASF_DEMUX \
+@@ -199,6 +203,14 @@
+   /* for debugging only */
+   gchar               *objpath;
+ 
++#ifdef HAS_DXDRM
++  HDxDrmStream         drmStream;
++  DxBool               drmFileOpened;
++  DxStatus             lastResult;
++  DxBool               clientInitialized;
++  DxBool               fileIsDrmProtected;
++#endif
++
+   /* simple index, if available */
+   GstClockTime         sidx_interval;    /* interval between entries in ns */
+   guint                sidx_num_entries; /* number of index entries        */
