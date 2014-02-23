@@ -56,6 +56,7 @@ define QT5WEBKIT_CONFIGURE_CMDS
 		$(HOST_DIR)/usr/bin/qmake \
 			WEBKIT_CONFIG+=accelerated_2d_canvas \
 			WEBKIT_CONFIG+=video \
+			WEBKIT_CONFIG+=discovery \
 			WEBKIT_CONFIG+=use_gstreamer \
 			CONFIG+=release \
 			$(QT5WEBKIT_GST_CONFIG) \
