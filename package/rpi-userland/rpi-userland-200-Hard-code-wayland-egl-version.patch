@@ -1,0 +1,12 @@
+diff --git a/interface/khronos/wayland-egl/wayland-egl.pc.in b/interface/khronos/wayland-egl/wayland-egl.pc.in
+index fad3dc7..b66a791 100644
+--- a/interface/khronos/wayland-egl/wayland-egl.pc.in
++++ b/interface/khronos/wayland-egl/wayland-egl.pc.in
+@@ -5,6 +5,6 @@ includedir=${prefix}/include
+ 
+ Name: wayland-egl
+ Description: VideoCore wayland-egl library
+-Version: @PROJECT_APIVER@ 
++Version: 10
+ Libs: -L${libdir} -lwayland-egl
+ Cflags: -I${includedir}

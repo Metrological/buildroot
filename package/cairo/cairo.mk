@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-CAIRO_VERSION = 1.12.10
+CAIRO_VERSION = 1.12.16
 CAIRO_SOURCE = cairo-$(CAIRO_VERSION).tar.xz
 CAIRO_LICENSE = LGPLv2.1+
 CAIRO_LICENSE_FILES = COPYING
@@ -73,6 +73,12 @@ ifeq ($(BR2_PACKAGE_XORG7),y)
 	CAIRO_DEPENDENCIES += xlib_libX11 xlib_libXext
 else
 	CAIRO_CONF_OPT += --disable-xlib --disable-xcb --without-x
+endif
+
+ifeq ($(BR2_PACKAGE_WAYLAND),y)
+	CAIRO_CONF_OPT += --enable-egl
+else
+	CAIRO_CONF_OPT += --disable-egl
 endif
 
 ifeq ($(BR2_PACKAGE_XLIB_LIBXRENDER),y)
