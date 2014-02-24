@@ -1,0 +1,12 @@
+--- a/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp	2014-02-24 15:47:08.000000000 +0100
++++ b/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp	2014-02-24 15:45:44.000000000 +0100
+@@ -197,7 +197,8 @@
+     GRefPtr<GstElementFactory> srcFactory = gst_element_factory_find("webkitwebsrc");
+     if (!srcFactory) {
+         GST_DEBUG_CATEGORY_INIT(webkit_media_player_debug, "webkitmediaplayer", 0, "WebKit media player");
+-        return gst_element_register(0, "webkitwebsrc", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_WEB_SRC);
++        // FIXME: our http source element leaks memory, fallback to souphttpsrc for now.
++        // return gst_element_register(0, "webkitwebsrc", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_WEB_SRC);
+     }
+ 
+     return true;
