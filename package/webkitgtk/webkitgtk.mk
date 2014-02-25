@@ -12,13 +12,17 @@ WEBKITGTK_DEPENDENCIES = host-flex host-bison host-gperf host-ruby \
 
 WEBKITGTK_AUTORECONF = YES
 
+WEBKITGTK_EGL_CFLAGS = $(shell PKG_CONFIG_LIBDIR=$(STAGING_DIR)/usr/lib/pkgconfig pkg-config --define-variable=prefix=$(STAGING_DIR)/usr --cflags egl)
+
 # Give explicit path to icu-config.
 WEBKITGTK_CONF_ENV = \
 	ac_cv_path_icu_config=$(STAGING_DIR)/usr/bin/icu-config \
 	AR_FLAGS="cru" \
-	CXXFLAGS="$(TARGET_CXXFLAGS) -D_GLIBCXX_USE_SCHED_YIELD -D_GLIBCXX_USE_NANOSLEEP"
+	CFLAGS="$(TARGET_CFLAGS) -I$(STAGING_DIR)/usr/include $(WEBKITGTK_EGL_CFLAGS)" \
+	CXXFLAGS="$(TARGET_CXXFLAGS) -I$(STAGING_DIR)/usr/include $(WEBKITGTK_EGL_CFLAGS) -D_GLIBCXX_USE_SCHED_YIELD -D_GLIBCXX_USE_NANOSLEEP"
 
 WEBKITGTK_CONF_OPT = \
+	--disable-webkit1 \
 	--disable-credential-storage \
 	--disable-geolocation \
 	--disable-video \
