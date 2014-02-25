@@ -11,7 +11,7 @@ WESTON_LICENSE = MIT
 WESTON_LICENSE_FILES = COPYING
 
 WESTON_DEPENDENCIES = host-pkgconf wayland libxkbcommon pixman libpng \
-	jpeg mtdev udev cairo
+	jpeg mtdev udev cairo linux-pam
 
 # We're touching Makefile.am
 WESTON_AUTORECONF = YES
@@ -41,11 +41,10 @@ WESTON_DEPENDENCIES += rpi-userland
 WESTON_CONF_OPT += \
 	--enable-rpi-compositor \
 	--enable-weston-launch \
+	--enable-demo-clients-install \
 	--with-cairo=image \
 	--disable-resize-optimization \
 	--disable-setuid-install \
-	--disable-setuid-install \
-	--enable-demo-clients-install \
 	WESTON_NATIVE_BACKEND=rpi-backend.so
 else
 WESTON_CONF_OPT += --disable-rpi-compositor
