@@ -1,0 +1,28 @@
+#!/bin/sh
+
+start() {
+	vconfig add eth0 2
+	vconfig add eth0 3
+	ifconfig eth0.2 hw ether 00:10:18:99:88:66
+	ifconfig eth0.3 hw ether 00:10:18:99:88:99
+	ifconfig eth0 up
+	ifconfig lo up
+	ifconfig eth0.3 192.168.17.10
+
+	# Wait for the interfaces to be up. refsw_server asserts if interfaces are
+	# not present !!!
+	sleep 3
+
+	/usr/bin/refsw_server -mode unprotected &
+}
+
+case "$1" in
+	start)
+		start
+		;;
+	*)
+		echo "Usage: $0 {start}"
+		exit 1
+esac
+
+exit $?

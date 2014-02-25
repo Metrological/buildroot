@@ -119,13 +119,13 @@ ifeq ($(BR2_PACKAGE_GPU_VIV_BIN_MX6Q),y)
 QT5BASE_EGLFS_PLATFORM_HOOKS_SOURCES = \
 	$(@D)/mkspecs/devices/linux-imx6-g++/qeglfshooks_imx6.cpp
 endif
-ifeq ($(BR2_PACKAGE_BCM_REFSW),y)
+ifeq ($(BR2_PACKAGE_DAWN),y)
 QT5BASE_CONFIGURE_OPTS += \
 	-device-option QMAKE_LIBS_EGL="" \
 	-device-option QMAKE_LIBS_OPENGL_ES2="" 
 	-device-option QMAKE_LIBS_OPENGL_ES1="" 
 QT5BASE_EGLFS_PLATFORM_HOOKS_SOURCES = \
-	$(@D)/mkspecs/devices/linux-mipsel-broadcom-97425-g++/qeglfshooks_bcm.cpp
+	$(@D)/mkspecs/devices/linux-mipsel-broadcom-97425-g++/qeglfshooks_bcm_dawn.cpp
 endif
 ifeq ($(BR2_PACKAGE_RPI_USERLAND),y)
 QT5BASE_CONFIGURE_OPTS += -no-neon
