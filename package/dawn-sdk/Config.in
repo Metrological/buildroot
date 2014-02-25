@@ -3,9 +3,27 @@ config BR2_PACKAGE_DAWN_SDK
 	depends on BR2_mipsel
 	depends on BR2_INSTALL_LIBSTDCPP
 	depends on BR2_LARGEFILE
+	depends on BR2_TOOLCHAIN_HAS_THREADS
 	select BR2_PACKAGE_HAS_OPENGL_EGL
 	select BR2_PACKAGE_HAS_OPENGL_ES
 	select BR2_PACKAGE_HAS_OPENVG
 	help
 	  DAWN SDK
 	  Pre-compiled binaries of the Nexus libraries
+
+if BR2_PACKAGE_DAWN_SDK
+
+config BR2_PACKAGE_PROVIDES_OPENGL_EGL
+	default "dawn-sdk"
+
+config BR2_PACKAGE_PROVIDES_OPENGL_ES
+	default "dawn-sdk"
+
+config BR2_PACKAGE_PROVIDES_OPENVG
+	default "dawn-sdk"
+
+endif
+
+comment "dawn-sdk needs a toolchain w/ C++, largefile, threads"
+	depends on BR2_mipsel
+	depends on !BR2_INSTALL_LIBSTDCPP || !BR2_LARGEFILE || !BR2_TOOLCHAIN_HAS_THREADS
