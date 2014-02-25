@@ -22,6 +22,7 @@ WEBKITGTK_CONF_ENV = \
 	CXXFLAGS="$(TARGET_CXXFLAGS) -I$(STAGING_DIR)/usr/include $(WEBKITGTK_EGL_CFLAGS) -D_GLIBCXX_USE_SCHED_YIELD -D_GLIBCXX_USE_NANOSLEEP"
 
 WEBKITGTK_CONF_OPT = \
+	--disable-webkit1 \
 	--disable-credential-storage \
 	--disable-geolocation \
 	--disable-video \
