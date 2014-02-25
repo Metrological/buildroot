@@ -13,6 +13,7 @@ DAWN_SDK_LICENSE = PROPRIETARY
 define DAWN_SDK_INSTALL_STAGING_CMDS
 	cp -Rf $(@D)/sdk/include/* $(STAGING_DIR)/usr/include/
 	cp -Rf $(@D)/sdk/lib/* $(STAGING_DIR)/usr/lib/
+	mkdir -p $(STAGING_DIR)/usr/lib/pkgconfig
 	cp -Rf $(@D)/sdk/pkgconfig/* $(STAGING_DIR)/usr/lib/pkgconfig/
 endef
 
