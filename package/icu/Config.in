@@ -13,15 +13,6 @@ config BR2_PACKAGE_ICU
 
 	  http://site.icu-project.org/
 
-if BR2_PACKAGE_ICU
-
-config BR2_PACKAGE_ICU_MINIMIZED
-	bool "minimized"
-	help
-	  Uses a minimized icu data set.
-
-endif
-
 comment "icu needs a toolchain w/ C++, wchar, threads"
 	depends on !BR2_arc
 	depends on !BR2_BINFMT_FLAT
