@@ -136,7 +136,11 @@ else
 QT5BASE_CONFIGURE_OPTS += -no-opengl -no-eglfs
 endif
 
+ifeq ($(BR2_PACKAGE_DAWN_SDK),y)
+QT5BASE_CONFIGURE_OPTS += $(if $(BR2_PACKAGE_OPENSSL),-openssl-linked,-no-openssl)
+else
 QT5BASE_CONFIGURE_OPTS += $(if $(BR2_PACKAGE_OPENSSL),-openssl,-no-openssl)
+endif
 QT5BASE_DEPENDENCIES   += $(if $(BR2_PACKAGE_OPENSSL),openssl)
 
 QT5BASE_CONFIGURE_OPTS += $(if $(BR2_PACKAGE_QT5BASE_FONTCONFIG),-fontconfig,-no-fontconfig)
