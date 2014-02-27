@@ -12,6 +12,8 @@ DXDRM_REDISTRIBUTE = NO
 
 DXDRM_INSTALL_STAGING = YES
 
+DXDRM_DEPENDENCIES = libcurl
+
 define DXDRM_INSTALL_STAGING_CMDS
 	$(INSTALL) -m 755 $(@D)/dxdrm.$(call qstrip,$(BR2_ARCH)) $(STAGING_DIR)/usr/lib/libDxDrm.so
 	$(INSTALL) -d -m 755 $(STAGING_DIR)/usr/include/dxdrm
