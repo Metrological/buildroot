@@ -2,14 +2,4 @@ auto lo
 iface lo inet loopback
 
 auto eth0
-iface eth0 inet static
-
-auto eth0.2
-iface eth0.2 inet static
-hwaddress ether 00:10:18:99:88:66
-
-auto eth0.3
-iface eth0.3 inet static
-hwaddress ether 00:10:18:99:88:99
-address 192.168.17.10
-network 255.255.255.0
+iface eth0 inet dhcp
