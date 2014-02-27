@@ -9,16 +9,10 @@ start() {
 	                value=$(echo $line | cut -d' ' -f2)
         	        if [ "x${keyword}" = "xnameserver" ] && [ ! "x${value}" = "x0.0.0.0" ] ; then
                 	        echo "nameserver $value" >> /etc/resolv.conf
-                        	echo "nameserver $value"
 	                elif [ "x${keyword}" = "xbootserver" ] && [ ! "x${value}" = "x0.0.0.0" ] ; then
         	                echo "bootserver $value" >> /etc/resolv.conf
-                	        echo "bootserver $value"                                             
 	                elif [ "x${keyword}" = "xdomain" ] ; then                                    
         	                echo "domain $value" >> /etc/resolv.conf                             
-                	        echo "domain $value"                                                   
-	       	        else                                                                           
-        	                echo "Key -> ${keyword}"                                               
-                	        echo "Value -> ${value}"                                               
                 	fi                                                  
 	        done < /proc/net/pnp                                    
 	fi                                                              
