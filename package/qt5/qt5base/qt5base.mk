@@ -136,7 +136,7 @@ else
 QT5BASE_CONFIGURE_OPTS += -no-opengl -no-eglfs
 endif
 
-ifeq ($(BR2_PACKAGE_DAWN_SDK),y)
+ifeq ($(BR2_TOOLCHAIN_BUILDROOT_UCLIBC),y)
 QT5BASE_CONFIGURE_OPTS += $(if $(BR2_PACKAGE_OPENSSL),-openssl-linked,-no-openssl)
 else
 QT5BASE_CONFIGURE_OPTS += $(if $(BR2_PACKAGE_OPENSSL),-openssl,-no-openssl)
