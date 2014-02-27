@@ -39,14 +39,20 @@ case "$1" in
 		/sbin/ifconfig $interface $ip $BROADCAST $NETMASK
 
 		if [ -n "$router" ] ; then
-			echo "deleting routers"
-			while route del default gw 0.0.0.0 dev $interface 2> /dev/null; do
-				:
-			done
+			# Count the number of default routes set, not by this $interface
+			defroutes=$(ip route | grep default | grep -v $interface | wc -l)
 
-			for i in $router ; do
-				route add default gw $i dev $interface
-			done
+			if [ $defroutes = 0 ] ; then
+
+				echo "deleting routers"
+				while route del default gw 0.0.0.0 dev $interface 2> /dev/null; do
+					:
+				done
+
+				for i in $router ; do
+					route add default gw $i dev $interface
+				done
+			fi
 		fi
 
 		# drop info from this interface
