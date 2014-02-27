@@ -2,20 +2,20 @@
 
 start() {
 	# Add the DNS entries that were aquired during the "net boot" of the image.
-	if [ -f /proc/net/pnp ] ; then                    
-	        while read line                           
-        	do                                        
-                	keyword=$(echo $line | cut -d' ' -f1 )
-	                value=$(echo $line | cut -d' ' -f2)
-        	        if [ "x${keyword}" = "xnameserver" ] && [ ! "x${value}" = "x0.0.0.0" ] ; then
-                	        echo "nameserver $value" >> /etc/resolv.conf
-	                elif [ "x${keyword}" = "xbootserver" ] && [ ! "x${value}" = "x0.0.0.0" ] ; then
-        	                echo "bootserver $value" >> /etc/resolv.conf
-	                elif [ "x${keyword}" = "xdomain" ] ; then                                    
-        	                echo "domain $value" >> /etc/resolv.conf                             
-                	fi                                                  
-	        done < /proc/net/pnp                                    
-	fi                                                              
+	if [ -f /proc/net/pnp ] ; then
+		while read line
+		do
+			keyword=$(echo $line | cut -d' ' -f1)
+			value=$(echo $line | cut -d' ' -f2)
+			if [ "x${keyword}" = "xnameserver" ] && [ ! "x${value}" = "x0.0.0.0" ] ; then
+				echo "nameserver $value" >> /etc/resolv.conf
+			elif [ "x${keyword}" = "xbootserver" ] && [ ! "x${value}" = "x0.0.0.0" ] ; then
+				echo "bootserver $value" >> /etc/resolv.conf
+			elif [ "x${keyword}" = "xdomain" ] ; then
+				echo "domain $value" >> /etc/resolv.conf
+			fi
+		done < /proc/net/pnp
+	fi
 
 	# If there is a refsw_server we should start it.
 	if [ -f /usr/bin/refsw_server ] ; then
