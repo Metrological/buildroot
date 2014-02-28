@@ -1,6 +1,6 @@
 --- a/mkspecs/devices/linux-mipsel-broadcom-97425-g++/qeglfshooks_bcm_dawn.cpp
-+++ b/mkspecs/devices/linux-mipsel-broadcom-97425-g++/qeglfshooks_bcm_dawn.cpp
-@@ -0,0 +1,204 @@
+--- b/mkspecs/devices/linux-mipsel-broadcom-97425-g++/qeglfshooks_bcm_dawn.cpp
+@@ -0,0 +1,295 @@
 +#include "qeglfshooks.h"
 +#include "qeglfscursor.h"
 +
@@ -9,12 +9,15 @@
 +#include <QtPlatformSupport/private/qeglconvenience_p.h>
 +#include <QtPlatformSupport/private/qeglplatformcontext_p.h>
 +
-+#include "nexus_platform.h"
-+#include "nexus_display.h"
-+#include "nexus_core_utils.h"
-+#include "default_nexus.h"
++#include <refsw/nexus_config.h>
++#include <refsw/nexus_platform.h>
++#include <refsw/nexus_display.h>
++#include <refsw/nexus_core_utils.h>
++#include <refsw/default_nexus.h>
 +
-+#include "refsw_session_simple_client.h"
++#ifndef NEXUS_STANDALONE
++#include <refsw/refsw_session_simple_client.h>
++#endif
 +
 +#ifdef __cplusplus
 +extern "C"
@@ -24,84 +27,172 @@
 +static unsigned int gs_screen_wdt = 1280;
 +static unsigned int gs_screen_hgt = 720;
 +
-+static NEXUS_SurfaceClient* gs_nexus_display = 0;
-+static void*                gs_native_window = 0;
++static NEXUS_DisplayHandle  gs_nexus_display = 0;
++static NEXUS_SurfaceClient* gs_native_window = 0;
 +static NXPL_PlatformHandle  nxpl_handle = 0;
++
++#ifdef NEXUS_STANDALONE
++
++#if NEXUS_NUM_HDMI_OUTPUTS && !NEXUS_DTV_PLATFORM
++
++static void hotplug_callback(void *pParam, int iParam)
++{
++   NEXUS_HdmiOutputStatus status;
++   NEXUS_HdmiOutputHandle hdmi = (NEXUS_HdmiOutputHandle)pParam;
++   NEXUS_DisplayHandle display = (NEXUS_DisplayHandle)iParam;
++
++   NEXUS_HdmiOutput_GetStatus(hdmi, &status);
++
++   qDebug("HDMI hotplug event: %s", status.connected?"connected":"not connected");
++
++   /* the app can choose to switch to the preferred format, but it's not required. */
++   if (status.connected)
++   {
++      NEXUS_DisplaySettings displaySettings;
++      NEXUS_Display_GetSettings(display, &displaySettings);
++
++      qDebug("Switching to preferred format %d", status.preferredVideoFormat);
++
++      displaySettings.format = status.preferredVideoFormat;
++      NEXUS_Display_SetSettings(display, &displaySettings);
++   }
++}
++
++#endif
++
++void InitHDMIOutput(NEXUS_DisplayHandle display)
++{
++
++#if NEXUS_NUM_HDMI_OUTPUTS && !NEXUS_DTV_PLATFORM
++
++   NEXUS_HdmiOutputSettings      hdmiSettings;
++   NEXUS_PlatformConfiguration   platform_config;
++
++   NEXUS_Platform_GetConfiguration(&platform_config);
++
++   if (platform_config.outputs.hdmi[0])
++   {
++      NEXUS_Display_AddOutput(display, NEXUS_HdmiOutput_GetVideoConnector(platform_config.outputs.hdmi[0]));
++
++      /* Install hotplug callback -- video only for now */
++      NEXUS_HdmiOutput_GetSettings(platform_config.outputs.hdmi[0], &hdmiSettings);
++
++      hdmiSettings.hotplugCallback.callback = hotplug_callback;
++      hdmiSettings.hotplugCallback.context = platform_config.outputs.hdmi[0];
++      hdmiSettings.hotplugCallback.param = (int)display;
++
++      NEXUS_HdmiOutput_SetSettings(platform_config.outputs.hdmi[0], &hdmiSettings);
++
++      /* Force a hotplug to switch to a supported format if necessary */
++      hotplug_callback(platform_config.outputs.hdmi[0], (int)display);
++   }
++
++#else
++
++   UNUSED(display);
++
++#endif
++
++}
++
++#endif
 +
 +bool InitPlatform ( void )
 +{
-+   NEXUS_Error error;
++   bool succeeded = true;
++   NEXUS_Error err;
++
++#ifdef NEXUS_STANDALONE
++
++   NEXUS_PlatformSettings platform_settings;
++
++   /* Initialise the Nexus platform */
++   NEXUS_Platform_GetDefaultSettings(&platform_settings);
++   platform_settings.openFrontend = false;
++
++   /* Initialise the Nexus platform */
++   err = NEXUS_Platform_Init(&platform_settings);
++
++   if (err)
++   {
++      qFatal("Err: NEXUS_Platform_Init() failed");
++      succeeded = false;
++   }
++   else
++   {
++      NEXUS_DisplayHandle    display = NULL;
++      NEXUS_DisplaySettings  display_settings;
++
++      NEXUS_Display_GetDefaultSettings(&display_settings);
++
++      display = NEXUS_Display_Open(0, &display_settings);
++
++      if (display == NULL)
++      {
++         qFatal("Err: NEXUS_Display_Open() failed");
++         succeeded = false;
++      }
++      else
++      {
++          NEXUS_VideoFormatInfo   video_format_info;
++          NEXUS_GraphicsSettings  graphics_settings;
++          NEXUS_Display_GetGraphicsSettings(display, &graphics_settings);
++
++          graphics_settings.horizontalFilter = NEXUS_GraphicsFilterCoeffs_eBilinear;
++          graphics_settings.verticalFilter = NEXUS_GraphicsFilterCoeffs_eBilinear;
++
++          NEXUS_Display_SetGraphicsSettings(display, &graphics_settings);
++ 
++          InitHDMIOutput(display);
++
++          NEXUS_Display_GetSettings(display, &display_settings);
++          NEXUS_VideoFormat_GetInfo(display_settings.format, &video_format_info);
++
++          gs_nexus_display = display;
++          gs_screen_wdt = video_format_info.width;
++          gs_screen_hgt = video_format_info.height;
++
++          qDebug("Screen width %d, Screen height %d", gs_screen_wdt, gs_screen_hgt);
++      }
++   }
++
++#else
++
 +   NEXUS_ClientAuthenticationSettings authSettings;
 +   
 +   simple_client_init("xre", &authSettings);
 +
-+   error = NEXUS_Platform_AuthenticatedJoin(&authSettings);
-+   if ( error )
++   err = NEXUS_Platform_AuthenticatedJoin(&authSettings);
++
++   if ( err )
 +   {
-+      qFatal ( "Error : NEXUS_Platform_AuthenticatedJoin() : %x ",  error );
++      qFatal ( "Error : NEXUS_Platform_AuthenticatedJoin() : %x ",  err );
++      succeeded = false;
 +   }
++   else
++   {
++      gs_nexus_display = 0;
++      gs_screen_wdt = 1280;
++      gs_screen_hgt = 720;
++   }
++
++#endif
++
++   if (succeeded == true)
++   {
++       NXPL_RegisterNexusDisplayPlatform ( &nxpl_handle, gs_nexus_display );
++   } 
 +    
-+   return true;
++   return succeeded;
 +}
 +
-+/*
-+NEXUS_DisplayHandle OpenDisplay ( NEXUS_VideoFormat format )
-+{
-+
-+   NEXUS_DisplayHandle   display = NULL;
-+   NEXUS_DisplaySettings display_settings;
-+
-+   NEXUS_Display_GetDefaultSettings ( &display_settings );
-+
-+   if ( format != 0 )
-+   {
-+      display_settings.format = format;
-+   }
-+
-+   return display;
-+}
-+*/
-+
-+bool InitDisplay ( void )
-+{
-+//   NXPL_NativeWindowInfo win_info;
-+
-+   if ( InitPlatform () == false )
-+   {
-+       qFatal ( "Error : InitPlatform()" );
-+//       return false;
-+   }
-+
-+   NXPL_RegisterNexusDisplayPlatform ( &nxpl_handle, gs_nexus_display );
-+
-+/*
-+   gs_screen_wdt     = 1280;
-+   gs_screen_hgt     = 720;
-+
-+   win_info.x        = 0; 
-+   win_info.y        = 0;
-+   win_info.width    = gs_screen_wdt;
-+   win_info.height   = gs_screen_hgt;
-+   win_info.stretch  = true;
-+   win_info.clientID = 0; //FIXME hardcoding
-+
-+   gs_native_window = NXPL_CreateNativeWindow ( &win_info );
-+*/
-+
-+   return true;
-+}
-+
-+void* NativeWindowHandle ( void )
-+{
-+   return gs_native_window;
-+}
 +
 +void DeInitPlatform ( void )
 +{
 +   if ( gs_nexus_display != 0 )
 +   {
 +       NXPL_UnregisterNexusDisplayPlatform ( nxpl_handle );
-+       NEXUS_SurfaceClient_Release ( gs_nexus_display );
++       NEXUS_SurfaceClient_Release ( gs_native_window );
 +   }
 +
 +   NEXUS_Platform_Uninit ();
@@ -128,7 +219,7 @@
 +
 +void QEglFSBCMHooks::platformInit ()
 +{
-+   InitDisplay ();
++   InitPlatform ();
 +}
 +
 +EGLNativeDisplayType QEglFSBCMHooks::platformDisplay () const
@@ -161,7 +252,7 @@
 +   win_info.stretch  = true;
 +   win_info.clientID = 0; //FIXME hardcoding
 +
-+   gs_native_window = NXPL_CreateNativeWindow ( &win_info );
++   gs_native_window = static_cast<NEXUS_SurfaceClient*> (NXPL_CreateNativeWindow ( &win_info ));
 +
 +   return ( EGLNativeWindowType ) gs_native_window;
 +}
