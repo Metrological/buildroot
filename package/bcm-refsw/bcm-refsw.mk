@@ -4,14 +4,13 @@
 #
 ################################################################################
 
-BCM_REFSW_VERSION = 20121210
+BCM_REFSW_VERSION = 20131218
 BCM_REFSW_SITE = file://../
 BCM_REFSW_SOURCE = refsw_release_unified_$(BCM_REFSW_VERSION).src.tgz
 BCM_REFSW_DEPENDENCIES = linux host-pkgconf
 BCM_REFSW_LICENSE = PROPRIETARY
 BCM_REFSW_INSTALL_STAGING = YES
 BCM_REFSW_INSTALL_TARGET = YES
-
 BCM_MAKE_ENV = \
 	NEXUS_TOP=${BCM_REFSW_DIR}/nexus \
 	PLATFORM=$(call qstrip,${BR2_PACKAGE_BCM_REFSW_PLATFORM}) \
@@ -26,6 +25,12 @@ ifeq ($(BR2_ENABLE_DEBUG),y)
 BCM_MAKE_ENV += B_REFSW_DEBUG=y
 else
 BCM_MAKE_ENV += B_REFSW_DEBUG=n
+endif
+
+ifneq ($(BCM_REFSW_VERSION),20121210)
+BCM_OUTPUT = "/obj.$(call qstrip,${BR2_PACKAGE_BCM_REFSW_PLATFORM})/"
+else
+BCM_OUTPUT = "/"
 endif
 
 BCM_MAKEFLAGS  = CROSS_COMPILE="${TARGET_CROSS}"
@@ -50,21 +55,21 @@ define BCM_REFSW_BUILD_CMDS
 endef
 
 define BCM_REFSW_INSTALL_LIBS
-	$(INSTALL) -D $(@D)/nexus/bin/libnexus.so $1/usr/lib/libnexus.so
-	$(INSTALL) -D $(@D)/nexus/bin/libnexus_client.so $1/usr/lib/libnexus_client.so
-	$(INSTALL) -D $(@D)/nexus/bin/libv3ddriver.so $1/usr/lib/libv3ddriver.so
-	$(INSTALL) -D $(@D)/nexus/bin/libnxpl.so $1/usr/lib/libnxpl.so
+	$(INSTALL) -D $(@D)$(BCM_OUTPUT)nexus/bin/libnexus.so $1/usr/lib/libnexus.so
+	$(INSTALL) -D $(@D)$(BCM_OUTPUT)nexus/bin/libnexus_client.so $1/usr/lib/libnexus_client.so
+	$(INSTALL) -D $(@D)$(BCM_OUTPUT)nexus/bin/libv3ddriver.so $1/usr/lib/libv3ddriver.so
+	$(INSTALL) -D $(@D)$(BCM_OUTPUT)nexus/bin/libnxpl.so $1/usr/lib/libnxpl.so
 endef
 
 define BCM_REFSW_INSTALL_STAGING_CMDS
-	mkdir -p $(STAGING_DIR)/usr/lib/pkgconfig
+	$(INSTALL) -m 755 -d $(STAGING_DIR)/usr/lib/pkgconfig
+        $(INSTALL) -m 755 -d $(STAGING_DIR)/usr/include/GLES
+     	$(INSTALL) -m 755 -d $(STAGING_DIR)/usr/include/GLES2
+	$(INSTALL) -m 755 -d $(STAGING_DIR)/usr/include/EGL
+	$(INSTALL) -m 755 -d $(STAGING_DIR)/usr/include/nexus
 	$(INSTALL) -m 644 package/bcm-refsw/egl.pc $(STAGING_DIR)/usr/lib/pkgconfig/
 	$(INSTALL) -m 644 package/bcm-refsw/glesv2.pc $(STAGING_DIR)/usr/lib/pkgconfig/
-	$(INSTALL) -m 755 -d $(STAGING_DIR)/usr/include/nexus
-	$(INSTALL) -m 644 $(@D)/nexus/bin/include/*.h $(STAGING_DIR)/usr/include/nexus/
-	$(INSTALL) -m 755 -d $(STAGING_DIR)/usr/include/GLES
-	$(INSTALL) -m 755 -d $(STAGING_DIR)/usr/include/GLES2
-	$(INSTALL) -m 755 -d $(STAGING_DIR)/usr/include/EGL
+        $(INSTALL) -m 644 $(@D)$(BCM_OUTPUT)nexus/bin/include/*.h $(STAGING_DIR)/usr/include/nexus/
 	$(INSTALL) -m 644 $(@D)/rockford/middleware/platform/nexus/*.h $(STAGING_DIR)/usr/include/nexus
 	$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/interface/khronos/include/GLES/*.h $(STAGING_DIR)/usr/include/GLES/
 	$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/interface/khronos/include/GLES2/*.h $(STAGING_DIR)/usr/include/GLES2/
@@ -74,7 +79,7 @@ define BCM_REFSW_INSTALL_STAGING_CMDS
 endef
 
 define BCM_REFSW_INSTALL_TARGET_CMDS
-	$(INSTALL) -m 644 -D $(@D)/nexus/bin/bcmdriver.ko $(TARGET_DIR)/lib/modules/bcmdriver.ko
+	$(INSTALL) -m 644 -D $(@D)$(BCM_OUTPUT)nexus/bin/bcmdriver.ko $(TARGET_DIR)/lib/modules/bcmdriver.ko
 	$(call BCM_REFSW_INSTALL_LIBS,$(TARGET_DIR))
 endef
 
