@@ -1,5 +1,3 @@
-if !BR2_PACKAGE_DAWN_SDK
-
 menuconfig BR2_PACKAGE_BCM_REFSW
 	bool "bcm-refsw"
 	depends on BR2_mipsel
@@ -40,5 +38,3 @@ endif
 comment "bcm-refsw needs a toolchain w/ C++, largefile, threads"
 	depends on BR2_mipsel
 	depends on !BR2_INSTALL_LIBSTDCPP || !BR2_LARGEFILE || !BR2_TOOLCHAIN_HAS_THREADS
-
-endif
