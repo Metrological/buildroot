@@ -33,6 +33,32 @@ config BR2_PACKAGE_BCM_REFSW_PLATFORM
 config BR2_PACKAGE_BCM_REFSW_PLATFORM_REV
 	string "Broadcom target platform revision"
 
+choice
+        prompt "Broadcom reference software version"
+
+config BR2_BCM_REFSW_VERSION_V12
+        bool "V12"
+        help
+	   Use official releas from Broadcom labeled V20121210
+
+config BR2_BCM_REFSW_VERSION_V13
+        bool "V13"
+        help
+	   Use official releas from Broadcom labeled V20131218
+
+config BR2_BCM_REFSW_CUSTOM
+        bool "Custom"
+        help
+          use a custom release, at the location indicated by the 
+          Custom Nexus tar ball
+
+endchoice
+
+config BR2_BCMREFSW_CUSTOM_LOCATION
+        string "Location of the Broadcom reference software tarball"
+        depends on BR2_BCM_REFSW_CUSTOM
+
+
 endif
 
 comment "bcm-refsw needs a toolchain w/ C++, largefile, threads"

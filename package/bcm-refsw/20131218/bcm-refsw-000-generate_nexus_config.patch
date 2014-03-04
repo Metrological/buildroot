@@ -1,0 +1,22 @@
+--- a/nexus/build/generate_nexus_config.pl
++++ b/nexus/build/generate_nexus_config.pl
+@@ -71,9 +71,18 @@
+         my $text = $_;
+         while ($text =~ /\-D([\w=]+)\W(.*)/) {
+             my $define = $1;
++            my $num;
+             $text = $2;
+             $define =~ s/=/ /;
+-            print "#define $define 1\n";
++            $num++ while $define =~ /\S+/g;
++            if ($num == 1)
++            {
++                print "#define $define 1\n";
++            }
++            else
++            {
++                print "#define $define\n";
++            }
+         }
+     }
+ }

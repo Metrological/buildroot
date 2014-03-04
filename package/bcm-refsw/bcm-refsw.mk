@@ -3,10 +3,20 @@
 # bcm-refsw
 #
 ################################################################################
+ifeq ($(BR2_BCM_REFSW_VERSION_V12), y)
+    BCM_REFSW_SITE = file://../bcm-refsw
+    BCM_REFSW_VERSION = 20121210
+    BCM_REFSW_SOURCE = refsw_release_unified_$(BCM_REFSW_VERSION).src.tar.xz
+else ifeq ($(BR2_BCM_REFSW_VERSION_V13), y)
+    BCM_REFSW_SITE = file://../bcm-refsw
+    BCM_REFSW_VERSION = 20131218
+    BCM_REFSW_SOURCE = refsw_release_unified_$(BCM_REFSW_VERSION).src.tar.xz
+else
+    BCM_REFSW_SITE = file:///
+    BCM_REFSW_VERSION = CUSTOM
+    BCM_REFSW_SOURCE = $(call qstrip,${BR2_BCMREFSW_CUSTOM_LOCATION})
+endif
 
-BCM_REFSW_VERSION = 20131218
-BCM_REFSW_SITE = file://../
-BCM_REFSW_SOURCE = refsw_release_unified_$(BCM_REFSW_VERSION).src.tgz
 BCM_REFSW_DEPENDENCIES = linux host-pkgconf
 BCM_REFSW_LICENSE = PROPRIETARY
 BCM_REFSW_INSTALL_STAGING = YES
@@ -42,7 +52,7 @@ BCM_MAKEFLAGS += HOST_DIR="${HOST_DIR}"
 BCM_MAKEFLAGS += APPLIBS_TOP=${BCM_APPS_DIR}
 
 define BCM_REFSW_EXTRACT_CMDS
-	gzip -d -c $(DL_DIR)/$(BCM_REFSW_SOURCE) \
+	xz -d -c $(DL_DIR)/$(BCM_REFSW_SOURCE) \
 		| $(TAR) --strip-components=0 -C $(@D) -xf -
 endef
 
