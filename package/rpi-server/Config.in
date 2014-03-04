@@ -1,0 +1,8 @@
+config BR2_PACKAGE_RPI_SERVER
+	bool "rpi-server"
+	depends on BR2_arm
+	depends on BR2_PACKAGE_RPI_FIRMWARE
+	depends on BR2_PACKAGE_NODEJS
+	depends on BR2_PACKAGE_NODEJS_NPM
+	help
+	  RPI Server
