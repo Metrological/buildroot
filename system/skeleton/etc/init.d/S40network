@@ -6,6 +6,7 @@
 case "$1" in
   start)
  	echo "Starting network..."
+ 	sleep 2
 	/sbin/ifup -a
 	;;
   stop)
