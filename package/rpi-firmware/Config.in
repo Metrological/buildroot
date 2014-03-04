@@ -9,6 +9,11 @@ config BR2_PACKAGE_RPI_FIRMWARE
 
 if BR2_PACKAGE_RPI_FIRMWARE
 
+config BR2_PACKAGE_RPI_FIRMWARE_WIFI
+	bool "add wlan0 interface"
+	help
+	  Enable wifi interface.
+
 choice
 	bool "Firmware to boot"
 	default BR2_PACKAGE_RPI_FIRMWARE_DEFAULT
