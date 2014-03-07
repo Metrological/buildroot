@@ -10,4 +10,5 @@ source "package/gstreamer1/gst1-plugins-dtcpip/Config.in"
 source "package/gstreamer1/gst1-plugins-dlnasrc/Config.in"
 source "package/gstreamer1/gst1-libav/Config.in"
 source "package/gstreamer1/gst1-omx/Config.in"
+source "package/gstreamer1/gst1-flucodecpack/Config.in"
 endif

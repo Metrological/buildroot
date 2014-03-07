@@ -1,0 +1,9 @@
+config BR2_PACKAGE_GST1_FLUCODECPACK
+	bool "gst1-flucodecpack"
+	depends on BR2_arm
+	select BR2_PACKAGE_GST1_PLUGINS_BASE
+	select BR2_PACKAGE_LIBCURL
+	help
+	  GStreamer Fluendo Codec Pack.
+
+	  http://www.metrological.com

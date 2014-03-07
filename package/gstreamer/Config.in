@@ -12,4 +12,5 @@ source "package/gstreamer/gst-fsl-plugins/Config.in"
 source "package/gstreamer/gst-omapfb/Config.in"
 source "package/gstreamer/gst-plugin-x170/Config.in"
 source "package/gstreamer/gst-omx/Config.in"
+source "package/gstreamer/gst-flucodecpack/Config.in"
 endif
