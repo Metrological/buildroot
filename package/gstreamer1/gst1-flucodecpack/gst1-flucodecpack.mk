@@ -10,9 +10,9 @@ GST1_FLUCODECPACK_SITE_METHOD = local
 GST1_FLUCODECPACK_LICENSE = PROPRIETARY
 GST1_FLUCODECPACK_REDISTRIBUTE = NO
 
-GST_FLUCODECPACK_DEPENDENCIES += libcurl
+GST1_FLUCODECPACK_DEPENDENCIES += libcurl
 
-define GST_FLUCODECPACK_INSTALL_TARGET_CMDS
+define GST1_FLUCODECPACK_INSTALL_TARGET_CMDS
 	mkdir -p $(TARGET_DIR)/usr/lib/gstreamer-1.0; \
 	$(INSTALL) -m 755 $(@D)/fluaacdec.bin $(TARGET_DIR)/usr/lib/gstreamer-0.10/libgstfluaacdec.so; \
 	$(INSTALL) -m 755 $(@D)/fluac3dec.bin $(TARGET_DIR)/usr/lib/gstreamer-0.10/libgstfluac3dec.so; \
