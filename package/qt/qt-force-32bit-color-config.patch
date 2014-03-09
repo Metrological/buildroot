@@ -1,0 +1,11 @@
+--- a/src/opengl/qgl_egl.cpp
++++ b/src/opengl/qgl_egl.cpp
+@@ -68,7 +68,7 @@
+     int stencilSize = glFormat.stencilBufferSize();
+     int sampleCount = glFormat.samples();
+ 
+-    bool prefer32Bit = false;
++    bool prefer32Bit = true;
+ #ifdef Q_OS_SYMBIAN
+     // on Symbian we prefer 32-bit configs, unless we're using the low memory GPU
+     prefer32Bit = !QSymbianGraphicsSystemEx::hasBCM2727();

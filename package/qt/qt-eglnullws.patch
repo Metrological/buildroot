@@ -1,0 +1,167 @@
+--- a/src/plugins/gfxdrivers/eglnullws/eglnullwsscreen.cpp
++++ b/src/plugins/gfxdrivers/eglnullws/eglnullwsscreen.cpp
+@@ -38,6 +38,25 @@
+ ** $QT_END_LICENSE$
+ **
+ ****************************************************************************/
++/****************************************************************************
++* © 2011 Broadcom Corporation
++*
++* THIS SOFTWARE IS PROVIDED AS A CONVENIENCE AND "AS-IS" WITHOUT ANY
++* REPRESENTATION OR WARRANTY OF ANY KIND.  BROADCOM AND ITS THIRD PARTY
++* LICENSORS MAKE NO REPRESENTATION OR WARRANTY ABOUT THIS SOFTWARE AND
++* SPECIFICALLY DISCLAIM ALL REPRESENTATIONS AND WARRANTIES ARISING FROM OR
++* RELATED TO THE SOFTWARE OR THE USE OR DISTRIBUTION THEREOF, WHETHER EXPRESS
++* OR IMPLIED, INCLUDING WITHOUT LIMITATION, ANY REPRESENTATIONS OR WARRANTIES
++* RELATING TO PERFORMANCE, ERROR-FREE OPERATION, MERCHANTABILITY, FITNESS FOR
++* A PARTICULAR PURPOSE, TITLE OR NON-INFRINGEMENT.  FURTHER, BROADCOM ONLY
++* GRANTS YOU A COPYRIGHT LICENSE TO USE AND DISTRIBUTE THIS SOFTWARE.  BROADCOM
++* DOES NOT GRANT ANY RIGHTS, EXPRESS OR IMPLIED, UNDER ITS PATENTS OR OTHER
++* INTELLECTUAL PROPERTY.  IF YOU DOWNLOAD, USE OR DISTRIBUTE THIS SOFTWARE,
++* YOU DO SO AT YOUR OWN RISK AND EXPENSE.  YOUR DOWNLOAD, USE OR DISTRIBUTION
++* OF THIS SOFTWARE CONSISTUTES BINDING ACCEPTANCE OF THESE TERMS ON BEHALF OF
++* YOUR ORGANIZATION. 
++*
++****************************************************************************/
+ 
+ #include "eglnullwsscreen.h"
+ #include "eglnullwswindowsurface.h"
+@@ -46,13 +65,88 @@
+ #include <QHash>
+ #include <QDebug>
+ 
++#include <refsw/nexus_platform.h>
++#include <refsw/nexus_display.h>
++#include <refsw/nexus_core_utils.h>
++#include <refsw/default_nexus.h>
++#include <refsw/refsw_session_simple_client.h>
++
++#define DBG_TRACE_EGLNULLWS_FLAG 1
++
++#ifdef DBG_TRACE_EGLNULLWS_FLAG
++    #define DBG_TRACE_EGLNULLWS(arg)    qDebug(arg)
++#else
++    #define DBG_TRACE_EGLNULLWS(arg)
++#endif
++
++#define UNUSED(X) (void)X
++
++/* SIXTY_HZ needs to be defined for B552 LVDS->DVI converter support */
++/* #define SIXTY_HZ */
++
++#ifdef __cplusplus
++extern "C"
++{
++#endif
++
++static unsigned int          gs_screen_wdt    = 0;
++static unsigned int          gs_screen_hgt    = 0;
++static NEXUS_SurfaceClient*  gs_nexus_display = 0;
++static void*                 gs_native_window = 0;
++static NXPL_PlatformHandle   nxpl_handle      = 0;
++
++bool InitDisplay(void)
++{
++    DBG_TRACE_EGLNULLWS("__DEBUG__ simple::InitDisplay");
++
++    NXPL_NativeWindowInfo   win_info;
++    NEXUS_ClientAuthenticationSettings authSettings;
++
++    qWarning("Calling NEXUS_Platform_AuthenticatedJoin");
++    simple_client_init("xre", &authSettings);
++    NEXUS_Error err = NEXUS_Platform_AuthenticatedJoin(&authSettings);
++    qWarning("After Calling NEXUS_Platform_AuthenticatedJoin");
++    if (err)
++    {
++        qFatal("Err: InitPlatform() failed");
++        return false;
++    }
++
++    //gs_nexus_display = OpenDisplay((NEXUS_VideoFormat)0);
++    gs_screen_wdt = 1280;
++    gs_screen_hgt = 720;
++    qDebug("Screen width %d, Screen height %d", gs_screen_wdt, gs_screen_hgt);
++
++    /* Register this display for exclusive mode access */
++    NXPL_RegisterNexusDisplayPlatform(&nxpl_handle, gs_nexus_display);
++
++    win_info.x = 0; 
++    win_info.y = 0;
++    win_info.width = gs_screen_wdt;
++    win_info.height = gs_screen_hgt;
++    win_info.stretch = true;
++    win_info.clientID = 0; //FIXME hardcoding
++    gs_native_window = NXPL_CreateNativeWindow(&win_info);
++
++    return true;
++}
++
++void* NativeWindowHandle(void)
++{
++    return gs_native_window;
++}
++
++#ifdef __cplusplus
++}
++#endif
++
+ namespace
+ {
+     class EGLNullWSScreenSurfaceFunctions : public QGLScreenSurfaceFunctions
+     {
+     public:
+         virtual bool createNativeWindow(QWidget *, EGLNativeWindowType *native)
+-            { *native = 0; return true; }
++            { *native = (EGLNativeWindowType*)NativeWindowHandle(); return true; }
+     };
+ }
+ 
+@@ -110,6 +204,12 @@
+ 
+ bool EGLNullWSScreen::connect(const QString &displaySpec)
+ {
++       DBG_TRACE_EGLNULLWS("__DEBUG__ EGLNullWSScreen::connect");
++    if (InitDisplay() == false)
++    {
++        qFatal("Err: InitDisplay failed");
++        return false;
++    }
+     const QStringList args = displaySpec.section(':', 1).split(':', QString::SkipEmptyParts);
+     const QHash<QString, QImage::Format> formatDict = formatDictionary();
+     Q_FOREACH(const QString arg, args) {
+@@ -129,8 +229,8 @@
+     }
+ 
+     if (w == 0 || h == 0) {
+-        w = 640;
+-        h = 480;
++        w = gs_screen_wdt;
++        h = gs_screen_hgt;
+         qWarning("%s: Using default screen size %dx%d", PluginName, w, h);
+     }
+     dw = w;
+@@ -150,7 +250,10 @@
+     return true;
+ }
+ 
+-void EGLNullWSScreen::disconnect() {}
++void EGLNullWSScreen::disconnect()
++{
++    DBG_TRACE_EGLNULLWS("__DEBUG__ EGLNullWSScreen::disconnect");
++}
+ 
+ void EGLNullWSScreen::shutdownDevice() {}
+ 
+@@ -163,7 +266,10 @@
+ QWSWindowSurface* EGLNullWSScreen::createSurface(QWidget *widget) const
+ {
+     if (qobject_cast<QGLWidget*>(widget)) {
+-        return new EGLNullWSWindowSurface(widget);
++        qWarning("%s: Creating GL surface", PluginName);
++        QWSWindowSurface * surf = new EGLNullWSWindowSurface(widget);
++        qWarning(" Created GL surface %p", surf);
++        return surf;
+     } else {
+         qWarning("%s: Creating non-GL surface", PluginName);
+         return QScreen::createSurface(widget);
+

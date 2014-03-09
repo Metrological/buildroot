@@ -2,8 +2,16 @@ menu "Graphics drivers"
 
 config BR2_PACKAGE_QT_GFX_LINUXFB
 	bool "Linux Framebuffer"
-	default y
+	default n
 
+config BR2_PACKAGE_QT_GFX_EGLNULLWS
+	bool "eglnullws"
+	depends on BR2_PACKAGE_QT_OPENGL_ES && BR2_PACKAGE_DAWN_SDK
+	help
+	  "eglnullws"
+comment "eglnullws requires OpenGL ES v2.x and dawn-sdk support"
+	depends on !BR2_PACKAGE_QT_OPENGL_ES || !BR2_PACKAGE_DAWN_SDK
+	  
 config BR2_PACKAGE_QT_GFX_TRANSFORMED
 	bool "Transformed"
 

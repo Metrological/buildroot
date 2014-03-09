@@ -148,6 +148,10 @@ QT_CONFIGURE_OPTS += \
 	-plugin-gfx-powervr -D QT_NO_QWS_CURSOR -D QT_QWS_CLIENTBLIT
 QT_DEPENDENCIES += powervr
 endif
+ifeq ($(BR2_PACKAGE_QT_GFX_EGLNULLWS),y)
+QT_CONFIGURE_OPTS += \
+	-plugin-gfx-eglnullws
+endif
 
 ### Mouse drivers
 ifeq ($(BR2_PACKAGE_QT_MOUSE_PC),y)
@@ -236,7 +240,7 @@ else
 QT_EMB_PLATFORM = generic
 endif
 
-QT_CONFIGURE_OPTS += -embedded $(QT_EMB_PLATFORM)
+QT_CONFIGURE_OPTS += -embedded $(QT_EMB_PLATFORM) -arch $(QT_EMB_PLATFORM) -xplatform qws/linux-buildroot-g++
 
 ifneq ($(BR2_PACKAGE_QT_GUI_MODULE),y)
 QT_CONFIGURE_OPTS += -no-gui
@@ -327,9 +331,12 @@ endif
 ifeq ($(BR2_PACKAGE_QT_OPENGL_ES),y)
 QT_CONFIGURE_OPTS += -opengl es2 -egl
 QT_DEPENDENCIES   += libgles libegl
-QT_CFLAGS   += $(shell $(PKG_CONFIG_HOST_BINARY) --cflags egl)
-QT_CXXFLAGS += $(shell $(PKG_CONFIG_HOST_BINARY) --cflags egl)
-QT_LDFLAGS  += $(shell $(PKG_CONFIG_HOST_BINARY) --libs egl)
+QT_CFLAGS   += $(shell $(PKG_CONFIG_HOST_BINARY) --cflags-only-other egl)
+QT_CXXFLAGS += $(shell $(PKG_CONFIG_HOST_BINARY) --cflags-only-other egl)
+QT_LDFLAGS  += $(shell $(PKG_CONFIG_HOST_BINARY) --libs-only-other egl)
+QT_EGL_INCDIR += $(shell $(PKG_CONFIG_HOST_BINARY) --cflags-only-I egl)
+QT_EGL_LIBDIR += $(shell $(PKG_CONFIG_HOST_BINARY) --libs-only-L egl)
+QT_EGL_LIBS   += $(shell $(PKG_CONFIG_HOST_BINARY) --libs-only-l egl)
 else
 QT_CONFIGURE_OPTS += -no-opengl
 endif
@@ -453,7 +460,7 @@ endif
 # End of workaround.
 
 # Variable for other Qt applications to use
-QT_QMAKE = $(HOST_DIR)/usr/bin/qmake -spec qws/linux-$(QT_EMB_PLATFORM)-g++
+QT_QMAKE = $(HOST_DIR)/usr/bin/qmake -spec qws/linux-buildroot-g++
 
 ################################################################################
 # QT_QMAKE_SET -- helper macro to set <variable> = <value> in
@@ -468,8 +475,8 @@ QT_QMAKE = $(HOST_DIR)/usr/bin/qmake -spec qws/linux-$(QT_EMB_PLATFORM)-g++
 # $(call QT_QMAKE_SET,variable,value,directory)
 ################################################################################
 define QT_QMAKE_SET
-	$(SED) '/$(1)/d' $(3)/mkspecs/qws/linux-$(QT_EMB_PLATFORM)-g++/qmake.conf
-	$(SED) '/include.*qws.conf/a$(1) = $(2)' $(3)/mkspecs/qws/linux-$(QT_EMB_PLATFORM)-g++/qmake.conf
+	$(SED) '/$(1)/d' $(3)/mkspecs/qws/linux-buildroot-g++/qmake.conf
+	$(SED) '/include.*qws.conf/a$(1) = $(2)' $(3)/mkspecs/qws/linux-buildroot-g++/qmake.conf
 endef
 
 ifneq ($(BR2_INET_IPV6),y)
@@ -502,6 +509,24 @@ define QT_CONFIGURE_CMDS
 	$(call QT_QMAKE_SET,QMAKE_CXXFLAGS,$(QT_CXXFLAGS),$(@D))
 	$(call QT_QMAKE_SET,QMAKE_LFLAGS,$(QT_LDFLAGS),$(@D))
 	$(call QT_QMAKE_SET,PKG_CONFIG,$(HOST_DIR)/usr/bin/pkg-config,$(@D))
+
+	$(call QT_QMAKE_SET,QMAKE_INCDIR_EGL,$(QT_EGL_INCDIR),$(@D))
+	$(call QT_QMAKE_SET,QMAKE_LIBDIR_EGL,$(QT_EGL_LIBDIR),$(@D))
+	$(call QT_QMAKE_SET,QMAKE_LIBS_EGL,$(QT_EGL_LIBS),$(@D))
+
+	$(call QT_QMAKE_SET,QMAKE_INCDIR_OPENGL,$(QT_EGL_INCDIR),$(@D))
+	$(call QT_QMAKE_SET,QMAKE_LIBDIR_OPENGL,$(QT_EGL_LIBDIR),$(@D))
+	$(call QT_QMAKE_SET,QMAKE_LIBS_OPENGL,$(QT_EGL_LIBS),$(@D))
+	$(call QT_QMAKE_SET,QMAKE_LIBS_OPENGL_QT,$(QT_EGL_LIBS),$(@D))
+
+	$(call QT_QMAKE_SET,QMAKE_INCDIR_OPENGL_ES1,$(QT_EGL_INCDIR),$(@D))
+	$(call QT_QMAKE_SET,QMAKE_LIBDIR_OPENGL_ES1,$(QT_EGL_LIBDIR),$(@D))
+	$(call QT_QMAKE_SET,QMAKE_LIBS_OPENGL_ES1,$(QT_EGL_LIBS),$(@D))
+
+	$(call QT_QMAKE_SET,QMAKE_INCDIR_OPENGL_ES2,$(QT_EGL_INCDIR),$(@D))
+	$(call QT_QMAKE_SET,QMAKE_LIBDIR_OPENGL_ES2,$(QT_EGL_LIBDIR),$(@D))
+	$(call QT_QMAKE_SET,QMAKE_LIBS_OPENGL_ES2,$(QT_EGL_LIBS),$(@D))
+
 # Don't use TARGET_CONFIGURE_OPTS here, qmake would be compiled for the target
 # instead of the host then. So set PKG_CONFIG* manually.
 	(cd $(@D); \
@@ -509,7 +534,7 @@ define QT_CONFIGURE_CMDS
 		PKG_CONFIG="$(PKG_CONFIG_HOST_BINARY)" \
 		PKG_CONFIG_PATH="$(STAGING_DIR)/usr/lib/pkgconfig:$(PKG_CONFIG_PATH)" \
 		MAKEFLAGS="$(MAKEFLAGS) -j$(PARALLEL_JOBS)" ./configure \
-		$(if $(VERBOSE),-verbose,-silent) \
+		$(if $(BR2_PACKAGE_QT_VERBOSE),-verbose,-silent) \
 		-force-pkg-config \
 		$(QT_CONFIGURE_OPTS) \
 		-no-xinerama \

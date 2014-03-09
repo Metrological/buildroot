@@ -17,6 +17,11 @@ menuconfig BR2_PACKAGE_QT
 
 if BR2_PACKAGE_QT
 
+config BR2_PACKAGE_QT_VERBOSE
+	bool "Enable verbose output"
+	help
+	  "Provides higher level of detail in (debug) messages"
+
 config BR2_PACKAGE_QT_DEBUG
 	bool "Compile with debug support"
 	help
