@@ -1,7 +1,7 @@
 Buildroot
 =========
 
-This buildroot fork will produce a very light-weight and trimmed down toolchain, rootfs and kernel for the multiple targets, including the Raspberry Pi. Mainly focused on enabling full features WebKit ports.
+This buildroot fork will produce a very light-weight and trimmed down toolchain, rootfs and kernel for the multiple targets, including the Raspberry Pi. Mainly focused on enabling all HTML5 features WebKit in multiple ports.
 
 Dependencies
 ------------
