@@ -1,34 +1,14 @@
 #!/bin/sh
 
 start() {
-	# Add the DNS entries that were aquired during the "net boot" of the image.
-	if [ -f /proc/net/pnp ] ; then
-		while read line
-		do
-			keyword=$(echo $line | cut -d' ' -f1)
-			value=$(echo $line | cut -d' ' -f2)
-			if [ "x${keyword}" = "xnameserver" ] && [ ! "x${value}" = "x0.0.0.0" ] ; then
-				echo "nameserver $value" >> /etc/resolv.conf
-			elif [ "x${keyword}" = "xbootserver" ] && [ ! "x${value}" = "x0.0.0.0" ] ; then
-				echo "bootserver $value" >> /etc/resolv.conf
-			elif [ "x${keyword}" = "xdomain" ] ; then
-				echo "domain $value" >> /etc/resolv.conf
-			fi
-		done < /proc/net/pnp
-	fi
-
-	# If there is a refsw_server we should start it.
 	if [ -f /usr/bin/refsw_server ] ; then
-		
 		# The "original" refsw_server has a hard-coded
 		# requirment for eth0 vlan 3 with the given IP
 		# address, if it is not available, the refsw_server
 		# will chrash, not a pretty sight :-)
 		vconfig add eth0 3
 		ifconfig eth0.3 192.168.17.10
-
 		sleep 3
-
 		/usr/bin/refsw_server -mode unprotected &
 	fi
 }
