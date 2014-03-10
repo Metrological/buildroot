@@ -100,6 +100,49 @@ config BR2_GCC_VERSION
 	default "b93bb009e021aba64dd4b8cdb0bbc5a176c55543" if BR2_GCC_VERSION_4_9_MICROBLAZE
 	default BR2_GCC_SNAP_DATE if BR2_GCC_VERSION_SNAP
 
+config BR2_USE_LINARO_GCC
+	bool "Use Linaro GCC"
+	depends on BR2_arm && BR2_GCC_VERSION_4_8_X
+	help
+	  Linaro GCC is performance focused branch of the current
+	  GCC stable release and includes backports of the
+	  improvements and bug fixes that Linaro and others have
+	  done upstream.
+
+if BR2_USE_LINARO_GCC
+
+config BR2_LINARO_GCC_VERSION
+	string
+	default "4.8"        if BR2_GCC_VERSION_4_8_X
+
+choice
+	prompt "Linaro GCC Release"
+	default BR2_LINARO_RELEASE_2014_02
+	help
+	  Select the release of Linaro GCC you wish to use.
+
+	config BR2_LINARO_RELEASE_2013_11
+		bool "2013.11"
+
+	config BR2_LINARO_RELEASE_2013_12
+		bool "2013.12"
+
+	config BR2_LINARO_RELEASE_2014_01
+		bool "2014.01"
+
+	config BR2_LINARO_RELEASE_2014_02
+		bool "2014.02"
+endchoice
+
+config BR2_LINARO_RELEASE
+	string
+	default "2013.11"   if BR2_LINARO_RELEASE_2013_11
+	default "2013.12"   if BR2_LINARO_RELEASE_2013_12
+	default "2014.01"   if BR2_LINARO_RELEASE_2014_01
+	default "2014.02"   if BR2_LINARO_RELEASE_2014_02
+
+endif
+
 config BR2_EXTRA_GCC_CONFIG_OPTIONS
 	string "Additional gcc options"
 	default ""
@@ -168,3 +211,24 @@ config BR2_GCC_ENABLE_LIBMUDFLAP
 	  the help of the gcc -fmudflap option for more details.
 
 	  If you're unsure, leave this option disabled.
+
+config BR2_GCC_NEEDS_CLOOG
+	bool
+
+config BR2_GCC_NEEDS_ISL
+	bool
+
+config BR2_GCC_ENABLE_GRAPHITE
+	bool "Enable compiler graphite support"
+	depends on BR2_GCC_VERSION_4_8_X || BR2_GCC_VERSION_SNAP
+	select BR2_GCC_NEEDS_CLOOG
+	select BR2_GCC_NEEDS_ISL
+	help
+	  Enable graphite support for the compiler
+
+config BR2_GCC_ENABLE_LTO
+	bool "Enable compiler Link Time Optimization support"
+	depends on BR2_GCC_VERSION_4_8_X || BR2_GCC_VERSION_SNAP
+	help
+	  Enable Link Time Optimization support for the compiler
+	  Need libelf v0.8.12 or newer installed on host system

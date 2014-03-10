@@ -1,0 +1,9 @@
+config BR2_PACKAGE_CLOOG
+	bool "cloog"
+	select BR2_PACKAGE_GMP
+	help
+	  CLooG is a free software and library to generate code for scanning
+	  Z-polyhedra. That is, it finds a code (e.g. in C, FORTRAN...) that
+	  reaches each integral point of one or more parameterized polyhedra.
+
+	  http://www.cloog.org/

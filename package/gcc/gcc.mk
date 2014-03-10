@@ -31,6 +31,13 @@ endif
 
 GCC_SOURCE ?= gcc-$(GCC_VERSION).tar.bz2
 
+ifeq ($(BR2_USE_LINARO_GCC),y)
+LINARO_GCC_VERSION = $(call qstrip,$(BR2_LINARO_GCC_VERSION))
+LINARO_RELEASE = $(call qstrip,$(BR2_LINARO_RELEASE))
+GCC_SITE = https://launchpad.net/gcc-linaro/$(LINARO_GCC_VERSION)/$(LINARO_GCC_VERSION)-$(LINARO_RELEASE)/+download/
+GCC_SOURCE = gcc-linaro-$(LINARO_GCC_VERSION)-$(LINARO_RELEASE).tar.xz
+endif
+
 #
 # Xtensa special hook
 #
@@ -149,6 +156,22 @@ endif
 ifeq ($(BR2_GCC_NEEDS_MPC),y)
 HOST_GCC_COMMON_DEPENDENCIES += host-mpc
 HOST_GCC_COMMON_CONF_OPT += --with-mpc=$(HOST_DIR)/usr
+endif
+
+ifeq ($(BR2_GCC_ENABLE_LTO),y)
+HOST_GCC_COMMON_CONF_OPT += --enable-lto
+else
+HOST_GCC_COMMON_CONF_OPT += --disable-lto
+endif
+
+ifeq ($(BR2_GCC_NEEDS_ISL),y)
+HOST_GCC_COMMON_DEPENDENCIES += host-isl
+HOST_GCC_COMMON_CONF_OPT += --with-isl=$(HOST_DIR)/usr
+endif
+
+ifeq ($(BR2_GCC_NEEDS_CLOOG),y)
+HOST_GCC_COMMON_DEPENDENCIES += host-cloog
+HOST_GCC_COMMON_CONF_OPT += --with-cloog=$(HOST_DIR)/usr --enable-cloog-backend=isl
 endif
 
 ifeq ($(BR2_arc),y)
