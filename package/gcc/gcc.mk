@@ -59,12 +59,20 @@ endef
 endif
 endif
 
+ifeq ($(BR2_USE_LINARO_GCC),y)
+define HOST_GCC_APPLY_PATCHES
+	if test -d package/gcc/$(GCC_VERSION); then \
+	  support/scripts/apply-patches.sh $(@D) package/gcc/$(GCC_VERSION)-linaro \*.patch ; \
+	fi;
+endef
+else
 define HOST_GCC_APPLY_PATCHES
 	if test -d package/gcc/$(GCC_VERSION); then \
 	  support/scripts/apply-patches.sh $(@D) package/gcc/$(GCC_VERSION) \*.patch ; \
 	fi;
 	$(HOST_GCC_APPLY_POWERPC_PATCH)
 endef
+endif
 
 #
 # Custom extract command to save disk space
