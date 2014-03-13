@@ -30,8 +30,10 @@ endif
 
 ifeq ($(BR2_ENABLE_DEBUG),y)
 	QT5WEBKIT_DEBUG_CONFIG = "CONFIG+=debug"
+	QT5WEBKIT_DEBUG_CONFIG = "CONFIG-=release"
 else
 	QT5WEBKIT_DEBUG_CONFIG = "CONFIG-=debug"
+	QT5WEBKIT_DEBUG_CONFIG = "CONFIG+=release"
 endif
 
 ifeq ($(BR2_USE_GSTREAMER),y)
@@ -58,6 +60,11 @@ ifeq ($(BR2_PACKAGE_DUMPRENDERTREE), y)
 	QT5WEBKIT_POST_BUILD_HOOKS += QT5WEBKIT_BUILD_DUMPRENDERTREE
 endif
 
+ifeq ($(BR2_PACKAGE_MINIBROWSER)$(BR2_PACKAGE_TESTBROWSER)$(BR2_PACKAGE_DUMPRENDERTREE),y) 
+# CONFIG-=production_build enables the build of certain features/functionality required by some tools
+	QT5WEBKIT_TOOLS_CONFIG += "CONFIG-=production_build"
+endif
+
 define QT5WEBKIT_CONFIGURE_CMDS
 	(cd $(@D); \
 		$(TARGET_MAKE_ENV) \
@@ -65,8 +72,8 @@ define QT5WEBKIT_CONFIGURE_CMDS
 			WEBKIT_CONFIG+=accelerated_2d_canvas \
 			WEBKIT_CONFIG+=discovery \
 			$(QT5WEBKIT_GST_CONFIG) \
-			CONFIG+=release \
 			$(QT5WEBKIT_DEBUG_CONFIG) \
+			$(QT5WEBKIT_TOOLS_CONFIG) \
 	)
 endef
 
