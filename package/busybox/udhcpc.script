@@ -4,6 +4,31 @@
 
 [ -z "$1" ] && echo "Error: should be called from udhcpc" && exit 1
 
+nfsbootdevice()
+{
+	nfsboot=0;
+
+	for item in $(cat /proc/cmdline)
+	do
+		key=$(echo $item | cut -d= -f1)
+		value=$(echo $item | cut -d= -f2)
+		if [ "x${key}" = "xroot" ] && [ "x${value}" = "x/dev/nfs" ] ; then
+			nfsboot=$(( ${nfsboot} + 1 ))
+		fi
+		if [ "x${key}" = "xnfsroot" ] ; then
+			nfsboot=$(( ${nfsboot} + 1 ))
+		fi
+		if [ "x${key}" = "xip" ] ; then
+			bootdevice=$(echo $value | cut -d: -f6)
+		fi
+	done
+
+	if [ ${nfsboot} == 2 ] ; then
+		echo $bootdevice
+	fi
+}
+
+NFS_INTERFACE=$(nfsbootdevice)
 RESOLV_CONF="/etc/resolv.conf"
 [ -e $RESOLV_CONF ] || touch $RESOLV_CONF
 [ -n "$broadcast" ] && BROADCAST="broadcast $broadcast"
@@ -12,7 +37,9 @@ RESOLV_CONF="/etc/resolv.conf"
 case "$1" in
 	deconfig)
 		/sbin/ifconfig $interface up
-		/sbin/ifconfig $interface 0.0.0.0
+		if [ ! "x$NFS_INTERFACE" = "x$interface" ] ; then
+			/sbin/ifconfig $interface 0.0.0.0
+		fi
 
 		# drop info from this interface
 		# resolv.conf may be a symlink to /tmp/, so take care
