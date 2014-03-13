@@ -60,7 +60,7 @@ ifeq ($(BR2_PACKAGE_DUMPRENDERTREE), y)
 	QT5WEBKIT_POST_BUILD_HOOKS += QT5WEBKIT_BUILD_DUMPRENDERTREE
 endif
 
-ifeq ($(BR2_PACKAGE_MINIBROWSER)$(BR2_PACKAGE_TESTBROWSER)$(BR2_PACKAGE_DUMPRENDERTREE),y) 
+ifeq ($(findstring y,$(BR2_PACKAGE_MINIBROWSER)$(BR2_PACKAGE_TESTBROWSER)$(BR2_PACKAGE_DUMPRENDERTREE)),y) 
 # CONFIG-=production_build enables the build of certain features/functionality required by some tools
 	QT5WEBKIT_TOOLS_CONFIG += "CONFIG-=production_build"
 endif
