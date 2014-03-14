@@ -1,0 +1,468 @@
+From 6112349857728da54cdd61f1222ac89089c7a095 Mon Sep 17 00:00:00 2001
+From: Kalle Vahlman <kalle.vahlman@movial.com>
+Date: Tue, 9 Jul 2013 08:08:58 +0000
+Subject: [PATCH 2/2] Add support for system EGL headers and enabling EGL
+ without X11
+
+EGL platform headers are not as uniform as GL headers so building
+against system headers is sometimes neccessary.
+
+At the same time, add support for EGL on unix systems without X11.
+
+Signed-off-by: Kalle Vahlman <kalle.vahlman@movial.com>
+---
+ CMakeLists.txt          |  14 +-
+ dispatch/eglimports.hpp |   1 +
+ dispatch/glimports.hpp  |   4 +
+ retrace/CMakeLists.txt  |  24 ++++
+ retrace/glws_egl.cpp    | 330 ++++++++++++++++++++++++++++++++++++++++++++++++
+ 5 files changed, 370 insertions(+), 3 deletions(-)
+ create mode 100644 retrace/glws_egl.cpp
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index d819be2..58426ff 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -31,6 +31,10 @@ set (ENABLE_CLI true CACHE BOOL "Enable command Line interface.")
+ 
+ set (ENABLE_EGL true CACHE BOOL "Enable EGL support.")
+ 
++set (ENABLE_EGL_NO_X11 false CACHE BOOL "Enable EGL support without X11.")
++
++set (SYSTEM_EGL false CACHE BOOL "Build with system EGL headers.")
++
+ 
+ ##############################################################################
+ # Find dependencies
+@@ -75,7 +79,7 @@ if (WIN32)
+     set (ENABLE_EGL false)
+ elseif (APPLE)
+     set (ENABLE_EGL false)
+-else ()
++elseif (NOT ENABLE_EGL_NO_X11)
+     find_package (X11)
+ 
+     if (X11_FOUND)
+@@ -282,8 +286,10 @@ endif ()
+ # OpenGL and OpenGL ES at build time, because the OpenGL and OpenGL ES 1 APIs
+ # are so intertwined that conditional compilation extremely difficult. This
+ # also avoids missing/inconsistent declarations in system headers.
+-include_directories (BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/khronos)
+-
++# If SYSTEM_EGL is true, we use the EGL headers from the system
++if (NOT SYSTEM_EGL)
++    include_directories (BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/khronos)
++endif ()
+ 
+ ##############################################################################
+ # Common libraries / utilities
+@@ -301,6 +307,8 @@ else ()
+     set (os os_posix.cpp)
+     if (APPLE)
+         set (glws_os glws_cocoa.mm)
++    elseif (ENABLE_EGL_NO_X11)
++        set (glws_os glws_egl.cpp)
+     else ()
+         set (glws_os glws_glx.cpp)
+     endif ()
+diff --git a/dispatch/eglimports.hpp b/dispatch/eglimports.hpp
+index 49cf177..fd2305d 100644
+--- a/dispatch/eglimports.hpp
++++ b/dispatch/eglimports.hpp
+@@ -85,6 +85,7 @@ typedef int32_t  GLclampx;
+ #endif
+ 
+ #undef _glext_h_
++#undef __glext_h_
+ #include "GLES/glext.h"
+ 
+ 
+diff --git a/dispatch/glimports.hpp b/dispatch/glimports.hpp
+index 358135f..dd1526c 100644
+--- a/dispatch/glimports.hpp
++++ b/dispatch/glimports.hpp
+@@ -45,6 +45,10 @@
+ #include <GL/gl.h>
+ #include <GL/glext.h>
+ 
++// Alias GL_TEXTURE_BUFFER_FORMAT if it's not present (the value matches)
++#ifndef GL_TEXTURE_BUFFER_FORMAT
++#define GL_TEXTURE_BUFFER_FORMAT GL_TEXTURE_BUFFER_FORMAT_ARB
++#endif
+ 
+ // Windows 8 GL headers define GL_EXT_paletted_texture but not
+ // GL_TEXTURE_INDEX_SIZE_EXT, and due to the way we include DirectX headers, it
+diff --git a/retrace/CMakeLists.txt b/retrace/CMakeLists.txt
+index 78cceae..d22d00b 100644
+--- a/retrace/CMakeLists.txt
++++ b/retrace/CMakeLists.txt
+@@ -137,6 +137,30 @@ if (ENABLE_EGL AND X11_FOUND AND NOT WIN32 AND NOT APPLE)
+     endif ()
+ 
+     install (TARGETS eglretrace RUNTIME DESTINATION bin) 
++
++elseif (ENABLE_EGL AND ENABLE_EGL_NO_X11 AND NOT WIN32 AND NOT APPLE)
++    add_executable (eglretrace
++        glws_egl.cpp
++    )
++
++    add_dependencies (eglretrace glproc)
++
++    target_link_libraries (eglretrace
++        retrace_common
++        glretrace_common
++        glproc_egl
++        ${CMAKE_THREAD_LIBS_INIT}
++        dl
++    )
++
++    if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
++        target_link_libraries (eglretrace rt)
++        if (READPROC_H_FOUND)
++            target_link_libraries (eglretrace ${proc_LIBRARY})
++        endif ()
++    endif ()
++
++    install (TARGETS eglretrace RUNTIME DESTINATION bin)
+ endif ()
+ 
+ if (WIN32)
+diff --git a/retrace/glws_egl.cpp b/retrace/glws_egl.cpp
+new file mode 100644
+index 0000000..6a376be
+--- /dev/null
++++ b/retrace/glws_egl.cpp
+@@ -0,0 +1,330 @@
++/**************************************************************************
++ *
++ * Copyright 2011 LunarG, Inc.
++ * Copyright 2011 Jose Fonseca
++ * All Rights Reserved.
++ *
++ * Permission is hereby granted, free of charge, to any person obtaining a copy
++ * of this software and associated documentation files (the "Software"), to deal
++ * in the Software without restriction, including without limitation the rights
++ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
++ * copies of the Software, and to permit persons to whom the Software is
++ * furnished to do so, subject to the following conditions:
++ *
++ * The above copyright notice and this permission notice shall be included in
++ * all copies or substantial portions of the Software.
++ *
++ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
++ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
++ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
++ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
++ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
++ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
++ * THE SOFTWARE.
++ *
++ **************************************************************************/
++
++#include <assert.h>
++#include <stdlib.h>
++
++#include <iostream>
++
++#include <dlfcn.h>
++
++#include "glproc.hpp"
++#include "glws.hpp"
++
++
++namespace glws {
++
++
++static EGLDisplay eglDisplay = EGL_NO_DISPLAY;
++static int screen = 0;
++
++
++class EglVisual : public Visual
++{
++public:
++    EGLConfig config;
++
++    EglVisual() :
++        config(0)
++    {}
++
++    ~EglVisual() {
++    }
++};
++
++class EglDrawable : public Drawable
++{
++public:
++    EGLSurface surface;
++    EGLint api;
++
++    EglDrawable(const Visual *vis, int w, int h, bool pbuffer) :
++        Drawable(vis, w, h, pbuffer),
++        api(EGL_OPENGL_ES_API)
++    {
++        eglWaitNative(EGL_CORE_NATIVE_ENGINE);
++
++        EGLConfig config = static_cast<const EglVisual *>(visual)->config;
++        surface = eglCreateWindowSurface(eglDisplay, config, (EGLNativeWindowType)NULL, NULL);
++    }
++
++    void waitForEvent(int type) {
++    }
++
++    ~EglDrawable() {
++        eglDestroySurface(eglDisplay, surface);
++    }
++
++    void
++    recreate(void) {
++        EGLContext currentContext = eglGetCurrentContext();
++        EGLSurface currentDrawSurface = eglGetCurrentSurface(EGL_DRAW);
++        EGLSurface currentReadSurface = eglGetCurrentSurface(EGL_READ);
++        bool rebindDrawSurface = currentDrawSurface == surface;
++        bool rebindReadSurface = currentReadSurface == surface;
++
++        if (rebindDrawSurface || rebindReadSurface) {
++            eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
++        }
++
++        eglDestroySurface(eglDisplay, surface);
++
++        EGLConfig config = static_cast<const EglVisual *>(visual)->config;
++        surface = eglCreateWindowSurface(eglDisplay, config, (EGLNativeWindowType)NULL, NULL);
++
++        if (rebindDrawSurface || rebindReadSurface) {
++            eglMakeCurrent(eglDisplay, surface, surface, currentContext);
++        }
++    }
++
++    void
++    resize(int w, int h) {
++        Drawable::resize(w, h);
++    
++
++        }
++
++    void show(void) {
++        if (visible) {
++            return;
++        }
++
++        Drawable::show();
++    }
++
++    void swapBuffers(void) {
++        eglBindAPI(api);
++        eglSwapBuffers(eglDisplay, surface);
++    }
++};
++
++
++class EglContext : public Context
++{
++public:
++    EGLContext context;
++
++    EglContext(const Visual *vis, Profile prof, EGLContext ctx) :
++        Context(vis, prof),
++        context(ctx)
++    {}
++
++    ~EglContext() {
++        eglDestroyContext(eglDisplay, context);
++    }
++};
++
++/**
++ * Load the symbols from the specified shared object into global namespace, so
++ * that they can be later found by dlsym(RTLD_NEXT, ...);
++ */
++static void
++load(const char *filename)
++{
++    if (!dlopen(filename, RTLD_GLOBAL | RTLD_LAZY)) {
++        std::cerr << "error: unable to open " << filename << "\n";
++        exit(1);
++    }
++}
++
++void
++init(void) {
++    load("libEGL.so.1");
++
++    eglDisplay = eglGetDisplay((EGLNativeDisplayType)0);
++    if (eglDisplay == EGL_NO_DISPLAY) {
++        std::cerr << "error: unable to get EGL display\n";
++        exit(1);
++    }
++
++    EGLint major, minor;
++    if (!eglInitialize(eglDisplay, &major, &minor)) {
++        std::cerr << "error: unable to initialize EGL display\n";
++        exit(1);
++    }
++}
++
++void
++cleanup(void) {
++        eglTerminate(eglDisplay);
++}
++
++Visual *
++createVisual(bool doubleBuffer, Profile profile) {
++    EglVisual *visual = new EglVisual();
++    // possible combinations
++    const EGLint api_bits_gl[7] = {
++        EGL_OPENGL_BIT | EGL_OPENGL_ES_BIT | EGL_OPENGL_ES2_BIT,
++        EGL_OPENGL_BIT | EGL_OPENGL_ES_BIT,
++        EGL_OPENGL_BIT | EGL_OPENGL_ES2_BIT,
++        EGL_OPENGL_BIT,
++        EGL_OPENGL_ES_BIT | EGL_OPENGL_ES2_BIT,
++        EGL_OPENGL_ES2_BIT,
++        EGL_OPENGL_ES_BIT,
++    };
++    const EGLint api_bits_gles1[7] = {
++        EGL_OPENGL_BIT | EGL_OPENGL_ES_BIT | EGL_OPENGL_ES2_BIT,
++        EGL_OPENGL_ES_BIT | EGL_OPENGL_ES2_BIT,
++        EGL_OPENGL_BIT | EGL_OPENGL_ES_BIT,
++        EGL_OPENGL_ES_BIT,
++        EGL_OPENGL_BIT | EGL_OPENGL_ES2_BIT,
++        EGL_OPENGL_BIT,
++        EGL_OPENGL_ES2_BIT,
++    };
++    const EGLint api_bits_gles2[7] = {
++        EGL_OPENGL_BIT | EGL_OPENGL_ES_BIT | EGL_OPENGL_ES2_BIT,
++        EGL_OPENGL_ES_BIT | EGL_OPENGL_ES2_BIT,
++        EGL_OPENGL_BIT | EGL_OPENGL_ES2_BIT,
++        EGL_OPENGL_ES2_BIT,
++        EGL_OPENGL_BIT | EGL_OPENGL_ES_BIT,
++        EGL_OPENGL_BIT,
++        EGL_OPENGL_ES_BIT,
++    };
++    const EGLint *api_bits;
++
++    switch(profile) {
++    case PROFILE_COMPAT:
++        api_bits = api_bits_gl;
++        break;
++    case PROFILE_ES1:
++        api_bits = api_bits_gles1;
++        break;
++    case PROFILE_ES2:
++        api_bits = api_bits_gles2;
++        break;
++    default:
++        return NULL;
++    };
++
++    for (int i = 0; i < 7; i++) {
++        Attributes<EGLint> attribs;
++
++        attribs.add(EGL_SURFACE_TYPE, EGL_WINDOW_BIT);
++        attribs.add(EGL_RED_SIZE, 1);
++        attribs.add(EGL_GREEN_SIZE, 1);
++        attribs.add(EGL_BLUE_SIZE, 1);
++        attribs.add(EGL_ALPHA_SIZE, 1);
++        attribs.add(EGL_DEPTH_SIZE, 1);
++        attribs.add(EGL_STENCIL_SIZE, 1);
++        attribs.add(EGL_RENDERABLE_TYPE, api_bits[i]);
++        attribs.end(EGL_NONE);
++
++        EGLint num_configs, vid;
++        if (eglChooseConfig(eglDisplay, attribs, &visual->config, 1, &num_configs) &&
++            num_configs == 1)
++	{
++	    break;	
++	}
++    }
++
++    return visual;
++}
++
++Drawable *
++createDrawable(const Visual *visual, int width, int height, bool pbuffer)
++{
++    return new EglDrawable(visual, width, height, pbuffer);
++}
++
++Context *
++createContext(const Visual *_visual, Context *shareContext, Profile profile, bool debug)
++{
++    const EglVisual *visual = static_cast<const EglVisual *>(_visual);
++    EGLContext share_context = EGL_NO_CONTEXT;
++    EGLContext context;
++    Attributes<EGLint> attribs;
++
++    if (shareContext) {
++        share_context = static_cast<EglContext*>(shareContext)->context;
++    }
++
++    EGLint api = eglQueryAPI();
++
++    switch (profile) {
++    case PROFILE_COMPAT:
++        load("libGL.so.1");
++        eglBindAPI(EGL_OPENGL_API);
++        break;
++    case PROFILE_CORE:
++        assert(0);
++        return NULL;
++    case PROFILE_ES1:
++        load("libGLESv1_CM.so.1");
++        eglBindAPI(EGL_OPENGL_ES_API);
++        break;
++    case PROFILE_ES2:
++        load("libGLESv2.so.2");
++        eglBindAPI(EGL_OPENGL_ES_API);
++        attribs.add(EGL_CONTEXT_CLIENT_VERSION, 2);
++        break;
++    default:
++        return NULL;
++    }
++
++    attribs.end(EGL_NONE);
++
++    context = eglCreateContext(eglDisplay, visual->config, share_context, attribs);
++    if (!context)
++        return NULL;
++
++    eglBindAPI(api);
++
++    return new EglContext(visual, profile, context);
++}
++
++bool
++makeCurrent(Drawable *drawable, Context *context)
++{
++    if (!drawable || !context) {
++        return eglMakeCurrent(eglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
++    } else {
++        EglDrawable *eglDrawable = static_cast<EglDrawable *>(drawable);
++        EglContext *eglContext = static_cast<EglContext *>(context);
++        EGLBoolean ok;
++
++        ok = eglMakeCurrent(eglDisplay, eglDrawable->surface,
++                            eglDrawable->surface, eglContext->context);
++
++        if (ok) {
++            EGLint api;
++
++            eglQueryContext(eglDisplay, eglContext->context,
++                            EGL_CONTEXT_CLIENT_TYPE, &api);
++
++            eglDrawable->api = api;
++        }
++
++        return ok;
++    }
++}
++
++bool
++processEvents(void) {
++    return true;
++}
++
++
++} /* namespace glws */
+-- 
+1.8.3-rc3
+
