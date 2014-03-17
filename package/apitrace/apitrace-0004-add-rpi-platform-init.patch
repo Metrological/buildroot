@@ -1,0 +1,23 @@
+--- a/retrace/glws_egl.cpp
++++ b/retrace/glws_egl.cpp
+@@ -34,6 +34,9 @@
+ #include "glproc.hpp"
+ #include "glws.hpp"
+
++#ifdef PLATFORM_RPI 
++#include <bcm_host.h>
++#endif
+ 
+ namespace glws {
+ 
+@@ -155,6 +156,10 @@
+ init(void) {
+     load("libEGL.so.1");
+ 
++#ifdef PLATFORM_RPI 
++    bcm_host_init();
++#endif
++
+     eglDisplay = eglGetDisplay((EGLNativeDisplayType)0);
+     if (eglDisplay == EGL_NO_DISPLAY) {
+         std::cerr << "error: unable to get EGL display\n";
