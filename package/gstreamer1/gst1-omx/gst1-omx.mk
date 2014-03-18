@@ -4,30 +4,35 @@
 #
 ################################################################################
 
-GST1_OMX_VERSION = 1.0.0.1
-GST1_OMX_SOURCE = gst-omx1.0_$(GST1_OMX_VERSION).orig.tar.xz
-GST1_OMX_SITE = http://raspberrypi.collabora.com/pool/web/g/gst-omx1.0/
+GST1_OMX_VERSION = e8ca74c6f862e5f1e0bdc5057dc836a71902244e
+GST1_OMX_SOURCE = gst-omx-$(GST1_OMX_VERSION).tar.gz
+GST1_OMX_SITE = http://cgit.freedesktop.org/gstreamer/gst-omx/snapshot/
 
 GST1_OMX_LICENSE = LGPLv2.1
 GST1_OMX_LICENSE_FILES = COPYING
 
 GST1_OMX_DEPENDENCIES = gstreamer1 gst1-plugins-base libopenmax
 
+GST1_OMX_AUTORECONF = YES
+
+GST1_OMX_POST_DOWNLOAD_HOOKS += GSTREAMER1_COMMON_DOWNLOAD
+GST1_OMX_POST_EXTRACT_HOOKS += GSTREAMER1_COMMON_EXTRACT
+
 ifeq ($(BR2_PACKAGE_GST1_PLUGINS_BAD_PLUGIN_EGLGLES),y)
 GST1_OMX_DEPENDENCIES += gst1-plugins-bad
 endif
 
-GST1_OMX_CONF_OPT = \
-	--disable-examples
-
 ifeq ($(BR2_PACKAGE_RPI_USERLAND),y)
-GST1_OMX_CONF_OPT += \
+GST1_OMX_CONF_OPT = \
 	--with-omx-target=rpi
 GST1_OMX_CONF_ENV = \
 	CFLAGS="$(TARGET_CFLAGS) \
 		-I$(STAGING_DIR)/usr/include/IL \
 		-I$(STAGING_DIR)/usr/include/interface/vcos/pthreads \
 		-I$(STAGING_DIR)/usr/include/interface/vmcs_host/linux"
+else
+GST1_OMX_CONF_OPT = \
+	--disable-examples
 endif
 
 ifeq ($(BR2_PACKAGE_BELLAGIO),y)

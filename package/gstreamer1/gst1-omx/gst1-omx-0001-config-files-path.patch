@@ -1,11 +1,5 @@
-Change config files to match default buildroot install
-
-Signed-off-by: Spenser Gilliland <spenser@gillilanding.com>
----
-Index: gst-omx-1.0.0/config/bellagio/gstomx.conf
-===================================================================
---- gst-omx-1.0.0.orig/config/bellagio/gstomx.conf	2013-03-12 04:12:09.000000000 -0500
-+++ gst-omx-1.0.0/config/bellagio/gstomx.conf	2013-05-21 17:50:14.545692908 -0500
+--- a/config/bellagio/gstomx.conf
++++ b/config/bellagio/gstomx.conf
 @@ -1,6 +1,6 @@
  [omxmpeg4videodec]
  type-name=GstOMXMPEG4VideoDec
@@ -41,10 +35,8 @@ Index: gst-omx-1.0.0/config/bellagio/gstomx.conf
  component-name=OMX.st.audio_encoder.aac
  rank=0
  in-port-index=0
-Index: gst-omx-1.0.0/config/rpi/gstomx.conf
-===================================================================
---- gst-omx-1.0.0.orig/config/rpi/gstomx.conf	2013-05-21 17:51:39.965693635 -0500
-+++ gst-omx-1.0.0/config/rpi/gstomx.conf	2013-05-21 17:52:07.781693871 -0500
+--- a/config/rpi/gstomx.conf
++++ b/config/rpi/gstomx.conf
 @@ -1,6 +1,6 @@
  [omxmpeg2videodec]
  type-name=GstOMXMPEG2VideoDec
@@ -113,9 +105,8 @@ Index: gst-omx-1.0.0/config/rpi/gstomx.conf
  type-name=GstOMXWMVDec
 -core-name=/opt/vc/lib/libopenmaxil.so
 +core-name=/usr/lib/libopenmaxil.so
--component-name=OMX.broadcom.video_encode
-+component-name=OMX.broadcom.video_decode
- rank=257
+ component-name=OMX.broadcom.video_decode
+ rank=256
  in-port-index=130
 @@ -73,7 +73,7 @@
  
