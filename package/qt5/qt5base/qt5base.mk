@@ -29,6 +29,12 @@ QT5BASE_CONFIGURE_OPTS += \
 	-system-pcre \
 	-no-pch
 
+ifeq ($(findstring 2.19,$(BR2_BINUTILS_VERSION)),2.19)
+ifeq ($(BR2_mips)$(BR2_mipsel),y)
+QT5BASE_CONFIGURE_OPTS += -no-reduce-relocations
+endif
+endif
+
 ifeq ($(BR2_ENABLE_DEBUG),y)
 QT5BASE_CONFIGURE_OPTS += -debug -no-qml-debug
 else
