@@ -171,6 +171,7 @@ endmenu
 menu "Graphic libraries and applications (graphic/text)"
 
 comment "Graphic applications"
+source "package/dawn-browser/Config.in"
 source "package/fswebcam/Config.in"
 source "package/gnuplot/Config.in"
 source "package/jhead/Config.in"
