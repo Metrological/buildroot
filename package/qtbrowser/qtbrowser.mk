@@ -4,9 +4,9 @@
 #
 ################################################################################
 
-QTBROWSER_VERSION = 1.0.0
-QTBROWSER_SITE = ../qtbrowser
-QTBROWSER_SITE_METHOD = local
+QTBROWSER_VERSION = 98f48b2a8fcb151a2864ce4fc93b934cc133711b
+QTBROWSER_SITE = $(call github,metrological,qtbrowser,$(QTBROWSER_VERSION))
+QTBROWSER_LICENSE = GPLv2
 
 ifeq ($(BR2_PACKAGE_QT5WEBKIT),y)
 QTBROWSER_DEPENDENCIES = qt5webkit
