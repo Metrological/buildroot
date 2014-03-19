@@ -177,6 +177,7 @@ source "package/gnuplot/Config.in"
 source "package/jhead/Config.in"
 source "package/rrdtool/Config.in"
 source "package/mlbrowser/Config.in"
+source "package/qtbrowser/Config.in"
 source "package/rpi-nixbrowser/Config.in"
 
 comment "Graphic libraries"

@@ -1,0 +1,10 @@
+config BR2_PACKAGE_QTBROWSER
+	bool "qtbrowser"
+	depends on BR2_PACKAGE_QT_WEBKIT || BR2_PACKAGE_QT5WEBKIT
+	help
+	  Metrological's qtbrowser implementation
+	  http://www.metrological.com
+
+comment "qtbrowser needs qtwebkit or qt5webkit"
+	depends on !BR2_PACKAGE_QT_WEBKIT
+	depends on !BR2_PACKAGE_QT5WEBKIT
