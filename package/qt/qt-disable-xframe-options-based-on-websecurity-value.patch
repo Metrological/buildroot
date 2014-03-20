@@ -1,0 +1,14 @@
+--- a/src/3rdparty/webkit/Source/WebCore/loader/FrameLoader.cpp
++++ b/src/3rdparty/webkit/Source/WebCore/loader/FrameLoader.cpp
+@@ -3193,6 +3193,11 @@
+ 
+ bool FrameLoader::shouldInterruptLoadForXFrameOptions(const String& content, const KURL& url)
+ {
++    Settings* settings = m_frame->document()->settings();
++
++    if (settings == NULL || settings->isWebSecurityEnabled() == false)
++	return false;
++ 
+     Frame* topFrame = m_frame->tree()->top();
+     if (m_frame == topFrame)
+         return false;

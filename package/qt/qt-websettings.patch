@@ -1,0 +1,82 @@
+--- a/src/3rdparty/webkit/Source/WebKit/qt/Api/qwebsettings.h
++++ b/src/3rdparty/webkit/Source/WebKit/qt/Api/qwebsettings.h
+@@ -77,6 +77,9 @@
+         SiteSpecificQuirksEnabled,
+         JavascriptCanCloseWindows,
+         WebGLEnabled,
++        RepaintCounter,
++        DebugBorder,
++        WebSecurityEnabled,
+         HyperlinkAuditingEnabled
+     };
+     enum WebGraphic {
+@@ -145,6 +148,8 @@
+ 
+     static void clearMemoryCaches();
+ 
++    static void garbageCollectNow();
++
+     static void enablePersistentStorage(const QString& path = QString());
+ 
+     inline QWebSettingsPrivate* handle() const { return d; }
+--- b/src/3rdparty/webkit/Source/WebKit/qt/Api/qwebsettings.cpp
++++ b/src/3rdparty/webkit/Source/WebKit/qt/Api/qwebsettings.cpp
+@@ -55,6 +55,8 @@
+ 
+ #include "NetworkStateNotifier.h"
+ 
++#include "GCController.h"
++
+ void QWEBKIT_EXPORT qt_networkAccessAllowed(bool isAllowed)
+ {
+ #if USE(QT_BEARER)
+@@ -285,6 +287,10 @@
+ 
+         settings->setUsesPageCache(WebCore::pageCache()->capacity());
+ 
++        value = attributes.value(QWebSettings::WebSecurityEnabled,
++                                      global->attributes.value(QWebSettings::WebSecurityEnabled));
++        settings->setWebSecurityEnabled(value);
++ 
+ #if ENABLE(PASSWORD_ECHO)
+         settings->setPasswordEchoEnabled(true);
+         settings->setPasswordEchoDurationInSeconds(1);
+@@ -528,6 +534,8 @@
+     d->attributes.insert(QWebSettings::TiledBackingStoreEnabled, false);
+     d->attributes.insert(QWebSettings::FrameFlatteningEnabled, false);
+     d->attributes.insert(QWebSettings::SiteSpecificQuirksEnabled, true);
++    d->attributes.insert(QWebSettings::RepaintCounter, false);
++    d->attributes.insert(QWebSettings::DebugBorder, false);
+     d->offlineStorageDefaultQuota = 5 * 1024 * 1024;
+     d->defaultTextEncoding = QLatin1String("iso-8859-1");
+ }
+@@ -776,4 +784,9 @@
+ }
+ 
++void QWebSettings::garbageCollectNow()
++{
++    WebCore::gcController().garbageCollectNow();
++}
++
+ /*!
+     Sets the maximum number of pages to hold in the memory page cache to \a pages.
+--- a/src/3rdparty/webkit/Source/WebKit/qt/Api/qwebsettings.cpp
++++ b/src/3rdparty/webkit/Source/WebKit/qt/Api/qwebsettings.cpp
+@@ -175,6 +175,17 @@
+                                       global->attributes.value(QWebSettings::AcceleratedCompositingEnabled));
+ 
+         settings->setAcceleratedCompositingEnabled(value);
++
++        bool showDebugVisuals = qgetenv("WEBKIT_SHOW_COMPOSITING_DEBUG_VISUALS") == "1";              
++        value = attributes.value(QWebSettings::DebugBorder,                                           
++                                      global->attributes.value(QWebSettings::DebugBorder));           
++
++        settings->setShowDebugBorders(showDebugVisuals || value);                                     
++
++        value = attributes.value(QWebSettings::RepaintCounter,                                        
++                                      global->attributes.value(QWebSettings::RepaintCounter));        
++
++        settings->setShowRepaintCounter(showDebugVisuals || value);  
+ #endif
+ #if ENABLE(WEBGL)
+         value = attributes.value(QWebSettings::WebGLEnabled,
