@@ -1,0 +1,11 @@
+--- ./src/gui/kernel/qplatformwindow.cpp.orig	2014-03-20 08:51:03.777576904 +0100
++++ ./src/gui/kernel/qplatformwindow.cpp	2014-03-20 08:52:04.087730549 +0100
+@@ -258,7 +258,7 @@
+ void QPlatformWindow::setParent(const QPlatformWindow *parent)
+ {
+     Q_UNUSED(parent);
+-    qWarning("This plugin does not support setParent!");
++//    qWarning("This plugin does not support setParent!");
+ }
+ 
+ /*!
