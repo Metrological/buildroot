@@ -1,5 +1,5 @@
---- ./src/gui/kernel/qplatformwindow.cpp.orig	2014-03-20 08:51:03.777576904 +0100
-+++ ./src/gui/kernel/qplatformwindow.cpp	2014-03-20 08:52:04.087730549 +0100
+--- a/src/gui/kernel/qplatformwindow.cpp
++++ b/src/gui/kernel/qplatformwindow.cpp
 @@ -258,7 +258,7 @@
  void QPlatformWindow::setParent(const QPlatformWindow *parent)
  {
