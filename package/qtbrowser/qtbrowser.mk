@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-QTBROWSER_VERSION = 98f48b2a8fcb151a2864ce4fc93b934cc133711b
+QTBROWSER_VERSION = a167b2f8d3bda722c8400cf82fe4c223d6090e41
 QTBROWSER_SITE = $(call github,metrological,qtbrowser,$(QTBROWSER_VERSION))
 QTBROWSER_LICENSE = GPLv2
 
