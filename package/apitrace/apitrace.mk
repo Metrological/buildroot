@@ -33,7 +33,11 @@ APITRACE_CONF_OPT += \
 	-DCMAKE_EXE_LINKER_FLAGS="$(TARGET_LDFLAGS) $(APITRACE_LDFLAGS) $(shell $(PKG_CONFIG_HOST_BINARY) --libs egl)"
 endif
 
-# Gui was never tested, so we prefer to explicitly disable it
+ifeq ($(BR2_PACKAGE_APITRACE_GUI),y)
+APITRACE_DEPENDENCIES = qt
+APITRACE_CONF_OPT += -DENABLE_GUI=true
+else
 APITRACE_CONF_OPT += -DENABLE_GUI=false
+endif
 
 $(eval $(cmake-package))
