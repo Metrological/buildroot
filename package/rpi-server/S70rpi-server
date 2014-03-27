@@ -7,7 +7,7 @@ start() {
 	sleep 3
 
 	echo -n "Starting mlbrowser: "
-	mlbrowser http://localhost:8080/client/index.html &
+	qtbrowser --url=http://localhost:8080/client/index.html &
 
 	echo "OK"
 }
@@ -16,7 +16,7 @@ stop() {
 	killall node
 
 	echo -n "Stopping mlbrowser: "
-	killall mlbrowser
+	killall qtbrowser
 
 	echo "OK"
 }
