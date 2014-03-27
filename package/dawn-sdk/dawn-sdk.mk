@@ -22,6 +22,10 @@ define DAWN_SDK_INSTALL_TARGET_CMDS
 	cp -Rf $(@D)/sdk/lib/* $(TARGET_DIR)/usr/lib/
 	mkdir -p $(TARGET_DIR)/lib/modules/
 	cp -Rf $(@D)/modules/nexus.ko $(TARGET_DIR)/lib/modules/
+	grep -q 'eth0' $(TARGET_DIR)/etc/network/interfaces || \
+		echo -e '# Configure eth0\nauto eth0\niface eth0 inet dhcp\n' >> $(TARGET_DIR)/etc/network/interfaces
+	grep -q 'eth2' $(TARGET_DIR)/etc/network/interfaces || \
+		echo -e '# Configure eth2\nauto eth2\niface eth2 inet dhcp\n' >> $(TARGET_DIR)/etc/network/interfaces
 	$(INSTALL) -D -m 755 package/dawn-sdk/S11nexus $(TARGET_DIR)/etc/init.d/
 	$(INSTALL) -D -m 755 package/dawn-sdk/S70refsw $(TARGET_DIR)/etc/init.d/
 	cp -Rf $(@D)/bin/* $(TARGET_DIR)/usr/bin
