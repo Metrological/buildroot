@@ -1,6 +1,6 @@
 --- a/omx/gstomxvideodec.c
 +++ b/omx/gstomxvideodec.c
-@@ -660,8 +660,8 @@
+@@ -659,8 +659,8 @@
        }
  
        buffers = g_list_append (buffers, buffer);
