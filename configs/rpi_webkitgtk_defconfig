@@ -23,6 +23,7 @@ BR2_TARGET_GENERIC_ROOT_PASSWD="root"
 BR2_TARGET_GENERIC_GETTY_PORT="tty1"
 BR2_TARGET_GENERIC_GETTY_TERM=""
 
+BR2_GCC_VERSION_4_8_X=y
 BR2_TARGET_OPTIMIZATION="-pipe -mhard-float -mfloat-abi=hard -mfpu=vfp -mtune=arm1176jzf-s -march=armv6zk -fsigned-char"
 
 BR2_PACKAGE_RPI_FIRMWARE=y
