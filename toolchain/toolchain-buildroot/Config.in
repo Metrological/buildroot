@@ -69,6 +69,18 @@ config BR2_TOOLCHAIN_BUILDROOT_LIBC
 	default "glibc"  if BR2_TOOLCHAIN_BUILDROOT_EGLIBC
 	default "glibc"  if BR2_TOOLCHAIN_BUILDROOT_GLIBC
 
+if BR2_TOOLCHAIN_USES_GLIBC && BR2_TOOLCHAIN_BUILDROOT_GLIBC
+config BR2_TOOLCHAIN_BUILDROOT_GLIBC_VERSION
+        string "GLIBC version"
+        default "2.18"
+endif
+
+if BR2_TOOLCHAIN_USES_GLIBC && BR2_TOOLCHAIN_BUILDROOT_EGLIBC
+config BR2_TOOLCHAIN_BUILDROOT_EGLIBC_VERSION
+        string "EGLIBC version"
+        default "2.18-svnr23787"
+endif
+
 source "package/uclibc/Config.in"
 
 source "package/binutils/Config.in.host"
