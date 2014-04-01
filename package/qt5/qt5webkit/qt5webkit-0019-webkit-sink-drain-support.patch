@@ -1,0 +1,202 @@
+diff -ur qt5webkit-5.2.1.orig/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamerBase.cpp qt5webkit-5.2.1/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamerBase.cpp
+--- qt5webkit-5.2.1.orig/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamerBase.cpp	2014-03-31 16:00:34.352468924 +0200
++++ qt5webkit-5.2.1/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamerBase.cpp	2014-04-01 16:06:46.583450476 +0200
+@@ -162,11 +162,17 @@
+     playerPrivate->triggerRepaint(buffer);
+ }
+ 
++static void mediaPlayerPrivateDrainCallback(WebKitVideoSink*, MediaPlayerPrivateGStreamerBase* playerPrivate)
++{
++    playerPrivate->triggerDrain();
++}
++
+ MediaPlayerPrivateGStreamerBase::MediaPlayerPrivateGStreamerBase(MediaPlayer* player)
+     : m_player(player)
+     , m_fpsSink(0)
+     , m_readyState(MediaPlayer::HaveNothing)
+     , m_networkState(MediaPlayer::Empty)
++    , m_isEndReached(false)
+     , m_buffer(0)
+     , m_volumeTimerHandler(0)
+     , m_muteTimerHandler(0)
+@@ -204,6 +210,11 @@
+         m_repaintHandler = 0;
+     }
+ 
++    if (m_drainHandler) {
++        g_signal_handler_disconnect(m_webkitVideoSink.get(), m_drainHandler);
++        m_drainHandler = 0;
++    }
++
+ #ifndef GST_API_VERSION_1
+     g_signal_handlers_disconnect_by_func(m_webkitVideoSink.get(), reinterpret_cast<gpointer>(mediaPlayerPrivateVideoPrerollCallback), this);
+     g_signal_handlers_disconnect_by_func(m_webkitVideoSink.get(), reinterpret_cast<gpointer>(mediaPlayerPrivateVideoBufferCallback), this);
+@@ -868,6 +879,17 @@
+     m_player->repaint();
+ }
+ 
++void MediaPlayerPrivateGStreamerBase::triggerDrain()
++{
++    m_videoSize.setWidth(0);
++    m_videoSize.setHeight(0);
++    g_mutex_lock(m_bufferMutex);
++    if (m_buffer)
++        gst_buffer_unref(m_buffer);
++    m_buffer = 0;
++    g_mutex_unlock(m_bufferMutex);
++}
++
+ void MediaPlayerPrivateGStreamerBase::setSize(const IntSize& size)
+ {
+     m_size = size;
+@@ -931,14 +953,14 @@
+             matrix.rotate3d(180, 0, 0);
+             matrix.translateRight(0, targetRect.height());
+             textureMapper->drawTexture(*texture.get(), targetRect, matrix, opacity);
+-        }
+-        else {
++        } else {
+             textureMapper->drawTexture(*texture.get(), targetRect, modelViewMatrix, opacity);
+         }
+ #else
+         textureMapper->drawTexture(*texture.get(), targetRect, modelViewMatrix, opacity);
+ #endif
+-    }
++    } else if (!m_isEndReached)
++        client()->setPlatformLayerNeedsDisplay();
+ #else
+ 
+ #ifndef GST_API_VERSION_1
+@@ -1046,6 +1068,7 @@
+ #ifdef GST_API_VERSION_1
+     m_webkitVideoSink = webkitVideoSinkNew();
+     m_repaintHandler = g_signal_connect(m_webkitVideoSink.get(), "repaint-requested", G_CALLBACK(mediaPlayerPrivateRepaintCallback), this);
++    m_drainHandler = g_signal_connect(m_webkitVideoSink.get(), "drain", G_CALLBACK(mediaPlayerPrivateDrainCallback), this);
+ #else
+     m_webkitVideoSink = gst_element_factory_make("fakesink", "vsink");
+     g_object_set (m_webkitVideoSink.get(), "sync", TRUE, "silent", TRUE,
+diff -ur qt5webkit-5.2.1.orig/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamerBase.h qt5webkit-5.2.1/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamerBase.h
+--- qt5webkit-5.2.1.orig/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamerBase.h	2014-03-31 16:00:34.352468924 +0200
++++ qt5webkit-5.2.1/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamerBase.h	2014-04-01 15:41:25.717422641 +0200
+@@ -84,6 +84,8 @@
+     void setSize(const IntSize&);
+     void sizeChanged();
+ 
++    void triggerDrain();
++
+     void triggerRepaint(GstBuffer*);
+     void paint(GraphicsContext*, const IntRect&);
+ 
+@@ -141,6 +143,7 @@
+     GstElement* m_fpsSink;
+     MediaPlayer::ReadyState m_readyState;
+     MediaPlayer::NetworkState m_networkState;
++    bool m_isEndReached;
+     IntSize m_size;
+     GMutex* m_bufferMutex;
+     GstBuffer* m_buffer;
+@@ -153,6 +156,7 @@
+     unsigned long m_repaintHandler;
+     unsigned long m_volumeSignalHandler;
+     unsigned long m_muteSignalHandler;
++    unsigned long m_drainHandler;
+     mutable IntSize m_videoSize;
+ #if USE(ACCELERATED_COMPOSITING) && USE(TEXTURE_MAPPER_GL)
+ #if USE(COORDINATED_GRAPHICS) && defined(GST_API_VERSION_1)
+diff -ur qt5webkit-5.2.1.orig/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp qt5webkit-5.2.1/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp
+--- qt5webkit-5.2.1.orig/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp	2014-03-31 16:00:34.360468992 +0200
++++ qt5webkit-5.2.1/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp	2014-04-01 15:41:49.385642307 +0200
+@@ -219,7 +219,6 @@
+     , m_seekTime(0)
+     , m_changingRate(false)
+     , m_endTime(numeric_limits<float>::infinity())
+-    , m_isEndReached(false)
+     , m_isStreaming(false)
+     , m_mediaLocations(0)
+     , m_mediaLocationCurrentIndex(0)
+diff -ur qt5webkit-5.2.1.orig/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.h qt5webkit-5.2.1/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.h
+--- qt5webkit-5.2.1.orig/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.h	2014-02-01 21:37:48.000000000 +0100
++++ qt5webkit-5.2.1/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.h	2014-04-01 15:41:11.613291711 +0200
+@@ -134,7 +134,6 @@
+     float m_seekTime;
+     bool m_changingRate;
+     float m_endTime;
+-    bool m_isEndReached;
+     mutable bool m_isStreaming;
+     GstStructure* m_mediaLocations;
+     int m_mediaLocationCurrentIndex;
+diff -ur qt5webkit-5.2.1.orig/Source/WebCore/platform/graphics/gstreamer/VideoSinkGStreamer.cpp qt5webkit-5.2.1/Source/WebCore/platform/graphics/gstreamer/VideoSinkGStreamer.cpp
+--- qt5webkit-5.2.1.orig/Source/WebCore/platform/graphics/gstreamer/VideoSinkGStreamer.cpp	2014-03-31 16:00:34.356468958 +0200
++++ qt5webkit-5.2.1/Source/WebCore/platform/graphics/gstreamer/VideoSinkGStreamer.cpp	2014-04-01 13:15:18.488149712 +0200
+@@ -96,6 +96,7 @@
+ 
+ enum {
+     REPAINT_REQUESTED,
++    DRAIN,
+     LAST_SIGNAL
+ };
+ 
+@@ -164,6 +165,7 @@
+ #endif
+ 
+ #if USE(OPENGL_ES_2) && GST_CHECK_VERSION(1, 1, 2)
++    g_object_set(GST_BASE_SINK(sink), "enable-last-sample", FALSE, NULL);
+     sink->priv->pool = NULL;
+     sink->priv->last_buffer = NULL;
+ 
+@@ -1033,6 +1035,29 @@
+ #endif
+     return TRUE;
+ }
++
++static gboolean webkitVideoSinkQuery(GstBaseSink* baseSink, GstQuery* query)
++{
++    WebKitVideoSink* sink = WEBKIT_VIDEO_SINK(baseSink);
++    WebKitVideoSinkPrivate* priv = sink->priv;
++
++    switch (GST_QUERY_TYPE(query)) {
++    case GST_QUERY_DRAIN:
++    {
++#if USE(OPENGL_ES_2) && GST_CHECK_VERSION(1, 1, 2)
++        GST_OBJECT_LOCK (sink);
++        if (priv->last_buffer)
++            gst_buffer_replace (&priv->last_buffer, NULL);
++        g_signal_emit(sink, webkitVideoSinkSignals[DRAIN], 0);
++        GST_OBJECT_UNLOCK (sink);
++#endif
++        return TRUE;
++    default:
++        return GST_CALL_PARENT_WITH_DEFAULT(GST_BASE_SINK_CLASS, query, (baseSink, query), TRUE);
++      break;
++    }
++    }
++}
+ #endif
+ 
+ #ifndef GST_API_VERSION_1
+@@ -1081,6 +1106,7 @@
+     baseSinkClass->set_caps = webkitVideoSinkSetCaps;
+ #ifdef GST_API_VERSION_1
+     baseSinkClass->propose_allocation = webkitVideoSinkProposeAllocation;
++    baseSinkClass->query = webkitVideoSinkQuery;
+ #endif
+ 
+     g_object_class_install_property(gobjectClass, PROP_CAPS,
+@@ -1100,6 +1126,17 @@
+             G_TYPE_NONE, // Return type
+             1, // Only one parameter
+             GST_TYPE_BUFFER);
++
++    webkitVideoSinkSignals[DRAIN] = g_signal_new("drain",
++            G_TYPE_FROM_CLASS(klass),
++            static_cast<GSignalFlags>(G_SIGNAL_RUN_LAST | G_SIGNAL_ACTION),
++            0, // Class offset
++            0, // Accumulator
++            0, // Accumulator data
++            g_cclosure_marshal_generic,
++            G_TYPE_NONE, // Return type
++            0 // No parameters
++            );
+ }
+ 
+ 
