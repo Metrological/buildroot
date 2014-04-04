@@ -28,6 +28,8 @@ ifeq ($(BR2_PACKAGE_QT5DECLARATIVE),y)
 QT5WEBKIT_DEPENDENCIES += qt5declarative
 endif
 
+QT5WEBKIT_CONFIG = 
+
 ifeq ($(BR2_ENABLE_DEBUG),y)
 	QT5WEBKIT_DEBUG_CONFIG = "CONFIG+=debug"
 	QT5WEBKIT_DEBUG_CONFIG += "CONFIG-=release"
@@ -65,11 +67,19 @@ ifeq ($(findstring y,$(BR2_PACKAGE_MINIBROWSER)$(BR2_PACKAGE_TESTBROWSER)$(BR2_P
 	QT5WEBKIT_TOOLS_CONFIG += "CONFIG-=production_build"
 endif
 
+
+ifeq ($(BR2_USE_ACCELERATED_CANVAS), y)
+	QT5WEBKIT_CONFIG+=accelerated_2d_canvas
+endif
+
+ifeq ($(BR2_USE_DISCOVERY), y)
+	QT5WEBKIT_CONFIG+=discovery
+endif
+
 define QT5WEBKIT_CONFIGURE_CMDS
 	(cd $(@D); \
 		$(TARGET_MAKE_ENV) \
 		$(HOST_DIR)/usr/bin/qmake \
-			WEBKIT_CONFIG+=accelerated_2d_canvas \
 			WEBKIT_CONFIG+=discovery \
 			$(QT5WEBKIT_GST_CONFIG) \
 			$(QT5WEBKIT_DEBUG_CONFIG) \

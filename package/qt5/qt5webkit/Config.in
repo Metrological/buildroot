@@ -24,6 +24,18 @@ config BR2_PACKAGE_QT5WEBKIT
 
 menu "Extra options"
 
+config BR2_USE_DISCOVERY
+	bool "qt5webkit_discovery"
+	default y
+	help
+	  Network Service Discovery
+
+config BR2_USE_ACCELERATED_CANVAS
+	bool "qt5webkit_accelerated_canvas"
+	default y
+	help
+	  Hardware accelerated canvas
+
 config BR2_USE_DEPRECATED_GSTREAMER
 	bool "deprecated-gstreamer"
 	depends on BR2_PACKAGE_GSTREAMER
