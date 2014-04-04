@@ -80,7 +80,7 @@ define QT5WEBKIT_CONFIGURE_CMDS
 	(cd $(@D); \
 		$(TARGET_MAKE_ENV) \
 		$(HOST_DIR)/usr/bin/qmake \
-			WEBKIT_CONFIG+=discovery \
+			$(QT5WEBKIT_CONFIG) \
 			$(QT5WEBKIT_GST_CONFIG) \
 			$(QT5WEBKIT_DEBUG_CONFIG) \
 			$(QT5WEBKIT_TOOLS_CONFIG) \
