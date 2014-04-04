@@ -1,0 +1,4800 @@
+From 2b1589fc5e838ca48c32e549364ed8f86929f1cc Mon Sep 17 00:00:00 2001
+From: Zack Rusin <zack@kde.org>
+Date: Sun, 30 Mar 2014 01:10:40 -0400
+Subject: [PATCH] Port the gui to Qt5.
+
+The biggest change is that Qt5 includes json support in the core.
+Everything else should stay the same.
+---
+ CMakeLists.txt                          |   22 +-
+ gui/CMakeLists.txt                      |   21 +-
+ gui/glsledit.cpp                        |    2 +-
+ gui/main.cpp                            |    1 -
+ gui/profiledialog.cpp                   |    2 +-
+ gui/retracer.cpp                        |   36 +-
+ thirdparty/qjson/.gitignore             |    1 -
+ thirdparty/qjson/CMakeLists.txt         |   39 --
+ thirdparty/qjson/COPYING.lib            |  504 --------------
+ thirdparty/qjson/README                 |   27 -
+ thirdparty/qjson/json_parser.cc         | 1116 -------------------------------
+ thirdparty/qjson/json_parser.hh         |  325 ---------
+ thirdparty/qjson/json_parser.yy         |  219 ------
+ thirdparty/qjson/json_scanner.cpp       |  377 -----------
+ thirdparty/qjson/json_scanner.h         |   54 --
+ thirdparty/qjson/location.hh            |  145 ----
+ thirdparty/qjson/parser.cpp             |  125 ----
+ thirdparty/qjson/parser.h               |   94 ---
+ thirdparty/qjson/parser_p.h             |   56 --
+ thirdparty/qjson/parserrunnable.cpp     |   68 --
+ thirdparty/qjson/parserrunnable.h       |   67 --
+ thirdparty/qjson/position.hh            |  142 ----
+ thirdparty/qjson/qjson_debug.h          |   33 -
+ thirdparty/qjson/qjson_export.h         |   35 -
+ thirdparty/qjson/qobjecthelper.cpp      |   85 ---
+ thirdparty/qjson/qobjecthelper.h        |  144 ----
+ thirdparty/qjson/serializer.cpp         |  322 ---------
+ thirdparty/qjson/serializer.h           |  134 ----
+ thirdparty/qjson/serializerrunnable.cpp |   60 --
+ thirdparty/qjson/serializerrunnable.h   |   74 --
+ thirdparty/qjson/stack.hh               |  129 ----
+ 31 files changed, 27 insertions(+), 4432 deletions(-)
+ delete mode 100644 thirdparty/qjson/.gitignore
+ delete mode 100644 thirdparty/qjson/CMakeLists.txt
+ delete mode 100644 thirdparty/qjson/COPYING.lib
+ delete mode 100644 thirdparty/qjson/README
+ delete mode 100644 thirdparty/qjson/json_parser.cc
+ delete mode 100644 thirdparty/qjson/json_parser.hh
+ delete mode 100644 thirdparty/qjson/json_parser.yy
+ delete mode 100644 thirdparty/qjson/json_scanner.cpp
+ delete mode 100644 thirdparty/qjson/json_scanner.h
+ delete mode 100644 thirdparty/qjson/location.hh
+ delete mode 100644 thirdparty/qjson/parser.cpp
+ delete mode 100644 thirdparty/qjson/parser.h
+ delete mode 100644 thirdparty/qjson/parser_p.h
+ delete mode 100644 thirdparty/qjson/parserrunnable.cpp
+ delete mode 100644 thirdparty/qjson/parserrunnable.h
+ delete mode 100644 thirdparty/qjson/position.hh
+ delete mode 100644 thirdparty/qjson/qjson_debug.h
+ delete mode 100644 thirdparty/qjson/qjson_export.h
+ delete mode 100644 thirdparty/qjson/qobjecthelper.cpp
+ delete mode 100644 thirdparty/qjson/qobjecthelper.h
+ delete mode 100644 thirdparty/qjson/serializer.cpp
+ delete mode 100644 thirdparty/qjson/serializer.h
+ delete mode 100644 thirdparty/qjson/serializerrunnable.cpp
+ delete mode 100644 thirdparty/qjson/serializerrunnable.h
+ delete mode 100644 thirdparty/qjson/stack.hh
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 5fe0d50..4530e62 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required (VERSION 2.8)
++cmake_minimum_required (VERSION 2.8.8)
+ 
+ 
+ # Use clang on MacOSX. gcc doesn't support __thread key, and Apple has
+@@ -69,7 +69,8 @@ if (ENABLE_GUI)
+     if (NOT (ENABLE_GUI STREQUAL "AUTO"))
+         set (REQUIRE_GUI REQUIRED)
+     endif ()
+-    find_package (Qt4 4.7 COMPONENTS QtCore QtGui QtWebKit ${REQUIRE_GUI})
++    find_package (Qt5Widgets REQUIRED)
++    find_package (Qt5WebKitWidgets REQUIRED)
+ endif ()
+ 
+ if (WIN32)
+@@ -288,19 +289,6 @@ add_subdirectory (thirdparty/md5)
+ set (MD5_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/md5)
+ set (MD5_LIBRARIES md5_bundled)
+ 
+-# Always use bundled QJSon.
+-# - The packaged versions QJson are very old, and do not support NaN/Infinity.
+-# - To make it easier to build the GUI on Windows and MacOSX, as there are no
+-# binaries at all.
+-if (QT4_FOUND)
+-    add_definitions (-DQJSON_EXPORT=)
+-    add_subdirectory (thirdparty/qjson)
+-    set (QJSON_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty)
+-    set (QJSON_LIBRARY_DIRS)
+-    set (QJSON_LIBRARIES qjson_bundled)
+-    set (QJSON_FOUND TRUE)
+-endif ()
+-
+ # We use bundled headers for all Khronos APIs, to guarantee support for both
+ # OpenGL and OpenGL ES at build time, because the OpenGL and OpenGL ES 1 APIs
+ # are so intertwined that conditional compilation extremely difficult. This
+@@ -411,8 +399,8 @@ endif ()
+ ##############################################################################
+ # GUI
+ 
+-if (ENABLE_GUI AND QT4_FOUND AND QJSON_FOUND)
+-    add_subdirectory(gui)
++if (ENABLE_GUI AND Qt5Widgets_FOUND AND Qt5WebKitWidgets_FOUND)
++  add_subdirectory(gui)
+ endif ()
+ 
+ 
+diff --git a/gui/CMakeLists.txt b/gui/CMakeLists.txt
+index ad13475..6494b5e 100644
+--- a/gui/CMakeLists.txt
++++ b/gui/CMakeLists.txt
+@@ -1,5 +1,3 @@
+-# Include the cmake file needed to use qt4
+-include( ${QT_USE_FILE} )
+ 
+ set(qapitrace_SRCS
+    apisurface.cpp
+@@ -37,9 +35,7 @@ set(qapitrace_SRCS
+    graphing/timeaxiswidget.cpp
+  )
+ 
+-qt4_automoc(${qapitrace_SRCS})
+-
+-qt4_add_resources(qapitrace_SRCS qapitrace.qrc)
++qt5_add_resources(qapitrace_SRCS qapitrace.qrc)
+ 
+ set(qapitrace_UIS
+    ui/argumentseditor.ui
+@@ -55,16 +51,17 @@ set(qapitrace_UIS
+    ui/shaderssourcewidget.ui
+    )
+ 
+-QT4_WRAP_UI(qapitrace_UIS_H ${qapitrace_UIS})
++set(CMAKE_AUTOMOC ON)
++QT5_WRAP_UI(qapitrace_UIS_H ${qapitrace_UIS})
++set(CMAKE_INCLUDE_CURRENT_DIR ON)
+ 
+ #add_app_icon(qapitrace_SRCS ../icons/hi*-qapitrace.png)
+-link_directories(${LINK_DIRECTORIES} ${QJSON_LIBRARY_DIRS})
+ include_directories(
+     ${CMAKE_CURRENT_BINARY_DIR}
+     ${CMAKE_CURRENT_SOURCE_DIR}
+     ${CMAKE_SOURCE_DIR}
+-    ${QJSON_INCLUDE_DIR}
+-    ${QT_INCLUDES}
++    ${QT5WIDGETS_INCLUDE_DIRS}
++    ${QT5WEBKITWIDGETS_INCLUDE_DIRS}
+ )
+ 
+ if (WIN32)
+@@ -74,13 +71,15 @@ endif ()
+ 
+ add_executable(qapitrace ${qapitrace_SUBSYSTEM} ${qapitrace_SRCS} ${qapitrace_UIS_H})
+ 
++qt5_use_modules(qapitrace Widgets WebKitWidgets)
++
+ target_link_libraries (qapitrace
+     image
+     common
+     ${ZLIB_LIBRARIES}
+     ${SNAPPY_LIBRARIES}
+-    ${QJSON_LIBRARIES}
+-    ${QT_LIBRARIES}
++    Qt5::Widgets
++    Qt5::WebKitWidgets
+     ${CMAKE_THREAD_LIBS_INIT}
+ )
+ 
+diff --git a/gui/glsledit.cpp b/gui/glsledit.cpp
+index b73f098..8cd7f02 100644
+--- a/gui/glsledit.cpp
++++ b/gui/glsledit.cpp
+@@ -29,7 +29,7 @@
+ 
+ #include "glsledit.h"
+ 
+-#include <QtGui>
++#include <QtWidgets>
+ 
+ class GLSLBlockData: public QTextBlockUserData
+ {
+diff --git a/gui/main.cpp b/gui/main.cpp
+index b98bce6..9e10ccb 100644
+--- a/gui/main.cpp
++++ b/gui/main.cpp
+@@ -30,7 +30,6 @@ static void usage(void)
+ 
+ int main(int argc, char **argv)
+ {
+-    QApplication::setGraphicsSystem("raster");
+     QApplication app(argc, argv);
+ 
+     qRegisterMetaType<QList<ApiTraceFrame*> >();
+diff --git a/gui/profiledialog.cpp b/gui/profiledialog.cpp
+index a9892cf..9d80d3f 100644
+--- a/gui/profiledialog.cpp
++++ b/gui/profiledialog.cpp
+@@ -223,7 +223,7 @@ void ProfileDialog::setProfile(trace::Profile* profile)
+         m_table->setModel(model);
+         m_table->update(QModelIndex());
+         m_table->sortByColumn(2, Qt::DescendingOrder);
+-        m_table->horizontalHeader()->setResizeMode(QHeaderView::ResizeToContents);
++        m_table->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
+         m_table->resizeColumnsToContents();
+ 
+         /* Reset selection */
+diff --git a/gui/retracer.cpp b/gui/retracer.cpp
+index 9603e28..5d2a500 100644
+--- a/gui/retracer.cpp
++++ b/gui/retracer.cpp
+@@ -11,8 +11,7 @@
+ #include <QVariant>
+ #include <QList>
+ #include <QImage>
+-
+-#include <qjson/parser.h>
++#include <QJsonDocument>
+ 
+ /**
+  * Wrapper around a QProcess which enforces IO to block .
+@@ -377,32 +376,17 @@ void Retracer::run()
+         BlockingIODevice io(&process);
+ 
+         if (m_captureState) {
+-            /*
+-             * Parse JSON from the output.
+-             *
+-             * XXX: QJSON's scanner is inneficient as it abuses single
+-             * character QIODevice::peek (not cheap), instead of maintaining a
+-             * lookahead character on its own.
+-             */
+-
+-            bool ok = false;
+-            QJson::Parser jsonParser;
+-
+-            // Allow Nan/Infinity
+-            jsonParser.allowSpecialNumbers(true);
+-#if 0
+-            parsedJson = jsonParser.parse(&io, &ok).toMap();
+-#else
+-            /*
+-             * XXX: QJSON expects blocking IO, and it looks like
+-             * BlockingIODevice does not work reliably in all cases.
+-             */
+             process.waitForFinished(-1);
+-            parsedJson = jsonParser.parse(&process, &ok).toMap();
+-#endif
+-            if (!ok) {
+-                msg = QLatin1String("failed to parse JSON");
++            QByteArray data = process.readAll();
++            QJsonParseError error;
++            QJsonDocument jsonDoc =
++                QJsonDocument::fromJson(data, &error);
++
++            if (error.error != QJsonParseError::NoError) {
++                //qDebug()<<"Error is "<<error.errorString();
++                msg = error.errorString();
+             }
++            parsedJson = jsonDoc.toVariant().toMap();
+         } else if (m_captureThumbnails) {
+             /*
+              * Parse concatenated PNM images from output.
+diff --git a/thirdparty/qjson/.gitignore b/thirdparty/qjson/.gitignore
+deleted file mode 100644
+index 72337ff..0000000
+--- a/thirdparty/qjson/.gitignore
++++ /dev/null
+@@ -1 +0,0 @@
+-moc_*.cxx*
+diff --git a/thirdparty/qjson/CMakeLists.txt b/thirdparty/qjson/CMakeLists.txt
+deleted file mode 100644
+index f142371..0000000
+--- a/thirdparty/qjson/CMakeLists.txt
++++ /dev/null
+@@ -1,39 +0,0 @@
+-add_definitions (
+-    -DQT_NO_CAST_FROM_ASCII
+-    -DQT_NO_CAST_TO_ASCII
+-    -DQT_NO_DEBUG_OUTPUT
+-)
+-
+-set (QT_DONT_USE_QTGUI TRUE)
+-
+-include (${QT_USE_FILE})
+-
+-include_directories (${CMAKE_CURRENT_BINARY_DIR})
+-
+-set (qjson_MOC_HDRS
+-    parserrunnable.h
+-    #serializerrunnable.h
+-)
+-
+-qt4_wrap_cpp (qjson_MOC_SRCS ${qjson_MOC_HDRS})
+-
+-set (qjson_SRCS
+-    parser.cpp
+-    qobjecthelper.cpp
+-    json_scanner.cpp
+-    json_parser.cc
+-    parserrunnable.cpp
+-    #serializer.cpp
+-    #serializerrunnable.cpp
+-)
+-
+-add_library (qjson_bundled STATIC EXCLUDE_FROM_ALL
+-    ${qjson_SRCS}
+-    ${qjson_MOC_SRCS}
+-)
+-
+-install (
+-    FILES COPYING.lib
+-    DESTINATION ${DOC_INSTALL_DIR}
+-    RENAME LICENSE-qjson.txt
+-)
+diff --git a/thirdparty/qjson/COPYING.lib b/thirdparty/qjson/COPYING.lib
+deleted file mode 100644
+index 08f25cd..0000000
+--- a/thirdparty/qjson/COPYING.lib
++++ /dev/null
+@@ -1,504 +0,0 @@
+-		  GNU LESSER GENERAL PUBLIC LICENSE
+-		       Version 2.1, February 1999
+-
+- Copyright (C) 1991, 1999 Free Software Foundation, Inc.
+- 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+- Everyone is permitted to copy and distribute verbatim copies
+- of this license document, but changing it is not allowed.
+-
+-[This is the first released version of the Lesser GPL.  It also counts
+- as the successor of the GNU Library Public License, version 2, hence
+- the version number 2.1.]
+-
+-			    Preamble
+-
+-  The licenses for most software are designed to take away your
+-freedom to share and change it.  By contrast, the GNU General Public
+-Licenses are intended to guarantee your freedom to share and change
+-free software--to make sure the software is free for all its users.
+-
+-  This license, the Lesser General Public License, applies to some
+-specially designated software packages--typically libraries--of the
+-Free Software Foundation and other authors who decide to use it.  You
+-can use it too, but we suggest you first think carefully about whether
+-this license or the ordinary General Public License is the better
+-strategy to use in any particular case, based on the explanations below.
+-
+-  When we speak of free software, we are referring to freedom of use,
+-not price.  Our General Public Licenses are designed to make sure that
+-you have the freedom to distribute copies of free software (and charge
+-for this service if you wish); that you receive source code or can get
+-it if you want it; that you can change the software and use pieces of
+-it in new free programs; and that you are informed that you can do
+-these things.
+-
+-  To protect your rights, we need to make restrictions that forbid
+-distributors to deny you these rights or to ask you to surrender these
+-rights.  These restrictions translate to certain responsibilities for
+-you if you distribute copies of the library or if you modify it.
+-
+-  For example, if you distribute copies of the library, whether gratis
+-or for a fee, you must give the recipients all the rights that we gave
+-you.  You must make sure that they, too, receive or can get the source
+-code.  If you link other code with the library, you must provide
+-complete object files to the recipients, so that they can relink them
+-with the library after making changes to the library and recompiling
+-it.  And you must show them these terms so they know their rights.
+-
+-  We protect your rights with a two-step method: (1) we copyright the
+-library, and (2) we offer you this license, which gives you legal
+-permission to copy, distribute and/or modify the library.
+-
+-  To protect each distributor, we want to make it very clear that
+-there is no warranty for the free library.  Also, if the library is
+-modified by someone else and passed on, the recipients should know
+-that what they have is not the original version, so that the original
+-author's reputation will not be affected by problems that might be
+-introduced by others.
+-
+-  Finally, software patents pose a constant threat to the existence of
+-any free program.  We wish to make sure that a company cannot
+-effectively restrict the users of a free program by obtaining a
+-restrictive license from a patent holder.  Therefore, we insist that
+-any patent license obtained for a version of the library must be
+-consistent with the full freedom of use specified in this license.
+-
+-  Most GNU software, including some libraries, is covered by the
+-ordinary GNU General Public License.  This license, the GNU Lesser
+-General Public License, applies to certain designated libraries, and
+-is quite different from the ordinary General Public License.  We use
+-this license for certain libraries in order to permit linking those
+-libraries into non-free programs.
+-
+-  When a program is linked with a library, whether statically or using
+-a shared library, the combination of the two is legally speaking a
+-combined work, a derivative of the original library.  The ordinary
+-General Public License therefore permits such linking only if the
+-entire combination fits its criteria of freedom.  The Lesser General
+-Public License permits more lax criteria for linking other code with
+-the library.
+-
+-  We call this license the "Lesser" General Public License because it
+-does Less to protect the user's freedom than the ordinary General
+-Public License.  It also provides other free software developers Less
+-of an advantage over competing non-free programs.  These disadvantages
+-are the reason we use the ordinary General Public License for many
+-libraries.  However, the Lesser license provides advantages in certain
+-special circumstances.
+-
+-  For example, on rare occasions, there may be a special need to
+-encourage the widest possible use of a certain library, so that it becomes
+-a de-facto standard.  To achieve this, non-free programs must be
+-allowed to use the library.  A more frequent case is that a free
+-library does the same job as widely used non-free libraries.  In this
+-case, there is little to gain by limiting the free library to free
+-software only, so we use the Lesser General Public License.
+-
+-  In other cases, permission to use a particular library in non-free
+-programs enables a greater number of people to use a large body of
+-free software.  For example, permission to use the GNU C Library in
+-non-free programs enables many more people to use the whole GNU
+-operating system, as well as its variant, the GNU/Linux operating
+-system.
+-
+-  Although the Lesser General Public License is Less protective of the
+-users' freedom, it does ensure that the user of a program that is
+-linked with the Library has the freedom and the wherewithal to run
+-that program using a modified version of the Library.
+-
+-  The precise terms and conditions for copying, distribution and
+-modification follow.  Pay close attention to the difference between a
+-"work based on the library" and a "work that uses the library".  The
+-former contains code derived from the library, whereas the latter must
+-be combined with the library in order to run.
+-
+-		  GNU LESSER GENERAL PUBLIC LICENSE
+-   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
+-
+-  0. This License Agreement applies to any software library or other
+-program which contains a notice placed by the copyright holder or
+-other authorized party saying it may be distributed under the terms of
+-this Lesser General Public License (also called "this License").
+-Each licensee is addressed as "you".
+-
+-  A "library" means a collection of software functions and/or data
+-prepared so as to be conveniently linked with application programs
+-(which use some of those functions and data) to form executables.
+-
+-  The "Library", below, refers to any such software library or work
+-which has been distributed under these terms.  A "work based on the
+-Library" means either the Library or any derivative work under
+-copyright law: that is to say, a work containing the Library or a
+-portion of it, either verbatim or with modifications and/or translated
+-straightforwardly into another language.  (Hereinafter, translation is
+-included without limitation in the term "modification".)
+-
+-  "Source code" for a work means the preferred form of the work for
+-making modifications to it.  For a library, complete source code means
+-all the source code for all modules it contains, plus any associated
+-interface definition files, plus the scripts used to control compilation
+-and installation of the library.
+-
+-  Activities other than copying, distribution and modification are not
+-covered by this License; they are outside its scope.  The act of
+-running a program using the Library is not restricted, and output from
+-such a program is covered only if its contents constitute a work based
+-on the Library (independent of the use of the Library in a tool for
+-writing it).  Whether that is true depends on what the Library does
+-and what the program that uses the Library does.
+-  
+-  1. You may copy and distribute verbatim copies of the Library's
+-complete source code as you receive it, in any medium, provided that
+-you conspicuously and appropriately publish on each copy an
+-appropriate copyright notice and disclaimer of warranty; keep intact
+-all the notices that refer to this License and to the absence of any
+-warranty; and distribute a copy of this License along with the
+-Library.
+-
+-  You may charge a fee for the physical act of transferring a copy,
+-and you may at your option offer warranty protection in exchange for a
+-fee.
+-
+-  2. You may modify your copy or copies of the Library or any portion
+-of it, thus forming a work based on the Library, and copy and
+-distribute such modifications or work under the terms of Section 1
+-above, provided that you also meet all of these conditions:
+-
+-    a) The modified work must itself be a software library.
+-
+-    b) You must cause the files modified to carry prominent notices
+-    stating that you changed the files and the date of any change.
+-
+-    c) You must cause the whole of the work to be licensed at no
+-    charge to all third parties under the terms of this License.
+-
+-    d) If a facility in the modified Library refers to a function or a
+-    table of data to be supplied by an application program that uses
+-    the facility, other than as an argument passed when the facility
+-    is invoked, then you must make a good faith effort to ensure that,
+-    in the event an application does not supply such function or
+-    table, the facility still operates, and performs whatever part of
+-    its purpose remains meaningful.
+-
+-    (For example, a function in a library to compute square roots has
+-    a purpose that is entirely well-defined independent of the
+-    application.  Therefore, Subsection 2d requires that any
+-    application-supplied function or table used by this function must
+-    be optional: if the application does not supply it, the square
+-    root function must still compute square roots.)
+-
+-These requirements apply to the modified work as a whole.  If
+-identifiable sections of that work are not derived from the Library,
+-and can be reasonably considered independent and separate works in
+-themselves, then this License, and its terms, do not apply to those
+-sections when you distribute them as separate works.  But when you
+-distribute the same sections as part of a whole which is a work based
+-on the Library, the distribution of the whole must be on the terms of
+-this License, whose permissions for other licensees extend to the
+-entire whole, and thus to each and every part regardless of who wrote
+-it.
+-
+-Thus, it is not the intent of this section to claim rights or contest
+-your rights to work written entirely by you; rather, the intent is to
+-exercise the right to control the distribution of derivative or
+-collective works based on the Library.
+-
+-In addition, mere aggregation of another work not based on the Library
+-with the Library (or with a work based on the Library) on a volume of
+-a storage or distribution medium does not bring the other work under
+-the scope of this License.
+-
+-  3. You may opt to apply the terms of the ordinary GNU General Public
+-License instead of this License to a given copy of the Library.  To do
+-this, you must alter all the notices that refer to this License, so
+-that they refer to the ordinary GNU General Public License, version 2,
+-instead of to this License.  (If a newer version than version 2 of the
+-ordinary GNU General Public License has appeared, then you can specify
+-that version instead if you wish.)  Do not make any other change in
+-these notices.
+-
+-  Once this change is made in a given copy, it is irreversible for
+-that copy, so the ordinary GNU General Public License applies to all
+-subsequent copies and derivative works made from that copy.
+-
+-  This option is useful when you wish to copy part of the code of
+-the Library into a program that is not a library.
+-
+-  4. You may copy and distribute the Library (or a portion or
+-derivative of it, under Section 2) in object code or executable form
+-under the terms of Sections 1 and 2 above provided that you accompany
+-it with the complete corresponding machine-readable source code, which
+-must be distributed under the terms of Sections 1 and 2 above on a
+-medium customarily used for software interchange.
+-
+-  If distribution of object code is made by offering access to copy
+-from a designated place, then offering equivalent access to copy the
+-source code from the same place satisfies the requirement to
+-distribute the source code, even though third parties are not
+-compelled to copy the source along with the object code.
+-
+-  5. A program that contains no derivative of any portion of the
+-Library, but is designed to work with the Library by being compiled or
+-linked with it, is called a "work that uses the Library".  Such a
+-work, in isolation, is not a derivative work of the Library, and
+-therefore falls outside the scope of this License.
+-
+-  However, linking a "work that uses the Library" with the Library
+-creates an executable that is a derivative of the Library (because it
+-contains portions of the Library), rather than a "work that uses the
+-library".  The executable is therefore covered by this License.
+-Section 6 states terms for distribution of such executables.
+-
+-  When a "work that uses the Library" uses material from a header file
+-that is part of the Library, the object code for the work may be a
+-derivative work of the Library even though the source code is not.
+-Whether this is true is especially significant if the work can be
+-linked without the Library, or if the work is itself a library.  The
+-threshold for this to be true is not precisely defined by law.
+-
+-  If such an object file uses only numerical parameters, data
+-structure layouts and accessors, and small macros and small inline
+-functions (ten lines or less in length), then the use of the object
+-file is unrestricted, regardless of whether it is legally a derivative
+-work.  (Executables containing this object code plus portions of the
+-Library will still fall under Section 6.)
+-
+-  Otherwise, if the work is a derivative of the Library, you may
+-distribute the object code for the work under the terms of Section 6.
+-Any executables containing that work also fall under Section 6,
+-whether or not they are linked directly with the Library itself.
+-
+-  6. As an exception to the Sections above, you may also combine or
+-link a "work that uses the Library" with the Library to produce a
+-work containing portions of the Library, and distribute that work
+-under terms of your choice, provided that the terms permit
+-modification of the work for the customer's own use and reverse
+-engineering for debugging such modifications.
+-
+-  You must give prominent notice with each copy of the work that the
+-Library is used in it and that the Library and its use are covered by
+-this License.  You must supply a copy of this License.  If the work
+-during execution displays copyright notices, you must include the
+-copyright notice for the Library among them, as well as a reference
+-directing the user to the copy of this License.  Also, you must do one
+-of these things:
+-
+-    a) Accompany the work with the complete corresponding
+-    machine-readable source code for the Library including whatever
+-    changes were used in the work (which must be distributed under
+-    Sections 1 and 2 above); and, if the work is an executable linked
+-    with the Library, with the complete machine-readable "work that
+-    uses the Library", as object code and/or source code, so that the
+-    user can modify the Library and then relink to produce a modified
+-    executable containing the modified Library.  (It is understood
+-    that the user who changes the contents of definitions files in the
+-    Library will not necessarily be able to recompile the application
+-    to use the modified definitions.)
+-
+-    b) Use a suitable shared library mechanism for linking with the
+-    Library.  A suitable mechanism is one that (1) uses at run time a
+-    copy of the library already present on the user's computer system,
+-    rather than copying library functions into the executable, and (2)
+-    will operate properly with a modified version of the library, if
+-    the user installs one, as long as the modified version is
+-    interface-compatible with the version that the work was made with.
+-
+-    c) Accompany the work with a written offer, valid for at
+-    least three years, to give the same user the materials
+-    specified in Subsection 6a, above, for a charge no more
+-    than the cost of performing this distribution.
+-
+-    d) If distribution of the work is made by offering access to copy
+-    from a designated place, offer equivalent access to copy the above
+-    specified materials from the same place.
+-
+-    e) Verify that the user has already received a copy of these
+-    materials or that you have already sent this user a copy.
+-
+-  For an executable, the required form of the "work that uses the
+-Library" must include any data and utility programs needed for
+-reproducing the executable from it.  However, as a special exception,
+-the materials to be distributed need not include anything that is
+-normally distributed (in either source or binary form) with the major
+-components (compiler, kernel, and so on) of the operating system on
+-which the executable runs, unless that component itself accompanies
+-the executable.
+-
+-  It may happen that this requirement contradicts the license
+-restrictions of other proprietary libraries that do not normally
+-accompany the operating system.  Such a contradiction means you cannot
+-use both them and the Library together in an executable that you
+-distribute.
+-
+-  7. You may place library facilities that are a work based on the
+-Library side-by-side in a single library together with other library
+-facilities not covered by this License, and distribute such a combined
+-library, provided that the separate distribution of the work based on
+-the Library and of the other library facilities is otherwise
+-permitted, and provided that you do these two things:
+-
+-    a) Accompany the combined library with a copy of the same work
+-    based on the Library, uncombined with any other library
+-    facilities.  This must be distributed under the terms of the
+-    Sections above.
+-
+-    b) Give prominent notice with the combined library of the fact
+-    that part of it is a work based on the Library, and explaining
+-    where to find the accompanying uncombined form of the same work.
+-
+-  8. You may not copy, modify, sublicense, link with, or distribute
+-the Library except as expressly provided under this License.  Any
+-attempt otherwise to copy, modify, sublicense, link with, or
+-distribute the Library is void, and will automatically terminate your
+-rights under this License.  However, parties who have received copies,
+-or rights, from you under this License will not have their licenses
+-terminated so long as such parties remain in full compliance.
+-
+-  9. You are not required to accept this License, since you have not
+-signed it.  However, nothing else grants you permission to modify or
+-distribute the Library or its derivative works.  These actions are
+-prohibited by law if you do not accept this License.  Therefore, by
+-modifying or distributing the Library (or any work based on the
+-Library), you indicate your acceptance of this License to do so, and
+-all its terms and conditions for copying, distributing or modifying
+-the Library or works based on it.
+-
+-  10. Each time you redistribute the Library (or any work based on the
+-Library), the recipient automatically receives a license from the
+-original licensor to copy, distribute, link with or modify the Library
+-subject to these terms and conditions.  You may not impose any further
+-restrictions on the recipients' exercise of the rights granted herein.
+-You are not responsible for enforcing compliance by third parties with
+-this License.
+-
+-  11. If, as a consequence of a court judgment or allegation of patent
+-infringement or for any other reason (not limited to patent issues),
+-conditions are imposed on you (whether by court order, agreement or
+-otherwise) that contradict the conditions of this License, they do not
+-excuse you from the conditions of this License.  If you cannot
+-distribute so as to satisfy simultaneously your obligations under this
+-License and any other pertinent obligations, then as a consequence you
+-may not distribute the Library at all.  For example, if a patent
+-license would not permit royalty-free redistribution of the Library by
+-all those who receive copies directly or indirectly through you, then
+-the only way you could satisfy both it and this License would be to
+-refrain entirely from distribution of the Library.
+-
+-If any portion of this section is held invalid or unenforceable under any
+-particular circumstance, the balance of the section is intended to apply,
+-and the section as a whole is intended to apply in other circumstances.
+-
+-It is not the purpose of this section to induce you to infringe any
+-patents or other property right claims or to contest validity of any
+-such claims; this section has the sole purpose of protecting the
+-integrity of the free software distribution system which is
+-implemented by public license practices.  Many people have made
+-generous contributions to the wide range of software distributed
+-through that system in reliance on consistent application of that
+-system; it is up to the author/donor to decide if he or she is willing
+-to distribute software through any other system and a licensee cannot
+-impose that choice.
+-
+-This section is intended to make thoroughly clear what is believed to
+-be a consequence of the rest of this License.
+-
+-  12. If the distribution and/or use of the Library is restricted in
+-certain countries either by patents or by copyrighted interfaces, the
+-original copyright holder who places the Library under this License may add
+-an explicit geographical distribution limitation excluding those countries,
+-so that distribution is permitted only in or among countries not thus
+-excluded.  In such case, this License incorporates the limitation as if
+-written in the body of this License.
+-
+-  13. The Free Software Foundation may publish revised and/or new
+-versions of the Lesser General Public License from time to time.
+-Such new versions will be similar in spirit to the present version,
+-but may differ in detail to address new problems or concerns.
+-
+-Each version is given a distinguishing version number.  If the Library
+-specifies a version number of this License which applies to it and
+-"any later version", you have the option of following the terms and
+-conditions either of that version or of any later version published by
+-the Free Software Foundation.  If the Library does not specify a
+-license version number, you may choose any version ever published by
+-the Free Software Foundation.
+-
+-  14. If you wish to incorporate parts of the Library into other free
+-programs whose distribution conditions are incompatible with these,
+-write to the author to ask for permission.  For software which is
+-copyrighted by the Free Software Foundation, write to the Free
+-Software Foundation; we sometimes make exceptions for this.  Our
+-decision will be guided by the two goals of preserving the free status
+-of all derivatives of our free software and of promoting the sharing
+-and reuse of software generally.
+-
+-			    NO WARRANTY
+-
+-  15. BECAUSE THE LIBRARY IS LICENSED FREE OF CHARGE, THERE IS NO
+-WARRANTY FOR THE LIBRARY, TO THE EXTENT PERMITTED BY APPLICABLE LAW.
+-EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR
+-OTHER PARTIES PROVIDE THE LIBRARY "AS IS" WITHOUT WARRANTY OF ANY
+-KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE
+-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+-PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE
+-LIBRARY IS WITH YOU.  SHOULD THE LIBRARY PROVE DEFECTIVE, YOU ASSUME
+-THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
+-
+-  16. IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN
+-WRITING WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY
+-AND/OR REDISTRIBUTE THE LIBRARY AS PERMITTED ABOVE, BE LIABLE TO YOU
+-FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR
+-CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE
+-LIBRARY (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING
+-RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A
+-FAILURE OF THE LIBRARY TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF
+-SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+-DAMAGES.
+-
+-		     END OF TERMS AND CONDITIONS
+-
+-           How to Apply These Terms to Your New Libraries
+-
+-  If you develop a new library, and you want it to be of the greatest
+-possible use to the public, we recommend making it free software that
+-everyone can redistribute and change.  You can do so by permitting
+-redistribution under these terms (or, alternatively, under the terms of the
+-ordinary General Public License).
+-
+-  To apply these terms, attach the following notices to the library.  It is
+-safest to attach them to the start of each source file to most effectively
+-convey the exclusion of warranty; and each file should have at least the
+-"copyright" line and a pointer to where the full notice is found.
+-
+-    <one line to give the library's name and a brief idea of what it does.>
+-    Copyright (C) <year>  <name of author>
+-
+-    This library is free software; you can redistribute it and/or
+-    modify it under the terms of the GNU Lesser General Public
+-    License version 2.1, as published by the Free Software Foundation.
+-    
+-
+-    This library is distributed in the hope that it will be useful,
+-    but WITHOUT ANY WARRANTY; without even the implied warranty of
+-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-    Lesser General Public License for more details.
+-
+-    You should have received a copy of the GNU Lesser General Public
+-    License along with this library; if not, write to the Free Software
+-    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+-
+-Also add information on how to contact you by electronic and paper mail.
+-
+-You should also get your employer (if you work as a programmer) or your
+-school, if any, to sign a "copyright disclaimer" for the library, if
+-necessary.  Here is a sample; alter the names:
+-
+-  Yoyodyne, Inc., hereby disclaims all copyright interest in the
+-  library `Frob' (a library for tweaking knobs) written by James Random Hacker.
+-
+-  <signature of Ty Coon>, 1 April 1990
+-  Ty Coon, President of Vice
+-
+-That's all there is to it!
+-
+-
+diff --git a/thirdparty/qjson/README b/thirdparty/qjson/README
+deleted file mode 100644
+index fe4853d..0000000
+--- a/thirdparty/qjson/README
++++ /dev/null
+@@ -1,27 +0,0 @@
+-QJson
+--------------------------------------------------
+-Website: http://qjson.sourceforge.net/
+-Mailing List: https://lists.sourceforge.net/mailman/listinfo/qjson-devel
+-
+-Project Lead/Maintainer (2008-current):
+-  Flavio Castelli <flavio@castelli.name>
+-
+-Install
+--------
+-  For installation or compiling instructions, see the INSTALL file.
+-
+-License
+--------
+-  This library is licensed under the Lesser GNU General Public License version 2.1.
+-  See the COPYING.lib file for more information.
+-
+-Description
+------------
+-  JSON (JavaScript Object Notation) is a lightweight data-interchange format.
+-  It can represents integer, real number, string, an ordered sequence of value, and a collection of name/value pairs.
+-
+-  QJson is a qt-based library that maps JSON data to QVariant objects.
+-  JSON arrays will be mapped to QVariantList instances, while JSON's objects will be mapped to QVariantMap.
+-
+-Happy hacking
+-Flavio
+diff --git a/thirdparty/qjson/json_parser.cc b/thirdparty/qjson/json_parser.cc
+deleted file mode 100644
+index 620e135..0000000
+--- a/thirdparty/qjson/json_parser.cc
++++ /dev/null
+@@ -1,1116 +0,0 @@
+-/* A Bison parser, made by GNU Bison 2.3.  */
+-
+-/* Skeleton implementation for Bison LALR(1) parsers in C++
+-
+-   Copyright (C) 2002, 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
+-
+-   This program is free software; you can redistribute it and/or modify
+-   it under the terms of the GNU General Public License as published by
+-   the Free Software Foundation; either version 2, or (at your option)
+-   any later version.
+-
+-   This program is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-   GNU General Public License for more details.
+-
+-   You should have received a copy of the GNU General Public License
+-   along with this program; if not, write to the Free Software
+-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+-   Boston, MA 02110-1301, USA.  */
+-
+-/* As a special exception, you may create a larger work that contains
+-   part or all of the Bison parser skeleton and distribute that work
+-   under terms of your choice, so long as that work isn't itself a
+-   parser generator using the skeleton or a modified version thereof
+-   as a parser skeleton.  Alternatively, if you modify or redistribute
+-   the parser skeleton itself, you may (at your option) remove this
+-   special exception, which will cause the skeleton and the resulting
+-   Bison output files to be licensed under the GNU General Public
+-   License without this special exception.
+-
+-   This special exception was added by the Free Software Foundation in
+-   version 2.2 of Bison.  */
+-
+-
+-#include "json_parser.hh"
+-
+-/* User implementation prologue.  */
+-
+-
+-/* Line 317 of lalr1.cc.  */
+-#line 43 "json_parser.cc"
+-
+-#ifndef YY_
+-# if YYENABLE_NLS
+-#  if ENABLE_NLS
+-#   include <libintl.h> /* FIXME: INFRINGES ON USER NAME SPACE */
+-#   define YY_(msgid) dgettext ("bison-runtime", msgid)
+-#  endif
+-# endif
+-# ifndef YY_
+-#  define YY_(msgid) msgid
+-# endif
+-#endif
+-
+-/* Suppress unused-variable warnings by "using" E.  */
+-#define YYUSE(e) ((void) (e))
+-
+-/* A pseudo ostream that takes yydebug_ into account.  */
+-# define YYCDEBUG							\
+-  for (bool yydebugcond_ = yydebug_; yydebugcond_; yydebugcond_ = false)	\
+-    (*yycdebug_)
+-
+-/* Enable debugging if requested.  */
+-#if YYDEBUG
+-
+-# define YY_SYMBOL_PRINT(Title, Type, Value, Location)	\
+-do {							\
+-  if (yydebug_)						\
+-    {							\
+-      *yycdebug_ << Title << ' ';			\
+-      yy_symbol_print_ ((Type), (Value), (Location));	\
+-      *yycdebug_ << std::endl;				\
+-    }							\
+-} while (false)
+-
+-# define YY_REDUCE_PRINT(Rule)		\
+-do {					\
+-  if (yydebug_)				\
+-    yy_reduce_print_ (Rule);		\
+-} while (false)
+-
+-# define YY_STACK_PRINT()		\
+-do {					\
+-  if (yydebug_)				\
+-    yystack_print_ ();			\
+-} while (false)
+-
+-#else /* !YYDEBUG */
+-
+-# define YY_SYMBOL_PRINT(Title, Type, Value, Location)
+-# define YY_REDUCE_PRINT(Rule)
+-# define YY_STACK_PRINT()
+-
+-#endif /* !YYDEBUG */
+-
+-#define YYACCEPT	goto yyacceptlab
+-#define YYABORT		goto yyabortlab
+-#define YYERROR		goto yyerrorlab
+-
+-namespace yy
+-{
+-#if YYERROR_VERBOSE
+-
+-  /* Return YYSTR after stripping away unnecessary quotes and
+-     backslashes, so that it's suitable for yyerror.  The heuristic is
+-     that double-quoting is unnecessary unless the string contains an
+-     apostrophe, a comma, or backslash (other than backslash-backslash).
+-     YYSTR is taken from yytname.  */
+-  std::string
+-  json_parser::yytnamerr_ (const char *yystr)
+-  {
+-    if (*yystr == '"')
+-      {
+-        std::string yyr = "";
+-        char const *yyp = yystr;
+-
+-        for (;;)
+-          switch (*++yyp)
+-            {
+-            case '\'':
+-            case ',':
+-              goto do_not_strip_quotes;
+-
+-            case '\\':
+-              if (*++yyp != '\\')
+-                goto do_not_strip_quotes;
+-              /* Fall through.  */
+-            default:
+-              yyr += *yyp;
+-              break;
+-
+-            case '"':
+-              return yyr;
+-            }
+-      do_not_strip_quotes: ;
+-      }
+-
+-    return yystr;
+-  }
+-
+-#endif
+-
+-  /// Build a parser object.
+-  json_parser::json_parser (QJson::ParserPrivate* driver_yyarg)
+-    : yydebug_ (false),
+-      yycdebug_ (&std::cerr),
+-      driver (driver_yyarg)
+-  {
+-  }
+-
+-  json_parser::~json_parser ()
+-  {
+-  }
+-
+-#if YYDEBUG
+-  /*--------------------------------.
+-  | Print this symbol on YYOUTPUT.  |
+-  `--------------------------------*/
+-
+-  inline void
+-  json_parser::yy_symbol_value_print_ (int yytype,
+-			   const semantic_type* yyvaluep, const location_type* yylocationp)
+-  {
+-    YYUSE (yylocationp);
+-    YYUSE (yyvaluep);
+-    switch (yytype)
+-      {
+-         default:
+-	  break;
+-      }
+-  }
+-
+-
+-  void
+-  json_parser::yy_symbol_print_ (int yytype,
+-			   const semantic_type* yyvaluep, const location_type* yylocationp)
+-  {
+-    *yycdebug_ << (yytype < yyntokens_ ? "token" : "nterm")
+-	       << ' ' << yytname_[yytype] << " ("
+-	       << *yylocationp << ": ";
+-    yy_symbol_value_print_ (yytype, yyvaluep, yylocationp);
+-    *yycdebug_ << ')';
+-  }
+-#endif /* ! YYDEBUG */
+-
+-  void
+-  json_parser::yydestruct_ (const char* yymsg,
+-			   int yytype, semantic_type* yyvaluep, location_type* yylocationp)
+-  {
+-    YYUSE (yylocationp);
+-    YYUSE (yymsg);
+-    YYUSE (yyvaluep);
+-
+-    YY_SYMBOL_PRINT (yymsg, yytype, yyvaluep, yylocationp);
+-
+-    switch (yytype)
+-      {
+-  
+-	default:
+-	  break;
+-      }
+-  }
+-
+-  void
+-  json_parser::yypop_ (unsigned int n)
+-  {
+-    yystate_stack_.pop (n);
+-    yysemantic_stack_.pop (n);
+-    yylocation_stack_.pop (n);
+-  }
+-
+-  std::ostream&
+-  json_parser::debug_stream () const
+-  {
+-    return *yycdebug_;
+-  }
+-
+-  void
+-  json_parser::set_debug_stream (std::ostream& o)
+-  {
+-    yycdebug_ = &o;
+-  }
+-
+-
+-  json_parser::debug_level_type
+-  json_parser::debug_level () const
+-  {
+-    return yydebug_;
+-  }
+-
+-  void
+-  json_parser::set_debug_level (debug_level_type l)
+-  {
+-    yydebug_ = l;
+-  }
+-
+-
+-  int
+-  json_parser::parse ()
+-  {
+-    /// Look-ahead and look-ahead in internal form.
+-    int yychar = yyempty_;
+-    int yytoken = 0;
+-
+-    /* State.  */
+-    int yyn;
+-    int yylen = 0;
+-    int yystate = 0;
+-
+-    /* Error handling.  */
+-    int yynerrs_ = 0;
+-    int yyerrstatus_ = 0;
+-
+-    /// Semantic value of the look-ahead.
+-    semantic_type yylval;
+-    /// Location of the look-ahead.
+-    location_type yylloc;
+-    /// The locations where the error started and ended.
+-    location yyerror_range[2];
+-
+-    /// $$.
+-    semantic_type yyval;
+-    /// @$.
+-    location_type yyloc;
+-
+-    int yyresult;
+-
+-    YYCDEBUG << "Starting parse" << std::endl;
+-
+-
+-    /* Initialize the stacks.  The initial state will be pushed in
+-       yynewstate, since the latter expects the semantical and the
+-       location values to have been already stored, initialize these
+-       stacks with a primary value.  */
+-    yystate_stack_ = state_stack_type (0);
+-    yysemantic_stack_ = semantic_stack_type (0);
+-    yylocation_stack_ = location_stack_type (0);
+-    yysemantic_stack_.push (yylval);
+-    yylocation_stack_.push (yylloc);
+-
+-    /* New state.  */
+-  yynewstate:
+-    yystate_stack_.push (yystate);
+-    YYCDEBUG << "Entering state " << yystate << std::endl;
+-    goto yybackup;
+-
+-    /* Backup.  */
+-  yybackup:
+-
+-    /* Try to take a decision without look-ahead.  */
+-    yyn = yypact_[yystate];
+-    if (yyn == yypact_ninf_)
+-      goto yydefault;
+-
+-    /* Read a look-ahead token.  */
+-    if (yychar == yyempty_)
+-      {
+-	YYCDEBUG << "Reading a token: ";
+-	yychar = yylex (&yylval, &yylloc, driver);
+-      }
+-
+-
+-    /* Convert token to internal form.  */
+-    if (yychar <= yyeof_)
+-      {
+-	yychar = yytoken = yyeof_;
+-	YYCDEBUG << "Now at end of input." << std::endl;
+-      }
+-    else
+-      {
+-	yytoken = yytranslate_ (yychar);
+-	YY_SYMBOL_PRINT ("Next token is", yytoken, &yylval, &yylloc);
+-      }
+-
+-    /* If the proper action on seeing token YYTOKEN is to reduce or to
+-       detect an error, take that action.  */
+-    yyn += yytoken;
+-    if (yyn < 0 || yylast_ < yyn || yycheck_[yyn] != yytoken)
+-      goto yydefault;
+-
+-    /* Reduce or error.  */
+-    yyn = yytable_[yyn];
+-    if (yyn <= 0)
+-      {
+-	if (yyn == 0 || yyn == yytable_ninf_)
+-	goto yyerrlab;
+-	yyn = -yyn;
+-	goto yyreduce;
+-      }
+-
+-    /* Accept?  */
+-    if (yyn == yyfinal_)
+-      goto yyacceptlab;
+-
+-    /* Shift the look-ahead token.  */
+-    YY_SYMBOL_PRINT ("Shifting", yytoken, &yylval, &yylloc);
+-
+-    /* Discard the token being shifted unless it is eof.  */
+-    if (yychar != yyeof_)
+-      yychar = yyempty_;
+-
+-    yysemantic_stack_.push (yylval);
+-    yylocation_stack_.push (yylloc);
+-
+-    /* Count tokens shifted since error; after three, turn off error
+-       status.  */
+-    if (yyerrstatus_)
+-      --yyerrstatus_;
+-
+-    yystate = yyn;
+-    goto yynewstate;
+-
+-  /*-----------------------------------------------------------.
+-  | yydefault -- do the default action for the current state.  |
+-  `-----------------------------------------------------------*/
+-  yydefault:
+-    yyn = yydefact_[yystate];
+-    if (yyn == 0)
+-      goto yyerrlab;
+-    goto yyreduce;
+-
+-  /*-----------------------------.
+-  | yyreduce -- Do a reduction.  |
+-  `-----------------------------*/
+-  yyreduce:
+-    yylen = yyr2_[yyn];
+-    /* If YYLEN is nonzero, implement the default value of the action:
+-       `$$ = $1'.  Otherwise, use the top of the stack.
+-
+-       Otherwise, the following line sets YYVAL to garbage.
+-       This behavior is undocumented and Bison
+-       users should not rely upon it.  */
+-    if (yylen)
+-      yyval = yysemantic_stack_[yylen - 1];
+-    else
+-      yyval = yysemantic_stack_[0];
+-
+-    {
+-      slice<location_type, location_stack_type> slice (yylocation_stack_, yylen);
+-      YYLLOC_DEFAULT (yyloc, slice, yylen);
+-    }
+-    YY_REDUCE_PRINT (yyn);
+-    switch (yyn)
+-      {
+-	  case 2:
+-#line 84 "json_parser.yy"
+-    {
+-              driver->m_result = (yysemantic_stack_[(1) - (1)]);
+-              qjsonDebug() << "json_parser - parsing finished";
+-            ;}
+-    break;
+-
+-  case 3:
+-#line 89 "json_parser.yy"
+-    { (yyval) = (yysemantic_stack_[(1) - (1)]); ;}
+-    break;
+-
+-  case 4:
+-#line 91 "json_parser.yy"
+-    {
+-            qCritical()<< "json_parser - syntax error found, "
+-                    << "forcing abort, Line" << (yyloc).begin.line << "Column" << (yyloc).begin.column;
+-            YYABORT;
+-          ;}
+-    break;
+-
+-  case 6:
+-#line 98 "json_parser.yy"
+-    { (yyval) = (yysemantic_stack_[(3) - (2)]); ;}
+-    break;
+-
+-  case 7:
+-#line 100 "json_parser.yy"
+-    { (yyval) = QVariant (QVariantMap()); ;}
+-    break;
+-
+-  case 8:
+-#line 101 "json_parser.yy"
+-    {
+-            QVariantMap members = (yysemantic_stack_[(2) - (2)]).toMap();
+-            (yysemantic_stack_[(2) - (2)]) = QVariant(); // Allow reuse of map
+-            (yyval) = QVariant(members.unite ((yysemantic_stack_[(2) - (1)]).toMap()));
+-          ;}
+-    break;
+-
+-  case 9:
+-#line 107 "json_parser.yy"
+-    { (yyval) = QVariant (QVariantMap()); ;}
+-    break;
+-
+-  case 10:
+-#line 108 "json_parser.yy"
+-    {
+-          QVariantMap members = (yysemantic_stack_[(3) - (3)]).toMap();
+-          (yysemantic_stack_[(3) - (3)]) = QVariant(); // Allow reuse of map
+-          (yyval) = QVariant(members.unite ((yysemantic_stack_[(3) - (2)]).toMap()));
+-          ;}
+-    break;
+-
+-  case 11:
+-#line 114 "json_parser.yy"
+-    {
+-            QVariantMap pair;
+-            pair.insert ((yysemantic_stack_[(3) - (1)]).toString(), QVariant((yysemantic_stack_[(3) - (3)])));
+-            (yyval) = QVariant (pair);
+-          ;}
+-    break;
+-
+-  case 12:
+-#line 120 "json_parser.yy"
+-    { (yyval) = (yysemantic_stack_[(3) - (2)]); ;}
+-    break;
+-
+-  case 13:
+-#line 122 "json_parser.yy"
+-    { (yyval) = QVariant (QVariantList()); ;}
+-    break;
+-
+-  case 14:
+-#line 123 "json_parser.yy"
+-    {
+-          QVariantList members = (yysemantic_stack_[(2) - (2)]).toList();
+-          (yysemantic_stack_[(2) - (2)]) = QVariant(); // Allow reuse of list
+-          members.prepend ((yysemantic_stack_[(2) - (1)]));
+-          (yyval) = QVariant(members);
+-        ;}
+-    break;
+-
+-  case 15:
+-#line 130 "json_parser.yy"
+-    { (yyval) = QVariant (QVariantList()); ;}
+-    break;
+-
+-  case 16:
+-#line 131 "json_parser.yy"
+-    {
+-            QVariantList members = (yysemantic_stack_[(3) - (3)]).toList();
+-            (yysemantic_stack_[(3) - (3)]) = QVariant(); // Allow reuse of list
+-            members.prepend ((yysemantic_stack_[(3) - (2)]));
+-            (yyval) = QVariant(members);
+-          ;}
+-    break;
+-
+-  case 17:
+-#line 138 "json_parser.yy"
+-    { (yyval) = (yysemantic_stack_[(1) - (1)]); ;}
+-    break;
+-
+-  case 18:
+-#line 139 "json_parser.yy"
+-    { (yyval) = (yysemantic_stack_[(1) - (1)]); ;}
+-    break;
+-
+-  case 19:
+-#line 140 "json_parser.yy"
+-    { (yyval) = (yysemantic_stack_[(1) - (1)]); ;}
+-    break;
+-
+-  case 20:
+-#line 141 "json_parser.yy"
+-    { (yyval) = (yysemantic_stack_[(1) - (1)]); ;}
+-    break;
+-
+-  case 21:
+-#line 142 "json_parser.yy"
+-    { (yyval) = QVariant (true); ;}
+-    break;
+-
+-  case 22:
+-#line 143 "json_parser.yy"
+-    { (yyval) = QVariant (false); ;}
+-    break;
+-
+-  case 23:
+-#line 144 "json_parser.yy"
+-    {
+-          QVariant null_variant;
+-          (yyval) = null_variant;
+-        ;}
+-    break;
+-
+-  case 24:
+-#line 149 "json_parser.yy"
+-    { (yyval) = QVariant(QVariant::Double); (yyval).setValue( -std::numeric_limits<double>::infinity() ); ;}
+-    break;
+-
+-  case 25:
+-#line 150 "json_parser.yy"
+-    { (yyval) = QVariant(QVariant::Double); (yyval).setValue( std::numeric_limits<double>::infinity() ); ;}
+-    break;
+-
+-  case 26:
+-#line 151 "json_parser.yy"
+-    { (yyval) = QVariant(QVariant::Double); (yyval).setValue( std::numeric_limits<double>::quiet_NaN() ); ;}
+-    break;
+-
+-  case 28:
+-#line 154 "json_parser.yy"
+-    {
+-            if ((yysemantic_stack_[(1) - (1)]).toByteArray().startsWith('-')) {
+-              (yyval) = QVariant (QVariant::LongLong);
+-              (yyval).setValue((yysemantic_stack_[(1) - (1)]).toLongLong());
+-            }
+-            else {
+-              (yyval) = QVariant (QVariant::ULongLong);
+-              (yyval).setValue((yysemantic_stack_[(1) - (1)]).toULongLong());
+-            }
+-          ;}
+-    break;
+-
+-  case 29:
+-#line 164 "json_parser.yy"
+-    {
+-            const QByteArray value = (yysemantic_stack_[(2) - (1)]).toByteArray() + (yysemantic_stack_[(2) - (2)]).toByteArray();
+-            (yyval) = QVariant(QVariant::Double);
+-            (yyval).setValue(value.toDouble());
+-          ;}
+-    break;
+-
+-  case 30:
+-#line 169 "json_parser.yy"
+-    { (yyval) = QVariant ((yysemantic_stack_[(2) - (1)]).toByteArray() + (yysemantic_stack_[(2) - (2)]).toByteArray()); ;}
+-    break;
+-
+-  case 31:
+-#line 170 "json_parser.yy"
+-    {
+-            const QByteArray value = (yysemantic_stack_[(3) - (1)]).toByteArray() + (yysemantic_stack_[(3) - (2)]).toByteArray() + (yysemantic_stack_[(3) - (3)]).toByteArray();
+-            (yyval) = QVariant (value);
+-          ;}
+-    break;
+-
+-  case 32:
+-#line 175 "json_parser.yy"
+-    { (yyval) = QVariant ((yysemantic_stack_[(2) - (1)]).toByteArray() + (yysemantic_stack_[(2) - (2)]).toByteArray()); ;}
+-    break;
+-
+-  case 33:
+-#line 176 "json_parser.yy"
+-    { (yyval) = QVariant (QByteArray("-") + (yysemantic_stack_[(3) - (2)]).toByteArray() + (yysemantic_stack_[(3) - (3)]).toByteArray()); ;}
+-    break;
+-
+-  case 34:
+-#line 178 "json_parser.yy"
+-    { (yyval) = QVariant (QByteArray("")); ;}
+-    break;
+-
+-  case 35:
+-#line 179 "json_parser.yy"
+-    {
+-          (yyval) = QVariant((yysemantic_stack_[(2) - (1)]).toByteArray() + (yysemantic_stack_[(2) - (2)]).toByteArray());
+-        ;}
+-    break;
+-
+-  case 36:
+-#line 183 "json_parser.yy"
+-    {
+-          (yyval) = QVariant(QByteArray(".") + (yysemantic_stack_[(2) - (2)]).toByteArray());
+-        ;}
+-    break;
+-
+-  case 37:
+-#line 187 "json_parser.yy"
+-    { (yyval) = QVariant((yysemantic_stack_[(2) - (1)]).toByteArray() + (yysemantic_stack_[(2) - (2)]).toByteArray()); ;}
+-    break;
+-
+-  case 38:
+-#line 189 "json_parser.yy"
+-    { (yyval) = (yysemantic_stack_[(3) - (2)]); ;}
+-    break;
+-
+-  case 39:
+-#line 191 "json_parser.yy"
+-    { (yyval) = QVariant (QString(QLatin1String(""))); ;}
+-    break;
+-
+-  case 40:
+-#line 192 "json_parser.yy"
+-    {
+-                (yyval) = (yysemantic_stack_[(1) - (1)]);
+-              ;}
+-    break;
+-
+-
+-    /* Line 675 of lalr1.cc.  */
+-#line 628 "json_parser.cc"
+-	default: break;
+-      }
+-    YY_SYMBOL_PRINT ("-> $$ =", yyr1_[yyn], &yyval, &yyloc);
+-
+-    yypop_ (yylen);
+-    yylen = 0;
+-    YY_STACK_PRINT ();
+-
+-    yysemantic_stack_.push (yyval);
+-    yylocation_stack_.push (yyloc);
+-
+-    /* Shift the result of the reduction.  */
+-    yyn = yyr1_[yyn];
+-    yystate = yypgoto_[yyn - yyntokens_] + yystate_stack_[0];
+-    if (0 <= yystate && yystate <= yylast_
+-	&& yycheck_[yystate] == yystate_stack_[0])
+-      yystate = yytable_[yystate];
+-    else
+-      yystate = yydefgoto_[yyn - yyntokens_];
+-    goto yynewstate;
+-
+-  /*------------------------------------.
+-  | yyerrlab -- here on detecting error |
+-  `------------------------------------*/
+-  yyerrlab:
+-    /* If not already recovering from an error, report this error.  */
+-    if (!yyerrstatus_)
+-      {
+-	++yynerrs_;
+-	error (yylloc, yysyntax_error_ (yystate, yytoken));
+-      }
+-
+-    yyerror_range[0] = yylloc;
+-    if (yyerrstatus_ == 3)
+-      {
+-	/* If just tried and failed to reuse look-ahead token after an
+-	 error, discard it.  */
+-
+-	if (yychar <= yyeof_)
+-	  {
+-	  /* Return failure if at end of input.  */
+-	  if (yychar == yyeof_)
+-	    YYABORT;
+-	  }
+-	else
+-	  {
+-	    yydestruct_ ("Error: discarding", yytoken, &yylval, &yylloc);
+-	    yychar = yyempty_;
+-	  }
+-      }
+-
+-    /* Else will try to reuse look-ahead token after shifting the error
+-       token.  */
+-    goto yyerrlab1;
+-
+-
+-  /*---------------------------------------------------.
+-  | yyerrorlab -- error raised explicitly by YYERROR.  |
+-  `---------------------------------------------------*/
+-  yyerrorlab:
+-
+-    /* Pacify compilers like GCC when the user code never invokes
+-       YYERROR and the label yyerrorlab therefore never appears in user
+-       code.  */
+-    if (false)
+-      goto yyerrorlab;
+-
+-    yyerror_range[0] = yylocation_stack_[yylen - 1];
+-    /* Do not reclaim the symbols of the rule which action triggered
+-       this YYERROR.  */
+-    yypop_ (yylen);
+-    yylen = 0;
+-    yystate = yystate_stack_[0];
+-    goto yyerrlab1;
+-
+-  /*-------------------------------------------------------------.
+-  | yyerrlab1 -- common code for both syntax error and YYERROR.  |
+-  `-------------------------------------------------------------*/
+-  yyerrlab1:
+-    yyerrstatus_ = 3;	/* Each real token shifted decrements this.  */
+-
+-    for (;;)
+-      {
+-	yyn = yypact_[yystate];
+-	if (yyn != yypact_ninf_)
+-	{
+-	  yyn += yyterror_;
+-	  if (0 <= yyn && yyn <= yylast_ && yycheck_[yyn] == yyterror_)
+-	    {
+-	      yyn = yytable_[yyn];
+-	      if (0 < yyn)
+-		break;
+-	    }
+-	}
+-
+-	/* Pop the current state because it cannot handle the error token.  */
+-	if (yystate_stack_.height () == 1)
+-	YYABORT;
+-
+-	yyerror_range[0] = yylocation_stack_[0];
+-	yydestruct_ ("Error: popping",
+-		     yystos_[yystate],
+-		     &yysemantic_stack_[0], &yylocation_stack_[0]);
+-	yypop_ ();
+-	yystate = yystate_stack_[0];
+-	YY_STACK_PRINT ();
+-      }
+-
+-    if (yyn == yyfinal_)
+-      goto yyacceptlab;
+-
+-    yyerror_range[1] = yylloc;
+-    // Using YYLLOC is tempting, but would change the location of
+-    // the look-ahead.  YYLOC is available though.
+-    YYLLOC_DEFAULT (yyloc, (yyerror_range - 1), 2);
+-    yysemantic_stack_.push (yylval);
+-    yylocation_stack_.push (yyloc);
+-
+-    /* Shift the error token.  */
+-    YY_SYMBOL_PRINT ("Shifting", yystos_[yyn],
+-		   &yysemantic_stack_[0], &yylocation_stack_[0]);
+-
+-    yystate = yyn;
+-    goto yynewstate;
+-
+-    /* Accept.  */
+-  yyacceptlab:
+-    yyresult = 0;
+-    goto yyreturn;
+-
+-    /* Abort.  */
+-  yyabortlab:
+-    yyresult = 1;
+-    goto yyreturn;
+-
+-  yyreturn:
+-    if (yychar != yyeof_ && yychar != yyempty_)
+-      yydestruct_ ("Cleanup: discarding lookahead", yytoken, &yylval, &yylloc);
+-
+-    /* Do not reclaim the symbols of the rule which action triggered
+-       this YYABORT or YYACCEPT.  */
+-    yypop_ (yylen);
+-    while (yystate_stack_.height () != 1)
+-      {
+-	yydestruct_ ("Cleanup: popping",
+-		   yystos_[yystate_stack_[0]],
+-		   &yysemantic_stack_[0],
+-		   &yylocation_stack_[0]);
+-	yypop_ ();
+-      }
+-
+-    return yyresult;
+-  }
+-
+-  // Generate an error message.
+-  std::string
+-  json_parser::yysyntax_error_ (int yystate, int tok)
+-  {
+-    std::string res;
+-    YYUSE (yystate);
+-#if YYERROR_VERBOSE
+-    int yyn = yypact_[yystate];
+-    if (yypact_ninf_ < yyn && yyn <= yylast_)
+-      {
+-	/* Start YYX at -YYN if negative to avoid negative indexes in
+-	   YYCHECK.  */
+-	int yyxbegin = yyn < 0 ? -yyn : 0;
+-
+-	/* Stay within bounds of both yycheck and yytname.  */
+-	int yychecklim = yylast_ - yyn + 1;
+-	int yyxend = yychecklim < yyntokens_ ? yychecklim : yyntokens_;
+-	int count = 0;
+-	for (int x = yyxbegin; x < yyxend; ++x)
+-	  if (yycheck_[x + yyn] == x && x != yyterror_)
+-	    ++count;
+-
+-	// FIXME: This method of building the message is not compatible
+-	// with internationalization.  It should work like yacc.c does it.
+-	// That is, first build a string that looks like this:
+-	// "syntax error, unexpected %s or %s or %s"
+-	// Then, invoke YY_ on this string.
+-	// Finally, use the string as a format to output
+-	// yytname_[tok], etc.
+-	// Until this gets fixed, this message appears in English only.
+-	res = "syntax error, unexpected ";
+-	res += yytnamerr_ (yytname_[tok]);
+-	if (count < 5)
+-	  {
+-	    count = 0;
+-	    for (int x = yyxbegin; x < yyxend; ++x)
+-	      if (yycheck_[x + yyn] == x && x != yyterror_)
+-		{
+-		  res += (!count++) ? ", expecting " : " or ";
+-		  res += yytnamerr_ (yytname_[x]);
+-		}
+-	  }
+-      }
+-    else
+-#endif
+-      res = YY_("syntax error");
+-    return res;
+-  }
+-
+-
+-  /* YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
+-     STATE-NUM.  */
+-  const signed char json_parser::yypact_ninf_ = -21;
+-  const signed char
+-  json_parser::yypact_[] =
+-  {
+-         3,   -21,   -21,    -6,    31,   -10,     0,   -21,   -21,   -21,
+-       6,   -21,   -21,    25,   -21,   -21,   -21,   -21,   -21,   -21,
+-      -5,   -21,    22,    19,    21,    23,    24,     0,   -21,     0,
+-     -21,   -21,    13,   -21,     0,     0,    29,   -21,   -21,    -6,
+-     -21,    31,   -21,    31,   -21,   -21,   -21,   -21,   -21,   -21,
+-     -21,    19,   -21,    24,   -21,   -21
+-  };
+-
+-  /* YYDEFACT[S] -- default rule to reduce with in state S when YYTABLE
+-     doesn't specify something else to do.  Zero means the default is an
+-     error.  */
+-  const unsigned char
+-  json_parser::yydefact_[] =
+-  {
+-         0,     5,     4,     7,    13,     0,    34,    21,    22,    23,
+-      39,    25,    26,     0,     2,    19,    20,     3,    18,    27,
+-      28,    17,     0,     9,     0,     0,    15,    34,    24,    34,
+-      32,    40,     0,     1,    34,    34,    29,    30,     6,     0,
+-       8,     0,    12,     0,    14,    33,    35,    38,    36,    37,
+-      31,     9,    11,    15,    10,    16
+-  };
+-
+-  /* YYPGOTO[NTERM-NUM].  */
+-  const signed char
+-  json_parser::yypgoto_[] =
+-  {
+-       -21,   -21,   -21,   -21,   -21,   -20,     4,   -21,   -21,   -18,
+-      -4,   -21,   -21,   -21,   -14,   -21,    -3,    -1,   -21
+-  };
+-
+-  /* YYDEFGOTO[NTERM-NUM].  */
+-  const signed char
+-  json_parser::yydefgoto_[] =
+-  {
+-        -1,    13,    14,    15,    22,    40,    23,    16,    25,    44,
+-      17,    18,    19,    20,    30,    36,    37,    21,    32
+-  };
+-
+-  /* YYTABLE[YYPACT[STATE-NUM]].  What to do in state STATE-NUM.  If
+-     positive, shift that token.  If negative, reduce the rule which
+-     number is the opposite.  If zero, do what YYDEFACT says.  */
+-  const signed char json_parser::yytable_ninf_ = -1;
+-  const unsigned char
+-  json_parser::yytable_[] =
+-  {
+-        26,    27,    24,     1,     2,    34,     3,    35,     4,    28,
+-      10,    29,     5,    45,     6,    46,     7,     8,     9,    10,
+-      48,    49,    11,    12,    31,    33,    38,    39,    41,    42,
+-      47,    54,    43,    50,     3,    55,     4,    52,    24,    53,
+-       5,    35,     6,    51,     7,     8,     9,    10,     0,     0,
+-      11,    12
+-  };
+-
+-  /* YYCHECK.  */
+-  const signed char
+-  json_parser::yycheck_[] =
+-  {
+-         4,    11,     3,     0,     1,    10,     3,    12,     5,    19,
+-      16,    11,     9,    27,    11,    29,    13,    14,    15,    16,
+-      34,    35,    19,    20,    18,     0,     4,     8,     7,     6,
+-      17,    51,     8,    36,     3,    53,     5,    41,    39,    43,
+-       9,    12,    11,    39,    13,    14,    15,    16,    -1,    -1,
+-      19,    20
+-  };
+-
+-  /* STOS_[STATE-NUM] -- The (internal number of the) accessing
+-     symbol of state STATE-NUM.  */
+-  const unsigned char
+-  json_parser::yystos_[] =
+-  {
+-         0,     0,     1,     3,     5,     9,    11,    13,    14,    15,
+-      16,    19,    20,    22,    23,    24,    28,    31,    32,    33,
+-      34,    38,    25,    27,    38,    29,    31,    11,    19,    11,
+-      35,    18,    39,     0,    10,    12,    36,    37,     4,     8,
+-      26,     7,     6,     8,    30,    35,    35,    17,    35,    35,
+-      37,    27,    31,    31,    26,    30
+-  };
+-
+-#if YYDEBUG
+-  /* TOKEN_NUMBER_[YYLEX-NUM] -- Internal symbol number corresponding
+-     to YYLEX-NUM.  */
+-  const unsigned short int
+-  json_parser::yytoken_number_[] =
+-  {
+-         0,   256,   257,     1,     2,     3,     4,     5,     6,     7,
+-       8,     9,    10,    11,    12,    13,    14,    15,    16,    17,
+-      18
+-  };
+-#endif
+-
+-  /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
+-  const unsigned char
+-  json_parser::yyr1_[] =
+-  {
+-         0,    21,    22,    23,    23,    23,    24,    25,    25,    26,
+-      26,    27,    28,    29,    29,    30,    30,    31,    31,    31,
+-      31,    31,    31,    31,    32,    32,    32,    32,    33,    33,
+-      33,    33,    34,    34,    35,    35,    36,    37,    38,    39,
+-      39
+-  };
+-
+-  /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
+-  const unsigned char
+-  json_parser::yyr2_[] =
+-  {
+-         0,     2,     1,     1,     1,     1,     3,     0,     2,     0,
+-       3,     3,     3,     0,     2,     0,     3,     1,     1,     1,
+-       1,     1,     1,     1,     2,     1,     1,     1,     1,     2,
+-       2,     3,     2,     3,     0,     2,     2,     2,     3,     0,
+-       1
+-  };
+-
+-#if YYDEBUG || YYERROR_VERBOSE || YYTOKEN_TABLE
+-  /* YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
+-     First, the terminals, then, starting at \a yyntokens_, nonterminals.  */
+-  const char*
+-  const json_parser::yytname_[] =
+-  {
+-    "\"end of file\"", "error", "$undefined", "\"{\"", "\"}\"", "\"[\"",
+-  "\"]\"", "\":\"", "\",\"", "\"-\"", "\".\"", "\"digit\"",
+-  "\"exponential\"", "\"true\"", "\"false\"", "\"null\"",
+-  "\"open quotation mark\"", "\"close quotation mark\"", "\"string\"",
+-  "\"Infinity\"", "\"NaN\"", "$accept", "start", "data", "object",
+-  "members", "r_members", "pair", "array", "values", "r_values", "value",
+-  "special_or_number", "number", "int", "digits", "fract", "exp", "string",
+-  "string_arg", 0
+-  };
+-#endif
+-
+-#if YYDEBUG
+-  /* YYRHS -- A `-1'-separated list of the rules' RHS.  */
+-  const json_parser::rhs_number_type
+-  json_parser::yyrhs_[] =
+-  {
+-        22,     0,    -1,    23,    -1,    31,    -1,     1,    -1,     0,
+-      -1,     3,    25,     4,    -1,    -1,    27,    26,    -1,    -1,
+-       8,    27,    26,    -1,    38,     7,    31,    -1,     5,    29,
+-       6,    -1,    -1,    31,    30,    -1,    -1,     8,    31,    30,
+-      -1,    38,    -1,    32,    -1,    24,    -1,    28,    -1,    13,
+-      -1,    14,    -1,    15,    -1,     9,    19,    -1,    19,    -1,
+-      20,    -1,    33,    -1,    34,    -1,    34,    36,    -1,    34,
+-      37,    -1,    34,    36,    37,    -1,    11,    35,    -1,     9,
+-      11,    35,    -1,    -1,    11,    35,    -1,    10,    35,    -1,
+-      12,    35,    -1,    16,    39,    17,    -1,    -1,    18,    -1
+-  };
+-
+-  /* YYPRHS[YYN] -- Index of the first RHS symbol of rule number YYN in
+-     YYRHS.  */
+-  const unsigned char
+-  json_parser::yyprhs_[] =
+-  {
+-         0,     0,     3,     5,     7,     9,    11,    15,    16,    19,
+-      20,    24,    28,    32,    33,    36,    37,    41,    43,    45,
+-      47,    49,    51,    53,    55,    58,    60,    62,    64,    66,
+-      69,    72,    76,    79,    83,    84,    87,    90,    93,    97,
+-      98
+-  };
+-
+-  /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
+-  const unsigned char
+-  json_parser::yyrline_[] =
+-  {
+-         0,    84,    84,    89,    90,    96,    98,   100,   101,   107,
+-     108,   114,   120,   122,   123,   130,   131,   138,   139,   140,
+-     141,   142,   143,   144,   149,   150,   151,   152,   154,   164,
+-     169,   170,   175,   176,   178,   179,   183,   187,   189,   191,
+-     192
+-  };
+-
+-  // Print the state stack on the debug stream.
+-  void
+-  json_parser::yystack_print_ ()
+-  {
+-    *yycdebug_ << "Stack now";
+-    for (state_stack_type::const_iterator i = yystate_stack_.begin ();
+-	 i != yystate_stack_.end (); ++i)
+-      *yycdebug_ << ' ' << *i;
+-    *yycdebug_ << std::endl;
+-  }
+-
+-  // Report on the debug stream that the rule \a yyrule is going to be reduced.
+-  void
+-  json_parser::yy_reduce_print_ (int yyrule)
+-  {
+-    unsigned int yylno = yyrline_[yyrule];
+-    int yynrhs = yyr2_[yyrule];
+-    /* Print the symbols being reduced, and their result.  */
+-    *yycdebug_ << "Reducing stack by rule " << yyrule - 1
+-	       << " (line " << yylno << "), ";
+-    /* The symbols being reduced.  */
+-    for (int yyi = 0; yyi < yynrhs; yyi++)
+-      YY_SYMBOL_PRINT ("   $" << yyi + 1 << " =",
+-		       yyrhs_[yyprhs_[yyrule] + yyi],
+-		       &(yysemantic_stack_[(yynrhs) - (yyi + 1)]),
+-		       &(yylocation_stack_[(yynrhs) - (yyi + 1)]));
+-  }
+-#endif // YYDEBUG
+-
+-  /* YYTRANSLATE(YYLEX) -- Bison symbol number corresponding to YYLEX.  */
+-  json_parser::token_number_type
+-  json_parser::yytranslate_ (int t)
+-  {
+-    static
+-    const token_number_type
+-    translate_table[] =
+-    {
+-           0,     3,     4,     5,     6,     7,     8,     9,    10,    11,
+-      12,    13,    14,    15,    16,    17,    18,    19,    20,     2,
+-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+-       2,     2,     2,     2,     2,     2,     1,     2
+-    };
+-    if ((unsigned int) t <= yyuser_token_number_max_)
+-      return translate_table[t];
+-    else
+-      return yyundef_token_;
+-  }
+-
+-  const int json_parser::yyeof_ = 0;
+-  const int json_parser::yylast_ = 51;
+-  const int json_parser::yynnts_ = 19;
+-  const int json_parser::yyempty_ = -2;
+-  const int json_parser::yyfinal_ = 33;
+-  const int json_parser::yyterror_ = 1;
+-  const int json_parser::yyerrcode_ = 256;
+-  const int json_parser::yyntokens_ = 21;
+-
+-  const unsigned int json_parser::yyuser_token_number_max_ = 257;
+-  const json_parser::token_number_type json_parser::yyundef_token_ = 2;
+-
+-} // namespace yy
+-
+-#line 196 "json_parser.yy"
+-
+-
+-int yy::yylex(YYSTYPE *yylval, yy::location *yylloc, QJson::ParserPrivate* driver)
+-{
+-  JSonScanner* scanner = driver->m_scanner;
+-  yylval->clear();
+-  int ret = scanner->yylex(yylval, yylloc);
+-
+-  qjsonDebug() << "json_parser::yylex - calling scanner yylval==|"
+-           << yylval->toByteArray() << "|, ret==|" << QString::number(ret) << "|";
+-  
+-  return ret;
+-}
+-
+-void yy::json_parser::error (const yy::location& yyloc,
+-                                 const std::string& error)
+-{
+-  /*qjsonDebug() << yyloc.begin.line;
+-  qjsonDebug() << yyloc.begin.column;
+-  qjsonDebug() << yyloc.end.line;
+-  qjsonDebug() << yyloc.end.column;*/
+-  qjsonDebug() << "json_parser::error [line" << yyloc.end.line << "] -" << error.c_str() ;
+-  driver->setError(QString::fromLatin1(error.c_str()), yyloc.end.line);
+-}
+-
+diff --git a/thirdparty/qjson/json_parser.hh b/thirdparty/qjson/json_parser.hh
+deleted file mode 100644
+index e61ca7c..0000000
+--- a/thirdparty/qjson/json_parser.hh
++++ /dev/null
+@@ -1,325 +0,0 @@
+-/* A Bison parser, made by GNU Bison 2.3.  */
+-
+-/* Skeleton interface for Bison LALR(1) parsers in C++
+-
+-   Copyright (C) 2002, 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
+-
+-   This program is free software; you can redistribute it and/or modify
+-   it under the terms of the GNU General Public License as published by
+-   the Free Software Foundation; either version 2, or (at your option)
+-   any later version.
+-
+-   This program is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-   GNU General Public License for more details.
+-
+-   You should have received a copy of the GNU General Public License
+-   along with this program; if not, write to the Free Software
+-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+-   Boston, MA 02110-1301, USA.  */
+-
+-/* As a special exception, you may create a larger work that contains
+-   part or all of the Bison parser skeleton and distribute that work
+-   under terms of your choice, so long as that work isn't itself a
+-   parser generator using the skeleton or a modified version thereof
+-   as a parser skeleton.  Alternatively, if you modify or redistribute
+-   the parser skeleton itself, you may (at your option) remove this
+-   special exception, which will cause the skeleton and the resulting
+-   Bison output files to be licensed under the GNU General Public
+-   License without this special exception.
+-
+-   This special exception was added by the Free Software Foundation in
+-   version 2.2 of Bison.  */
+-
+-/* C++ LALR(1) parser skeleton written by Akim Demaille.  */
+-
+-#ifndef PARSER_HEADER_H
+-# define PARSER_HEADER_H
+-
+-#include <string>
+-#include <iostream>
+-#include "stack.hh"
+-
+-namespace yy
+-{
+-  class position;
+-  class location;
+-}
+-
+-/* First part of user declarations.  */
+-#line 25 "json_parser.yy"
+-
+-  #include "parser_p.h"
+-  #include "json_scanner.h"
+-  #include "qjson_debug.h"
+-
+-  #include <QtCore/QByteArray>
+-  #include <QtCore/QMap>
+-  #include <QtCore/QString>
+-  #include <QtCore/QVariant>
+-
+-  #include <limits>
+-
+-  class JSonScanner;
+-
+-  namespace QJson {
+-    class Parser;
+-  }
+-
+-  #define YYERROR_VERBOSE 1
+-
+-
+-/* Line 35 of lalr1.cc.  */
+-#line 75 "json_parser.hh"
+-
+-#include "location.hh"
+-
+-/* Enabling traces.  */
+-#ifndef YYDEBUG
+-# define YYDEBUG 1
+-#endif
+-
+-/* Enabling verbose error messages.  */
+-#ifdef YYERROR_VERBOSE
+-# undef YYERROR_VERBOSE
+-# define YYERROR_VERBOSE 1
+-#else
+-# define YYERROR_VERBOSE 1
+-#endif
+-
+-/* Enabling the token table.  */
+-#ifndef YYTOKEN_TABLE
+-# define YYTOKEN_TABLE 0
+-#endif
+-
+-/* YYLLOC_DEFAULT -- Set CURRENT to span from RHS[1] to RHS[N].
+-   If N is 0, then set CURRENT to the empty location which ends
+-   the previous symbol: RHS[0] (always defined).  */
+-
+-#ifndef YYLLOC_DEFAULT
+-# define YYLLOC_DEFAULT(Current, Rhs, N)		\
+-do {							\
+-  if (N)						\
+-    {							\
+-      (Current).begin = (Rhs)[1].begin;			\
+-      (Current).end   = (Rhs)[N].end;			\
+-    }							\
+-  else							\
+-    {							\
+-      (Current).begin = (Current).end = (Rhs)[0].end;	\
+-    }							\
+-} while (false)
+-#endif
+-
+-namespace yy
+-{
+-
+-  /// A Bison parser.
+-  class json_parser
+-  {
+-  public:
+-    /// Symbol semantic values.
+-#ifndef YYSTYPE
+-    typedef int semantic_type;
+-#else
+-    typedef YYSTYPE semantic_type;
+-#endif
+-    /// Symbol locations.
+-    typedef location location_type;
+-    /// Tokens.
+-    struct token
+-    {
+-      /* Tokens.  */
+-   enum yytokentype {
+-     END = 0,
+-     CURLY_BRACKET_OPEN = 1,
+-     CURLY_BRACKET_CLOSE = 2,
+-     SQUARE_BRACKET_OPEN = 3,
+-     SQUARE_BRACKET_CLOSE = 4,
+-     COLON = 5,
+-     COMMA = 6,
+-     MINUS = 7,
+-     DOT = 8,
+-     DIGIT = 9,
+-     E = 10,
+-     TRUE_VAL = 11,
+-     FALSE_VAL = 12,
+-     NULL_VAL = 13,
+-     QUOTMARKOPEN = 14,
+-     QUOTMARKCLOSE = 15,
+-     STRING = 16,
+-     INFINITY_VAL = 17,
+-     NAN_VAL = 18
+-   };
+-
+-    };
+-    /// Token type.
+-    typedef token::yytokentype token_type;
+-
+-    /// Build a parser object.
+-    json_parser (QJson::ParserPrivate* driver_yyarg);
+-    virtual ~json_parser ();
+-
+-    /// Parse.
+-    /// \returns  0 iff parsing succeeded.
+-    virtual int parse ();
+-
+-    /// The current debugging stream.
+-    std::ostream& debug_stream () const;
+-    /// Set the current debugging stream.
+-    void set_debug_stream (std::ostream &);
+-
+-    /// Type for debugging levels.
+-    typedef int debug_level_type;
+-    /// The current debugging level.
+-    debug_level_type debug_level () const;
+-    /// Set the current debugging level.
+-    void set_debug_level (debug_level_type l);
+-
+-  private:
+-    /// Report a syntax error.
+-    /// \param loc    where the syntax error is found.
+-    /// \param msg    a description of the syntax error.
+-    virtual void error (const location_type& loc, const std::string& msg);
+-
+-    /// Generate an error message.
+-    /// \param state   the state where the error occurred.
+-    /// \param tok     the look-ahead token.
+-    virtual std::string yysyntax_error_ (int yystate, int tok);
+-
+-#if YYDEBUG
+-    /// \brief Report a symbol value on the debug stream.
+-    /// \param yytype       The token type.
+-    /// \param yyvaluep     Its semantic value.
+-    /// \param yylocationp  Its location.
+-    virtual void yy_symbol_value_print_ (int yytype,
+-					 const semantic_type* yyvaluep,
+-					 const location_type* yylocationp);
+-    /// \brief Report a symbol on the debug stream.
+-    /// \param yytype       The token type.
+-    /// \param yyvaluep     Its semantic value.
+-    /// \param yylocationp  Its location.
+-    virtual void yy_symbol_print_ (int yytype,
+-				   const semantic_type* yyvaluep,
+-				   const location_type* yylocationp);
+-#endif /* ! YYDEBUG */
+-
+-
+-    /// State numbers.
+-    typedef int state_type;
+-    /// State stack type.
+-    typedef stack<state_type>    state_stack_type;
+-    /// Semantic value stack type.
+-    typedef stack<semantic_type> semantic_stack_type;
+-    /// location stack type.
+-    typedef stack<location_type> location_stack_type;
+-
+-    /// The state stack.
+-    state_stack_type yystate_stack_;
+-    /// The semantic value stack.
+-    semantic_stack_type yysemantic_stack_;
+-    /// The location stack.
+-    location_stack_type yylocation_stack_;
+-
+-    /// Internal symbol numbers.
+-    typedef unsigned char token_number_type;
+-    /* Tables.  */
+-    /// For a state, the index in \a yytable_ of its portion.
+-    static const signed char yypact_[];
+-    static const signed char yypact_ninf_;
+-
+-    /// For a state, default rule to reduce.
+-    /// Unless\a  yytable_ specifies something else to do.
+-    /// Zero means the default is an error.
+-    static const unsigned char yydefact_[];
+-
+-    static const signed char yypgoto_[];
+-    static const signed char yydefgoto_[];
+-
+-    /// What to do in a state.
+-    /// \a yytable_[yypact_[s]]: what to do in state \a s.
+-    /// - if positive, shift that token.
+-    /// - if negative, reduce the rule which number is the opposite.
+-    /// - if zero, do what YYDEFACT says.
+-    static const unsigned char yytable_[];
+-    static const signed char yytable_ninf_;
+-
+-    static const signed char yycheck_[];
+-
+-    /// For a state, its accessing symbol.
+-    static const unsigned char yystos_[];
+-
+-    /// For a rule, its LHS.
+-    static const unsigned char yyr1_[];
+-    /// For a rule, its RHS length.
+-    static const unsigned char yyr2_[];
+-
+-#if YYDEBUG || YYERROR_VERBOSE || YYTOKEN_TABLE
+-    /// For a symbol, its name in clear.
+-    static const char* const yytname_[];
+-#endif
+-
+-#if YYERROR_VERBOSE
+-    /// Convert the symbol name \a n to a form suitable for a diagnostic.
+-    virtual std::string yytnamerr_ (const char *n);
+-#endif
+-
+-#if YYDEBUG
+-    /// A type to store symbol numbers and -1.
+-    typedef signed char rhs_number_type;
+-    /// A `-1'-separated list of the rules' RHS.
+-    static const rhs_number_type yyrhs_[];
+-    /// For each rule, the index of the first RHS symbol in \a yyrhs_.
+-    static const unsigned char yyprhs_[];
+-    /// For each rule, its source line number.
+-    static const unsigned char yyrline_[];
+-    /// For each scanner token number, its symbol number.
+-    static const unsigned short int yytoken_number_[];
+-    /// Report on the debug stream that the rule \a r is going to be reduced.
+-    virtual void yy_reduce_print_ (int r);
+-    /// Print the state stack on the debug stream.
+-    virtual void yystack_print_ ();
+-#endif
+-
+-    /// Convert a scanner token number \a t to a symbol number.
+-    token_number_type yytranslate_ (int t);
+-
+-    /// \brief Reclaim the memory associated to a symbol.
+-    /// \param yymsg        Why this token is reclaimed.
+-    /// \param yytype       The symbol type.
+-    /// \param yyvaluep     Its semantic value.
+-    /// \param yylocationp  Its location.
+-    inline void yydestruct_ (const char* yymsg,
+-			     int yytype,
+-			     semantic_type* yyvaluep,
+-			     location_type* yylocationp);
+-
+-    /// Pop \a n symbols the three stacks.
+-    inline void yypop_ (unsigned int n = 1);
+-
+-    /* Constants.  */
+-    static const int yyeof_;
+-    /* LAST_ -- Last index in TABLE_.  */
+-    static const int yylast_;
+-    static const int yynnts_;
+-    static const int yyempty_;
+-    static const int yyfinal_;
+-    static const int yyterror_;
+-    static const int yyerrcode_;
+-    static const int yyntokens_;
+-    static const unsigned int yyuser_token_number_max_;
+-    static const token_number_type yyundef_token_;
+-
+-    /* Debugging.  */
+-    int yydebug_;
+-    std::ostream* yycdebug_;
+-
+-
+-    /* User arguments.  */
+-    QJson::ParserPrivate* driver;
+-  };
+-}
+-
+-
+-#endif /* ! defined PARSER_HEADER_H */
+diff --git a/thirdparty/qjson/json_parser.yy b/thirdparty/qjson/json_parser.yy
+deleted file mode 100644
+index 2540889..0000000
+--- a/thirdparty/qjson/json_parser.yy
++++ /dev/null
+@@ -1,219 +0,0 @@
+-/* This file is part of QJSon
+-  *
+-  * Copyright (C) 2008 Flavio Castelli <flavio.castelli@gmail.com>
+-  *
+-  * This library is free software; you can redistribute it and/or
+-  * modify it under the terms of the GNU Lesser General Public
+-  * License version 2.1, as published by the Free Software Foundation.
+-  * 
+-  *
+-  * This library is distributed in the hope that it will be useful,
+-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-  * Lesser General Public License for more details.
+-  *
+-  * You should have received a copy of the GNU Lesser General Public License
+-  * along with this library; see the file COPYING.LIB.  If not, write to
+-  * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+-  * Boston, MA 02110-1301, USA.
+-  */
+-
+-%skeleton "lalr1.cc"
+-%defines
+-%define "parser_class_name" "json_parser"
+-
+-%{
+-  #include "parser_p.h"
+-  #include "json_scanner.h"
+-  #include "qjson_debug.h"
+-
+-  #include <QtCore/QByteArray>
+-  #include <QtCore/QMap>
+-  #include <QtCore/QString>
+-  #include <QtCore/QVariant>
+-
+-  #include <limits>
+-
+-  class JSonScanner;
+-
+-  namespace QJson {
+-    class Parser;
+-  }
+-
+-  #define YYERROR_VERBOSE 1
+-%}
+-
+-%parse-param { QJson::ParserPrivate* driver }
+-%lex-param { QJson::ParserPrivate* driver }
+-
+-%locations
+-
+-%debug
+-%error-verbose
+-
+-%token END 0 "end of file"
+-
+-%token CURLY_BRACKET_OPEN 1 "{"
+-%token CURLY_BRACKET_CLOSE 2 "}"
+-%token SQUARE_BRACKET_OPEN 3 "["
+-%token SQUARE_BRACKET_CLOSE 4 "]"
+-
+-%token COLON 5 ":"
+-%token COMMA 6 ","
+-%token MINUS 7 "-"
+-%token DOT 8 "."
+-%token DIGIT 9 "digit"
+-%token E 10 "exponential"
+-%token TRUE_VAL 11 "true"
+-%token FALSE_VAL 12 "false"
+-%token NULL_VAL 13 "null"
+-%token QUOTMARKOPEN 14 "open quotation mark"
+-%token QUOTMARKCLOSE 15 "close quotation mark"
+-
+-%token STRING 16 "string"
+-%token INFINITY_VAL 17 "Infinity"
+-%token NAN_VAL 18 "NaN"
+-
+-// define the initial token
+-%start start
+-
+-%%
+-
+-// grammar rules
+-
+-start: data {
+-              driver->m_result = $1;
+-              qjsonDebug() << "json_parser - parsing finished";
+-            };
+-
+-data: value { $$ = $1; }
+-      | error
+-          {
+-            qCritical()<< "json_parser - syntax error found, "
+-                    << "forcing abort, Line" << @$.begin.line << "Column" << @$.begin.column;
+-            YYABORT;
+-          }
+-      | END;
+-
+-object: CURLY_BRACKET_OPEN members CURLY_BRACKET_CLOSE { $$ = $2; };
+-
+-members: /* empty */ { $$ = QVariant (QVariantMap()); }
+-        | pair r_members {
+-            QVariantMap members = $2.toMap();
+-            $2 = QVariant(); // Allow reuse of map
+-            $$ = QVariant(members.unite ($1.toMap()));
+-          };
+-
+-r_members: /* empty */ { $$ = QVariant (QVariantMap()); }
+-        | COMMA pair r_members {
+-          QVariantMap members = $3.toMap();
+-          $3 = QVariant(); // Allow reuse of map
+-          $$ = QVariant(members.unite ($2.toMap()));
+-          };
+-
+-pair:   string COLON value {
+-            QVariantMap pair;
+-            pair.insert ($1.toString(), QVariant($3));
+-            $$ = QVariant (pair);
+-          };
+-
+-array: SQUARE_BRACKET_OPEN values SQUARE_BRACKET_CLOSE { $$ = $2; };
+-
+-values: /* empty */ { $$ = QVariant (QVariantList()); }
+-        | value r_values {
+-          QVariantList members = $2.toList();
+-          $2 = QVariant(); // Allow reuse of list
+-          members.prepend ($1);
+-          $$ = QVariant(members);
+-        };
+-
+-r_values: /* empty */ { $$ = QVariant (QVariantList()); }
+-          | COMMA value r_values {
+-            QVariantList members = $3.toList();
+-            $3 = QVariant(); // Allow reuse of list
+-            members.prepend ($2);
+-            $$ = QVariant(members);
+-          };
+-
+-value: string { $$ = $1; }
+-        | special_or_number { $$ = $1; }
+-        | object { $$ = $1; }
+-        | array { $$ = $1; }
+-        | TRUE_VAL { $$ = QVariant (true); }
+-        | FALSE_VAL { $$ = QVariant (false); }
+-        | NULL_VAL {
+-          QVariant null_variant;
+-          $$ = null_variant;
+-        };
+-
+-special_or_number: MINUS INFINITY_VAL { $$ = QVariant(QVariant::Double); $$.setValue( -std::numeric_limits<double>::infinity() ); }
+-                   | INFINITY_VAL { $$ = QVariant(QVariant::Double); $$.setValue( std::numeric_limits<double>::infinity() ); }
+-                   | NAN_VAL { $$ = QVariant(QVariant::Double); $$.setValue( std::numeric_limits<double>::quiet_NaN() ); }
+-                   | number;
+-
+-number: int {
+-            if ($1.toByteArray().startsWith('-')) {
+-              $$ = QVariant (QVariant::LongLong);
+-              $$.setValue($1.toLongLong());
+-            }
+-            else {
+-              $$ = QVariant (QVariant::ULongLong);
+-              $$.setValue($1.toULongLong());
+-            }
+-          }
+-        | int fract {
+-            const QByteArray value = $1.toByteArray() + $2.toByteArray();
+-            $$ = QVariant(QVariant::Double);
+-            $$.setValue(value.toDouble());
+-          }
+-        | int exp { $$ = QVariant ($1.toByteArray() + $2.toByteArray()); }
+-        | int fract exp {
+-            const QByteArray value = $1.toByteArray() + $2.toByteArray() + $3.toByteArray();
+-            $$ = QVariant (value);
+-          };
+-
+-int:  DIGIT digits { $$ = QVariant ($1.toByteArray() + $2.toByteArray()); }
+-      | MINUS DIGIT digits { $$ = QVariant (QByteArray("-") + $2.toByteArray() + $3.toByteArray()); };
+-
+-digits: /* empty */ { $$ = QVariant (QByteArray("")); }
+-        | DIGIT digits {
+-          $$ = QVariant($1.toByteArray() + $2.toByteArray());
+-        };
+-
+-fract: DOT digits {
+-          $$ = QVariant(QByteArray(".") + $2.toByteArray());
+-        };
+-
+-exp: E digits { $$ = QVariant($1.toByteArray() + $2.toByteArray()); };
+-
+-string: QUOTMARKOPEN string_arg QUOTMARKCLOSE { $$ = $2; };
+-
+-string_arg: /*empty */ { $$ = QVariant (QString(QLatin1String(""))); }
+-            | STRING {
+-                $$ = $1;
+-              };
+-
+-%%
+-
+-int yy::yylex(YYSTYPE *yylval, yy::location *yylloc, QJson::ParserPrivate* driver)
+-{
+-  JSonScanner* scanner = driver->m_scanner;
+-  yylval->clear();
+-  int ret = scanner->yylex(yylval, yylloc);
+-
+-  qjsonDebug() << "json_parser::yylex - calling scanner yylval==|"
+-           << yylval->toByteArray() << "|, ret==|" << QString::number(ret) << "|";
+-  
+-  return ret;
+-}
+-
+-void yy::json_parser::error (const yy::location& yyloc,
+-                                 const std::string& error)
+-{
+-  /*qjsonDebug() << yyloc.begin.line;
+-  qjsonDebug() << yyloc.begin.column;
+-  qjsonDebug() << yyloc.end.line;
+-  qjsonDebug() << yyloc.end.column;*/
+-  qjsonDebug() << "json_parser::error [line" << yyloc.end.line << "] -" << error.c_str() ;
+-  driver->setError(QString::fromLatin1(error.c_str()), yyloc.end.line);
+-}
+diff --git a/thirdparty/qjson/json_scanner.cpp b/thirdparty/qjson/json_scanner.cpp
+deleted file mode 100644
+index de0ddc2..0000000
+--- a/thirdparty/qjson/json_scanner.cpp
++++ /dev/null
+@@ -1,377 +0,0 @@
+-/* This file is part of QJson
+- *
+- * Copyright (C) 2008 Flavio Castelli <flavio.castelli@gmail.com>
+- *
+- * This library is free software; you can redistribute it and/or
+- * modify it under the terms of the GNU Lesser General Public
+- * License version 2.1, as published by the Free Software Foundation.
+- * 
+- *
+- * This library is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+- * Lesser General Public License for more details.
+- *
+- * You should have received a copy of the GNU Lesser General Public License
+- * along with this library; see the file COPYING.LIB.  If not, write to
+- * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+- * Boston, MA 02110-1301, USA.
+- */
+-
+-#include "qjson_debug.h"
+-#include "json_scanner.h"
+-#include "json_parser.hh"
+-
+-#include <ctype.h>
+-
+-#include <QtCore/QDebug>
+-#include <QtCore/QRegExp>
+-
+-#include <cassert>
+-
+-bool ishexnstring(const QString& string) {
+-  for (int i = 0; i < string.length(); i++) {
+-    if (isxdigit(string[i] == 0))
+-      return false;
+-  }
+-  return true;
+-}
+-
+-JSonScanner::JSonScanner(QIODevice* io)
+-  : m_allowSpecialNumbers(false),
+-    m_io (io)
+-{
+-  m_quotmarkClosed = true;
+-  m_quotmarkCount = 0;
+-}
+-
+-void JSonScanner::allowSpecialNumbers(bool allow) {
+-  m_allowSpecialNumbers = allow;
+-}
+-
+-static QString unescape( const QByteArray& ba, bool* ok ) {
+-  assert( ok );
+-  *ok = false;
+-  QString res;
+-  QByteArray seg;
+-  bool bs = false;
+-  for ( int i = 0, size = ba.size(); i < size; ++i ) {
+-    const char ch = ba[i];
+-    if ( !bs ) {
+-      if ( ch == '\\' )
+-        bs = true;
+-      else
+-        seg += ch;
+-    } else {
+-      bs = false;
+-      switch ( ch ) {
+-        case 'b':
+-          seg += '\b';
+-          break;
+-        case 'f':
+-          seg += '\f';
+-          break;
+-        case 'n':
+-          seg += '\n';
+-          break;
+-        case 'r':
+-          seg += '\r';
+-          break;
+-        case 't':
+-          seg += '\t';
+-          break;
+-        case 'u':
+-        {
+-          res += QString::fromUtf8( seg );
+-          seg.clear();
+-
+-          if ( i > size - 5 ) {
+-            //error
+-            return QString();
+-          }
+-
+-          const QString hex_digit1 = QString::fromUtf8( ba.mid( i + 1, 2 ) );
+-          const QString hex_digit2 = QString::fromUtf8( ba.mid( i + 3, 2 ) );
+-          i += 4;
+-
+-          if ( !ishexnstring( hex_digit1 ) || !ishexnstring( hex_digit2 ) ) {
+-            qCritical() << "Not an hex string:" << hex_digit1 << hex_digit2;
+-            return QString();
+-          }
+-          bool hexOk;
+-          const ushort hex_code1 = hex_digit1.toShort( &hexOk, 16 );
+-          if (!hexOk) {
+-            qCritical() << "error converting hex value to short:" << hex_digit1;
+-            return QString();
+-          }
+-          const ushort hex_code2 = hex_digit2.toShort( &hexOk, 16 );
+-          if (!hexOk) {
+-            qCritical() << "error converting hex value to short:" << hex_digit2;
+-            return QString();
+-          }
+-
+-          res += QChar(hex_code2, hex_code1);
+-          break;
+-        }
+-        case '\\':
+-          seg  += '\\';
+-          break;
+-        default:
+-          seg += ch;
+-          break;
+-      }
+-    }
+-  }
+-  res += QString::fromUtf8( seg );
+-  *ok = true;
+-  return res;
+-}
+-
+-int JSonScanner::yylex(YYSTYPE* yylval, yy::location *yylloc)
+-{
+-  char ch;
+-
+-  if (!m_io->isOpen()) {
+-    qCritical() << "JSonScanner::yylex - io device is not open";
+-    return -1;
+-  }
+-
+-  yylloc->step();
+-
+-  do {
+-    bool ret;
+-    if (m_io->atEnd()) {
+-      qjsonDebug() << "JSonScanner::yylex - yy::json_parser::token::END";
+-      return yy::json_parser::token::END;
+-    }
+-    else
+-      ret = m_io->getChar(&ch);
+-
+-    if (!ret) {
+-      qCritical() << "JSonScanner::yylex - error reading from io device";
+-      return -1;
+-    }
+-
+-    qjsonDebug() << "JSonScanner::yylex - got |" << ch << "|";
+-    yylloc->columns();
+-
+-    if (ch == '\n' || ch == '\r')
+-      yylloc->lines();
+-  } while (m_quotmarkClosed && (isspace(ch) != 0));
+-
+-  if (m_quotmarkClosed && ((ch == 't') || (ch == 'T'))) {
+-    const QByteArray buf = m_io->peek(3).toLower();
+-    if (buf == "rue") {
+-      m_io->read (3);
+-      yylloc->columns(3);
+-      qjsonDebug() << "JSonScanner::yylex - TRUE_VAL";
+-      return yy::json_parser::token::TRUE_VAL;
+-    }
+-  }
+-  else if (m_quotmarkClosed && ((ch == 'n') || (ch == 'N'))) {
+-    const QByteArray buf = m_io->peek(3).toLower();
+-    if (buf == "ull") {
+-      m_io->read (3);
+-      yylloc->columns(3);
+-      qjsonDebug() << "JSonScanner::yylex - NULL_VAL";
+-      return yy::json_parser::token::NULL_VAL;
+-    } else if (buf.startsWith("an") && m_allowSpecialNumbers) {
+-      m_io->read(2);
+-      yylloc->columns(2);
+-      qjsonDebug() << "JSonScanner::yylex - NAN_VAL";
+-      return yy::json_parser::token::NAN_VAL;
+-
+-    }
+-  }
+-  else if (m_quotmarkClosed && ((ch == 'f') || (ch == 'F'))) {
+-    // check false value
+-    const QByteArray buf = m_io->peek(4).toLower();
+-    if (buf.length() == 4) {
+-      if (buf == "alse") {
+-        m_io->read (4);
+-        yylloc->columns(4);
+-        qjsonDebug() << "JSonScanner::yylex - FALSE_VAL";
+-        return yy::json_parser::token::FALSE_VAL;
+-      }
+-    }
+-  }
+-  else if (m_quotmarkClosed && ((ch == 'e') || (ch == 'E'))) {
+-    QByteArray ret(1, ch);
+-    const QByteArray buf = m_io->peek(1);
+-    if (!buf.isEmpty()) {
+-      if ((buf[0] == '+' ) || (buf[0] == '-' )) {
+-        ret += m_io->read (1);
+-        yylloc->columns();
+-      }
+-    }
+-    *yylval = QVariant(QString::fromUtf8(ret));
+-    return yy::json_parser::token::E;
+-  }
+-  else if (m_allowSpecialNumbers && m_quotmarkClosed && ((ch == 'I') || (ch == 'i'))) {
+-    QByteArray ret(1, ch);
+-    const QByteArray buf = m_io->peek(7);
+-    if (buf == "nfinity") {
+-      m_io->read(7);
+-      yylloc->columns(7);
+-      qjsonDebug() << "JSonScanner::yylex - INFINITY_VAL";
+-      return yy::json_parser::token::INFINITY_VAL;
+-    }
+-  }
+-
+-  if (ch != '"' && !m_quotmarkClosed) {
+-    // we're inside a " " block
+-    QByteArray raw;
+-    raw += ch;
+-    char prevCh = ch;
+-    bool escape_on = (ch == '\\') ? true : false;
+-
+-    while ( true ) {
+-      char nextCh;
+-      qint64 ret = m_io->peek(&nextCh, 1);
+-      if (ret != 1) {
+-        if (m_io->atEnd())
+-          return yy::json_parser::token::END;
+-        else
+-          return -1;
+-      } else if ( !escape_on && nextCh == '\"' ) {
+-        bool ok;
+-        const QString str = unescape( raw, &ok );
+-        *yylval = ok ? str : QString();
+-        return ok ? yy::json_parser::token::STRING : -1;
+-      }
+-#if 0
+-      if ( prevCh == '\\' && nextCh != '"' && nextCh != '\\' && nextCh != '/' &&
+-           nextCh != 'b' && nextCh != 'f' && nextCh != 'n' &&
+-           nextCh != 'r' && nextCh != 't' && nextCh != 'u') {
+-        qjsonDebug() << "Just read" << nextCh;
+-        qjsonDebug() << "JSonScanner::yylex - error decoding escaped sequence";
+-        return -1;
+-       }
+-#endif
+-      m_io->read(1); // consume
+-      raw += nextCh;
+-      prevCh = nextCh;
+-      if (escape_on)
+-        escape_on = false;
+-      else
+-        escape_on = (prevCh == '\\') ? true : false;
+-#if 0
+-      if (nextCh == '\\') {
+-        char buf;
+-        if (m_io->getChar (&buf)) {
+-          yylloc->columns();
+-          if (((buf != '"') && (buf != '\\') && (buf != '/') &&
+-              (buf != 'b') && (buf != 'f') && (buf != 'n') &&
+-              (buf != 'r') && (buf != 't') && (buf != 'u'))) {
+-                qjsonDebug() << "Just read" << buf;
+-                qjsonDebug() << "JSonScanner::yylex - error decoding escaped sequence";
+-                return -1;
+-          }
+-        } else {
+-          qCritical() << "JSonScanner::yylex - error decoding escaped sequence : io error";
+-          return -1;
+-        }
+-      }
+-#endif
+-    }
+-  }
+-  else if (isdigit(ch) != 0 && m_quotmarkClosed) {
+-    bool ok;
+-    QByteArray numArray = QByteArray::fromRawData( &ch, 1 * sizeof(char) );
+-    qulonglong number = numArray.toULongLong(&ok);
+-    if (!ok) {
+-      //This shouldn't happen
+-      qCritical() << "JSonScanner::yylex - error while converting char to ulonglong, returning -1";
+-      return -1;
+-    }
+-    if (number == 0) {
+-      // we have to return immediately otherwise numbers like
+-      // 2.04 will be converted to 2.4
+-      *yylval = QVariant(number);
+-      qjsonDebug() << "JSonScanner::yylex - yy::json_parser::token::DIGIT";
+-      return yy::json_parser::token::DIGIT;
+-    }
+-
+-    char nextCh;
+-    qint64 ret = m_io->peek(&nextCh, 1);
+-    while (ret == 1 && isdigit(nextCh)) {
+-      m_io->read(1); //consume
+-      yylloc->columns(1);
+-      numArray = QByteArray::fromRawData( &nextCh, 1 * sizeof(char) );
+-      number = number * 10 + numArray.toULongLong(&ok);
+-      if (!ok) {
+-        //This shouldn't happen
+-        qCritical() << "JSonScanner::yylex - error while converting char to ulonglong, returning -1";
+-        return -1;
+-      }
+-      ret = m_io->peek(&nextCh, 1);
+-    }
+-
+-    *yylval = QVariant(number);
+-    qjsonDebug() << "JSonScanner::yylex - yy::json_parser::token::DIGIT";
+-    return yy::json_parser::token::DIGIT;
+-  }
+-  else if (isalnum(ch) != 0) {
+-    *yylval = QVariant(QString(QChar::fromLatin1(ch)));
+-    qjsonDebug() << "JSonScanner::yylex - yy::json_parser::token::WORD ("
+-             << ch << ")";
+-    return yy::json_parser::token::STRING;
+-  }
+-  else if (ch == ':') {
+-    // set yylval
+-    qjsonDebug() << "JSonScanner::yylex - yy::json_parser::token::COLON";
+-    return yy::json_parser::token::COLON;
+-  }
+-  else if (ch == '"') {
+-    // yy::json_parser::token::QUOTMARK (")
+-
+-    // set yylval
+-    m_quotmarkCount++;
+-    if (m_quotmarkCount %2 == 0) {
+-      m_quotmarkClosed = true;
+-      m_quotmarkCount = 0;
+-      qjsonDebug() << "JSonScanner::yylex - yy::json_parser::token::QUOTMARKCLOSE";
+-      return yy::json_parser::token::QUOTMARKCLOSE;
+-    }
+-    else {
+-      m_quotmarkClosed = false;
+-      qjsonDebug() << "JSonScanner::yylex - yy::json_parser::token::QUOTMARKOPEN";
+-      return yy::json_parser::token::QUOTMARKOPEN;
+-    }
+-  }
+-  else if (ch == ',') {
+-    qjsonDebug() << "JSonScanner::yylex - yy::json_parser::token::COMMA";
+-    return yy::json_parser::token::COMMA;
+-  }
+-  else if (ch == '.') {
+-    qjsonDebug() << "JSonScanner::yylex - yy::json_parser::token::DOT";
+-    return yy::json_parser::token::DOT;
+-  }
+-  else if (ch == '-') {
+-    qjsonDebug() << "JSonScanner::yylex - yy::json_parser::token::MINUS";
+-    return yy::json_parser::token::MINUS;
+-  }
+-  else if (ch == '[') {
+-    qjsonDebug() << "JSonScanner::yylex - yy::json_parser::token::SQUARE_BRACKET_OPEN";
+-    return yy::json_parser::token::SQUARE_BRACKET_OPEN;
+-  }
+-  else if (ch == ']') {
+-    qjsonDebug() << "JSonScanner::yylex - yy::json_parser::token::SQUARE_BRACKET_CLOSE";
+-    return yy::json_parser::token::SQUARE_BRACKET_CLOSE;
+-  }
+-  else if (ch == '{') {
+-    qjsonDebug() << "JSonScanner::yylex - yy::json_parser::token::CURLY_BRACKET_OPEN";
+-    return yy::json_parser::token::CURLY_BRACKET_OPEN;
+-  }
+-  else if (ch == '}') {
+-    qjsonDebug() << "JSonScanner::yylex - yy::json_parser::token::CURLY_BRACKET_CLOSE";
+-    return yy::json_parser::token::CURLY_BRACKET_CLOSE;
+-  }
+-
+-  //unknown char!
+-  //TODO yyerror?
+-  qCritical() << "JSonScanner::yylex - unknown char, returning -1";
+-  return -1;
+-}
+-
+-
+diff --git a/thirdparty/qjson/json_scanner.h b/thirdparty/qjson/json_scanner.h
+deleted file mode 100644
+index f13e565..0000000
+--- a/thirdparty/qjson/json_scanner.h
++++ /dev/null
+@@ -1,54 +0,0 @@
+-/* This file is part of QJson
+- *
+- * Copyright (C) 2008 Flavio Castelli <flavio.castelli@gmail.com>
+- *
+- * This library is free software; you can redistribute it and/or
+- * modify it under the terms of the GNU Lesser General Public
+- * License version 2.1, as published by the Free Software Foundation.
+- * 
+- *
+- * This library is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+- * Lesser General Public License for more details.
+- *
+- * You should have received a copy of the GNU Lesser General Public License
+- * along with this library; see the file COPYING.LIB.  If not, write to
+- * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+- * Boston, MA 02110-1301, USA.
+- */
+-
+-#ifndef _JSON_SCANNER
+-#define _JSON_SCANNER
+-
+-#include <fstream>
+-#include <string>
+-
+-#include <QtCore/QIODevice>
+-#include <QtCore/QVariant>
+-
+-#define YYSTYPE QVariant
+-
+-#include "parser_p.h"
+-
+-namespace yy {
+-  class location;
+-  int yylex(YYSTYPE *yylval, yy::location *yylloc, QJson::ParserPrivate* driver);
+-}
+-
+-class JSonScanner
+-{
+-    public:
+-        explicit JSonScanner(QIODevice* io);
+-        int yylex(YYSTYPE* yylval, yy::location *yylloc);
+-        void allowSpecialNumbers(bool allow);
+-
+-    protected:
+-        bool m_quotmarkClosed;
+-        bool m_allowSpecialNumbers;
+-        unsigned int m_quotmarkCount;
+-        QIODevice* m_io;
+-};
+-
+-#endif
+-
+diff --git a/thirdparty/qjson/location.hh b/thirdparty/qjson/location.hh
+deleted file mode 100644
+index 485fd77..0000000
+--- a/thirdparty/qjson/location.hh
++++ /dev/null
+@@ -1,145 +0,0 @@
+-/* A Bison parser, made by GNU Bison 2.3.  */
+-
+-/* Locations for Bison parsers in C++
+-
+-   Copyright (C) 2002, 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
+-
+-   This program is free software; you can redistribute it and/or modify
+-   it under the terms of the GNU General Public License as published by
+-   the Free Software Foundation; either version 2, or (at your option)
+-   any later version.
+-
+-   This program is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-   GNU General Public License for more details.
+-
+-   You should have received a copy of the GNU General Public License
+-   along with this program; if not, write to the Free Software
+-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+-   Boston, MA 02110-1301, USA.  */
+-
+-/* As a special exception, you may create a larger work that contains
+-   part or all of the Bison parser skeleton and distribute that work
+-   under terms of your choice, so long as that work isn't itself a
+-   parser generator using the skeleton or a modified version thereof
+-   as a parser skeleton.  Alternatively, if you modify or redistribute
+-   the parser skeleton itself, you may (at your option) remove this
+-   special exception, which will cause the skeleton and the resulting
+-   Bison output files to be licensed under the GNU General Public
+-   License without this special exception.
+-
+-   This special exception was added by the Free Software Foundation in
+-   version 2.2 of Bison.  */
+-
+-/**
+- ** \file location.hh
+- ** Define the yy::location class.
+- */
+-
+-#ifndef BISON_LOCATION_HH
+-# define BISON_LOCATION_HH
+-
+-# include <iostream>
+-# include <string>
+-# include "position.hh"
+-
+-namespace yy
+-{
+-
+-  /// Abstract a location.
+-  class location
+-  {
+-  public:
+-
+-    /// Construct a location.
+-    location ()
+-      : begin (), end ()
+-    {
+-    }
+-
+-
+-    /// Initialization.
+-    inline void initialize (std::string* fn)
+-    {
+-      begin.initialize (fn);
+-      end = begin;
+-    }
+-
+-    /** \name Line and Column related manipulators
+-     ** \{ */
+-  public:
+-    /// Reset initial location to final location.
+-    inline void step ()
+-    {
+-      begin = end;
+-    }
+-
+-    /// Extend the current location to the COUNT next columns.
+-    inline void columns (unsigned int count = 1)
+-    {
+-      end += count;
+-    }
+-
+-    /// Extend the current location to the COUNT next lines.
+-    inline void lines (unsigned int count = 1)
+-    {
+-      end.lines (count);
+-    }
+-    /** \} */
+-
+-
+-  public:
+-    /// Beginning of the located region.
+-    position begin;
+-    /// End of the located region.
+-    position end;
+-  };
+-
+-  /// Join two location objects to create a location.
+-  inline const location operator+ (const location& begin, const location& end)
+-  {
+-    location res = begin;
+-    res.end = end.end;
+-    return res;
+-  }
+-
+-  /// Add two location objects.
+-  inline const location operator+ (const location& begin, unsigned int width)
+-  {
+-    location res = begin;
+-    res.columns (width);
+-    return res;
+-  }
+-
+-  /// Add and assign a location.
+-  inline location& operator+= (location& res, unsigned int width)
+-  {
+-    res.columns (width);
+-    return res;
+-  }
+-
+-  /** \brief Intercept output stream redirection.
+-   ** \param ostr the destination output stream
+-   ** \param loc a reference to the location to redirect
+-   **
+-   ** Avoid duplicate information.
+-   */
+-  inline std::ostream& operator<< (std::ostream& ostr, const location& loc)
+-  {
+-    position last = loc.end - 1;
+-    ostr << loc.begin;
+-    if (last.filename
+-	&& (!loc.begin.filename
+-	    || *loc.begin.filename != *last.filename))
+-      ostr << '-' << last;
+-    else if (loc.begin.line != last.line)
+-      ostr << '-' << last.line  << '.' << last.column;
+-    else if (loc.begin.column != last.column)
+-      ostr << '-' << last.column;
+-    return ostr;
+-  }
+-
+-}
+-
+-#endif // not BISON_LOCATION_HH
+diff --git a/thirdparty/qjson/parser.cpp b/thirdparty/qjson/parser.cpp
+deleted file mode 100644
+index e203b87..0000000
+--- a/thirdparty/qjson/parser.cpp
++++ /dev/null
+@@ -1,125 +0,0 @@
+-/* This file is part of QJson
+- *
+- * Copyright (C) 2008 Flavio Castelli <flavio.castelli@gmail.com>
+- *
+- * This library is free software; you can redistribute it and/or
+- * modify it under the terms of the GNU Lesser General Public
+- * License version 2.1, as published by the Free Software Foundation.
+- * 
+- *
+- * This library is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+- * Lesser General Public License for more details.
+- *
+- * You should have received a copy of the GNU Lesser General Public License
+- * along with this library; see the file COPYING.LIB.  If not, write to
+- * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+- * Boston, MA 02110-1301, USA.
+- */
+-
+-#include "parser.h"
+-#include "parser_p.h"
+-#include "json_parser.hh"
+-#include "json_scanner.h"
+-
+-#include <QtCore/QBuffer>
+-#include <QtCore/QStringList>
+-#include <QtCore/QTextStream>
+-#include <QtCore/QDebug>
+-
+-using namespace QJson;
+-
+-ParserPrivate::ParserPrivate() :
+-    m_scanner(0)
+-  , m_negate(false)
+-  , m_error(false)
+-  , m_errorLine(0)
+-  , m_specialNumbersAllowed(false)
+-{
+-}
+-
+-ParserPrivate::~ParserPrivate()
+-{
+-  delete m_scanner;
+-}
+-
+-void ParserPrivate::setError(QString errorMsg, int errorLine) {
+-  m_error = true;
+-  m_errorMsg = errorMsg;
+-  m_errorLine = errorLine;
+-}
+-
+-Parser::Parser() :
+-    d(new ParserPrivate)
+-{
+-}
+-
+-Parser::~Parser()
+-{
+-  delete d;
+-}
+-
+-QVariant Parser::parse (QIODevice* io, bool* ok)
+-{
+-  d->m_errorMsg.clear();
+-  delete d->m_scanner;
+-  d->m_scanner = 0;
+-
+-  if (!io->isOpen()) {
+-    if (!io->open(QIODevice::ReadOnly)) {
+-      if (ok != 0)
+-        *ok = false;
+-      qCritical ("Error opening device");
+-      return QVariant();
+-    }
+-  }
+-
+-  if (!io->isReadable()) {
+-    if (ok != 0)
+-      *ok = false;
+-    qCritical ("Device is not readable");
+-    io->close();
+-    return QVariant();
+-  }
+-
+-  d->m_scanner = new JSonScanner (io);
+-  d->m_scanner->allowSpecialNumbers(d->m_specialNumbersAllowed);
+-  yy::json_parser parser(d);
+-  parser.parse();
+-
+-  delete d->m_scanner;
+-  d->m_scanner = 0;
+-
+-  if (ok != 0)
+-    *ok = !d->m_error;
+-
+-  io->close();
+-  return d->m_result;
+-}
+-
+-QVariant Parser::parse(const QByteArray& jsonString, bool* ok) {
+-  QBuffer buffer;
+-  buffer.open(QBuffer::ReadWrite);
+-  buffer.write(jsonString);
+-  buffer.seek(0);
+-  return parse (&buffer, ok);
+-}
+-
+-QString Parser::errorString() const
+-{
+-  return d->m_errorMsg;
+-}
+-
+-int Parser::errorLine() const
+-{
+-  return d->m_errorLine;
+-}
+-
+-void QJson::Parser::allowSpecialNumbers(bool allowSpecialNumbers) {
+-  d->m_specialNumbersAllowed = allowSpecialNumbers;
+-}
+-
+-bool Parser::specialNumbersAllowed() const {
+-  return d->m_specialNumbersAllowed;
+-}
+diff --git a/thirdparty/qjson/parser.h b/thirdparty/qjson/parser.h
+deleted file mode 100644
+index 6fb58d8..0000000
+--- a/thirdparty/qjson/parser.h
++++ /dev/null
+@@ -1,94 +0,0 @@
+-/* This file is part of QJson
+- *
+- * Copyright (C) 2008 Flavio Castelli <flavio.castelli@gmail.com>
+- *
+- * This library is free software; you can redistribute it and/or
+- * modify it under the terms of the GNU Lesser General Public
+- * License version 2.1, as published by the Free Software Foundation.
+- * 
+- *
+- * This library is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+- * Lesser General Public License for more details.
+- *
+- * You should have received a copy of the GNU Lesser General Public License
+- * along with this library; see the file COPYING.LIB.  If not, write to
+- * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+- * Boston, MA 02110-1301, USA.
+- */
+-
+-#ifndef QJSON_PARSER_H
+-#define QJSON_PARSER_H
+-
+-#include "qjson_export.h"
+-
+-class QIODevice;
+-class QVariant;
+-
+-namespace QJson {
+-
+-  class ParserPrivate;
+-
+-  /**
+-  * @brief Main class used to convert JSON data to QVariant objects
+-  */
+-  class QJSON_EXPORT Parser
+-  {
+-    public:
+-      Parser();
+-      ~Parser();
+-
+-      /**
+-      * Read JSON string from the I/O Device and converts it to a QVariant object
+-      * @param io Input output device
+-      * @param ok if a conversion error occurs, *ok is set to false; otherwise *ok is set to true.
+-      * @returns a QVariant object generated from the JSON string
+-      */
+-      QVariant parse(QIODevice* io, bool* ok = 0);
+-
+-      /**
+-      * This is a method provided for convenience.
+-      * @param jsonData data containing the JSON object representation
+-      * @param ok if a conversion error occurs, *ok is set to false; otherwise *ok is set to true.
+-      * @returns a QVariant object generated from the JSON string
+-      * @sa errorString
+-      * @sa errorLine
+-      */
+-      QVariant parse(const QByteArray& jsonData, bool* ok = 0);
+-
+-      /**
+-      * This method returns the error message
+-      * @returns a QString object containing the error message of the last parse operation
+-      * @sa errorLine
+-      */
+-      QString errorString() const;
+-
+-      /**
+-      * This method returns line number where the error occurred
+-      * @returns the line number where the error occurred
+-      * @sa errorString
+-      */
+-      int errorLine() const;
+-
+-      /**
+-       * Sets whether special numbers (Infinity, -Infinity, NaN) are allowed as an extension to
+-       * the standard
+-       * @param  allowSpecialNumbers new value of whether special numbers are allowed
+-       * @sa specialNumbersAllowed
+-       */
+-      void allowSpecialNumbers(bool allowSpecialNumbers);
+-
+-      /**
+-       * @returns whether special numbers (Infinity, -Infinity, NaN) are allowed
+-       * @sa allowSpecialNumbers
+-       */
+-      bool specialNumbersAllowed() const;
+-
+-    private:
+-      Q_DISABLE_COPY(Parser)
+-      ParserPrivate* const d;
+-  };
+-}
+-
+-#endif // QJSON_PARSER_H
+diff --git a/thirdparty/qjson/parser_p.h b/thirdparty/qjson/parser_p.h
+deleted file mode 100644
+index aae86a1..0000000
+--- a/thirdparty/qjson/parser_p.h
++++ /dev/null
+@@ -1,56 +0,0 @@
+-/* This file is part of QJson
+- *
+- * Copyright (C) 2008 Flavio Castelli <flavio.castelli@gmail.com>
+- * Copyright (C) 2009 Michael Leupold <lemma@confuego.org>
+- *
+- * This library is free software; you can redistribute it and/or
+- * modify it under the terms of the GNU Lesser General Public
+- * License version 2.1, as published by the Free Software Foundation.
+- * 
+- *
+- * This library is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+- * Lesser General Public License for more details.
+- *
+- * You should have received a copy of the GNU Lesser General Public License
+- * along with this library; see the file COPYING.LIB.  If not, write to
+- * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+- * Boston, MA 02110-1301, USA.
+- */
+-
+-#ifndef QJSON_PARSER_P_H
+-#define QJSON_PARSER_P_H
+-
+-#include "parser.h"
+-
+-#include <QtCore/QString>
+-#include <QtCore/QVariant>
+-
+-class JSonScanner;
+-
+-namespace yy {
+-  class json_parser;
+-}
+-
+-namespace QJson {
+-
+-  class ParserPrivate
+-  {
+-    public:
+-      ParserPrivate();
+-      ~ParserPrivate();
+-
+-      void setError(QString errorMsg, int line);
+-
+-      JSonScanner* m_scanner;
+-      bool m_negate;
+-      bool m_error;
+-      int m_errorLine;
+-      QString m_errorMsg;
+-      QVariant m_result;
+-      bool m_specialNumbersAllowed;
+-  };
+-}
+-
+-#endif // QJSON_PARSER_H
+diff --git a/thirdparty/qjson/parserrunnable.cpp b/thirdparty/qjson/parserrunnable.cpp
+deleted file mode 100644
+index 88baf4c..0000000
+--- a/thirdparty/qjson/parserrunnable.cpp
++++ /dev/null
+@@ -1,68 +0,0 @@
+-/* This file is part of qjson
+-  *
+-  * Copyright (C) 2009 Flavio Castelli <flavio@castelli.name>
+-  *
+-  * This library is free software; you can redistribute it and/or
+-  * modify it under the terms of the GNU Lesser General Public
+-  * License version 2.1, as published by the Free Software Foundation.
+-  * 
+-  *
+-  * This library is distributed in the hope that it will be useful,
+-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-  * Lesser General Public License for more details.
+-  *
+-  * You should have received a copy of the GNU Lesser General Public License
+-  * along with this library; see the file COPYING.LIB.  If not, write to
+-  * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+-  * Boston, MA 02110-1301, USA.
+-  */
+-
+-#include "parserrunnable.h"
+-
+-#include "parser.h"
+-
+-#include <QtCore/QDebug>
+-#include <QtCore/QVariant>
+-
+-using namespace QJson;
+-
+-class QJson::ParserRunnable::Private
+-{
+-  public:
+-    QByteArray m_data;
+-};
+-
+-ParserRunnable::ParserRunnable(QObject* parent)
+-    : QObject(parent),
+-      QRunnable(),
+-      d(new Private)
+-{
+-  qRegisterMetaType<QVariant>("QVariant");
+-}
+-
+-ParserRunnable::~ParserRunnable()
+-{
+-  delete d;
+-}
+-
+-void ParserRunnable::setData( const QByteArray& data ) {
+-  d->m_data = data;
+-}
+-
+-void ParserRunnable::run()
+-{
+-  qDebug() << Q_FUNC_INFO;
+-
+-  bool ok;
+-  Parser parser;
+-  QVariant result = parser.parse (d->m_data, &ok);
+-  if (ok) {
+-    qDebug() << "successfully converted json item to QVariant object";
+-    emit parsingFinished(result, true, QString());
+-  } else {
+-    const QString errorText = tr("An error occurred while parsing json: %1").arg(parser.errorString());
+-    qCritical() << errorText;
+-    emit parsingFinished(QVariant(), false, errorText);
+-  }
+-}
+diff --git a/thirdparty/qjson/parserrunnable.h b/thirdparty/qjson/parserrunnable.h
+deleted file mode 100644
+index 2badeb6..0000000
+--- a/thirdparty/qjson/parserrunnable.h
++++ /dev/null
+@@ -1,67 +0,0 @@
+-/* This file is part of qjson
+-  *
+-  * Copyright (C) 2009 Flavio Castelli <flavio@castelli.name>
+-  *
+-  * This library is free software; you can redistribute it and/or
+-  * modify it under the terms of the GNU Lesser General Public
+-  * License version 2.1, as published by the Free Software Foundation.
+-  * 
+-  *
+-  * This library is distributed in the hope that it will be useful,
+-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-  * Lesser General Public License for more details.
+-  *
+-  * You should have received a copy of the GNU Lesser General Public License
+-  * along with this library; see the file COPYING.LIB.  If not, write to
+-  * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+-  * Boston, MA 02110-1301, USA.
+-  */
+-
+-#ifndef PARSERRUNNABLE_H
+-#define PARSERRUNNABLE_H
+-
+-#include "qjson_export.h"
+-
+-#include <QtCore/QObject>
+-#include <QtCore/QRunnable>
+-
+-class QVariant;
+-
+-namespace QJson {
+-  /**
+-  * @brief Convenience class for converting JSON data to QVariant objects using a dedicated thread
+-  */
+-  class QJSON_EXPORT ParserRunnable  : public QObject, public QRunnable
+-  {
+-    Q_OBJECT
+-    public:
+-      /**
+-      * This signal is emitted when the conversion process has been completed
+-      * @param data contains the JSON data that has to be converted
+-      * @param parent parent of the object
+-      **/
+-      explicit ParserRunnable(QObject* parent = 0);
+-      ~ParserRunnable();
+-
+-      void setData( const QByteArray& data );
+-
+-      void run();
+-
+-    Q_SIGNALS:
+-      /**
+-      * This signal is emitted when the parsing process has been completed
+-      * @param json contains the result of the parsing
+-      * @param ok if a parsing error occurs ok is set to false, otherwise it's set to true.
+-      * @param error_msg contains a string explaining the failure reason
+-      **/
+-      void parsingFinished(const QVariant& json, bool ok, const QString& error_msg);
+-
+-    private:
+-      Q_DISABLE_COPY(ParserRunnable)
+-      class Private;
+-      Private* const d;
+-  };
+-}
+-
+-#endif // PARSERRUNNABLE_H
+diff --git a/thirdparty/qjson/position.hh b/thirdparty/qjson/position.hh
+deleted file mode 100644
+index 27331d0..0000000
+--- a/thirdparty/qjson/position.hh
++++ /dev/null
+@@ -1,142 +0,0 @@
+-/* A Bison parser, made by GNU Bison 2.3.  */
+-
+-/* Positions for Bison parsers in C++
+-
+-   Copyright (C) 2002, 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
+-
+-   This program is free software; you can redistribute it and/or modify
+-   it under the terms of the GNU General Public License as published by
+-   the Free Software Foundation; either version 2, or (at your option)
+-   any later version.
+-
+-   This program is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-   GNU General Public License for more details.
+-
+-   You should have received a copy of the GNU General Public License
+-   along with this program; if not, write to the Free Software
+-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+-   Boston, MA 02110-1301, USA.  */
+-
+-/* As a special exception, you may create a larger work that contains
+-   part or all of the Bison parser skeleton and distribute that work
+-   under terms of your choice, so long as that work isn't itself a
+-   parser generator using the skeleton or a modified version thereof
+-   as a parser skeleton.  Alternatively, if you modify or redistribute
+-   the parser skeleton itself, you may (at your option) remove this
+-   special exception, which will cause the skeleton and the resulting
+-   Bison output files to be licensed under the GNU General Public
+-   License without this special exception.
+-
+-   This special exception was added by the Free Software Foundation in
+-   version 2.2 of Bison.  */
+-
+-/**
+- ** \file position.hh
+- ** Define the yy::position class.
+- */
+-
+-#ifndef BISON_POSITION_HH
+-# define BISON_POSITION_HH
+-
+-# include <iostream>
+-# include <string>
+-
+-namespace yy
+-{
+-  /// Abstract a position.
+-  class position
+-  {
+-  public:
+-
+-    /// Construct a position.
+-    position ()
+-      : filename (0), line (1), column (0)
+-    {
+-    }
+-
+-
+-    /// Initialization.
+-    inline void initialize (std::string* fn)
+-    {
+-      filename = fn;
+-      line = 1;
+-      column = 0;
+-    }
+-
+-    /** \name Line and Column related manipulators
+-     ** \{ */
+-  public:
+-    /// (line related) Advance to the COUNT next lines.
+-    inline void lines (int count = 1)
+-    {
+-      column = 0;
+-      line += count;
+-    }
+-
+-    /// (column related) Advance to the COUNT next columns.
+-    inline void columns (int count = 1)
+-    {
+-      int leftmost = 0;
+-      int current  = column;
+-      if (leftmost <= current + count)
+-	column += count;
+-      else
+-	column = 0;
+-    }
+-    /** \} */
+-
+-  public:
+-    /// File name to which this position refers.
+-    std::string* filename;
+-    /// Current line number.
+-    unsigned int line;
+-    /// Current column number.
+-    unsigned int column;
+-  };
+-
+-  /// Add and assign a position.
+-  inline const position&
+-  operator+= (position& res, const int width)
+-  {
+-    res.columns (width);
+-    return res;
+-  }
+-
+-  /// Add two position objects.
+-  inline const position
+-  operator+ (const position& begin, const int width)
+-  {
+-    position res = begin;
+-    return res += width;
+-  }
+-
+-  /// Add and assign a position.
+-  inline const position&
+-  operator-= (position& res, const int width)
+-  {
+-    return res += -width;
+-  }
+-
+-  /// Add two position objects.
+-  inline const position
+-  operator- (const position& begin, const int width)
+-  {
+-    return begin + -width;
+-  }
+-
+-  /** \brief Intercept output stream redirection.
+-   ** \param ostr the destination output stream
+-   ** \param pos a reference to the position to redirect
+-   */
+-  inline std::ostream&
+-  operator<< (std::ostream& ostr, const position& pos)
+-  {
+-    if (pos.filename)
+-      ostr << *pos.filename << ':';
+-    return ostr << pos.line << '.' << pos.column;
+-  }
+-
+-}
+-#endif // not BISON_POSITION_HH
+diff --git a/thirdparty/qjson/qjson_debug.h b/thirdparty/qjson/qjson_debug.h
+deleted file mode 100644
+index 0a511ae..0000000
+--- a/thirdparty/qjson/qjson_debug.h
++++ /dev/null
+@@ -1,33 +0,0 @@
+-/* This file is part of qjson
+-  *
+-  * Copyright (C) 2009 Michael Leupold <lemma@confuego.org>
+-  *
+-  * This library is free software; you can redistribute it and/or
+-  * modify it under the terms of the GNU Lesser General Public
+-  * License version 2.1, as published by the Free Software Foundation.
+-  * 
+-  *
+-  * This library is distributed in the hope that it will be useful,
+-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-  * Lesser General Public License for more details.
+-  *
+-  * You should have received a copy of the GNU Lesser General Public License
+-  * along with this library; see the file COPYING.LIB.  If not, write to
+-  * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+-  * Boston, MA 02110-1301, USA.
+-  */
+-
+-#ifndef QJSON_DEBUG_H
+-#define QJSON_DEBUG_H
+-
+-#include <QtCore/QDebug>
+-
+-// define qjsonDebug()
+-#ifdef QJSON_VERBOSE_DEBUG_OUTPUT
+-  inline QDebug qjsonDebug() { return QDebug(QtDebugMsg); }
+-#else
+-  inline QNoDebug qjsonDebug() { return QNoDebug(); }
+-#endif
+-
+-#endif
+diff --git a/thirdparty/qjson/qjson_export.h b/thirdparty/qjson/qjson_export.h
+deleted file mode 100644
+index 9a807b9..0000000
+--- a/thirdparty/qjson/qjson_export.h
++++ /dev/null
+@@ -1,35 +0,0 @@
+-/*  This file is part of the KDE project
+-    Copyright (C) 2009 Pino Toscano <pino@kde.org>
+-
+-    This library is free software; you can redistribute it and/or
+-    modify it under the terms of the GNU Lesser General Public
+-    License version 2.1, as published by the Free Software Foundation.
+-    
+-
+-    This library is distributed in the hope that it will be useful,
+-    but WITHOUT ANY WARRANTY; without even the implied warranty of
+-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-    Lesser General Public License for more details.
+-
+-    You should have received a copy of the GNU Lesser General Public License
+-    along with this library; see the file COPYING.LIB.  If not, write to
+-    the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+-    Boston, MA 02110-1301, USA.
+-*/
+-
+-#ifndef QJSON_EXPORT_H
+-#define QJSON_EXPORT_H
+-
+-#include <QtCore/qglobal.h>
+-
+-#ifndef QJSON_EXPORT
+-# if defined(QJSON_MAKEDLL)
+-   /* We are building this library */
+-#  define QJSON_EXPORT Q_DECL_EXPORT
+-# else
+-   /* We are using this library */
+-#  define QJSON_EXPORT Q_DECL_IMPORT
+-# endif
+-#endif
+-
+-#endif
+diff --git a/thirdparty/qjson/qobjecthelper.cpp b/thirdparty/qjson/qobjecthelper.cpp
+deleted file mode 100644
+index b756488..0000000
+--- a/thirdparty/qjson/qobjecthelper.cpp
++++ /dev/null
+@@ -1,85 +0,0 @@
+-/* This file is part of qjson
+-  *
+-  * Copyright (C) 2009 Till Adam <adam@kde.org>
+-  * Copyright (C) 2009 Flavio Castelli <flavio@castelli.name>
+-  *
+-  * This library is free software; you can redistribute it and/or
+-  * modify it under the terms of the GNU Lesser General Public
+-  * License version 2.1, as published by the Free Software Foundation.
+-  * 
+-  *
+-  * This library is distributed in the hope that it will be useful,
+-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-  * Lesser General Public License for more details.
+-  *
+-  * You should have received a copy of the GNU Lesser General Public License
+-  * along with this library; see the file COPYING.LIB.  If not, write to
+-  * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+-  * Boston, MA 02110-1301, USA.
+-  */
+-
+-
+-#include "qobjecthelper.h"
+-
+-#include <QtCore/QMetaObject>
+-#include <QtCore/QMetaProperty>
+-#include <QtCore/QObject>
+-
+-using namespace QJson;
+-
+-class QObjectHelper::QObjectHelperPrivate {
+-};
+-
+-QObjectHelper::QObjectHelper()
+-  : d (new QObjectHelperPrivate)
+-{
+-}
+-
+-QObjectHelper::~QObjectHelper()
+-{
+-  delete d;
+-}
+-
+-QVariantMap QObjectHelper::qobject2qvariant( const QObject* object,
+-                              const QStringList& ignoredProperties)
+-{
+-  QVariantMap result;
+-  const QMetaObject *metaobject = object->metaObject();
+-  int count = metaobject->propertyCount();
+-  for (int i=0; i<count; ++i) {
+-    QMetaProperty metaproperty = metaobject->property(i);
+-    const char *name = metaproperty.name();
+-
+-    if (ignoredProperties.contains(QLatin1String(name)) || (!metaproperty.isReadable()))
+-      continue;
+-
+-    QVariant value = object->property(name);
+-    result[QLatin1String(name)] = value;
+- }
+-  return result;
+-}
+-
+-void QObjectHelper::qvariant2qobject(const QVariantMap& variant, QObject* object)
+-{
+-  const QMetaObject *metaobject = object->metaObject();
+-
+-  QVariantMap::const_iterator iter;
+-  for (iter = variant.constBegin(); iter != variant.constEnd(); ++iter) {
+-    int pIdx = metaobject->indexOfProperty( iter.key().toAscii() );
+-
+-    if ( pIdx < 0 ) {
+-      continue;
+-    }
+-
+-    QMetaProperty metaproperty = metaobject->property( pIdx );
+-    QVariant::Type type = metaproperty.type();
+-    QVariant v( iter.value() );
+-    if ( v.canConvert( type ) ) {
+-      v.convert( type );
+-      metaproperty.write( object, v );
+-    } else if (QString(QLatin1String("QVariant")).compare(QLatin1String(metaproperty.typeName())) == 0) {
+-     metaproperty.write( object, v );
+-    }
+-  }
+-}
+diff --git a/thirdparty/qjson/qobjecthelper.h b/thirdparty/qjson/qobjecthelper.h
+deleted file mode 100644
+index 514ca1f..0000000
+--- a/thirdparty/qjson/qobjecthelper.h
++++ /dev/null
+@@ -1,144 +0,0 @@
+-/* This file is part of qjson
+-  *
+-  * Copyright (C) 2009 Flavio Castelli <flavio@castelli.name>
+-  *
+-  * This library is free software; you can redistribute it and/or
+-  * modify it under the terms of the GNU Lesser General Public
+-  * License version 2.1, as published by the Free Software Foundation.
+-  * 
+-  *
+-  * This library is distributed in the hope that it will be useful,
+-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-  * Lesser General Public License for more details.
+-  *
+-  * You should have received a copy of the GNU Lesser General Public License
+-  * along with this library; see the file COPYING.LIB.  If not, write to
+-  * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+-  * Boston, MA 02110-1301, USA.
+-  */
+-
+-#ifndef QOBJECTHELPER_H
+-#define QOBJECTHELPER_H
+-
+-#include "qjson_export.h"
+-
+-#include <QtCore/QLatin1String>
+-#include <QtCore/QStringList>
+-#include <QtCore/QVariantMap>
+-
+-class QObject;
+-
+-namespace QJson {
+-  /**
+-  * @brief Class used to convert QObject into QVariant and vivce-versa.
+-  * During these operations only the class attributes defined as properties will
+-  * be considered.
+-  * Properties marked as 'non-stored' will be ignored.
+-  *
+-  * Suppose the declaration of the Person class looks like this:
+-  * \code
+-  * class Person : public QObject
+-    {
+-      Q_OBJECT
+-
+-      Q_PROPERTY(QString name READ name WRITE setName)
+-      Q_PROPERTY(int phoneNumber READ phoneNumber WRITE setPhoneNumber)
+-      Q_PROPERTY(Gender gender READ gender WRITE setGender)
+-      Q_PROPERTY(QDate dob READ dob WRITE setDob)
+-      Q_ENUMS(Gender)
+-
+-     public:
+-        Person(QObject* parent = 0);
+-        ~Person();
+-
+-        QString name() const;
+-        void setName(const QString& name);
+-
+-        int phoneNumber() const;
+-        void setPhoneNumber(const int  phoneNumber);
+-
+-        enum Gender {Male, Female};
+-        void setGender(Gender gender);
+-        Gender gender() const;
+-
+-        QDate dob() const;
+-        void setDob(const QDate& dob);
+-
+-      private:
+-        QString m_name;
+-        int m_phoneNumber;
+-        Gender m_gender;
+-        QDate m_dob;
+-    };
+-    \endcode
+-
+-    The following code will serialize an instance of Person to JSON :
+-
+-    \code
+-    Person person;
+-    person.setName("Flavio");
+-    person.setPhoneNumber(123456);
+-    person.setGender(Person::Male);
+-    person.setDob(QDate(1982, 7, 12));
+-
+-    QVariantMap variant = QObjectHelper::qobject2qvariant(&person);
+-    Serializer serializer;
+-    qDebug() << serializer.serialize( variant);
+-    \endcode
+-
+-    The generated output will be:
+-    \code
+-    { "dob" : "1982-07-12", "gender" : 0, "name" : "Flavio", "phoneNumber" : 123456 }
+-    \endcode
+-
+-    It's also possible to initialize a QObject using the values stored inside of
+-    a QVariantMap.
+-
+-    Suppose you have the following JSON data stored into a QString:
+-    \code
+-    { "dob" : "1982-07-12", "gender" : 0, "name" : "Flavio", "phoneNumber" : 123456 }
+-    \endcode
+-
+-    The following code will initialize an already allocated instance of Person
+-    using the JSON values:
+-    \code
+-    Parser parser;
+-    QVariant variant = parser.parse(json);
+-
+-    Person person;
+-    QObjectHelper::qvariant2qobject(variant.toMap(), &person);
+-    \endcode
+-
+-    \sa Parser
+-    \sa Serializer
+-  */
+-  class QJSON_EXPORT QObjectHelper {
+-    public:
+-      QObjectHelper();
+-      ~QObjectHelper();
+-      
+-    /**
+-    * This method converts a QObject instance into a QVariantMap.
+-    *
+-    * @param object The QObject instance to be converted.
+-    * @param ignoredProperties Properties that won't be converted.
+-    */
+-    static QVariantMap qobject2qvariant( const QObject* object,
+-                                  const QStringList& ignoredProperties = QStringList(QString(QLatin1String("objectName"))));
+-
+-    /**
+-    * This method converts a QVariantMap instance into a QObject
+-    *
+-    * @param object The QObject instance to be converted.
+-    */
+-    static void qvariant2qobject(const QVariantMap& variant, QObject* object);
+-
+-    private:
+-      Q_DISABLE_COPY(QObjectHelper)
+-      class QObjectHelperPrivate;
+-      QObjectHelperPrivate* const d;
+-  };
+-}
+-
+-#endif // QOBJECTHELPER_H
+diff --git a/thirdparty/qjson/serializer.cpp b/thirdparty/qjson/serializer.cpp
+deleted file mode 100644
+index 41407c2..0000000
+--- a/thirdparty/qjson/serializer.cpp
++++ /dev/null
+@@ -1,322 +0,0 @@
+-/* This file is part of qjson
+-  *
+-  * Copyright (C) 2009 Till Adam <adam@kde.org>
+-  * Copyright (C) 2009 Flavio Castelli <flavio@castelli.name>
+-  *
+-  * This library is free software; you can redistribute it and/or
+-  * modify it under the terms of the GNU Lesser General Public
+-  * License version 2.1, as published by the Free Software Foundation.
+-  * 
+-  *
+-  * This library is distributed in the hope that it will be useful,
+-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-  * Lesser General Public License for more details.
+-  *
+-  * You should have received a copy of the GNU Lesser General Public License
+-  * along with this library; see the file COPYING.LIB.  If not, write to
+-  * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+-  * Boston, MA 02110-1301, USA.
+-  */
+-
+-#include "serializer.h"
+-
+-#include <QtCore/QDataStream>
+-#include <QtCore/QStringList>
+-#include <QtCore/QVariant>
+-
+-#include <cmath>
+-
+-#ifdef _MSC_VER  // using MSVC compiler
+-#include <float.h>
+-#endif
+-
+-using namespace QJson;
+-
+-class Serializer::SerializerPrivate {
+-  public:
+-    SerializerPrivate() :
+-      specialNumbersAllowed(false),
+-      indentMode(QJson::IndentNone),
+-      doublePrecision(6) {
+-      }
+-    bool specialNumbersAllowed;
+-    IndentMode indentMode;
+-    int doublePrecision;
+-    QByteArray buildIndent(int spaces);
+-    QByteArray serialize( const QVariant &v, int reserved = 0);
+-    QString sanitizeString( QString str );
+-    QByteArray join( const QList<QByteArray>& list, const QByteArray& sep );
+-};
+-
+-QByteArray Serializer::SerializerPrivate::join( const QList<QByteArray>& list, const QByteArray& sep ) {
+-  QByteArray res;
+-  Q_FOREACH( const QByteArray& i, list ) {
+-    if ( !res.isEmpty() )
+-      res += sep;
+-    res += i;
+-  }
+-  return res;
+-}
+-
+-QByteArray Serializer::SerializerPrivate::serialize( const QVariant &v, int reserved )
+-{
+-  QByteArray str;
+-  bool error = false;
+-  QByteArray indent;
+-
+-  if ( ! v.isValid() ) { // invalid or null?
+-    str = "null";
+-  } else if (( v.type() == QVariant::List ) || ( v.type() == QVariant::StringList )){ // an array or a stringlist?
+-    const QVariantList list = v.toList();
+-    QList<QByteArray> values;
+-    Q_FOREACH( const QVariant& var, list )
+-    {
+-      reserved++;
+-      QByteArray serializedValue = serialize( var,reserved );
+-      reserved--;
+-      if ( serializedValue.isNull() ) {
+-        error = true;
+-        break;
+-      }
+-      values << serializedValue;
+-    }
+-
+-    if (indentMode == QJson::IndentMinimum) {
+-      QByteArray indent = buildIndent(reserved - 1);
+-      str = "[\n" + join( values, ",\n" ) + "\n" + indent + "]";
+-    }
+-    else if (indentMode == QJson::IndentMedium || indentMode == QJson::IndentFull) {
+-      QByteArray indent = buildIndent(reserved);
+-      str = "[\n" + join( values, ",\n" ) + "\n" + indent + "]";
+-    }
+-    else if (indentMode == QJson::IndentCompact) {
+-      str = "[" + join( values, "," ) + "]";
+-    }
+-    else {
+-      str = "[ " + join( values, ", " ) + " ]";
+-    }
+-
+-  } else if ( v.type() == QVariant::Map ) { // variant is a map?
+-    const QVariantMap vmap = v.toMap();
+-    QMapIterator<QString, QVariant> it( vmap );
+-
+-    if (indentMode == QJson::IndentMinimum) {
+-      QByteArray indent = buildIndent(reserved);
+-      str = indent + "{ ";
+-    }
+-    else if (indentMode == QJson::IndentMedium || indentMode == QJson::IndentFull) {
+-      QByteArray indent = buildIndent(reserved);
+-      QByteArray nextindent = buildIndent(reserved + 1);
+-      str = indent + "{\n" + nextindent;
+-    }
+-    else if (indentMode == QJson::IndentCompact) {
+-      str = "{";
+-    }
+-    else {
+-      str = "{ ";
+-    }
+-
+-    QList<QByteArray> pairs;
+-    while ( it.hasNext() ) {
+-      it.next();
+-      reserved++;
+-      QByteArray serializedValue = serialize( it.value() , reserved);
+-      reserved--;
+-      if ( serializedValue.isNull() ) {
+-        error = true;
+-        break;
+-      }
+-      QByteArray key   = sanitizeString( it.key() ).toUtf8();
+-      QByteArray value = serializedValue;
+-      if (indentMode == QJson::IndentCompact) {
+-        pairs << key + ":" + value;
+-      } else {
+-        pairs << key + " : " + value;
+-      }
+-    }
+-
+-    if (indentMode == QJson::IndentFull) {
+-      QByteArray indent = buildIndent(reserved + 1);
+-      str += join( pairs, ",\n" + indent);
+-    }
+-    else if (indentMode == QJson::IndentCompact) {
+-      str += join( pairs, "," );
+-    }
+-    else {
+-      str += join( pairs, ", " );
+-    }
+-
+-    if (indentMode == QJson::IndentMedium || indentMode == QJson::IndentFull) {
+-      QByteArray indent = buildIndent(reserved);
+-      str += "\n" + indent + "}";
+-    }
+-    else if (indentMode == QJson::IndentCompact) {
+-      str += "}";
+-    }
+-    else {
+-      str += " }";
+-    }
+-
+-  } else if (( v.type() == QVariant::String ) ||  ( v.type() == QVariant::ByteArray )) { // a string or a byte array?
+-    str = sanitizeString( v.toString() ).toUtf8();
+-  } else if (( v.type() == QVariant::Double) || ((QMetaType::Type)v.type() == QMetaType::Float)) { // a double or a float?
+-    const double value = v.toDouble();
+-#if defined _WIN32 && !defined(Q_OS_SYMBIAN)
+-    const bool special = _isnan(value) || !_finite(value);
+-#elif defined(Q_OS_SYMBIAN) || defined(Q_OS_ANDROID)
+-    const bool special = isnan(value) || isinf(value);
+-#else
+-    const bool special = std::isnan(value) || std::isinf(value);
+-#endif
+-    if (special) {
+-      if (specialNumbersAllowed) {
+-#if defined _WIN32 && !defined(Q_OS_SYMBIAN)
+-        if (_isnan(value)) {
+-#elif defined(Q_OS_SYMBIAN) || defined(Q_OS_ANDROID)
+-        if (isnan(value)) {
+-#else
+-        if (std::isnan(value)) {
+-#endif
+-          str += "NaN";
+-        } else {
+-          if (value<0) {
+-            str += '-';
+-          }
+-          str += "Infinity";
+-        }
+-      } else {
+-        qCritical("Attempt to write NaN or infinity, which is not supported by json");
+-        error = true;
+-    }
+-    } else {
+-      str = QByteArray::number( value , 'g', doublePrecision);
+-      if( ! str.contains( "." ) && ! str.contains( "e" ) ) {
+-        str += ".0";
+-      }
+-    }
+-  } else if ( v.type() == QVariant::Bool ) { // boolean value?
+-    str = ( v.toBool() ? "true" : "false" );
+-  } else if ( v.type() == QVariant::ULongLong ) { // large unsigned number?
+-    str = QByteArray::number( v.value<qulonglong>() );
+-  } else if ( v.canConvert<qlonglong>() ) { // any signed number?
+-    str = QByteArray::number( v.value<qlonglong>() );
+-  } else if ( v.canConvert<QString>() ){ // can value be converted to string?
+-    // this will catch QDate, QDateTime, QUrl, ...
+-    str = sanitizeString( v.toString() ).toUtf8();
+-    //TODO: catch other values like QImage, QRect, ...
+-  } else {
+-    error = true;
+-  }
+-  if ( !error )
+-  {
+-    return str;
+-  }
+-  else
+-    return QByteArray();
+-}
+-
+-QByteArray Serializer::SerializerPrivate::buildIndent(int spaces)
+-{
+-   QByteArray indent;
+-   if (spaces < 0) {
+-     spaces = 0;
+-   }
+-   for (int i = 0; i < spaces; i++ ) {
+-     indent += " ";
+-   }
+-   return indent;
+-}
+-
+-QString Serializer::SerializerPrivate::sanitizeString( QString str )
+-{
+-  str.replace( QLatin1String( "\\" ), QLatin1String( "\\\\" ) );
+-
+-  // escape unicode chars
+-  QString result;
+-  const ushort* unicode = str.utf16();
+-  unsigned int i = 0;
+-
+-  while ( unicode[ i ] ) {
+-    if ( unicode[ i ] < 128 ) {
+-      result.append( QChar( unicode[ i ] ) );
+-    }
+-    else {
+-      QString hexCode = QString::number( unicode[ i ], 16 ).rightJustified( 4,
+-                                                           QLatin1Char('0') );
+-
+-      result.append( QLatin1String ("\\u") ).append( hexCode );
+-    }
+-    ++i;
+-  }
+-  str = result;
+-
+-  str.replace( QLatin1String( "\"" ), QLatin1String( "\\\"" ) );
+-  str.replace( QLatin1String( "\b" ), QLatin1String( "\\b" ) );
+-  str.replace( QLatin1String( "\f" ), QLatin1String( "\\f" ) );
+-  str.replace( QLatin1String( "\n" ), QLatin1String( "\\n" ) );
+-  str.replace( QLatin1String( "\r" ), QLatin1String( "\\r" ) );
+-  str.replace( QLatin1String( "\t" ), QLatin1String( "\\t" ) );
+-
+-  return QString( QLatin1String( "\"%1\"" ) ).arg( str );
+-}
+-
+-Serializer::Serializer()
+-  : d( new SerializerPrivate )
+-{
+-}
+-
+-Serializer::~Serializer() {
+-  delete d;
+-}
+-
+-void Serializer::serialize( const QVariant& v, QIODevice* io, bool* ok)
+-{
+-  Q_ASSERT( io );
+-  if (ok)
+-      *ok = false;
+-
+-  if (!io->isOpen()) {
+-    if (!io->open(QIODevice::WriteOnly)) {
+-      qCritical ("Error opening device");
+-      return;
+-    }
+-  }
+-
+-  if (!io->isWritable()) {
+-    qCritical ("Device is not readable");
+-    io->close();
+-    return;
+-  }
+-
+-  const QByteArray str = serialize( v );
+-  if (io->write(str) == str.count()) {
+-    if (ok)
+-      *ok = true;
+-  }
+-}
+-
+-QByteArray Serializer::serialize( const QVariant &v)
+-{
+-  return d->serialize(v);
+-}
+-
+-void QJson::Serializer::allowSpecialNumbers(bool allow) {
+-  d->specialNumbersAllowed = allow;
+-}
+-
+-bool QJson::Serializer::specialNumbersAllowed() const {
+-  return d->specialNumbersAllowed;
+-}
+-
+-void QJson::Serializer::setIndentMode(IndentMode mode) {
+-  d->indentMode = mode;
+-}
+-
+-void QJson::Serializer::setDoublePrecision(int precision) {
+-  d->doublePrecision = precision;
+-}
+-
+-IndentMode QJson::Serializer::indentMode() const {
+-  return d->indentMode;
+-}
+diff --git a/thirdparty/qjson/serializer.h b/thirdparty/qjson/serializer.h
+deleted file mode 100644
+index 66b349c..0000000
+--- a/thirdparty/qjson/serializer.h
++++ /dev/null
+@@ -1,134 +0,0 @@
+-/* This file is part of qjson
+-  *
+-  * Copyright (C) 2009 Till Adam <adam@kde.org>
+-  *
+-  * This library is free software; you can redistribute it and/or
+-  * modify it under the terms of the GNU Lesser General Public
+-  * License version 2.1, as published by the Free Software Foundation.
+-  * 
+-  *
+-  * This library is distributed in the hope that it will be useful,
+-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+-  * Lesser General Public License for more details.
+-  *
+-  * You should have received a copy of the GNU Lesser General Public License
+-  * along with this library; see the file COPYING.LIB.  If not, write to
+-  * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+-  * Boston, MA 02110-1301, USA.
+-  */
+-
+-#ifndef QJSON_SERIALIZER_H
+-#define QJSON_SERIALIZER_H
+-
+-#include "qjson_export.h"
+-
+-class QIODevice;
+-class QString;
+-class QVariant;
+-
+-namespace QJson {
+-  /**
+-  * @brief How the indentation should work.
+-  *
+-  * none (default) : { "foo" : 0, "foo1" : 1, "foo2" : [ { "foo3" : 3, "foo4" : 4 } ] }
+-  *
+-  * compact : {"foo":0,"foo1":1,"foo2":[{"foo3":3,"foo4":4}]}
+-  *
+-  * minimum : { "foo" : 0, "foo1" : 1, "foo2" : [
+-  *             { "foo3" : 3, "foo4" : 4 }
+-  *           ] }
+-  *
+-  * medium : {
+-  *           "foo" : 0, "foo1" : 1, "foo2" : [
+-  *            {
+-  *             "foo3" : 3, "foo4" : 4
+-  *            }
+-  *           ]
+-  *          }
+-  * full : {
+-  *         "foo" : 0,
+-  *         "foo1" : 1,
+-  *         "foo2" : [
+-  *          {
+-  *           "foo3" : 3,
+-  *           "foo4" : 4
+-  *          }
+-  *         ]
+-  *        }
+-  */
+-  enum IndentMode {
+-    IndentNone,
+-    IndentCompact,
+-    IndentMinimum,
+-    IndentMedium,
+-    IndentFull
+-  };
+-  /**
+-  * @brief Main class used to convert QVariant objects to JSON data.
+-  *
+-  * QVariant objects are converted to a string containing the JSON data.
+-  * If QVariant object is empty or not valid a <em>null</em> json object is returned.
+-  */
+-  class QJSON_EXPORT Serializer {
+-  public:
+-    Serializer();
+-    ~Serializer();
+-
+-     /**
+-      * This method generates a textual JSON representation and outputs it to the
+-      * passed in I/O Device.
+-      * @param variant The JSON document in its in-memory representation as generated by the
+-      * parser.
+-      * @param out Input output device
+-      * @param ok if a conversion error occurs, *ok is set to false; otherwise *ok is set to true
+-      */
+-    void serialize( const QVariant& variant, QIODevice* out, bool* ok = 0);
+-
+-    /**
+-      * This is a method provided for convenience. It turns the passed in in-memory
+-      * representation of the JSON document into a textual one, which is returned.
+-      * If the returned string is empty, the document was empty. If it was null, there
+-      * was a parsing error.
+-      *
+-      * @param variant The JSON document in its in-memory representation as generated by the
+-      * parser.
+-      */
+-
+-    QByteArray serialize( const QVariant& variant);
+-
+-    /**
+-     * Allow or disallow writing of NaN and/or Infinity (as an extension to QJson)
+-     */
+-    void allowSpecialNumbers(bool allow);
+-
+-    /**
+-     * Is Nan and/or Infinity allowed?
+-     */
+-    bool specialNumbersAllowed() const;
+-
+-    /**
+-     * set output indentation mode as defined in QJson::IndentMode
+-     */
+-    void setIndentMode(IndentMode mode = QJson::IndentNone);
+-
+-
+-    /**
+-    * set double precision used while converting Double
+-    * \sa QByteArray::number
+-    */
+-    void setDoublePrecision(int precision);
+-
+-    /**
+-     * Returns one of the indentation modes defined in QJson::IndentMode
+-     */
+-    IndentMode indentMode() const;
+-
+-  private:
+-    Q_DISABLE_COPY(Serializer)
+-    class SerializerPrivate;
+-    SerializerPrivate* const d;
+-  };
+-}
+-
+-#endif // QJSON_SERIALIZER_H
+diff --git a/thirdparty/qjson/serializerrunnable.cpp b/thirdparty/qjson/serializerrunnable.cpp
+deleted file mode 100644
+index 9ebf68b..0000000
+--- a/thirdparty/qjson/serializerrunnable.cpp
++++ /dev/null
+@@ -1,60 +0,0 @@
+-#include "serializerrunnable.h"
+-
+-/* This file is part of qjson
+- *
+- * Copyright (C) 2009 Flavio Castelli <flavio@castelli.name>
+- *               2009 Frank Osterfeld <osterfeld@kde.org>
+- *
+- * This library is free software; you can redistribute it and/or
+- * modify it under the terms of the GNU Lesser General Public
+- * License version 2.1, as published by the Free Software Foundation.
+- * 
+- *
+- * This library is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+- * Lesser General Public License for more details.
+- *
+- * You should have received a copy of the GNU Lesser General Public License
+- * along with this library; see the file COPYING.LIB.  If not, write to
+- * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+- * Boston, MA 02110-1301, USA.
+- */
+-
+-#include "parserrunnable.h"
+-#include "serializer.h"
+-
+-#include <QtCore/QDebug>
+-#include <QtCore/QVariant>
+-
+-using namespace QJson;
+-
+-class SerializerRunnable::Private
+-{
+-public:
+-  QVariant json;
+-};
+-
+-SerializerRunnable::SerializerRunnable(QObject* parent)
+-    : QObject(parent),
+-      QRunnable(),
+-      d(new Private)
+-{
+-  qRegisterMetaType<QVariant>("QVariant");
+-}
+-
+-SerializerRunnable::~SerializerRunnable()
+-{
+-  delete d;
+-}
+-
+-void SerializerRunnable::setJsonObject( const QVariant& json )
+-{
+-  d->json = json;
+-}
+-
+-void SerializerRunnable::run()
+-{
+-  Serializer serializer;
+-  emit parsingFinished( Serializer().serialize( d->json ), true, QString() );
+-}
+diff --git a/thirdparty/qjson/serializerrunnable.h b/thirdparty/qjson/serializerrunnable.h
+deleted file mode 100644
+index d665fc5..0000000
+--- a/thirdparty/qjson/serializerrunnable.h
++++ /dev/null
+@@ -1,74 +0,0 @@
+-/* This file is part of qjson
+- *
+- * Copyright (C) 2009 Frank Osterfeld <osterfeld@kde.org>
+- *
+- * This library is free software; you can redistribute it and/or
+- * modify it under the terms of the GNU Lesser General Public
+- * License version 2.1, as published by the Free Software Foundation.
+- * 
+- *
+- * This library is distributed in the hope that it will be useful,
+- * but WITHOUT ANY WARRANTY; without even the implied warranty of
+- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+- * Lesser General Public License for more details.
+- *
+- * You should have received a copy of the GNU Lesser General Public License
+- * along with this library; see the file COPYING.LIB.  If not, write to
+- * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+- * Boston, MA 02110-1301, USA.
+- */
+-
+-#ifndef SERIALIZERRUNNABLE_H
+-#define SERIALIZERRUNNABLE_H
+-
+-#include "qjson_export.h"
+-
+-#include <QtCore/QObject>
+-#include <QtCore/QRunnable>
+-
+-class QByteArray;
+-class QString;
+-class QVariant;
+-
+-namespace QJson {
+-  /**
+-  * @brief Convenience class for converting JSON data to QVariant objects using a dedicated thread
+-  */
+-  class QJSON_EXPORT SerializerRunnable  : public QObject, public QRunnable
+-  {
+-    Q_OBJECT
+-    public:
+-      /**
+-      * This signal is emitted when the conversion process has been completed
+-      * @param data contains the JSON data that has to be converted
+-      * @param parent parent of the object
+-      **/
+-      explicit SerializerRunnable(QObject* parent = 0);
+-      ~SerializerRunnable();
+-
+-      /**
+-       * Sets the json object to serialize.
+-       *
+-       * @param json QVariant containing the json representation to be serialized
+-       */
+-      void setJsonObject( const QVariant& json );
+-
+-      /* reimp */ void run();
+-
+-    Q_SIGNALS:
+-      /**
+-      * This signal is emitted when the serialization process has been completed
+-      * @param serialized contains the result of the serialization
+-      * @param ok if a serialization error occurs ok is set to false, otherwise it's set to true.
+-      * @param error_msg contains a string explaining the failure reason
+-      **/
+-      void parsingFinished(const QByteArray& serialized, bool ok, const QString& error_msg);
+-
+-    private:
+-      Q_DISABLE_COPY(SerializerRunnable)
+-      class Private;
+-      Private* const d;
+-  };
+-}
+-
+-#endif // SERIALIZERRUNNABLE_H
+diff --git a/thirdparty/qjson/stack.hh b/thirdparty/qjson/stack.hh
+deleted file mode 100644
+index 754b664..0000000
+--- a/thirdparty/qjson/stack.hh
++++ /dev/null
+@@ -1,129 +0,0 @@
+-/* A Bison parser, made by GNU Bison 2.3.  */
+-
+-/* Stack handling for Bison parsers in C++
+-
+-   Copyright (C) 2002, 2003, 2004, 2005, 2006 Free Software Foundation, Inc.
+-
+-   This program is free software; you can redistribute it and/or modify
+-   it under the terms of the GNU General Public License as published by
+-   the Free Software Foundation; either version 2, or (at your option)
+-   any later version.
+-
+-   This program is distributed in the hope that it will be useful,
+-   but WITHOUT ANY WARRANTY; without even the implied warranty of
+-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-   GNU General Public License for more details.
+-
+-   You should have received a copy of the GNU General Public License
+-   along with this program; if not, write to the Free Software
+-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
+-   Boston, MA 02110-1301, USA.  */
+-
+-/* As a special exception, you may create a larger work that contains
+-   part or all of the Bison parser skeleton and distribute that work
+-   under terms of your choice, so long as that work isn't itself a
+-   parser generator using the skeleton or a modified version thereof
+-   as a parser skeleton.  Alternatively, if you modify or redistribute
+-   the parser skeleton itself, you may (at your option) remove this
+-   special exception, which will cause the skeleton and the resulting
+-   Bison output files to be licensed under the GNU General Public
+-   License without this special exception.
+-
+-   This special exception was added by the Free Software Foundation in
+-   version 2.2 of Bison.  */
+-
+-#ifndef BISON_STACK_HH
+-# define BISON_STACK_HH
+-
+-#include <deque>
+-
+-namespace yy
+-{
+-  template <class T, class S = std::deque<T> >
+-  class stack
+-  {
+-  public:
+-
+-    // Hide our reversed order.
+-    typedef typename S::reverse_iterator iterator;
+-    typedef typename S::const_reverse_iterator const_iterator;
+-
+-    stack () : seq_ ()
+-    {
+-    }
+-
+-    stack (unsigned int n) : seq_ (n)
+-    {
+-    }
+-
+-    inline
+-    T&
+-    operator [] (unsigned int i)
+-    {
+-      return seq_[i];
+-    }
+-
+-    inline
+-    const T&
+-    operator [] (unsigned int i) const
+-    {
+-      return seq_[i];
+-    }
+-
+-    inline
+-    void
+-    push (const T& t)
+-    {
+-      seq_.push_front (t);
+-    }
+-
+-    inline
+-    void
+-    pop (unsigned int n = 1)
+-    {
+-      for (; n; --n)
+-	seq_.pop_front ();
+-    }
+-
+-    inline
+-    unsigned int
+-    height () const
+-    {
+-      return seq_.size ();
+-    }
+-
+-    inline const_iterator begin () const { return seq_.rbegin (); }
+-    inline const_iterator end () const { return seq_.rend (); }
+-
+-  private:
+-
+-    S seq_;
+-  };
+-
+-  /// Present a slice of the top of a stack.
+-  template <class T, class S = stack<T> >
+-  class slice
+-  {
+-  public:
+-
+-    slice (const S& stack,
+-	   unsigned int range) : stack_ (stack),
+-				 range_ (range)
+-    {
+-    }
+-
+-    inline
+-    const T&
+-    operator [] (unsigned int i) const
+-    {
+-      return stack_[range_ - i];
+-    }
+-
+-  private:
+-
+-    const S& stack_;
+-    unsigned int range_;
+-  };
+-}
+-
+-#endif // not BISON_STACK_HH
+-- 
+1.9.1
+
