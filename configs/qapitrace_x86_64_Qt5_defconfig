@@ -1,6 +1,6 @@
 #
 # Automatically generated file; DO NOT EDIT.
-# Buildroot 2014.02-00422-g9fdb57a-dirty Configuration
+# Buildroot 2014.02-00454-g4eb0e7a Configuration
 #
 BR2_HAVE_DOT_CONFIG=y
 
@@ -403,12 +403,10 @@ BR2_PACKAGE_APITRACE_GUI=y
 #
 # Graphic applications
 #
-# BR2_PACKAGE_DAWN_BROWSER is not set
 # BR2_PACKAGE_FSWEBCAM is not set
 # BR2_PACKAGE_GNUPLOT is not set
 # BR2_PACKAGE_JHEAD is not set
 # BR2_PACKAGE_RRDTOOL is not set
-# BR2_PACKAGE_MLBROWSER is not set
 # BR2_PACKAGE_QTBROWSER is not set
 
 #
@@ -431,125 +429,75 @@ BR2_PACKAGE_APITRACE_GUI=y
 # Other GUIs
 #
 # BR2_PACKAGE_EFL is not set
-BR2_PACKAGE_QT=y
-BR2_PACKAGE_QT_VERBOSE=y
-# BR2_PACKAGE_QT_DEBUG is not set
-# BR2_PACKAGE_QT_DEMOS is not set
-# BR2_PACKAGE_QT_EXAMPLES is not set
-BR2_PACKAGE_QT_SHARED=y
-# BR2_PACKAGE_QT_STATIC is not set
-BR2_PACKAGE_QT_LICENSE_APPROVED=y
-BR2_PACKAGE_QT_CONFIG_FILE=""
-# BR2_PACKAGE_QT_QT3SUPPORT is not set
-BR2_PACKAGE_QT_GUI_MODULE=y
-
-#
-# Pixel depths
-#
-
-#
-# Deselecting each option leads to Qt's default (8,16,32)
-#
-# BR2_PACKAGE_QT_PIXEL_DEPTH_1 is not set
-# BR2_PACKAGE_QT_PIXEL_DEPTH_4 is not set
-BR2_PACKAGE_QT_PIXEL_DEPTH_8=y
-# BR2_PACKAGE_QT_PIXEL_DEPTH_12 is not set
-# BR2_PACKAGE_QT_PIXEL_DEPTH_15 is not set
-BR2_PACKAGE_QT_PIXEL_DEPTH_16=y
-# BR2_PACKAGE_QT_PIXEL_DEPTH_18 is not set
-# BR2_PACKAGE_QT_PIXEL_DEPTH_24 is not set
-BR2_PACKAGE_QT_PIXEL_DEPTH_32=y
-
-#
-# Fonts
-#
-BR2_PACKAGE_QT_FONT_MICRO=y
-BR2_PACKAGE_QT_FONT_FIXED=y
-BR2_PACKAGE_QT_FONT_HELVETICA=y
-# BR2_PACKAGE_QT_FONT_JAPANESE is not set
-# BR2_PACKAGE_QT_FONT_UNIFONT is not set
-BR2_PACKAGE_QT_NOFREETYPE=y
-# BR2_PACKAGE_QT_QTFREETYPE is not set
-# BR2_PACKAGE_QT_SYSTEMFREETYPE is not set
-# BR2_PACKAGE_QT_GIF is not set
-# BR2_PACKAGE_QT_LIBMNG is not set
-BR2_PACKAGE_QT_NOJPEG=y
-# BR2_PACKAGE_QT_SYSTEMJPEG is not set
-# BR2_PACKAGE_QT_QTJPEG is not set
-BR2_PACKAGE_QT_NOPNG=y
-# BR2_PACKAGE_QT_SYSTEMPNG is not set
-# BR2_PACKAGE_QT_QTPNG is not set
-BR2_PACKAGE_QT_NOTIFF=y
-# BR2_PACKAGE_QT_SYSTEMTIFF is not set
-# BR2_PACKAGE_QT_QTTIFF is not set
-BR2_PACKAGE_QT_QTZLIB=y
-# BR2_PACKAGE_QT_SYSTEMZLIB is not set
-# BR2_PACKAGE_QT_SQL_MODULE is not set
-
-#
-# Graphics drivers
-#
-BR2_PACKAGE_QT_GFX_LINUXFB=y
-
-#
-# eglnullws requires OpenGL ES v2.x and dawn-sdk support
-#
-# BR2_PACKAGE_QT_GFX_TRANSFORMED is not set
-# BR2_PACKAGE_QT_GFX_QVFB is not set
-# BR2_PACKAGE_QT_GFX_VNC is not set
-# BR2_PACKAGE_QT_GFX_MULTISCREEN is not set
-
-#
-# directfb Qt driver not available (need directfb)
-#
-
-#
-# Mouse drivers
-#
-# BR2_PACKAGE_QT_MOUSE_PC is not set
-# BR2_PACKAGE_QT_MOUSE_LINUXTP is not set
-BR2_PACKAGE_QT_MOUSE_LINUXINPUT=y
-# BR2_PACKAGE_QT_MOUSE_TSLIB is not set
-# BR2_PACKAGE_QT_MOUSE_QVFB is not set
-
-#
-# Mouse Options
-#
-# BR2_PACKAGE_QT_MOUSE_NO_QWS_CURSOR is not set
-
-#
-# Keyboard drivers
-#
-# BR2_PACKAGE_QT_KEYBOARD_TTY is not set
-BR2_PACKAGE_QT_KEYBOARD_LINUXINPUT=y
-# BR2_PACKAGE_QT_KEYBOARD_QVFB is not set
-
-#
-# Phonon module needs gstreamer
-#
-# BR2_PACKAGE_QT_DBUS is not set
-BR2_PACKAGE_QT_XML=y
-# BR2_PACKAGE_QT_XMLPATTERNS is not set
-# BR2_PACKAGE_QT_MULTIMEDIA is not set
-# BR2_PACKAGE_QT_SVG is not set
-BR2_PACKAGE_QT_NETWORK=y
-BR2_PACKAGE_QT_ARCH_SUPPORTS_WEBKIT=y
-BR2_PACKAGE_QT_WEBKIT=y
-BR2_PACKAGE_QT_STL=y
-# BR2_PACKAGE_QT_OPENSSL is not set
-BR2_PACKAGE_QT_SCRIPT=y
-# BR2_PACKAGE_QT_SCRIPTTOOLS is not set
-# BR2_PACKAGE_QT_DECLARATIVE is not set
-
-#
-# QT libraries and helper libraries
-#
-# BR2_PACKAGE_GRANTLEE is not set
-# BR2_PACKAGE_QEXTSERIALPORT is not set
-# BR2_PACKAGE_QJSON is not set
-# BR2_PACKAGE_QTUIO is not set
-# BR2_PACKAGE_QWT is not set
+# BR2_PACKAGE_QT is not set
 BR2_PACKAGE_QT5_JSCORE_AVAILABLE=y
+BR2_PACKAGE_QT5=y
+BR2_PACKAGE_QT5BASE=y
+BR2_PACKAGE_QT5BASE_LICENSE_APPROVED=y
+# BR2_PACKAGE_QT5BASE_EXAMPLES is not set
+BR2_PACKAGE_QT5BASE_NETWORK=y
+# BR2_PACKAGE_QT5BASE_CONCURRENT is not set
+BR2_PACKAGE_QT5BASE_SQL=y
+# BR2_PACKAGE_QT5BASE_MYSQL is not set
+BR2_PACKAGE_QT5BASE_SQLITE_NONE=y
+# BR2_PACKAGE_QT5BASE_SQLITE_QT is not set
+# BR2_PACKAGE_QT5BASE_SQLITE_SYSTEM is not set
+# BR2_PACKAGE_QT5BASE_TEST is not set
+BR2_PACKAGE_QT5BASE_XML=y
+BR2_PACKAGE_QT5BASE_GUI=y
+BR2_PACKAGE_QT5BASE_WIDGETS=y
+BR2_PACKAGE_QT5BASE_LINUXFB=y
+# BR2_PACKAGE_QT5BASE_DIRECTFB is not set
+
+#
+# X.org XCB backend available if X.org is enabled
+#
+
+#
+# eglfs backend available if OpenGLES and EGL are enabled
+#
+BR2_PACKAGE_QT5BASE_PRINTSUPPORT=y
+# BR2_PACKAGE_QT5BASE_FONTCONFIG is not set
+# BR2_PACKAGE_QT5BASE_GIF is not set
+# BR2_PACKAGE_QT5BASE_JPEG is not set
+# BR2_PACKAGE_QT5BASE_PNG is not set
+# BR2_PACKAGE_QT5BASE_DBUS is not set
+BR2_PACKAGE_QT5BASE_ICU=y
+# BR2_PACKAGE_QT5BASE_TSLIB is not set
+# BR2_PACKAGE_QT5CONNECTIVITY is not set
+
+#
+# qt5declarative requires an OpenGL-capable backend
+#
+
+#
+# qt5graphicaleffects requires an OpenGL-capable backend
+#
+# BR2_PACKAGE_QT5IMAGEFORMATS is not set
+
+#
+# qt5multimedia requires an OpenGL-capable backend
+#
+
+#
+# qt5quick1 needs a toolchain w/ dynamic library and an OpenGL-capable backend
+#
+
+#
+# qt5quickcontrols requires an OpenGL-capable backend
+#
+# BR2_PACKAGE_QT5SCRIPT is not set
+# BR2_PACKAGE_QT5SENSORS is not set
+# BR2_PACKAGE_QT5SERIALPORT is not set
+# BR2_PACKAGE_QT5SVG is not set
+BR2_PACKAGE_QT5WEBKIT=y
+
+#
+# Extra options
+#
+# BR2_PACKAGE_TESTBROWSER is not set
+# BR2_PACKAGE_DUMPRENDERTREE is not set
+# BR2_PACKAGE_QT5XMLPATTERNS is not set
 # BR2_PACKAGE_WESTON is not set
 # BR2_PACKAGE_XORG7 is not set
 
@@ -715,7 +663,7 @@ BR2_PACKAGE_UDEV_RULES_GEN=y
 # BR2_PACKAGE_LIBARCHIVE is not set
 # BR2_PACKAGE_LZO is not set
 # BR2_PACKAGE_SNAPPY is not set
-# BR2_PACKAGE_ZLIB is not set
+BR2_PACKAGE_ZLIB=y
 
 #
 # Crypto
@@ -742,11 +690,20 @@ BR2_PACKAGE_UDEV_RULES_GEN=y
 # Database
 #
 # BR2_PACKAGE_BERKELEYDB is not set
+# BR2_PACKAGE_CPPDB is not set
 # BR2_PACKAGE_GDBM is not set
 # BR2_PACKAGE_MYSQL is not set
 # BR2_PACKAGE_REDIS is not set
-# BR2_PACKAGE_SQLCIPHER is not set
-# BR2_PACKAGE_SQLITE is not set
+
+#
+# sqlcipher conflicts with sqlite
+#
+BR2_PACKAGE_SQLITE=y
+# BR2_PACKAGE_SQLITE_READLINE is not set
+# BR2_PACKAGE_SQLITE_STAT3 is not set
+# BR2_PACKAGE_SQLITE_ENABLE_FTS3 is not set
+# BR2_PACKAGE_SQLITE_ENABLE_UNLOCK_NOTIFY is not set
+# BR2_PACKAGE_SQLITE_SECURE_DELETE is not set
 
 #
 # Filesystem
@@ -1017,14 +974,19 @@ BR2_PACKAGE_LIBNSPR_ARCH_SUPPORT=y
 # Text and terminal handling
 #
 # BR2_PACKAGE_ENCHANT is not set
-# BR2_PACKAGE_ICU is not set
+BR2_PACKAGE_ICU=y
+# BR2_PACKAGE_ICU_MINIMIZED is not set
 # BR2_PACKAGE_LIBEDIT is not set
 # BR2_PACKAGE_LIBENCA is not set
 # BR2_PACKAGE_LIBFRIBIDI is not set
 # BR2_PACKAGE_LINENOISE is not set
 # BR2_PACKAGE_NCURSES is not set
 # BR2_PACKAGE_NEWT is not set
-# BR2_PACKAGE_PCRE is not set
+BR2_PACKAGE_PCRE=y
+BR2_PACKAGE_PCRE_16=y
+# BR2_PACKAGE_PCRE_32 is not set
+# BR2_PACKAGE_PCRE_UTF is not set
+# BR2_PACKAGE_PCRE_UCP is not set
 # BR2_PACKAGE_POPT is not set
 # BR2_PACKAGE_READLINE is not set
 # BR2_PACKAGE_SLANG is not set
