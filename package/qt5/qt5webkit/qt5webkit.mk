@@ -69,11 +69,11 @@ endif
 
 
 ifeq ($(BR2_USE_ACCELERATED_CANVAS), y)
-	QT5WEBKIT_CONFIG+=accelerated_2d_canvas
+	QT5WEBKIT_CONFIG+=WEBKIT_CONFIG+=accelerated_2d_canvas
 endif
 
 ifeq ($(BR2_USE_DISCOVERY), y)
-	QT5WEBKIT_CONFIG+=discovery
+	QT5WEBKIT_CONFIG+=WEBKIT_CONFIG+=discovery
 endif
 
 define QT5WEBKIT_CONFIGURE_CMDS
