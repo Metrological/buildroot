@@ -33,8 +33,12 @@ config BR2_USE_DISCOVERY
 config BR2_USE_ACCELERATED_CANVAS
 	bool "qt5webkit_accelerated_canvas"
 	default y
+	depends on BR2_PACKAGE_HAS_OPENGL_ES
 	help
 	  Hardware accelerated canvas
+
+comment "Accelerated canvas depends on OpenGL (ES)"
+	depends on ! BR2_PACKAGE_HAS_OPENGL_ES
 
 config BR2_USE_DEPRECATED_GSTREAMER
 	bool "deprecated-gstreamer"
