@@ -32,23 +32,22 @@ diff -Naur qt5webkit-5.2.1-orig/Source/WebKit/qt/WebCoreSupport/InitWebCoreQt.cp
      initialized = true;
  }
  
-diff -Naur qt5webkit-5.2.1-orig/Source/WebKit/qt/WebCoreSupport/QWebPageAdapter.cpp qt5webkit-5.2.1/Source/WebKit/qt/WebCoreSupport/QWebPageAdapter.cpp
---- qt5webkit-5.2.1-orig/Source/WebKit/qt/WebCoreSupport/QWebPageAdapter.cpp	2014-03-06 13:29:21.974186444 +0100
-+++ qt5webkit-5.2.1/Source/WebKit/qt/WebCoreSupport/QWebPageAdapter.cpp	2014-03-06 13:29:34.530219939 +0100
-@@ -109,6 +109,7 @@
- #include <QWheelEvent>
+--- a/Source/WebKit/qt/WebCoreSupport/QWebPageAdapter.cpp
++++ b/Source/WebKit/qt/WebCoreSupport/QWebPageAdapter.cpp
+@@ -111,6 +111,7 @@
  #include <QOpenGLContext>
  #include "GLSharedContext.h"
+ #endif
 +#include "CookieJarQt.h"
  
  // from text/qfont.cpp
  QT_BEGIN_NAMESPACE
-@@ -356,8 +357,14 @@
+@@ -360,8 +361,14 @@
  
  QNetworkAccessManager* QWebPageAdapter::networkAccessManager()
  {
 -    if (!networkManager)
-+    if (!networkManager) {
++    if (!networkManager) { 
          networkManager = new QNetworkAccessManager(handle());
 +
 +        // set the shared cookieJar by default to the network manager
@@ -58,4 +57,3 @@ diff -Naur qt5webkit-5.2.1-orig/Source/WebKit/qt/WebCoreSupport/QWebPageAdapter.
 +    }
      return networkManager;
  }
- 

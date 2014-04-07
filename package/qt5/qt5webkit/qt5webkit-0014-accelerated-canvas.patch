@@ -1,6 +1,5 @@
-diff -Naur qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/html/HTMLCanvasElement.cpp qtwebkit-opensource-src-5.2.1/Source/WebCore/html/HTMLCanvasElement.cpp
---- qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/html/HTMLCanvasElement.cpp	2014-02-01 21:37:46.000000000 +0100
-+++ qtwebkit-opensource-src-5.2.1/Source/WebCore/html/HTMLCanvasElement.cpp	2014-02-20 15:16:58.113032333 +0100
+--- a/Source/WebCore/html/HTMLCanvasElement.cpp
++++ b/Source/WebCore/html/HTMLCanvasElement.cpp
 @@ -552,8 +552,8 @@
          return false;
  
@@ -12,9 +11,8 @@ diff -Naur qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/html/HTMLCanvasElem
  
      return true;
  #else
-diff -Naur qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/page/Settings.in qtwebkit-opensource-src-5.2.1/Source/WebCore/page/Settings.in
---- qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/page/Settings.in	2014-02-01 21:37:52.000000000 +0100
-+++ qtwebkit-opensource-src-5.2.1/Source/WebCore/page/Settings.in	2014-02-20 15:16:58.113032333 +0100
+--- a/Source/WebCore/page/Settings.in
++++ b/Source/WebCore/page/Settings.in
 @@ -107,7 +107,7 @@
  webGLErrorsToConsoleEnabled initial=true
  openGLMultisamplingEnabled initial=true
@@ -24,9 +22,8 @@ diff -Naur qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/page/Settings.in qt
  antialiased2dCanvasEnabled initial=true
  loadDeferringEnabled initial=true
  webAudioEnabled initial=false
-diff -Naur qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/platform/graphics/GraphicsContext.cpp qtwebkit-opensource-src-5.2.1/Source/WebCore/platform/graphics/GraphicsContext.cpp
---- qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/platform/graphics/GraphicsContext.cpp	2014-02-01 21:37:48.000000000 +0100
-+++ qtwebkit-opensource-src-5.2.1/Source/WebCore/platform/graphics/GraphicsContext.cpp	2014-02-20 15:16:58.113032333 +0100
+--- a/Source/WebCore/platform/graphics/GraphicsContext.cpp
++++ b/Source/WebCore/platform/graphics/GraphicsContext.cpp
 @@ -758,7 +758,7 @@
  }
  #endif
@@ -36,9 +33,8 @@ diff -Naur qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/platform/graphics/G
  bool GraphicsContext::isAcceleratedContext() const
  {
      return false;
-diff -Naur qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/platform/graphics/ImageBuffer.cpp qtwebkit-opensource-src-5.2.1/Source/WebCore/platform/graphics/ImageBuffer.cpp
---- qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/platform/graphics/ImageBuffer.cpp	2014-02-01 21:37:47.000000000 +0100
-+++ qtwebkit-opensource-src-5.2.1/Source/WebCore/platform/graphics/ImageBuffer.cpp	2014-02-20 15:16:58.113032333 +0100
+--- a/Source/WebCore/platform/graphics/ImageBuffer.cpp
++++ b/Source/WebCore/platform/graphics/ImageBuffer.cpp
 @@ -98,7 +98,7 @@
      genericConvertToLuminanceMask();
  }
@@ -48,9 +44,8 @@ diff -Naur qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/platform/graphics/I
  PlatformLayer* ImageBuffer::platformLayer() const
  {
      return 0;
-diff -Naur qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/platform/graphics/qt/GLSharedContext.cpp qtwebkit-opensource-src-5.2.1/Source/WebCore/platform/graphics/qt/GLSharedContext.cpp
---- qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/platform/graphics/qt/GLSharedContext.cpp	1970-01-01 01:00:00.000000000 +0100
-+++ qtwebkit-opensource-src-5.2.1/Source/WebCore/platform/graphics/qt/GLSharedContext.cpp	2014-02-20 15:16:58.113032333 +0100
+--- a/Source/WebCore/platform/graphics/qt/GLSharedContext.cpp
++++ b/Source/WebCore/platform/graphics/qt/GLSharedContext.cpp
 @@ -0,0 +1,14 @@
 +#include "GLSharedContext.h"
 +
@@ -66,9 +61,8 @@ diff -Naur qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/platform/graphics/q
 +
 +QOpenGLContext* GLSharedContext::m_context = NULL;
 +}
-diff -Naur qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/platform/graphics/qt/GLSharedContext.h qtwebkit-opensource-src-5.2.1/Source/WebCore/platform/graphics/qt/GLSharedContext.h
---- qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/platform/graphics/qt/GLSharedContext.h	1970-01-01 01:00:00.000000000 +0100
-+++ qtwebkit-opensource-src-5.2.1/Source/WebCore/platform/graphics/qt/GLSharedContext.h	2014-02-20 15:16:58.113032333 +0100
+--- a/Source/WebCore/platform/graphics/qt/GLSharedContext.h
++++ b/Source/WebCore/platform/graphics/qt/GLSharedContext.h
 @@ -0,0 +1,18 @@
 +#include <QOpenGLContext>
 +
@@ -88,9 +82,8 @@ diff -Naur qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/platform/graphics/q
 +}
 +
 +#endif
-diff -Naur qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/platform/graphics/qt/GraphicsContextQt.cpp qtwebkit-opensource-src-5.2.1/Source/WebCore/platform/graphics/qt/GraphicsContextQt.cpp
---- qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/platform/graphics/qt/GraphicsContextQt.cpp	2014-02-01 21:37:48.000000000 +0100
-+++ qtwebkit-opensource-src-5.2.1/Source/WebCore/platform/graphics/qt/GraphicsContextQt.cpp	2014-02-20 15:16:58.113032333 +0100
+--- a/Source/WebCore/platform/graphics/qt/GraphicsContextQt.cpp
++++ b/Source/WebCore/platform/graphics/qt/GraphicsContextQt.cpp
 @@ -1704,6 +1704,10 @@
      m_data->takeOwnershipOfPlatformContext();
  }
@@ -102,9 +95,8 @@ diff -Naur qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/platform/graphics/q
  
 +}
  // vim: ts=4 sw=4 et
-diff -Naur qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/platform/graphics/qt/ImageBufferDataQt.h qtwebkit-opensource-src-5.2.1/Source/WebCore/platform/graphics/qt/ImageBufferDataQt.h
---- qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/platform/graphics/qt/ImageBufferDataQt.h	2014-02-01 21:37:48.000000000 +0100
-+++ qtwebkit-opensource-src-5.2.1/Source/WebCore/platform/graphics/qt/ImageBufferDataQt.h	2014-02-20 15:16:58.113032333 +0100
+--- a/Source/WebCore/platform/graphics/qt/ImageBufferDataQt.h
++++ b/Source/WebCore/platform/graphics/qt/ImageBufferDataQt.h
 @@ -34,16 +34,14 @@
  namespace WebCore {
  
@@ -127,9 +119,160 @@ diff -Naur qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/platform/graphics/q
  };
  
  } // namespace WebCore
-diff -Naur qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/platform/graphics/qt/ImageBufferQt.cpp qtwebkit-opensource-src-5.2.1/Source/WebCore/platform/graphics/qt/ImageBufferQt.cpp
---- qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/platform/graphics/qt/ImageBufferQt.cpp	2014-02-01 21:37:48.000000000 +0100
-+++ qtwebkit-opensource-src-5.2.1/Source/WebCore/platform/graphics/qt/ImageBufferQt.cpp	2014-02-20 15:16:58.113032333 +0100
+--- b/Source/WebCore/Target.pri
++++ b/Source/WebCore/Target.pri
+@@ -2232,7 +2232,14 @@
+     platform/graphics/RoundedRect.h \
+     platform/graphics/qt/FontCustomPlatformData.h \
+     platform/graphics/qt/NativeImageQt.h \
+-    platform/graphics/qt/StillImageQt.h \
++    platform/graphics/qt/StillImageQt.h
++
++contains(QT_CONFIG,opengl) {
++HEADERS += \
++    platform/graphics/qt/GLSharedContext.h
++}
++
++HEADERS += \
+     platform/graphics/qt/TransparencyLayer.h \
+     platform/graphics/SegmentedFontData.h \
+     platform/graphics/ShadowBlur.h \
+@@ -2886,7 +2893,14 @@
+     platform/graphics/qt/IntSizeQt.cpp \
+     platform/graphics/qt/PathQt.cpp \
+     platform/graphics/qt/PatternQt.cpp \
+-    platform/graphics/qt/StillImageQt.cpp \
++    platform/graphics/qt/StillImageQt.cpp
++
++contains(QT_CONFIG,opengl){
++SOURCES += \
++    platform/graphics/qt/GLSharedContext.cpp
++}
++
++SOURCES += \
+     platform/graphics/texmap/GraphicsLayerTextureMapper.cpp \
+     platform/graphics/texmap/TextureMapper.cpp \
+     platform/graphics/texmap/TextureMapperBackingStore.cpp \
+--- b/Source/WebKit/qt/WidgetSupport/PageClientQt.h
++++ b/Source/WebKit/qt/WidgetSupport/PageClientQt.h
+@@ -174,7 +174,9 @@
+ #endif
+ 
+     virtual bool makeOpenGLContextCurrentIfAvailable();
+-
++#ifndef QT_NO_OPENGL
++    virtual QOpenGLContext* getOpenGLContextIfAvailable();
++#endif
+     virtual QRectF windowRect() const;
+ 
+     QGraphicsView* firstGraphicsView() const;
+--- b/Source/WebKit/qt/WidgetSupport/PageClientQt.cpp
++++ b/Source/WebKit/qt/WidgetSupport/PageClientQt.cpp
+@@ -195,6 +195,26 @@
+     return false;
+ }
+ 
++#ifndef QT_NO_OPENGL
++QOpenGLContext* PageClientQGraphicsWidget::getOpenGLContextIfAvailable()
++{
++#if USE(ACCELERATED_COMPOSITING) && USE(TEXTURE_MAPPER_GL) && defined(QT_OPENGL_LIB)
++    QGraphicsView* graphicsView = firstGraphicsView();
++    if (graphicsView && graphicsView->viewport()) {
++        QGLWidget* glWidget = qobject_cast<QGLWidget*>(graphicsView->viewport());
++        if (glWidget) {
++            QOpenGLContext *previous = QOpenGLContext::currentContext();
++            glWidget->makeCurrent();
++            QOpenGLContext *c = QOpenGLContext::currentContext();
++            previous->makeCurrent(previous->surface());
++            return c;
++        }
++    }
++#endif
++    return 0;
++}
++#endif
++
+ void PageClientQGraphicsWidget::setInputMethodEnabled(bool enable)
+ {
+     view->setFlag(QGraphicsItem::ItemAcceptsInputMethod, enable);
+--- b/Source/WebKit/qt/WidgetApi/qgraphicswebview.cpp
++++ b/Source/WebKit/qt/WidgetApi/qgraphicswebview.cpp
+@@ -316,6 +316,11 @@
+         QApplication::sendEvent(this, &event);
+         return value;
+     }
++#ifndef QT_NO_OPENGL
++    case ItemSceneHasChanged:
++        if (scene())
++            d->page->d->saveGLContext();
++#endif
+     default:
+         break;
+     }
+--- b/Source/WebCore/platform/qt/QWebPageClient.h
++++ b/Source/WebCore/platform/qt/QWebPageClient.h
+@@ -40,6 +40,9 @@
+ 
+ #include <QPalette>
+ #include <QRect>
++#ifndef QT_NO_OPENGL
++#include <QOpenGLContext>
++#endif
+ 
+ QT_BEGIN_NAMESPACE
+ class QStyle;
+@@ -62,6 +65,9 @@
+     virtual void setInputMethodEnabled(bool enable) = 0;
+     virtual bool inputMethodEnabled() const = 0;
+     virtual bool makeOpenGLContextCurrentIfAvailable() { return false; }
++#ifndef QT_NO_OPENGL
++    virtual QOpenGLContext* getOpenGLContextIfAvailable() { return 0; }
++#endif
+ 
+     virtual void setInputMethodHints(Qt::InputMethodHints hint) = 0;
+ 
+--- b/Source/WebKit/qt/WebCoreSupport/QWebPageAdapter.h
++++ b/Source/WebKit/qt/WebCoreSupport/QWebPageAdapter.h
+@@ -158,6 +158,9 @@
+     // For similar reasons, we don't want to create the WebCore Page before
+     // we properly initialized the style factory callbacks.
+     void initializeWebCorePage();
++#ifndef QT_NO_OPENGL
++    void saveGLContext();
++#endif
+ 
+     virtual void show() = 0;
+     virtual void setFocus() = 0;
+--- b/Source/WebKit/qt/WebCoreSupport/QWebPageAdapter.cpp
++++ b/Source/WebKit/qt/WebCoreSupport/QWebPageAdapter.cpp
+@@ -107,6 +107,10 @@
+ #include <QTextCharFormat>
+ #include <QTouchEvent>
+ #include <QWheelEvent>
++#ifndef QT_NO_OPENGL
++#include <QOpenGLContext>
++#include "GLSharedContext.h"
++#endif
+ 
+ // from text/qfont.cpp
+ QT_BEGIN_NAMESPACE
+@@ -281,6 +285,14 @@
+     PageGroup::setShouldTrackVisitedLinks(true);
+ }
+ 
++#ifndef QT_NO_OPENGL
++void QWebPageAdapter::saveGLContext()
++{
++    QOpenGLContext *c = client->getOpenGLContextIfAvailable();
++    GLSharedContext::setContext(c);
++}
++#endif
++
+ QWebPageAdapter::~QWebPageAdapter()
+ {
+     delete page;
+--- a/Source/WebCore/platform/graphics/qt/ImageBufferQt.cpp
++++ b/Source/WebCore/platform/graphics/qt/ImageBufferQt.cpp
 @@ -45,116 +45,315 @@
  #include <QPixmap>
  #include <math.h>
@@ -679,129 +822,4 @@ diff -Naur qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/platform/graphics/q
 +}
 +
  }
-diff -Naur qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/platform/qt/QWebPageClient.h qtwebkit-opensource-src-5.2.1/Source/WebCore/platform/qt/QWebPageClient.h
---- qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/platform/qt/QWebPageClient.h	2014-02-01 21:37:47.000000000 +0100
-+++ qtwebkit-opensource-src-5.2.1/Source/WebCore/platform/qt/QWebPageClient.h	2014-02-20 15:16:58.113032333 +0100
-@@ -40,6 +40,7 @@
- 
- #include <QPalette>
- #include <QRect>
-+#include <QOpenGLContext>
- 
- QT_BEGIN_NAMESPACE
- class QStyle;
-@@ -62,6 +63,7 @@
-     virtual void setInputMethodEnabled(bool enable) = 0;
-     virtual bool inputMethodEnabled() const = 0;
-     virtual bool makeOpenGLContextCurrentIfAvailable() { return false; }
-+    virtual QOpenGLContext* getOpenGLContextIfAvailable() { return 0; }
- 
-     virtual void setInputMethodHints(Qt::InputMethodHints hint) = 0;
- 
-diff -Naur qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/Target.pri qtwebkit-opensource-src-5.2.1/Source/WebCore/Target.pri
---- qtwebkit-opensource-src-5.2.1-orig/Source/WebCore/Target.pri	2014-02-01 21:37:51.000000000 +0100
-+++ qtwebkit-opensource-src-5.2.1/Source/WebCore/Target.pri	2014-02-20 15:16:58.109032386 +0100
-@@ -2233,6 +2233,7 @@
-     platform/graphics/qt/FontCustomPlatformData.h \
-     platform/graphics/qt/NativeImageQt.h \
-     platform/graphics/qt/StillImageQt.h \
-+    platform/graphics/qt/GLSharedContext.h \
-     platform/graphics/qt/TransparencyLayer.h \
-     platform/graphics/SegmentedFontData.h \
-     platform/graphics/ShadowBlur.h \
-@@ -2887,6 +2888,7 @@
-     platform/graphics/qt/PathQt.cpp \
-     platform/graphics/qt/PatternQt.cpp \
-     platform/graphics/qt/StillImageQt.cpp \
-+    platform/graphics/qt/GLSharedContext.cpp \
-     platform/graphics/texmap/GraphicsLayerTextureMapper.cpp \
-     platform/graphics/texmap/TextureMapper.cpp \
-     platform/graphics/texmap/TextureMapperBackingStore.cpp \
-diff -Naur qtwebkit-opensource-src-5.2.1-orig/Source/WebKit/qt/WebCoreSupport/QWebPageAdapter.cpp qtwebkit-opensource-src-5.2.1/Source/WebKit/qt/WebCoreSupport/QWebPageAdapter.cpp
---- qtwebkit-opensource-src-5.2.1-orig/Source/WebKit/qt/WebCoreSupport/QWebPageAdapter.cpp	2014-02-01 21:37:43.000000000 +0100
-+++ qtwebkit-opensource-src-5.2.1/Source/WebKit/qt/WebCoreSupport/QWebPageAdapter.cpp	2014-02-20 15:16:58.113032333 +0100
-@@ -107,6 +107,8 @@
- #include <QTextCharFormat>
- #include <QTouchEvent>
- #include <QWheelEvent>
-+#include <QOpenGLContext>
-+#include "GLSharedContext.h"
- 
- // from text/qfont.cpp
- QT_BEGIN_NAMESPACE
-@@ -281,6 +283,12 @@
-     PageGroup::setShouldTrackVisitedLinks(true);
- }
- 
-+void QWebPageAdapter::saveGLContext()
-+{
-+    QOpenGLContext *c = client->getOpenGLContextIfAvailable();
-+    GLSharedContext::setContext(c);
-+}
-+
- QWebPageAdapter::~QWebPageAdapter()
- {
-     delete page;
-diff -Naur qtwebkit-opensource-src-5.2.1-orig/Source/WebKit/qt/WebCoreSupport/QWebPageAdapter.h qtwebkit-opensource-src-5.2.1/Source/WebKit/qt/WebCoreSupport/QWebPageAdapter.h
---- qtwebkit-opensource-src-5.2.1-orig/Source/WebKit/qt/WebCoreSupport/QWebPageAdapter.h	2014-02-01 21:37:43.000000000 +0100
-+++ qtwebkit-opensource-src-5.2.1/Source/WebKit/qt/WebCoreSupport/QWebPageAdapter.h	2014-02-20 15:16:58.117032281 +0100
-@@ -158,6 +158,7 @@
-     // For similar reasons, we don't want to create the WebCore Page before
-     // we properly initialized the style factory callbacks.
-     void initializeWebCorePage();
-+    void saveGLContext();
- 
-     virtual void show() = 0;
-     virtual void setFocus() = 0;
-diff -Naur qtwebkit-opensource-src-5.2.1-orig/Source/WebKit/qt/WidgetApi/qgraphicswebview.cpp qtwebkit-opensource-src-5.2.1/Source/WebKit/qt/WidgetApi/qgraphicswebview.cpp
---- qtwebkit-opensource-src-5.2.1-orig/Source/WebKit/qt/WidgetApi/qgraphicswebview.cpp	2014-02-01 21:37:43.000000000 +0100
-+++ qtwebkit-opensource-src-5.2.1/Source/WebKit/qt/WidgetApi/qgraphicswebview.cpp	2014-02-20 15:16:58.117032281 +0100
-@@ -316,6 +316,9 @@
-         QApplication::sendEvent(this, &event);
-         return value;
-     }
-+    case ItemSceneHasChanged:
-+        if (scene())
-+            d->page->d->saveGLContext();
-     default:
-         break;
-     }
-diff -Naur qtwebkit-opensource-src-5.2.1-orig/Source/WebKit/qt/WidgetSupport/PageClientQt.cpp qtwebkit-opensource-src-5.2.1/Source/WebKit/qt/WidgetSupport/PageClientQt.cpp
---- qtwebkit-opensource-src-5.2.1-orig/Source/WebKit/qt/WidgetSupport/PageClientQt.cpp	2014-02-01 21:37:43.000000000 +0100
-+++ qtwebkit-opensource-src-5.2.1/Source/WebKit/qt/WidgetSupport/PageClientQt.cpp	2014-02-20 15:16:58.117032281 +0100
-@@ -195,6 +195,24 @@
-     return false;
- }
- 
-+QOpenGLContext* PageClientQGraphicsWidget::getOpenGLContextIfAvailable()
-+{
-+#if USE(ACCELERATED_COMPOSITING) && USE(TEXTURE_MAPPER_GL) && defined(QT_OPENGL_LIB)
-+    QGraphicsView* graphicsView = firstGraphicsView();
-+    if (graphicsView && graphicsView->viewport()) {
-+        QGLWidget* glWidget = qobject_cast<QGLWidget*>(graphicsView->viewport());
-+        if (glWidget) {
-+            QOpenGLContext *previous = QOpenGLContext::currentContext();
-+            glWidget->makeCurrent();
-+            QOpenGLContext *c = QOpenGLContext::currentContext();
-+            previous->makeCurrent(previous->surface());
-+            return c;
-+        }
-+    }
-+#endif
-+    return 0;
-+}
-+
- void PageClientQGraphicsWidget::setInputMethodEnabled(bool enable)
- {
-     view->setFlag(QGraphicsItem::ItemAcceptsInputMethod, enable);
-diff -Naur qtwebkit-opensource-src-5.2.1-orig/Source/WebKit/qt/WidgetSupport/PageClientQt.h qtwebkit-opensource-src-5.2.1/Source/WebKit/qt/WidgetSupport/PageClientQt.h
---- qtwebkit-opensource-src-5.2.1-orig/Source/WebKit/qt/WidgetSupport/PageClientQt.h	2014-02-01 21:37:43.000000000 +0100
-+++ qtwebkit-opensource-src-5.2.1/Source/WebKit/qt/WidgetSupport/PageClientQt.h	2014-02-20 15:16:58.117032281 +0100
-@@ -174,6 +174,7 @@
- #endif
- 
-     virtual bool makeOpenGLContextCurrentIfAvailable();
-+    virtual QOpenGLContext* getOpenGLContextIfAvailable();
- 
-     virtual QRectF windowRect() const;
- 
+
