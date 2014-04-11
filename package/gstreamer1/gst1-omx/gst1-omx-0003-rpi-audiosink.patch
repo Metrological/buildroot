@@ -1,0 +1,1570 @@
+From 9dc3835f0d88570170075c8c41d77c615755b154 Mon Sep 17 00:00:00 2001
+From: Josep Torra <n770galaxy@gmail.com>
+Date: Fri, 04 Apr 2014 12:11:58 +0000
+Subject: omxaudiosink: Implements OpenMAX based audio sinks
+
+Provides omxanalogaudiosink and omxhdmiaudiosink elements on the
+Raspberry PI.
+---
+diff --git a/config/rpi/gstomx.conf b/config/rpi/gstomx.conf
+index a4b6f26..8f7eb97 100644
+--- a/config/rpi/gstomx.conf
++++ b/config/rpi/gstomx.conf
+@@ -80,3 +80,21 @@ in-port-index=200
+ out-port-index=201
+ hacks=no-component-role
+ 
++[omxanalogaudiosink]
++type-name=GstOMXAnalogAudioSink
++core-name=/usr/lib/libopenmaxil.so
++component-name=OMX.broadcom.audio_render
++rank=256
++in-port-index=100
++out-port-index=101
++hacks=no-component-role
++
++[omxhdmiaudiosink]
++type-name=GstOMXHdmiAudioSink
++core-name=/usr/lib/libopenmaxil.so
++component-name=OMX.broadcom.audio_render
++rank=257
++in-port-index=100
++out-port-index=101
++hacks=no-component-role
++
+diff --git a/omx/Makefile.am b/omx/Makefile.am
+index bcdd60c..7a9f50b 100644
+--- a/omx/Makefile.am
++++ b/omx/Makefile.am
+@@ -28,7 +28,10 @@ libgstomx_la_SOURCES = \
+ 	gstomxmpeg4videoenc.c \
+ 	gstomxh264enc.c \
+ 	gstomxh263enc.c \
+-	gstomxaacenc.c
++	gstomxaacenc.c \
++	gstomxaudiosink.c \
++	gstomxanalogaudiosink.c \
++	gstomxhdmiaudiosink.c	
+ 
+ noinst_HEADERS = \
+ 	gstomx.h \
+@@ -47,7 +50,10 @@ noinst_HEADERS = \
+ 	gstomxmpeg4videoenc.h \
+ 	gstomxh264enc.h \
+ 	gstomxh263enc.h \
+-	gstomxaacenc.h
++	gstomxaacenc.h \
++	gstomxaudiosink.h \
++	gstomxanalogaudiosink.h \
++	gstomxhdmiaudiosink.h 	
+ 
+ if !HAVE_EXTERNAL_OMX
+ OMX_INCLUDEPATH = -I$(abs_srcdir)/openmax
+diff --git a/omx/gstomx.c b/omx/gstomx.c
+index a37bb6b..4c05c0e 100644
+--- a/omx/gstomx.c
++++ b/omx/gstomx.c
+@@ -40,6 +40,8 @@
+ #include "gstomxh264enc.h"
+ #include "gstomxh263enc.h"
+ #include "gstomxaacenc.h"
++#include "gstomxanalogaudiosink.h"
++#include "gstomxhdmiaudiosink.h"
+ 
+ GST_DEBUG_CATEGORY (gstomx_debug);
+ #define GST_CAT_DEFAULT gstomx_debug
+@@ -2246,6 +2248,7 @@ done:
+ typedef GType (*GGetTypeFunction) (void);
+ 
+ static const GGetTypeFunction types[] = {
++  gst_omx_analog_audio_sink_get_type, gst_omx_hdmi_audio_sink_get_type,
+   gst_omx_mpeg2_video_dec_get_type, gst_omx_mpeg4_video_dec_get_type,
+   gst_omx_h264_dec_get_type, gst_omx_h263_dec_get_type,
+   gst_omx_wmv_dec_get_type, gst_omx_mpeg4_video_enc_get_type,
+@@ -2266,6 +2269,7 @@ struct TypeOffest
+ };
+ 
+ static const struct TypeOffest base_types[] = {
++  {gst_omx_audio_sink_get_type, G_STRUCT_OFFSET (GstOMXAudioSinkClass, cdata)},
+   {gst_omx_video_dec_get_type, G_STRUCT_OFFSET (GstOMXVideoDecClass, cdata)},
+   {gst_omx_video_enc_get_type, G_STRUCT_OFFSET (GstOMXVideoEncClass, cdata)},
+   {gst_omx_audio_enc_get_type, G_STRUCT_OFFSET (GstOMXAudioEncClass, cdata)},
+diff --git a/omx/gstomxanalogaudiosink.c b/omx/gstomxanalogaudiosink.c
+new file mode 100644
+index 0000000..72e7d05
+--- a/dev/null
++++ b/omx/gstomxanalogaudiosink.c
+@@ -0,0 +1,63 @@
++/*
++ * Copyright (C) 2014, Fluendo, S.A.
++ *   Author: Josep Torra <josep@fluendo.com>
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation
++ * version 2.1 of the License.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include "config.h"
++#endif
++
++#include <gst/gst.h>
++
++#include "gstomxanalogaudiosink.h"
++
++GST_DEBUG_CATEGORY_STATIC (gst_omx_analog_audio_sink_debug_category);
++#define GST_CAT_DEFAULT gst_omx_analog_audio_sink_debug_category
++
++/* class initialization */
++
++#define DEBUG_INIT \
++  GST_DEBUG_CATEGORY_INIT (gst_omx_analog_audio_sink_debug_category, "omxanalogaudiosink", 0, \
++      "debug category for gst-omx analog audio sink");
++
++G_DEFINE_TYPE_WITH_CODE (GstOMXAnalogAudioSink, gst_omx_analog_audio_sink,
++    GST_TYPE_OMX_AUDIO_SINK, DEBUG_INIT);
++
++static void
++gst_omx_analog_audio_sink_class_init (GstOMXAnalogAudioSinkClass * klass)
++{
++  GstOMXAudioSinkClass *audiosink_class = GST_OMX_AUDIO_SINK_CLASS (klass);
++  GstElementClass *element_class = GST_ELEMENT_CLASS (klass);
++
++  audiosink_class->cdata.default_sink_template_caps = "audio/x-raw, "
++      "format = (string) { S16LE, S32LE }, "
++      "layout = (string) interleaved, "
++      "rate = (int) [ 8000, 96000 ], " "channels = (int) [ 1, 8 ] ";
++  audiosink_class->destination = "local";
++
++  gst_element_class_set_static_metadata (element_class,
++      "OpenMAX Analog Audio Sink",
++      "Sink/Audio", "Output analog audio", "Josep Torra <josep@fluendo.com>");
++
++  gst_omx_set_default_role (&audiosink_class->cdata, "audio_render.local");
++}
++
++static void
++gst_omx_analog_audio_sink_init (GstOMXAnalogAudioSink * self)
++{
++}
+diff --git a/omx/gstomxanalogaudiosink.h b/omx/gstomxanalogaudiosink.h
+new file mode 100644
+index 0000000..c813416
+--- a/dev/null
++++ b/omx/gstomxanalogaudiosink.h
+@@ -0,0 +1,60 @@
++/*
++ * Copyright (C) 2014, Fluendo, S.A.
++ *   Author: Josep Torra <josep@fluendo.com>
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation
++ * version 2.1 of the License.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
++ *
++ */
++
++#ifndef __GST_OMX_ANALOG_AUDIO_SINK_H__
++#define __GST_OMX_ANALOG_AUDIO_SINK_H__
++
++#include <gst/gst.h>
++#include "gstomxaudiosink.h"
++
++G_BEGIN_DECLS
++
++#define GST_TYPE_OMX_ANALOG_AUDIO_SINK \
++  (gst_omx_analog_audio_sink_get_type())
++#define GST_OMX_ANALOG_AUDIO_SINK(obj) \
++  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_OMX_ANALOG_AUDIO_SINK,GstOMXAnalogAudioSink))
++#define GST_OMX_ANALOG_AUDIO_SINK_CLASS(klass) \
++  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_OMX_ANALOG_AUDIO_SINK,GstOMXAnalogAudioSinkClass))
++#define GST_OMX_ANALOG_AUDIO_SINK_GET_CLASS(obj) \
++  (G_TYPE_INSTANCE_GET_CLASS((obj),GST_TYPE_OMX_ANALOG_AUDIO_SINK,GstOMXAnalogAudioSinkClass))
++#define GST_IS_OMX_ANALOG_AUDIO_SINK(obj) \
++  (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_OMX_ANALOG_AUDIO_SINK))
++#define GST_IS_OMX_ANALOG_AUDIO_SINK_CLASS(obj) \
++  (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_OMX_ANALOG_AUDIO_SINK))
++
++typedef struct _GstOMXAnalogAudioSink GstOMXAnalogAudioSink;
++typedef struct _GstOMXAnalogAudioSinkClass GstOMXAnalogAudioSinkClass;
++
++struct _GstOMXAnalogAudioSink
++{
++  GstOMXAudioSink parent;
++};
++
++struct _GstOMXAnalogAudioSinkClass
++{
++  GstOMXAudioSinkClass parent_class;
++};
++
++GType gst_omx_analog_audio_sink_get_type (void);
++
++G_END_DECLS
++
++#endif /* __GST_OMX_ANALOG_AUDIO_SINK_H__ */
++
+diff --git a/omx/gstomxaudiosink.c b/omx/gstomxaudiosink.c
+new file mode 100644
+index 0000000..8faa32b
+--- a/dev/null
++++ b/omx/gstomxaudiosink.c
+@@ -0,0 +1,1095 @@
++/*
++ * Copyright (C) 2014, Fluendo, S.A.
++ *   Author: Josep Torra <josep@fluendo.com>
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation
++ * version 2.1 of the License.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include "config.h"
++#endif
++
++
++#include <gst/gst.h>
++#include <gst/audio/audio.h>
++
++#include <math.h>
++
++#include "gstomxaudiosink.h"
++
++GST_DEBUG_CATEGORY_STATIC (gst_omx_audio_sink_debug_category);
++#define GST_CAT_DEFAULT gst_omx_audio_sink_debug_category
++
++#define DEBUG_INIT \
++  GST_DEBUG_CATEGORY_INIT (gst_omx_audio_sink_debug_category, "omxaudiosink", \
++      0, "debug category for gst-omx audio sink base class");
++
++#define DEFAULT_PROP_MUTE       FALSE
++#define DEFAULT_PROP_VOLUME     1.0
++
++#define VOLUME_MAX_DOUBLE       10.0
++#define OUT_CHANNELS(num_channels) ((num_channels) > 4 ? 8: (num_channels) > 2 ? 4: (num_channels))
++
++enum
++{
++  PROP_0,
++  PROP_MUTE,
++  PROP_VOLUME
++};
++
++#define gst_omx_audio_sink_parent_class parent_class
++G_DEFINE_ABSTRACT_TYPE_WITH_CODE (GstOMXAudioSink, gst_omx_audio_sink,
++    GST_TYPE_AUDIO_SINK, G_IMPLEMENT_INTERFACE (GST_TYPE_STREAM_VOLUME, NULL);
++    DEBUG_INIT);
++
++static void
++gst_omx_audio_sink_mute_set (GstOMXAudioSink * self, gboolean mute)
++{
++  OMX_ERRORTYPE err;
++  OMX_AUDIO_CONFIG_MUTETYPE param;
++
++  GST_OMX_INIT_STRUCT (&param);
++  param.nPortIndex = self->in_port->index;
++  param.bMute = (mute ? OMX_TRUE : OMX_FALSE);
++  err = gst_omx_component_set_config (self->comp,
++      OMX_IndexConfigAudioMute, &param);
++  if (err != OMX_ErrorNone) {
++    GST_ERROR_OBJECT (self, "Failed to set mute to %d: %s (0x%08x)",
++        param.bMute, gst_omx_error_to_string (err), err);
++  } else {
++    self->mute = mute;
++  }
++}
++
++static void
++gst_omx_audio_sink_volume_set (GstOMXAudioSink * self, gdouble volume)
++{
++  OMX_ERRORTYPE err;
++  OMX_AUDIO_CONFIG_VOLUMETYPE param;
++  gdouble dbVol =
++      log (volume * (self->exp_volume_max - self->exp_volume_min) +
++      self->exp_volume_min);
++
++  GST_OMX_INIT_STRUCT (&param);
++  param.nPortIndex = self->in_port->index;
++  param.bLinear = OMX_FALSE;
++  param.sVolume.nValue = dbVol;
++  err = gst_omx_component_set_config (self->comp,
++      OMX_IndexConfigAudioVolume, &param);
++  if (err != OMX_ErrorNone) {
++    GST_ERROR_OBJECT (self, "Failed to set volume to %d: %s (0x%08x)",
++        param.sVolume.nValue, gst_omx_error_to_string (err), err);
++  } else {
++    self->volume = volume;
++  }
++}
++
++static inline gboolean
++gst_omx_audio_sink_volume_range_get (GstOMXAudioSink * self)
++{
++  OMX_S32 mbMax = 2;
++  OMX_S32 mbMin = -6;
++
++#if !defined (USE_OMX_TARGET_RPI)
++  OMX_ERRORTYPE err;
++  OMX_AUDIO_CONFIG_VOLUMETYPE param;
++
++  GST_OMX_INIT_STRUCT (&param);
++  param.nPortIndex = self->in_port->index;
++  param.bLinear = OMX_FALSE;
++  err = gst_omx_component_get_config (self->comp,
++      OMX_IndexConfigAudioVolume, &param);
++  if (err != OMX_ErrorNone) {
++    GST_ERROR_OBJECT (self, "Failed to get volume range: %s (0x%08x)",
++        gst_omx_error_to_string (err), err);
++  } else {
++    mbMax = param.sVolume.nMax;
++    mbMin = param.sVolume.nMin;
++  }
++#endif
++
++  self->exp_volume_min = exp (mbMin);
++  self->exp_volume_max = exp (mbMax);
++  return TRUE;
++}
++
++static gboolean
++gst_omx_audio_sink_open (GstAudioSink * audiosink)
++{
++  GstOMXAudioSink *self = GST_OMX_AUDIO_SINK (audiosink);
++  GstOMXAudioSinkClass *klass = GST_OMX_AUDIO_SINK_GET_CLASS (self);
++  gint port_index;
++  OMX_ERRORTYPE err;
++
++  GST_DEBUG_OBJECT (self, "Opening audio sink");
++
++  self->comp =
++      gst_omx_component_new (GST_OBJECT_CAST (self), klass->cdata.core_name,
++      klass->cdata.component_name, klass->cdata.component_role,
++      klass->cdata.hacks);
++
++  if (!self->comp)
++    return FALSE;
++
++  if (gst_omx_component_get_state (self->comp,
++          GST_CLOCK_TIME_NONE) != OMX_StateLoaded)
++    return FALSE;
++
++  port_index = klass->cdata.in_port_index;
++
++  if (port_index == -1) {
++    OMX_PORT_PARAM_TYPE param;
++    OMX_ERRORTYPE err;
++
++    GST_OMX_INIT_STRUCT (&param);
++
++    err =
++        gst_omx_component_get_parameter (self->comp, OMX_IndexParamAudioInit,
++        &param);
++    if (err != OMX_ErrorNone) {
++      GST_WARNING_OBJECT (self, "Couldn't get port information: %s (0x%08x)",
++          gst_omx_error_to_string (err), err);
++      /* Fallback */
++      port_index = 0;
++    } else {
++      GST_DEBUG_OBJECT (self, "Detected %u ports, starting at %u",
++          (guint) param.nPorts, (guint) param.nStartPortNumber);
++      port_index = param.nStartPortNumber + 0;
++    }
++  }
++  self->in_port = gst_omx_component_add_port (self->comp, port_index);
++
++  port_index = klass->cdata.out_port_index;
++
++  if (port_index == -1) {
++    OMX_PORT_PARAM_TYPE param;
++
++    GST_OMX_INIT_STRUCT (&param);
++
++    err =
++        gst_omx_component_get_parameter (self->comp, OMX_IndexParamAudioInit,
++        &param);
++    if (err != OMX_ErrorNone) {
++      GST_WARNING_OBJECT (self, "Couldn't get port information: %s (0x%08x)",
++          gst_omx_error_to_string (err), err);
++      /* Fallback */
++      port_index = 0;
++    } else {
++      GST_DEBUG_OBJECT (self, "Detected %u ports, starting at %u",
++          (guint) param.nPorts, (guint) param.nStartPortNumber);
++      port_index = param.nStartPortNumber + 1;
++    }
++  }
++  self->out_port = gst_omx_component_add_port (self->comp, port_index);
++
++  if (!self->in_port || !self->out_port)
++    return FALSE;
++
++  err = gst_omx_port_set_enabled (self->in_port, FALSE);
++  if (err != OMX_ErrorNone) {
++    GST_ERROR_OBJECT (self, "Failed to enable port: %s (0x%08x)",
++        gst_omx_error_to_string (err), err);
++    return FALSE;
++  }
++
++  err = gst_omx_port_set_enabled (self->out_port, FALSE);
++  if (err != OMX_ErrorNone) {
++    GST_ERROR_OBJECT (self, "Failed to enable port: %s (0x%08x)",
++        gst_omx_error_to_string (err), err);
++    return FALSE;
++  }
++
++  GST_DEBUG_OBJECT (self, "Opened audio sink");
++
++  return TRUE;
++}
++
++static gboolean
++gst_omx_audio_sink_close (GstAudioSink * audiosink)
++{
++  GstOMXAudioSink *self = GST_OMX_AUDIO_SINK (audiosink);
++  OMX_STATETYPE state;
++
++  GST_DEBUG_OBJECT (self, "Closing audio sink");
++
++  state = gst_omx_component_get_state (self->comp, 0);
++  if (state > OMX_StateLoaded || state == OMX_StateInvalid) {
++    if (state > OMX_StateIdle) {
++      gst_omx_component_set_state (self->comp, OMX_StateIdle);
++      gst_omx_component_get_state (self->comp, 5 * GST_SECOND);
++    }
++    gst_omx_component_set_state (self->comp, OMX_StateLoaded);
++    gst_omx_port_deallocate_buffers (self->in_port);
++    if (state > OMX_StateLoaded)
++      gst_omx_component_get_state (self->comp, 5 * GST_SECOND);
++  }
++
++  self->in_port = NULL;
++  self->out_port = NULL;
++  if (self->comp)
++    gst_omx_component_free (self->comp);
++  self->comp = NULL;
++
++  GST_DEBUG_OBJECT (self, "Closed audio sink");
++
++  return TRUE;
++}
++
++static gboolean
++gst_omx_audio_sink_parse_spec (GstOMXAudioSink * self,
++    GstAudioRingBufferSpec * spec)
++{
++  switch (spec->type) {
++    case GST_AUDIO_RING_BUFFER_FORMAT_TYPE_RAW:
++      if (GST_AUDIO_INFO_IS_INTEGER (&spec->info)) {
++        self->encoding = OMX_AUDIO_CodingPCM;
++      } else {
++        goto error;
++      }
++      break;
++    case GST_AUDIO_RING_BUFFER_FORMAT_TYPE_AC3:
++    case GST_AUDIO_RING_BUFFER_FORMAT_TYPE_EAC3:
++      self->encoding = OMX_AUDIO_CodingDDP;
++      break;
++    case GST_AUDIO_RING_BUFFER_FORMAT_TYPE_DTS:
++      self->encoding = OMX_AUDIO_CodingDTS;
++      break;
++    default:
++      goto error;
++  }
++
++  self->endianness = GST_AUDIO_INFO_ENDIANNESS (&spec->info);
++  self->rate = GST_AUDIO_INFO_RATE (&spec->info);
++  self->channels = GST_AUDIO_INFO_CHANNELS (&spec->info);
++  self->is_signed = GST_AUDIO_INFO_IS_SIGNED (&spec->info);
++  self->width = GST_AUDIO_INFO_WIDTH (&spec->info);
++
++  return TRUE;
++
++  /* ERRORS */
++error:
++  {
++    return FALSE;
++  }
++}
++
++static inline void
++channel_mapping (GstAudioRingBufferSpec * spec,
++    OMX_AUDIO_CHANNELTYPE * eChannelMapping)
++{
++  gint i, nchan = GST_AUDIO_INFO_CHANNELS (&spec->info);
++
++  for (i = 0; i < nchan; i++) {
++    OMX_AUDIO_CHANNELTYPE pos;
++
++    switch (GST_AUDIO_INFO_POSITION (&spec->info, i)) {
++      case GST_AUDIO_CHANNEL_POSITION_MONO:
++      case GST_AUDIO_CHANNEL_POSITION_FRONT_CENTER:
++        pos = OMX_AUDIO_ChannelCF;
++        break;
++      case GST_AUDIO_CHANNEL_POSITION_FRONT_LEFT:
++        pos = OMX_AUDIO_ChannelLF;
++        break;
++      case GST_AUDIO_CHANNEL_POSITION_FRONT_RIGHT:
++        pos = OMX_AUDIO_ChannelRF;
++        break;
++      case GST_AUDIO_CHANNEL_POSITION_SIDE_LEFT:
++        pos = OMX_AUDIO_ChannelLS;
++        break;
++      case GST_AUDIO_CHANNEL_POSITION_SIDE_RIGHT:
++        pos = OMX_AUDIO_ChannelRS;
++        break;
++      case GST_AUDIO_CHANNEL_POSITION_LFE1:
++        pos = OMX_AUDIO_ChannelLFE;
++        break;
++      case GST_AUDIO_CHANNEL_POSITION_REAR_CENTER:
++        pos = OMX_AUDIO_ChannelCS;
++        break;
++      case GST_AUDIO_CHANNEL_POSITION_REAR_LEFT:
++        pos = OMX_AUDIO_ChannelLR;
++        break;
++      case GST_AUDIO_CHANNEL_POSITION_REAR_RIGHT:
++        pos = OMX_AUDIO_ChannelRR;
++        break;
++      default:
++        pos = OMX_AUDIO_ChannelNone;
++        break;
++    }
++    eChannelMapping[i] = pos;
++  }
++}
++
++static inline const gchar *
++ch2str (OMX_AUDIO_CHANNELTYPE ch)
++{
++  switch (ch) {
++    case OMX_AUDIO_ChannelNone:
++      return "OMX_AUDIO_ChannelNone";
++    case OMX_AUDIO_ChannelLF:
++      return "OMX_AUDIO_ChannelLF";
++    case OMX_AUDIO_ChannelRF:
++      return "OMX_AUDIO_ChannelRF";
++    case OMX_AUDIO_ChannelCF:
++      return "OMX_AUDIO_ChannelCF";
++    case OMX_AUDIO_ChannelLS:
++      return "OMX_AUDIO_ChannelLS";
++    case OMX_AUDIO_ChannelRS:
++      return "OMX_AUDIO_ChannelRS";
++    case OMX_AUDIO_ChannelLFE:
++      return "OMX_AUDIO_ChannelLFE";
++    case OMX_AUDIO_ChannelCS:
++      return "OMX_AUDIO_ChannelCS";
++    case OMX_AUDIO_ChannelLR:
++      return "OMX_AUDIO_ChannelLR";
++    case OMX_AUDIO_ChannelRR:
++      return "OMX_AUDIO_ChannelRR";
++    default:
++      return "Invalid value";
++  }
++}
++
++static inline gboolean
++gst_omx_audio_sink_configure_pcm (GstOMXAudioSink * self,
++    GstAudioRingBufferSpec * spec)
++{
++  OMX_AUDIO_PARAM_PCMMODETYPE param;
++  OMX_ERRORTYPE err;
++
++  GST_OMX_INIT_STRUCT (&param);
++  param.nPortIndex = self->in_port->index;
++  param.nChannels = self->channels;
++  param.eNumData =
++      (self->is_signed ? OMX_NumericalDataSigned : OMX_NumericalDataUnsigned);
++  param.eEndian =
++      ((self->endianness ==
++          G_LITTLE_ENDIAN) ? OMX_EndianLittle : OMX_EndianBig);
++  param.bInterleaved = OMX_TRUE;
++  param.nBitPerSample = self->width;
++  param.nSamplingRate = self->rate;
++  param.ePCMMode = OMX_AUDIO_PCMModeLinear;
++  channel_mapping (spec, &param.eChannelMapping[0]);
++
++  GST_DEBUG_OBJECT (self, "Setting PCM parameters");
++  GST_DEBUG_OBJECT (self, "  nChannels: %d", param.nChannels);
++  GST_DEBUG_OBJECT (self, "  eNumData: %s",
++      (param.eNumData == OMX_NumericalDataSigned ? "signed" : "unsigned"));
++  GST_DEBUG_OBJECT (self, "  eEndian: %s",
++      (param.eEndian == OMX_EndianLittle ? "little endian" : "big endian"));
++  GST_DEBUG_OBJECT (self, "  bInterleaved: %d", param.bInterleaved);
++  GST_DEBUG_OBJECT (self, "  nBitPerSample: %d", param.nBitPerSample);
++  GST_DEBUG_OBJECT (self, "  nSamplingRate: %d", param.nSamplingRate);
++  GST_DEBUG_OBJECT (self, "  ePCMMode: %d", param.ePCMMode);
++  GST_DEBUG_OBJECT (self, "  eChannelMapping: {%s, %s, %s, %s, %s, %s, %s, %s}",
++      ch2str (param.eChannelMapping[0]), ch2str (param.eChannelMapping[1]),
++      ch2str (param.eChannelMapping[2]), ch2str (param.eChannelMapping[3]),
++      ch2str (param.eChannelMapping[4]), ch2str (param.eChannelMapping[5]),
++      ch2str (param.eChannelMapping[6]), ch2str (param.eChannelMapping[7]));
++
++  err =
++      gst_omx_component_set_parameter (self->comp, OMX_IndexParamAudioPcm,
++      &param);
++  if (err != OMX_ErrorNone) {
++    GST_ERROR_OBJECT (self, "Failed to set PCM parameters: %s (0x%08x)",
++        gst_omx_error_to_string (err), err);
++    return FALSE;
++  }
++
++  return TRUE;
++}
++
++static inline gboolean
++gst_omx_audio_sink_configure_ddp (GstOMXAudioSink * self,
++    GstAudioRingBufferSpec * spec)
++{
++  OMX_AUDIO_PARAM_DDPTYPE param;
++  OMX_ERRORTYPE err;
++
++  GST_OMX_INIT_STRUCT (&param);
++  param.nPortIndex = self->in_port->index;
++  param.nChannels = self->channels;
++  param.nSampleRate = self->rate;
++  if (spec->type == GST_AUDIO_RING_BUFFER_FORMAT_TYPE_AC3) {
++    param.eBitStreamId = OMX_AUDIO_DDPBitStreamIdAC3;
++  } else if (spec->type == GST_AUDIO_RING_BUFFER_FORMAT_TYPE_EAC3) {
++    param.eBitStreamId = OMX_AUDIO_DDPBitStreamIdEAC3;
++  }
++  param.nBitRate = 0;
++  channel_mapping (spec, &param.eChannelMapping[0]);
++
++  GST_DEBUG_OBJECT (self, "Setting DDP parameters");
++  GST_DEBUG_OBJECT (self, "  nChannels: %d", param.nChannels);
++  GST_DEBUG_OBJECT (self, "  nBitRate: %d", param.nBitRate);
++  GST_DEBUG_OBJECT (self, "  nSampleRate: %d", param.nSampleRate);
++  GST_DEBUG_OBJECT (self, "  eBitStreamId: %d", param.eBitStreamId);
++  GST_DEBUG_OBJECT (self, "  eBitStreamMode: %d", param.eBitStreamMode);
++  GST_DEBUG_OBJECT (self, "  eDolbySurroundMode: %d", param.eDolbySurroundMode);
++  GST_DEBUG_OBJECT (self, "  eChannelMapping: {%s, %s, %s, %s, %s, %s, %s, %s}",
++      ch2str (param.eChannelMapping[0]), ch2str (param.eChannelMapping[1]),
++      ch2str (param.eChannelMapping[2]), ch2str (param.eChannelMapping[3]),
++      ch2str (param.eChannelMapping[4]), ch2str (param.eChannelMapping[5]),
++      ch2str (param.eChannelMapping[6]), ch2str (param.eChannelMapping[7]));
++
++  err =
++      gst_omx_component_set_parameter (self->comp, OMX_IndexParamAudioDdp,
++      &param);
++  if (err != OMX_ErrorNone) {
++    GST_ERROR_OBJECT (self, "Failed to set DDP parameters: %s (0x%08x)",
++        gst_omx_error_to_string (err), err);
++    return FALSE;
++  }
++
++  return TRUE;
++}
++
++static inline gboolean
++gst_omx_audio_sink_configure_dts (GstOMXAudioSink * self,
++    GstAudioRingBufferSpec * spec)
++{
++  OMX_AUDIO_PARAM_DTSTYPE param;
++  OMX_ERRORTYPE err;
++
++  GST_OMX_INIT_STRUCT (&param);
++  param.nPortIndex = self->in_port->index;
++  param.nChannels = self->channels;
++  param.nBitRate = 0;
++  channel_mapping (spec, &param.eChannelMapping[0]);
++
++  GST_DEBUG_OBJECT (self, "Setting DTS parameters");
++  GST_DEBUG_OBJECT (self, "  nChannels: %d", param.nChannels);
++  GST_DEBUG_OBJECT (self, "  nBitRate: %d", param.nBitRate);
++  GST_DEBUG_OBJECT (self, "  nSampleRate: %d", param.nSampleRate);
++  GST_DEBUG_OBJECT (self, "  nDtsType: %d", param.nDtsType);
++  GST_DEBUG_OBJECT (self, "  nFormat: %d", param.nFormat);
++  GST_DEBUG_OBJECT (self, "  nDtsFrameSizeBytes: %d", param.nDtsFrameSizeBytes);
++  GST_DEBUG_OBJECT (self, "  eChannelMapping: {%s, %s, %s, %s, %s, %s, %s, %s}",
++      ch2str (param.eChannelMapping[0]), ch2str (param.eChannelMapping[1]),
++      ch2str (param.eChannelMapping[2]), ch2str (param.eChannelMapping[3]),
++      ch2str (param.eChannelMapping[4]), ch2str (param.eChannelMapping[5]),
++      ch2str (param.eChannelMapping[6]), ch2str (param.eChannelMapping[7]));
++
++  err =
++      gst_omx_component_set_parameter (self->comp, OMX_IndexParamAudioDts,
++      &param);
++  if (err != OMX_ErrorNone) {
++    GST_ERROR_OBJECT (self, "Failed to set DTS parameters: %s (0x%08x)",
++        gst_omx_error_to_string (err), err);
++    return FALSE;
++  }
++
++  return TRUE;
++}
++
++static gboolean
++gst_omx_audio_sink_prepare (GstAudioSink * audiosink,
++    GstAudioRingBufferSpec * spec)
++{
++  GstOMXAudioSink *self = GST_OMX_AUDIO_SINK (audiosink);
++  OMX_PARAM_PORTDEFINITIONTYPE port_def;
++  OMX_ERRORTYPE err;
++
++  if (!gst_omx_audio_sink_parse_spec (self, spec))
++    goto spec_parse;
++
++  gst_omx_port_get_port_definition (self->in_port, &port_def);
++
++  if (self->encoding == OMX_AUDIO_CodingPCM) {
++    port_def.nBufferSize = spec->segsize;
++    port_def.nBufferCountActual = 1 /*spec->segtotal */ ;
++  } else {
++    port_def.nBufferSize = 1536;
++    port_def.nBufferCountActual = 10;
++  }
++  port_def.format.audio.eEncoding = self->encoding;
++
++  GST_DEBUG_OBJECT (self, "Updating outport port definition");
++  GST_DEBUG_OBJECT (self, "  nBufferSize: %d", port_def.nBufferSize);
++  GST_DEBUG_OBJECT (self, "  nBufferCountActual: %d",
++      port_def.nBufferCountActual);
++  GST_DEBUG_OBJECT (self, "  audio.eEncoding: 0x%08x",
++      port_def.format.audio.eEncoding);
++
++  err = gst_omx_port_update_port_definition (self->in_port, &port_def);
++  if (err != OMX_ErrorNone) {
++    GST_ERROR_OBJECT (self, "Failed to configure port: %s (0x%08x)",
++        gst_omx_error_to_string (err), err);
++    goto configuration;
++  }
++
++  switch (self->encoding) {
++    case OMX_AUDIO_CodingPCM:
++      if (!gst_omx_audio_sink_configure_pcm (self, spec)) {
++        goto configuration;
++      }
++      break;
++    case OMX_AUDIO_CodingDDP:
++      if (!gst_omx_audio_sink_configure_ddp (self, spec)) {
++        goto configuration;
++      }
++      break;
++    case OMX_AUDIO_CodingDTS:
++      if (!gst_omx_audio_sink_configure_dts (self, spec)) {
++        goto configuration;
++      }
++      break;
++
++    default:
++      goto configuration;
++  }
++
++  err = gst_omx_component_set_state (self->comp, OMX_StateIdle);
++  if (err != OMX_ErrorNone) {
++    GST_ERROR_OBJECT (self, "Failed to set port disabled: %s (0x%08x)",
++        gst_omx_error_to_string (err), err);
++    goto activation;
++  }
++
++  err = gst_omx_port_set_enabled (self->in_port, TRUE);
++  if (err != OMX_ErrorNone) {
++    GST_ERROR_OBJECT (self, "Failed to enable port: %s (0x%08x)",
++        gst_omx_error_to_string (err), err);
++    goto activation;
++  }
++
++  GST_DEBUG_OBJECT (self, "Allocate buffers");
++  err = gst_omx_port_allocate_buffers (self->in_port);
++  if (err != OMX_ErrorNone) {
++    GST_ERROR_OBJECT (self, "Failed on buffer allocation: %s (0x%08x)",
++        gst_omx_error_to_string (err), err);
++    goto activation;
++  }
++
++  err = gst_omx_port_wait_enabled (self->in_port, 5 * GST_SECOND);
++  if (err != OMX_ErrorNone) {
++    GST_ERROR_OBJECT (self, "port not enabled: %s (0x%08x)",
++        gst_omx_error_to_string (err), err);
++    goto activation;
++  }
++
++  err = gst_omx_port_mark_reconfigured (self->in_port);
++  if (err != OMX_ErrorNone) {
++    GST_ERROR_OBJECT (self, "Couln't mark port as reconfigured: %s (0x%08x)",
++        gst_omx_error_to_string (err), err);
++    goto activation;
++  }
++
++  err = gst_omx_component_set_state (self->comp, OMX_StatePause);
++  if (err != OMX_ErrorNone) {
++    GST_ERROR_OBJECT (self, "Failed to set state paused: %s (0x%08x)",
++        gst_omx_error_to_string (err), err);
++    goto activation;
++  }
++
++  if (gst_omx_component_get_state (self->comp,
++          GST_CLOCK_TIME_NONE) != OMX_StatePause)
++    goto activation;
++
++  /* Collect some info from the component */
++  gst_omx_audio_sink_volume_range_get (self);
++
++  /* Configure some parameters */
++  GST_OBJECT_LOCK (self);
++  gst_omx_audio_sink_mute_set (self, self->mute);
++  gst_omx_audio_sink_volume_set (self, self->volume);
++  GST_OBJECT_UNLOCK (self);
++
++#if defined (USE_OMX_TARGET_RPI)
++  {
++    GstOMXAudioSinkClass *klass = GST_OMX_AUDIO_SINK_GET_CLASS (self);
++    OMX_ERRORTYPE err;
++    OMX_CONFIG_BRCMAUDIODESTINATIONTYPE param;
++
++    if (klass->destination
++        && strlen (klass->destination) < sizeof (param.sName)) {
++      GST_DEBUG_OBJECT (self, "Setting destination: %s", klass->destination);
++      GST_OMX_INIT_STRUCT (&param);
++      strcpy ((char *) param.sName, klass->destination);
++      err = gst_omx_component_set_config (self->comp,
++          OMX_IndexConfigBrcmAudioDestination, &param);
++      if (err != OMX_ErrorNone) {
++        GST_ERROR_OBJECT (self,
++            "Failed to configuring destination: %s (0x%08x)",
++            gst_omx_error_to_string (err), err);
++        goto activation;
++      }
++    }
++  }
++#endif
++
++  return TRUE;
++
++spec_parse:
++  {
++    GST_ELEMENT_ERROR (self, RESOURCE, SETTINGS, (NULL),
++        ("Error parsing spec"));
++    return FALSE;
++  }
++
++configuration:
++  {
++    GST_ELEMENT_ERROR (self, RESOURCE, SETTINGS, (NULL),
++        ("Configuration failed"));
++    return FALSE;
++  }
++activation:
++  {
++    GST_ELEMENT_ERROR (self, RESOURCE, SETTINGS, (NULL),
++        ("Component activation failed"));
++    return FALSE;
++  }
++}
++
++static gboolean
++gst_omx_audio_sink_unprepare (GstAudioSink * audiosink)
++{
++  GstOMXAudioSink *self = GST_OMX_AUDIO_SINK (audiosink);
++  OMX_ERRORTYPE err;
++
++  if (gst_omx_component_get_state (self->comp, 0) == OMX_StateIdle)
++    return TRUE;
++
++  err = gst_omx_port_set_flushing (self->in_port, 5 * GST_SECOND, TRUE);
++  if (err != OMX_ErrorNone) {
++    GST_ERROR_OBJECT (self, "Failed to set port flushing: %s (0x%08x)",
++        gst_omx_error_to_string (err), err);
++    goto failed;
++  }
++
++  err = gst_omx_component_set_state (self->comp, OMX_StateIdle);
++  if (err != OMX_ErrorNone) {
++    GST_ERROR_OBJECT (self, "Failed to set port disabled: %s (0x%08x)",
++        gst_omx_error_to_string (err), err);
++    goto failed;
++  }
++
++  err = gst_omx_port_set_enabled (self->in_port, FALSE);
++  if (err != OMX_ErrorNone) {
++    GST_ERROR_OBJECT (self, "Failed to set port disabled: %s (0x%08x)",
++        gst_omx_error_to_string (err), err);
++    goto failed;
++  }
++
++  err = gst_omx_port_wait_buffers_released (self->in_port, 5 * GST_SECOND);
++  if (err != OMX_ErrorNone) {
++    goto failed;
++  }
++
++  err = gst_omx_port_deallocate_buffers (self->in_port);
++  if (err != OMX_ErrorNone) {
++    GST_ERROR_OBJECT (self, "Couldn't deallocate buffers: %s (0x%08x)",
++        gst_omx_error_to_string (err), err);
++    goto failed;
++  }
++
++  err = gst_omx_port_wait_enabled (self->in_port, 1 * GST_SECOND);
++  if (err != OMX_ErrorNone) {
++    goto failed;
++  }
++
++  err = gst_omx_port_set_flushing (self->in_port, 5 * GST_SECOND, FALSE);
++  if (err != OMX_ErrorNone) {
++    GST_ERROR_OBJECT (self, "Failed to set port not flushing: %s (0x%08x)",
++        gst_omx_error_to_string (err), err);
++    goto failed;
++  }
++
++  gst_omx_component_get_state (self->comp, GST_CLOCK_TIME_NONE);
++
++  return TRUE;
++
++failed:
++  {
++    GST_ELEMENT_ERROR (self, LIBRARY, FAILED, (NULL),
++        ("OpenMAX component in error state %s (0x%08x)",
++            gst_omx_component_get_last_error_string (self->comp),
++            gst_omx_component_get_last_error (self->comp)));
++    return FALSE;
++  }
++}
++
++static GstOMXBuffer *
++gst_omx_audio_sink_acquire_buffer (GstOMXAudioSink * self)
++{
++  GstOMXAcquireBufferReturn acq_ret = GST_OMX_ACQUIRE_BUFFER_ERROR;
++  GstOMXPort *port = self->in_port;
++  OMX_ERRORTYPE err;
++  GstOMXBuffer *buf = NULL;
++
++  while (!buf) {
++    acq_ret = gst_omx_port_acquire_buffer (port, &buf);
++    if (acq_ret == GST_OMX_ACQUIRE_BUFFER_ERROR) {
++      goto component_error;
++    } else if (acq_ret == GST_OMX_ACQUIRE_BUFFER_FLUSHING) {
++      GST_DEBUG_OBJECT (self, "Flushing...");
++      goto flushing;
++    } else if (acq_ret == GST_OMX_ACQUIRE_BUFFER_RECONFIGURE) {
++      GST_DEBUG_OBJECT (self, "Reconfigure...");
++      /* Reallocate all buffers */
++      err = gst_omx_port_set_enabled (port, FALSE);
++      if (err != OMX_ErrorNone) {
++        GST_ERROR_OBJECT (self, "Failed to set port disabled: %s (0x%08x)",
++            gst_omx_error_to_string (err), err);
++        goto reconfigure_error;
++      }
++
++      err = gst_omx_port_wait_buffers_released (port, 5 * GST_SECOND);
++      if (err != OMX_ErrorNone) {
++        goto reconfigure_error;
++      }
++
++      err = gst_omx_port_deallocate_buffers (port);
++      if (err != OMX_ErrorNone) {
++        GST_ERROR_OBJECT (self, "Couldn't deallocate buffers: %s (0x%08x)",
++            gst_omx_error_to_string (err), err);
++        goto reconfigure_error;
++      }
++
++      err = gst_omx_port_wait_enabled (port, 1 * GST_SECOND);
++      if (err != OMX_ErrorNone) {
++        goto reconfigure_error;
++      }
++
++      err = gst_omx_port_set_enabled (port, TRUE);
++      if (err != OMX_ErrorNone) {
++        goto reconfigure_error;
++      }
++
++      err = gst_omx_port_allocate_buffers (port);
++      if (err != OMX_ErrorNone) {
++        goto reconfigure_error;
++      }
++
++      err = gst_omx_port_wait_enabled (port, 5 * GST_SECOND);
++      if (err != OMX_ErrorNone) {
++        goto reconfigure_error;
++      }
++
++      err = gst_omx_port_mark_reconfigured (port);
++      if (err != OMX_ErrorNone) {
++        goto reconfigure_error;
++      }
++      continue;
++    }
++  }
++
++  return buf;
++
++component_error:
++  {
++    GST_ELEMENT_ERROR (self, LIBRARY, FAILED, (NULL),
++        ("OpenMAX component in error state %s (0x%08x)",
++            gst_omx_component_get_last_error_string (self->comp),
++            gst_omx_component_get_last_error (self->comp)));
++    return NULL;
++  }
++reconfigure_error:
++  {
++    GST_ELEMENT_ERROR (self, LIBRARY, SETTINGS, (NULL),
++        ("Unable to reconfigure input port"));
++    return NULL;
++  }
++flushing:
++  {
++    return NULL;
++  }
++}
++
++static gint
++gst_omx_audio_sink_write (GstAudioSink * audiosink, gpointer data, guint length)
++{
++  GstOMXAudioSink *self = GST_OMX_AUDIO_SINK (audiosink);
++  GstOMXBuffer *buf;
++  OMX_ERRORTYPE err;
++  guint offset = 0;
++
++  GST_OMX_AUDIO_SINK_LOCK (self);
++
++  while (offset < length) {
++    if (!(buf = self->current_buffer)) {
++      if (!(buf = gst_omx_audio_sink_acquire_buffer (self))) {
++        goto beach;
++      }
++    }
++
++    if (buf->omx_buf->nAllocLen - buf->omx_buf->nOffset <= 0) {
++      GST_LOG_OBJECT (self, "Full buffer %p (%p)", buf, buf->omx_buf);
++      gst_omx_port_release_buffer (self->in_port, buf);
++      goto full_buffer;
++    }
++
++    /* Copy the buffer content in chunks of size as requested
++     * by the port */
++    GST_DEBUG_OBJECT (self, "Using buffer %p (%p)", buf, buf->omx_buf);
++    GST_LOG_OBJECT (self, "  nFilledLen: %d nAllocLen: %d nOffset: %d",
++        buf->omx_buf->nFilledLen, buf->omx_buf->nAllocLen,
++        buf->omx_buf->nOffset);
++    buf->omx_buf->nFilledLen =
++        MIN (length - offset, buf->omx_buf->nAllocLen - buf->omx_buf->nOffset);
++    memcpy (buf->omx_buf->pBuffer + buf->omx_buf->nOffset,
++        (guint8 *) data + offset, buf->omx_buf->nFilledLen);
++    GST_LOG_OBJECT (self, "received %d bytes, copied %d bytes from offset %d",
++        length, buf->omx_buf->nFilledLen, offset);
++    offset += buf->omx_buf->nFilledLen;
++    err = gst_omx_port_release_buffer (self->in_port, buf);
++    if (err != OMX_ErrorNone)
++      goto release_error;
++  }
++
++  self->current_buffer = gst_omx_audio_sink_acquire_buffer (self);
++
++beach:
++
++  GST_OMX_AUDIO_SINK_UNLOCK (self);
++
++  return offset;
++
++full_buffer:
++  {
++    GST_OMX_AUDIO_SINK_UNLOCK (self);
++    GST_ELEMENT_ERROR (self, LIBRARY, FAILED, (NULL),
++        ("Got OpenMAX buffer with no free space (%p, %u/%u)", buf,
++            (guint) buf->omx_buf->nOffset, (guint) buf->omx_buf->nAllocLen));
++    return 0;
++  }
++release_error:
++  {
++    GST_OMX_AUDIO_SINK_UNLOCK (self);
++    GST_ELEMENT_ERROR (self, LIBRARY, SETTINGS, (NULL),
++        ("Failed to relase input buffer to component: %s (0x%08x)",
++            gst_omx_error_to_string (err), err));
++    return 0;
++  }
++}
++
++static guint
++gst_omx_audio_sink_delay (GstAudioSink * audiosink)
++{
++  GstOMXAudioSink *self = GST_OMX_AUDIO_SINK (audiosink);
++  OMX_PARAM_U32TYPE param;
++  OMX_ERRORTYPE err;
++
++  GST_OMX_INIT_STRUCT (&param);
++  param.nPortIndex = self->in_port->index;
++  param.nU32 = 0;
++  err = gst_omx_component_get_config (self->comp,
++      OMX_IndexConfigAudioRenderingLatency, &param);
++  if (err != OMX_ErrorNone) {
++    GST_ERROR_OBJECT (self, "Failed to get rendering latency: %s (0x%08x)",
++        gst_omx_error_to_string (err), err);
++    param.nU32 = 0;
++  }
++
++  GST_DEBUG_OBJECT (self, "reported delay %d samples", param.nU32);
++  return param.nU32;
++}
++
++static void
++gst_omx_audio_sink_reset (GstAudioSink * audiosink)
++{
++  GstOMXAudioSink *self = GST_OMX_AUDIO_SINK (audiosink);
++  OMX_STATETYPE state;
++
++  GST_DEBUG_OBJECT (self, "Flushing sink");
++
++  gst_omx_port_set_flushing (self->in_port, 5 * GST_SECOND, TRUE);
++
++  GST_OMX_AUDIO_SINK_LOCK (self);
++  if (self->current_buffer) {
++    gst_omx_port_release_buffer (self->in_port, self->current_buffer);
++    self->current_buffer = NULL;
++  }
++
++  if ((state = gst_omx_component_get_state (self->comp, 0)) > OMX_StatePause) {
++    gst_omx_component_set_state (self->comp, OMX_StatePause);
++    gst_omx_component_get_state (self->comp, GST_CLOCK_TIME_NONE);
++  }
++
++  gst_omx_component_set_state (self->comp, state);
++  gst_omx_component_get_state (self->comp, GST_CLOCK_TIME_NONE);
++
++  gst_omx_port_set_flushing (self->in_port, 5 * GST_SECOND, FALSE);
++
++  gst_omx_audio_sink_delay (audiosink);
++  GST_OMX_AUDIO_SINK_UNLOCK (self);
++}
++
++static void
++gst_omx_audio_sink_set_property (GObject * object, guint prop_id,
++    const GValue * value, GParamSpec * pspec)
++{
++  GstOMXAudioSink *self = GST_OMX_AUDIO_SINK (object);
++
++  switch (prop_id) {
++    case PROP_MUTE:
++    {
++      gboolean mute = g_value_get_boolean (value);
++      GST_OBJECT_LOCK (self);
++      if (self->mute != mute) {
++        gst_omx_audio_sink_mute_set (self, mute);
++      }
++      GST_OBJECT_UNLOCK (self);
++      break;
++    }
++    case PROP_VOLUME:
++    {
++      gdouble volume = g_value_get_double (value);
++      GST_OBJECT_LOCK (self);
++      if (volume != self->volume) {
++        gst_omx_audio_sink_volume_set (self, volume);
++      }
++      GST_OBJECT_UNLOCK (self);
++      break;
++    }
++    default:
++      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
++      break;
++  }
++}
++
++static void
++gst_omx_audio_sink_get_property (GObject * object, guint prop_id,
++    GValue * value, GParamSpec * pspec)
++{
++  GstOMXAudioSink *self = GST_OMX_AUDIO_SINK (object);
++
++  switch (prop_id) {
++    case PROP_MUTE:
++      GST_OBJECT_LOCK (self);
++      g_value_set_boolean (value, self->mute);
++      GST_OBJECT_UNLOCK (self);
++      break;
++    case PROP_VOLUME:
++      GST_OBJECT_LOCK (self);
++      g_value_set_double (value, self->volume);
++      GST_OBJECT_UNLOCK (self);
++      break;
++    default:
++      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
++      break;
++  }
++}
++
++static GstStateChangeReturn
++gst_omx_audio_sink_change_state (GstElement * element,
++    GstStateChange transition)
++{
++  GstStateChangeReturn ret = GST_STATE_CHANGE_SUCCESS;
++  GstOMXAudioSink *self = GST_OMX_AUDIO_SINK (element);
++  OMX_ERRORTYPE err;
++
++  switch (transition) {
++    case GST_STATE_CHANGE_PAUSED_TO_PLAYING:
++    {
++      GST_DEBUG_OBJECT (self, "going to PLAYING state");
++      err = gst_omx_component_set_state (self->comp, OMX_StateExecuting);
++      if (err != OMX_ErrorNone) {
++        GST_ERROR_OBJECT (self, "Failed to set state executing: %s (0x%08x)",
++            gst_omx_error_to_string (err), err);
++        return GST_STATE_CHANGE_FAILURE;
++      }
++
++      if (gst_omx_component_get_state (self->comp,
++              GST_CLOCK_TIME_NONE) != OMX_StateExecuting) {
++        return GST_STATE_CHANGE_FAILURE;
++      }
++      GST_DEBUG_OBJECT (self, "in PLAYING state");
++      break;
++    }
++    default:
++      break;
++  }
++
++  ret = GST_ELEMENT_CLASS (parent_class)->change_state (element, transition);
++
++  switch (transition) {
++    case GST_STATE_CHANGE_PLAYING_TO_PAUSED:
++    {
++      GST_DEBUG_OBJECT (self, "going to PAUSED state");
++      err = gst_omx_component_set_state (self->comp, OMX_StatePause);
++      if (err != OMX_ErrorNone) {
++        GST_ERROR_OBJECT (self, "Failed to set state paused: %s (0x%08x)",
++            gst_omx_error_to_string (err), err);
++        return GST_STATE_CHANGE_FAILURE;
++      }
++
++      if (gst_omx_component_get_state (self->comp,
++              GST_CLOCK_TIME_NONE) != OMX_StatePause) {
++        return GST_STATE_CHANGE_FAILURE;
++      }
++      GST_DEBUG_OBJECT (self, "in PAUSED state");
++      break;
++    }
++    default:
++      break;
++  }
++
++  return ret;
++}
++
++static void
++gst_omx_audio_sink_finalize (GObject * object)
++{
++  GstOMXAudioSink *self = GST_OMX_AUDIO_SINK (object);
++
++  g_mutex_clear (&self->lock);
++
++  G_OBJECT_CLASS (parent_class)->finalize (object);
++}
++
++static void
++gst_omx_audio_sink_class_init (GstOMXAudioSinkClass * klass)
++{
++  GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
++  GstElementClass *element_class = GST_ELEMENT_CLASS (klass);
++  GstAudioSinkClass *audio_sink_class = GST_AUDIO_SINK_CLASS (klass);
++
++  gobject_class->set_property = gst_omx_audio_sink_set_property;
++  gobject_class->get_property = gst_omx_audio_sink_get_property;
++  gobject_class->finalize = gst_omx_audio_sink_finalize;
++
++  audio_sink_class->open = GST_DEBUG_FUNCPTR (gst_omx_audio_sink_open);
++  audio_sink_class->close = GST_DEBUG_FUNCPTR (gst_omx_audio_sink_close);
++  audio_sink_class->prepare = GST_DEBUG_FUNCPTR (gst_omx_audio_sink_prepare);
++  audio_sink_class->unprepare =
++      GST_DEBUG_FUNCPTR (gst_omx_audio_sink_unprepare);
++  audio_sink_class->write = GST_DEBUG_FUNCPTR (gst_omx_audio_sink_write);
++  audio_sink_class->delay = GST_DEBUG_FUNCPTR (gst_omx_audio_sink_delay);
++  audio_sink_class->reset = GST_DEBUG_FUNCPTR (gst_omx_audio_sink_reset);
++
++  element_class->change_state =
++      GST_DEBUG_FUNCPTR (gst_omx_audio_sink_change_state);
++
++  g_object_class_install_property (gobject_class, PROP_MUTE,
++      g_param_spec_boolean ("mute", "Mute", "mute channel",
++          DEFAULT_PROP_MUTE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
++
++  g_object_class_install_property (gobject_class, PROP_VOLUME,
++      g_param_spec_double ("volume", "Volume", "volume factor, 1.0=100%",
++          0.0, VOLUME_MAX_DOUBLE, DEFAULT_PROP_VOLUME,
++          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
++
++  klass->cdata.type = GST_OMX_COMPONENT_TYPE_SINK;
++}
++
++static void
++gst_omx_audio_sink_init (GstOMXAudioSink * self)
++{
++  g_mutex_init (&self->lock);
++
++  self->mute = DEFAULT_PROP_MUTE;
++  self->volume = DEFAULT_PROP_VOLUME;
++
++  gst_audio_base_sink_set_provide_clock (GST_AUDIO_BASE_SINK (self), TRUE);
++}
+diff --git a/omx/gstomxaudiosink.h b/omx/gstomxaudiosink.h
+new file mode 100644
+index 0000000..61447cb
+--- a/dev/null
++++ b/omx/gstomxaudiosink.h
+@@ -0,0 +1,93 @@
++/*
++ * Copyright (C) 2014, Fluendo, S.A.
++ *   Author: Josep Torra <josep@fluendo.com>
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation
++ * version 2.1 of the License.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
++ *
++ */
++
++#ifndef __GST_OMX_AUDIO_SINK_H__
++#define __GST_OMX_AUDIO_SINK_H__
++
++#ifdef HAVE_CONFIG_H
++#include "config.h"
++#endif
++
++#include <gst/gst.h>
++#include <gst/audio/audio.h>
++
++#include "gstomx.h"
++
++G_BEGIN_DECLS
++
++#define GST_TYPE_OMX_AUDIO_SINK \
++  (gst_omx_audio_sink_get_type())
++#define GST_OMX_AUDIO_SINK(obj) \
++  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_OMX_AUDIO_SINK,GstOMXAudioSink))
++#define GST_OMX_AUDIO_SINK_CLASS(klass) \
++  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_OMX_AUDIO_SINK,GstOMXAudioSinkClass))
++#define GST_OMX_AUDIO_SINK_GET_CLASS(obj) \
++  (G_TYPE_INSTANCE_GET_CLASS((obj),GST_TYPE_OMX_AUDIO_SINK,GstOMXAudioSinkClass))
++#define GST_IS_OMX_AUDIO_SINK(obj) \
++  (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_OMX_AUDIO_SINK))
++#define GST_IS_OMX_AUDIO_SINK_CLASS(obj) \
++  (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_OMX_AUDIO_SINK))
++#define GST_OMX_AUDIO_SINK_CAST(obj)      ((GstOMXAudioSink *) (obj))
++
++#define GST_OMX_AUDIO_SINK_GET_LOCK(obj)	(&GST_OMX_AUDIO_SINK_CAST (obj)->lock)
++#define GST_OMX_AUDIO_SINK_LOCK(obj)	    (g_mutex_lock (GST_OMX_AUDIO_SINK_GET_LOCK (obj)))
++#define GST_OMX_AUDIO_SINK_UNLOCK(obj)    (g_mutex_unlock (GST_OMX_AUDIO_SINK_GET_LOCK (obj)))
++
++typedef struct _GstOMXAudioSink GstOMXAudioSink;
++typedef struct _GstOMXAudioSinkClass GstOMXAudioSinkClass;
++
++struct _GstOMXAudioSink
++{
++  GstAudioSink parent;
++
++  /* < protected > */
++  GstOMXComponent *comp;
++  GstOMXPort *in_port, *out_port;
++  
++  gboolean mute;
++  gdouble volume;
++  gdouble exp_volume_min, exp_volume_max;
++
++  OMX_AUDIO_CODINGTYPE encoding;
++  guint endianness;
++  gboolean is_signed;
++  guint rate;
++  guint channels;
++  guint width;
++
++  GstOMXBuffer *current_buffer;
++
++  GMutex lock;
++};
++
++struct _GstOMXAudioSinkClass
++{
++  GstAudioSinkClass parent_class;
++
++  GstOMXClassData cdata;
++  const gchar * destination;
++};
++
++GType gst_omx_audio_sink_get_type (void);
++
++G_END_DECLS
++
++#endif /* __GST_OMX_AUDIO_SINK_H__ */
++
+diff --git a/omx/gstomxhdmiaudiosink.c b/omx/gstomxhdmiaudiosink.c
+new file mode 100644
+index 0000000..12e5195
+--- a/dev/null
++++ b/omx/gstomxhdmiaudiosink.c
+@@ -0,0 +1,70 @@
++/*
++ * Copyright (C) 2014, Fluendo, S.A.
++ *   Author: Josep Torra <josep@fluendo.com>
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation
++ * version 2.1 of the License.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
++ *
++ */
++
++#ifdef HAVE_CONFIG_H
++#include "config.h"
++#endif
++
++#include <gst/gst.h>
++
++#include "gstomxhdmiaudiosink.h"
++
++GST_DEBUG_CATEGORY_STATIC (gst_omx_hdmi_audio_sink_debug_category);
++#define GST_CAT_DEFAULT gst_omx_hdmi_audio_sink_debug_category
++
++/* class initialization */
++
++#define DEBUG_INIT \
++  GST_DEBUG_CATEGORY_INIT (gst_omx_hdmi_audio_sink_debug_category, "omxhdmiaudiosink", 0, \
++      "debug category for gst-omx hdmi audio sink");
++
++G_DEFINE_TYPE_WITH_CODE (GstOMXHdmiAudioSink, gst_omx_hdmi_audio_sink,
++    GST_TYPE_OMX_AUDIO_SINK, DEBUG_INIT);
++
++static void
++gst_omx_hdmi_audio_sink_class_init (GstOMXHdmiAudioSinkClass * klass)
++{
++  GstOMXAudioSinkClass *audiosink_class = GST_OMX_AUDIO_SINK_CLASS (klass);
++  GstElementClass *element_class = GST_ELEMENT_CLASS (klass);
++
++  audiosink_class->cdata.default_sink_template_caps =
++      "audio/x-raw, "
++      "format = (string) { S16LE, S32LE }, "
++      "layout = (string) interleaved, "
++      "rate = (int) [ 8000, 96000 ], "
++      "channels = (int) [ 1, 8 ]; "
++      "audio/x-ac3, framed = (boolean) true;"
++      "audio/x-eac3, framed = (boolean) true; "
++      "audio/x-dts, framed = (boolean) true, "
++      "block-size = (int) { 512, 1024, 2048 }; ";
++  audiosink_class->destination = "hdmi";
++
++  gst_element_class_set_static_metadata (element_class,
++      "OpenMAX HDMI Audio Sink",
++      "Sink/Audio",
++      "Output audio through HDMI", "Josep Torra <josep@fluendo.com>");
++
++  gst_omx_set_default_role (&audiosink_class->cdata, "audio_render.hdmi");
++}
++
++static void
++gst_omx_hdmi_audio_sink_init (GstOMXHdmiAudioSink * self)
++{
++}
+diff --git a/omx/gstomxhdmiaudiosink.h b/omx/gstomxhdmiaudiosink.h
+new file mode 100644
+index 0000000..8bede0a
+--- a/dev/null
++++ b/omx/gstomxhdmiaudiosink.h
+@@ -0,0 +1,60 @@
++/*
++ * Copyright (C) 2014, Fluendo, S.A.
++ *   Author: Josep Torra <josep@fluendo.com>
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation
++ * version 2.1 of the License.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with this library; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
++ *
++ */
++
++#ifndef __GST_OMX_HDMI_AUDIO_SINK_H__
++#define __GST_OMX_HDMI_AUDIO_SINK_H__
++
++#include <gst/gst.h>
++#include "gstomxaudiosink.h"
++
++G_BEGIN_DECLS
++
++#define GST_TYPE_OMX_HDMI_AUDIO_SINK \
++  (gst_omx_hdmi_audio_sink_get_type())
++#define GST_OMX_HDMI_AUDIO_SINK(obj) \
++  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_OMX_HDMI_AUDIO_SINK,GstOMXHdmiAudioSink))
++#define GST_OMX_HDMI_AUDIO_SINK_CLASS(klass) \
++  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_OMX_HDMI_AUDIO_SINK,GstOMXHdmiAudioSinkClass))
++#define GST_OMX_HDMI_AUDIO_SINK_GET_CLASS(obj) \
++  (G_TYPE_INSTANCE_GET_CLASS((obj),GST_TYPE_OMX_HDMI_AUDIO_SINK,GstOMXHdmiAudioSinkClass))
++#define GST_IS_OMX_HDMI_AUDIO_SINK(obj) \
++  (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_OMX_HDMI_AUDIO_SINK))
++#define GST_IS_OMX_HDMI_AUDIO_SINK_CLASS(obj) \
++  (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_OMX_HDMI_AUDIO_SINK))
++
++typedef struct _GstOMXHdmiAudioSink GstOMXHdmiAudioSink;
++typedef struct _GstOMXHdmiAudioSinkClass GstOMXHdmiAudioSinkClass;
++
++struct _GstOMXHdmiAudioSink
++{
++  GstOMXAudioSink parent;
++};
++
++struct _GstOMXHdmiAudioSinkClass
++{
++  GstOMXAudioSinkClass parent_class;
++};
++
++GType gst_omx_hdmi_audio_sink_get_type (void);
++
++G_END_DECLS
++
++#endif /* __GST_OMX_HDMI_AUDIO_SINK_H__ */
++
+--
+cgit v0.9.0.2-2-gbebe
