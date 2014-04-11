@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-QT5WEBKIT_VERSION = fdcfa5a04d883adec92c16e8c6afa4d54406ef90
+QT5WEBKIT_VERSION = 7f20fe3a546fe31ff2397f0559211f5268eecab8
 QT5WEBKIT_SITE = $(call github,Metrological,qtwebkit,$(QT5WEBKIT_VERSION))
 QT5WEBKIT_DEPENDENCIES = qt5base sqlite host-ruby host-gperf host-bison host-flex
 QT5WEBKIT_INSTALL_STAGING = YES
