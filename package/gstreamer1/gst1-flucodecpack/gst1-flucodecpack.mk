@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-GST1_FLUCODECPACK_VERSION = 2.0.0
+GST1_FLUCODECPACK_VERSION = 2.0.1
 GST1_FLUCODECPACK_SITE = ../gst-flucodecpack/1.0
 GST1_FLUCODECPACK_SITE_METHOD = local
 GST1_FLUCODECPACK_LICENSE = PROPRIETARY
