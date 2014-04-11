@@ -1,0 +1,173 @@
+--- a/retrace/glretrace_main.cpp
++++ b/retrace/glretrace_main.cpp
+@@ -63,6 +63,8 @@
+     bool isDraw;
+     GLuint program;
+     const trace::FunctionSig *sig;
++    int64_t gpuStart;
++    int64_t gpuEnd;
+     int64_t cpuStart;
+     int64_t cpuEnd;
+     int64_t vsizeStart;
+@@ -164,12 +166,19 @@
+ 
+     if (query.isDraw) {
+         if (retrace::profilingGpuTimes) {
+-            if (supportsTimestamp) {
+-                /* Use ARB queries in case EXT not present */
+-                glGetQueryObjecti64v(query.ids[GPU_START], GL_QUERY_RESULT, &gpuStart);
+-                glGetQueryObjecti64v(query.ids[GPU_DURATION], GL_QUERY_RESULT, &gpuDuration);
++            if (supportsTimestamp || supportsElapsed) {
++                if (supportsTimestamp) {
++                    /* Use ARB queries in case EXT not present */
++                    glGetQueryObjecti64v(query.ids[GPU_START], GL_QUERY_RESULT, &gpuStart);
++                    glGetQueryObjecti64v(query.ids[GPU_DURATION], GL_QUERY_RESULT, &gpuDuration);
++                } else {
++                    glGetQueryObjecti64vEXT(query.ids[GPU_DURATION], GL_QUERY_RESULT, &gpuDuration);
++                }
+             } else {
+-                glGetQueryObjecti64vEXT(query.ids[GPU_DURATION], GL_QUERY_RESULT, &gpuDuration);
++
++                gpuStart = query.gpuStart;
++                gpuDuration = query.gpuEnd - query.gpuStart;
++
+             }
+         }
+ 
+@@ -200,7 +209,9 @@
+         rssDuration = query.rssEnd - query.rssStart;
+     }
+ 
+-    glDeleteQueries(NUM_QUERIES, query.ids);
++    if (retrace::profilingPixelsDrawn || ( retrace::profilingGpuTimes && (supportsTimestamp || supportsElapsed))) {
++        glDeleteQueries(NUM_QUERIES, query.ids);
++    }
+ 
+     /* Add call to profile */
+     retrace::profiler.addCall(query.call, query.sig->name, query.program, pixels, gpuStart, gpuDuration, query.cpuStart, cpuDuration, query.vsizeStart, vsizeDuration, query.rssStart, rssDuration);
+@@ -226,16 +237,27 @@
+     query.sig = call.sig;
+     query.program = currentContext ? currentContext->activeProgram : 0;
+ 
+-    glGenQueries(NUM_QUERIES, query.ids);
++    if (retrace::profilingPixelsDrawn || ( retrace::profilingGpuTimes && (supportsTimestamp || supportsElapsed))) {
++        glGenQueries(NUM_QUERIES, query.ids);
++    }
+ 
+     /* GPU profiling only for draw calls */
+     if (isDraw) {
+         if (retrace::profilingGpuTimes) {
+-            if (supportsTimestamp) {
+-                glQueryCounter(query.ids[GPU_START], GL_TIMESTAMP);
++            if (supportsTimestamp || supportsElapsed) {
++
++                if (supportsTimestamp) {
++                    glQueryCounter(query.ids[GPU_START], GL_TIMESTAMP);
++                }
++
++	        if (supportsElapsed) {
++                    glBeginQuery(GL_TIME_ELAPSED, query.ids[GPU_DURATION]);
++                }
++            } else {
++                double cpuTimeScale = 1.0E9 / getTimeFrequency();
++                query.gpuStart = getCurrentTime() * cpuTimeScale;
+             }
+ 
+-            glBeginQuery(GL_TIME_ELAPSED, query.ids[GPU_DURATION]);
+         }
+ 
+         if (retrace::profilingPixelsDrawn) {
+@@ -260,7 +282,6 @@
+ 
+ void
+ endProfile(trace::Call &call, bool isDraw) {
+-
+     /* CPU profiling for all calls */
+     if (retrace::profilingCpuTimes) {
+         CallQuery& query = callQueries.back();
+@@ -270,7 +291,13 @@
+     /* GPU profiling only for draw calls */
+     if (isDraw) {
+         if (retrace::profilingGpuTimes) {
+-            glEndQuery(GL_TIME_ELAPSED);
++	    if (supportsElapsed) {
++                glEndQuery(GL_TIME_ELAPSED);
++            } else {
++                double cpuTimeScale = 1.0E9 / getTimeFrequency();
++                CallQuery& query = callQueries.back();
++                query.gpuEnd = getCurrentTime() * cpuTimeScale;
++            }
+         }
+ 
+         if (retrace::profilingPixelsDrawn) {
+@@ -289,6 +316,20 @@
+ initContext() {
+     glretrace::Context *currentContext = glretrace::getCurrentContext();
+ 
++    const unsigned char* gl_version = glGetString(GL_VERSION);
++
++    char* prefix = new char[strlen((const char*)gl_version)];
++    char* suffix = new char[strlen((const char*)gl_version)];
++
++    if ( prefix != NULL ) prefix[0] = '\0';
++    if ( suffix != NULL ) suffix[0] = '\0';
++
++    int major=0, minor=0;
++
++    if (3 <= std::sscanf(reinterpret_cast<const char*>(gl_version), "%s ES  %d.%d %s", prefix, &major, &minor, suffix)) {
++        std::cout << "Warning: OpenGL ES, version " << major << "." << minor << ", detected. Extensions might not be supported. Trying to avoid them." << std::endl;
++   }
++
+     /* Ensure we have adequate extension support */
+     assert(currentContext);
+     supportsTimestamp   = currentContext->hasExtension("GL_ARB_timer_query");
+@@ -300,23 +341,26 @@
+     /* Check for timer query support */
+     if (retrace::profilingGpuTimes) {
+         if (!supportsTimestamp && !supportsElapsed) {
+-            std::cout << "Error: Cannot run profile, GL_ARB_timer_query or GL_EXT_timer_query extensions are not supported." << std::endl;
+-            exit(-1);
+-        }
++            std::cout << "Warning: Cannot run GPU timer based profiling, GL_ARB_timer_query or GL_EXT_timer_query extensions are not supported. GPU time values will be approximated by CPU time values." << std::endl;
+ 
+-        GLint bits = 0;
+-        glGetQueryiv(GL_TIME_ELAPSED, GL_QUERY_COUNTER_BITS, &bits);
+-
+-        if (!bits) {
+-            std::cout << "Error: Cannot run profile, GL_QUERY_COUNTER_BITS == 0." << std::endl;
+-            exit(-1);
++            supportsTimestamp = false;
++            supportsElapsed = false;
++        } else {
++            GLint bits = 0;
++            glGetQueryiv(GL_TIME_ELAPSED, GL_QUERY_COUNTER_BITS, &bits);
++
++            if (!bits) {
++                std::cout << "Error: Cannot run GPU timer based profiling, GL_QUERY_COUNTER_BITS == 0." << std::endl;
++                exit(-1);
++            }
+         }
+     }
+ 
+     /* Check for occlusion query support */
+     if (retrace::profilingPixelsDrawn && !supportsOcclusion) {
+-        std::cout << "Error: Cannot run profile, GL_ARB_occlusion_query extension is not supported." << std::endl;
+-        exit(-1);
++        std::cout << "Warning: Cannot run pixel draw profiling, GL_ARB_occlusion_query extension is not supported." << std::endl;
++
++        retrace::profilingPixelsDrawn = false;
+     }
+ 
+     /* Setup debug message call back */
+@@ -328,6 +372,11 @@
+         if (DEBUG_OUTPUT_SYNCHRONOUS) {
+             glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+         }
++    } else {
++        std::cout << "Warning: Cannot run debug output (callback)." << std::endl;
++
++        supportsDebugOutput = false;
++        retrace::debug = false;
+     }
+ 
+     /* Sync the gpu and cpu start times */
