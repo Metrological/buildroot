@@ -4,7 +4,7 @@ comment "xbmc requires an OpenGL-capable backend"
 comment "xbmc needs an (e)glibc toolchain w/ C++, wchar"
 	depends on !BR2_TOOLCHAIN_USES_GLIBC || !BR2_INSTALL_LIBSTDCPP || !BR2_USE_WCHAR
 
-menuconfig BR2_PACKAGE_XBMC
+menuconfig BR2_PACKAGE_XBMCBASE
 	bool "xbmc"
 	select BR2_NEEDS_HOST_JAVA
 	select BR2_PACKAGE_BOOST
@@ -61,7 +61,7 @@ menuconfig BR2_PACKAGE_XBMC
 
 	  http://xbmc.org
 
-if BR2_PACKAGE_XBMC
+if BR2_PACKAGE_XBMCBASE
 
 config BR2_PACKAGE_XBMC_AVAHI
 	bool "avahi"
@@ -160,4 +160,5 @@ config BR2_PACKAGE_XBMC_WAVPACK
 	  Enable WAV input support.
 	  Select this if you want to play back WAV files.
 
+source "package/xbmc/pvr/Config.in"
 endif

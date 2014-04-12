@@ -1,0 +1,78 @@
+--- a/xbmc/settings/AdvancedSettings.cpp
++++ b/xbmc/settings/AdvancedSettings.cpp
+@@ -131,7 +131,11 @@
+   m_karaokeAlwaysEmptyOnCdgs = 1;
+   m_karaokeUseSongSpecificBackground = 0;
+ 
++  #if defined(TARGET_RASPBERRY_PI)
++  m_audioDefaultPlayer = "omxplayer";
++  #else
+   m_audioDefaultPlayer = "paplayer";
++  #endif
+   m_audioPlayCountMinimumPercent = 90.0f;
+   m_audioHost = "default";
+ 
+@@ -152,8 +156,14 @@
+   m_videoBlackBarColour = 0;
+   m_videoPPFFmpegDeint = "linblenddeint";
+   m_videoPPFFmpegPostProc = "ha:128:7,va,dr";
++
++  #if defined(TARGET_RASPBERRY_PI)
++  m_videoDefaultPlayer = "omxplayer";
++  m_videoDefaultDVDPlayer = "omxplayer";
++  #else
+   m_videoDefaultPlayer = "dvdplayer";
+   m_videoDefaultDVDPlayer = "dvdplayer";
++  #endif
+   m_videoIgnoreSecondsAtStart = 3*60;
+   m_videoIgnorePercentAtEnd   = 8.0f;
+   m_videoPlayCountMinimumPercent = 90.0f;
+@@ -368,7 +378,12 @@
+ 
+   m_measureRefreshrate = false;
+ 
++#if defined(TARGET_RASPBERRY_PI)
++  m_cacheMemBufferSize = 1024 * 1024 * 10;
++#else
+   m_cacheMemBufferSize = 1024 * 1024 * 20;
++#endif
++
+   m_networkBufferMode = 0; // Default (buffer all internet streams/filesystems)
+   // the following setting determines the readRate of a player data
+   // as multiply of the default data read rate
+@@ -624,11 +639,17 @@
+         RefreshOverride override = {0};
+ 
+         float fps;
++        #if defined(TARGET_RASPBERRY_PI)
++          fps = 23.976;
++          override.fpsmin = fps - 0.01f;
++          override.fpsmax = fps + 0.01f;
++        #else
+         if (XMLUtils::GetFloat(pRefreshOverride, "fps", fps))
+         {
+           override.fpsmin = fps - 0.01f;
+           override.fpsmax = fps + 0.01f;
+         }
++        #endif
+ 
+         float fpsmin, fpsmax;
+         if (XMLUtils::GetFloat(pRefreshOverride, "fpsmin", fpsmin) &&
+@@ -639,11 +660,17 @@
+         }
+ 
+         float refresh;
++        #if defined(TARGET_RASPBERRY_PI)
++          refresh = 24.0;
++          override.refreshmin = refresh - 0.01f;
++          override.refreshmax = refresh + 0.01f;
++        #else
+         if (XMLUtils::GetFloat(pRefreshOverride, "refresh", refresh))
+         {
+           override.refreshmin = refresh - 0.01f;
+           override.refreshmax = refresh + 0.01f;
+         }
++        #endif
+ 
+         float refreshmin, refreshmax;
+         if (XMLUtils::GetFloat(pRefreshOverride, "refreshmin", refreshmin) &&

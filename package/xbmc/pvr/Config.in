@@ -1,0 +1,25 @@
+menuconfig BR2_PACKAGE_PVR
+	bool "pvr"
+	help
+	  XBMC is an award-winning free and open source (GPL) software
+	  media player and entertainment hub for digital media.
+          This is the repository for PVR addons. These addons enable 
+          you to watch live TV in you XBMC.
+
+	  http://xbmc.org
+
+if BR2_PACKAGE_PVR
+
+config BR2_PACKAGE_PVR_TVHEADEND
+	bool "TV Headend"
+	help
+	  Enable TVHeadEnd support
+	  Select this if you want XBMC to support a TVHeadEnd backend.
+
+config BR2_PACKAGE_PVR_MYTHTV
+	bool "Myth TV"
+	help
+	  Enable MythTV support
+	  Select this if you want XBMC to support a MythTV backend.
+
+endif

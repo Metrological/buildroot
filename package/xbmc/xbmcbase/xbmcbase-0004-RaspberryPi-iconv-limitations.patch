@@ -1,0 +1,18 @@
+--- a/xbmc/utils/CharsetConverter.cpp
++++ a/xbmc/utils/CharsetConverter.cpp
+@@ -736,6 +736,7 @@
+                                 bool forceLTRReadingOrder /*= false*/, bool failOnBadChar /*= false*/)
+ {
+   // Try to flip hebrew/arabic characters, if any
++#if !defined(TARGET_RASPBERRY_PI)
+   if (bVisualBiDiFlip)
+   {
+     wStringDst.clear();
+@@ -748,6 +749,7 @@
+ 
+     return CInnerConverter::stdConvert(Utf32ToW, utf32flipped, wStringDst, failOnBadChar) && bidiResult;
+   }
++#endif
+   
+   return CInnerConverter::stdConvert(Utf8toW, utf8StringSrc, wStringDst, failOnBadChar);
+ }

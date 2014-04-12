@@ -1,0 +1,45 @@
+--- a/system/settings/settings.xml
++++ b/system/settings/settings.xml
+@@ -92,7 +92,7 @@
+       <group id="2">
+         <setting id="lookandfeel.enablerssfeeds" type="boolean" label="13305" help="36111">
+           <level>1</level>
+-          <default>true</default>
++          <default>false</default>
+           <control type="toggle" />
+         </setting>
+         <setting id="lookandfeel.rssedit" type="string" parent="lookandfeel.enablerssfeeds" label="21450" help="36112">
+@@ -2040,7 +2043,7 @@
+       <group id="1">
+         <setting id="services.webserver" type="boolean" label="263" help="36328">
+           <level>1</level>
+-          <default>false</default>
++          <default>true</default>
+           <control type="toggle" />
+         </setting>
+         <setting id="services.webserverport" type="integer" parent="services.webserver" label="730" help="36329">
+@@ -2195,7 +2198,7 @@
+       <group id="1">
+         <setting id="services.airplay" type="boolean" label="1270" help="36343">
+           <level>1</level>
+-          <default>false</default>
++          <default>true</default>
+           <control type="toggle" />
+         </setting>
+         <setting id="services.airplayvolumecontrol" type="boolean" parent="services.airplay" label="1269" help="36541">
+@@ -2601,13 +2604,13 @@
+       <group id="2">
+         <setting id="input.remoteaskeyboard" type="boolean" label="21449" help="36376">
+           <level>1</level>
+-          <default>false</default>
++          <default>true</default>
+           <control type="toggle" />
+         </setting>
+         <setting id="input.enablemouse" type="boolean" label="21369" help="36377">
+           <level>0</level>
+           <control type="toggle" />
+-          <default>true</default>
++          <default>false</default>
+         </setting>
+         <setting id="input.enablejoystick" type="boolean" label="35100" help="36378">
+           <requirement>HAS_SDL_JOYSTICK</requirement>
