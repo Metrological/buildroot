@@ -1,0 +1,5 @@
+config BR2_PACKAGE_WEBKITGTK_SHELL
+    bool "webkitgtk-shell"
+    depends on BR2_PACKAGE_WEBKITGTK
+    help
+      WIP. Move on.
