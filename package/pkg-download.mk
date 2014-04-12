@@ -99,6 +99,19 @@ define DOWNLOAD_GIT
 	popd > /dev/null)
 endef
 
+define DOWNLOAD_GITDEV
+	test -e $(DL_DIR)/$($(PKG)_SOURCE) || \
+	(pushd $(DL_DIR) > /dev/null && \
+	 ((test "`git ls-remote $($(PKG)_SITE) $($(PKG)_DL_VERSION)`" && \
+	   echo "Doing shallow clone" && \
+	   $(GIT) clone --depth 1 -b $($(PKG)_DL_VERSION) $($(PKG)_SITE) $($(PKG)_BASE_NAME)) || \
+	  (echo "Doing full clone" && \
+	   $(GIT) clone $($(PKG)_SITE) $($(PKG)_BASE_NAME))) && \
+	$(TAR) czf $($(PKG)_SOURCE) $($(PKG)_BASE_NAME)/ && \
+	rm -rf $($(PKG)_DL_DIR) && \
+	popd > /dev/null)
+endef
+
 # TODO: improve to check that the given PKG_DL_VERSION exists on the remote
 # repository
 define SOURCE_CHECK_GIT
@@ -266,6 +279,7 @@ define DOWNLOAD_INNER
 		fi ; \
 		case "$$scheme" in \
 			git) $($(DL_MODE)_GIT) && exit ;; \
+			gitdev) $($(DL_MODE)_GITDEV) && exit ;; \
 			svn) $($(DL_MODE)_SVN) && exit ;; \
 			cvs) $($(DL_MODE)_CVS) && exit ;; \
 			bzr) $($(DL_MODE)_BZR) && exit ;; \
