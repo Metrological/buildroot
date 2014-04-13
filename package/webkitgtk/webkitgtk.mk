@@ -12,6 +12,8 @@ WEBKITGTK_DEPENDENCIES = host-flex host-bison host-gperf host-ruby \
 
 WEBKITGTK_AUTORECONF = YES
 
+WEBKITGTK_DEPENDENCIES += $(if $(BR2_PACKAGE_OPENSSL),ca-certificates)
+
 WEBKITGTK_EGL_CFLAGS = $(shell PKG_CONFIG_LIBDIR=$(STAGING_DIR)/usr/lib/pkgconfig pkg-config --define-variable=prefix=$(STAGING_DIR)/usr --cflags egl)
 
 # Give explicit path to icu-config.
