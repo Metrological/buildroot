@@ -13,6 +13,7 @@ endef
 
 define RPI_ARMMEM_INSTALL_TARGET_CMDS
 	$(INSTALL) -D -m 0755 $(@D)/libarmmem.so $(TARGET_DIR)/usr/lib/libarmmem.so
+	echo "/usr/lib/libarmmem.so" > $(TARGET_DIR)/etc/ld.so.preload
 endef
 
 $(eval $(generic-package))
