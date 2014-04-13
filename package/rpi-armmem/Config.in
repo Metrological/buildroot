@@ -1,0 +1,5 @@
+config BR2_PACKAGE_RPI_ARMMEM
+	bool "rpi-armmem"
+	depends on BR2_PACKAGE_RPI_FIRMWARE
+	help
+	  https://github.com/bavison/arm-mem/
