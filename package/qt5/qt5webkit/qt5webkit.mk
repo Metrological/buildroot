@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-QT5WEBKIT_VERSION = e29736d9632aa04d4c29ef83e130c03f4c934f26
+QT5WEBKIT_VERSION = a00a54dbf4e59b137b505d13eddbfdc8742865e1
 QT5WEBKIT_SITE = $(call github,Metrological,qtwebkit,$(QT5WEBKIT_VERSION))
 QT5WEBKIT_DEPENDENCIES = qt5base sqlite host-ruby host-gperf host-bison host-flex
 QT5WEBKIT_INSTALL_STAGING = YES
@@ -40,7 +40,8 @@ endif
 ifeq ($(BR2_USE_GSTREAMER),y)
 	QT5WEBKIT_GST_CONFIG = \
 		WEBKIT_CONFIG+=video \
-		WEBKIT_CONFIG+=use_gstreamer
+		WEBKIT_CONFIG+=use_gstreamer \
+		WEBKIT_CONFIG+=use_soup
 endif
 
 ifeq ($(BR2_USE_DEPRECATED_GSTREAMER),y)
