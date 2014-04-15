@@ -1,4 +1,4 @@
-From 9dc3835f0d88570170075c8c41d77c615755b154 Mon Sep 17 00:00:00 2001
+From 8193b81397c2aec45a24b033481261c2feebc261 Mon Sep 17 00:00:00 2001
 From: Josep Torra <n770galaxy@gmail.com>
 Date: Fri, 04 Apr 2014 12:11:58 +0000
 Subject: omxaudiosink: Implements OpenMAX based audio sinks
@@ -91,7 +91,7 @@ index a37bb6b..4c05c0e 100644
    {gst_omx_audio_enc_get_type, G_STRUCT_OFFSET (GstOMXAudioEncClass, cdata)},
 diff --git a/omx/gstomxanalogaudiosink.c b/omx/gstomxanalogaudiosink.c
 new file mode 100644
-index 0000000..72e7d05
+index 0000000..7a4e1b5
 --- a/dev/null
 +++ b/omx/gstomxanalogaudiosink.c
 @@ -0,0 +1,63 @@
@@ -129,8 +129,8 @@ index 0000000..72e7d05
 +/* class initialization */
 +
 +#define DEBUG_INIT \
-+  GST_DEBUG_CATEGORY_INIT (gst_omx_analog_audio_sink_debug_category, "omxanalogaudiosink", 0, \
-+      "debug category for gst-omx analog audio sink");
++  GST_DEBUG_CATEGORY_INIT (gst_omx_analog_audio_sink_debug_category, \
++      "omxanalogaudiosink", 0, "debug category for gst-omx analog audio sink");
 +
 +G_DEFINE_TYPE_WITH_CODE (GstOMXAnalogAudioSink, gst_omx_analog_audio_sink,
 +    GST_TYPE_OMX_AUDIO_SINK, DEBUG_INIT);
@@ -144,7 +144,7 @@ index 0000000..72e7d05
 +  audiosink_class->cdata.default_sink_template_caps = "audio/x-raw, "
 +      "format = (string) { S16LE, S32LE }, "
 +      "layout = (string) interleaved, "
-+      "rate = (int) [ 8000, 96000 ], " "channels = (int) [ 1, 8 ] ";
++      "rate = (int) [ 8000, 192000 ], " "channels = (int) [ 1, 2 ] ";
 +  audiosink_class->destination = "local";
 +
 +  gst_element_class_set_static_metadata (element_class,
@@ -226,10 +226,10 @@ index 0000000..c813416
 +
 diff --git a/omx/gstomxaudiosink.c b/omx/gstomxaudiosink.c
 new file mode 100644
-index 0000000..8faa32b
+index 0000000..1fd9fa7
 --- a/dev/null
 +++ b/omx/gstomxaudiosink.c
-@@ -0,0 +1,1095 @@
+@@ -0,0 +1,1091 @@
 +/*
 + * Copyright (C) 2014, Fluendo, S.A.
 + *   Author: Josep Torra <josep@fluendo.com>
@@ -384,7 +384,6 @@ index 0000000..8faa32b
 +
 +  if (port_index == -1) {
 +    OMX_PORT_PARAM_TYPE param;
-+    OMX_ERRORTYPE err;
 +
 +    GST_OMX_INIT_STRUCT (&param);
 +
@@ -739,11 +738,12 @@ index 0000000..8faa32b
 +
 +  if (self->encoding == OMX_AUDIO_CodingPCM) {
 +    port_def.nBufferSize = spec->segsize;
-+    port_def.nBufferCountActual = 1 /*spec->segtotal */ ;
 +  } else {
 +    port_def.nBufferSize = 1536;
-+    port_def.nBufferCountActual = 10;
 +  }
++  /* Only allocate a min number of buffers for transfers from our ringbuffer to
++   * the hw ringbuffer as we want to keep our small */
++  port_def.nBufferCountActual = MAX (port_def.nBufferCountMin, 2);
 +  port_def.format.audio.eEncoding = self->encoding;
 +
 +  GST_DEBUG_OBJECT (self, "Updating outport port definition");
@@ -783,7 +783,7 @@ index 0000000..8faa32b
 +
 +  err = gst_omx_component_set_state (self->comp, OMX_StateIdle);
 +  if (err != OMX_ErrorNone) {
-+    GST_ERROR_OBJECT (self, "Failed to set port disabled: %s (0x%08x)",
++    GST_ERROR_OBJECT (self, "Failed to set state idle: %s (0x%08x)",
 +        gst_omx_error_to_string (err), err);
 +    goto activation;
 +  }
@@ -901,7 +901,7 @@ index 0000000..8faa32b
 +
 +  err = gst_omx_component_set_state (self->comp, OMX_StateIdle);
 +  if (err != OMX_ErrorNone) {
-+    GST_ERROR_OBJECT (self, "Failed to set port disabled: %s (0x%08x)",
++    GST_ERROR_OBJECT (self, "Failed to set state idle: %s (0x%08x)",
 +        gst_omx_error_to_string (err), err);
 +    goto failed;
 +  }
@@ -1049,10 +1049,8 @@ index 0000000..8faa32b
 +  GST_OMX_AUDIO_SINK_LOCK (self);
 +
 +  while (offset < length) {
-+    if (!(buf = self->current_buffer)) {
-+      if (!(buf = gst_omx_audio_sink_acquire_buffer (self))) {
-+        goto beach;
-+      }
++    if (!(buf = gst_omx_audio_sink_acquire_buffer (self))) {
++      goto beach;
 +    }
 +
 +    if (buf->omx_buf->nAllocLen - buf->omx_buf->nOffset <= 0) {
@@ -1078,8 +1076,6 @@ index 0000000..8faa32b
 +    if (err != OMX_ErrorNone)
 +      goto release_error;
 +  }
-+
-+  self->current_buffer = gst_omx_audio_sink_acquire_buffer (self);
 +
 +beach:
 +
@@ -1138,11 +1134,6 @@ index 0000000..8faa32b
 +  gst_omx_port_set_flushing (self->in_port, 5 * GST_SECOND, TRUE);
 +
 +  GST_OMX_AUDIO_SINK_LOCK (self);
-+  if (self->current_buffer) {
-+    gst_omx_port_release_buffer (self->in_port, self->current_buffer);
-+    self->current_buffer = NULL;
-+  }
-+
 +  if ((state = gst_omx_component_get_state (self->comp, 0)) > OMX_StatePause) {
 +    gst_omx_component_set_state (self->comp, OMX_StatePause);
 +    gst_omx_component_get_state (self->comp, GST_CLOCK_TIME_NONE);
@@ -1323,14 +1314,19 @@ index 0000000..8faa32b
 +  self->mute = DEFAULT_PROP_MUTE;
 +  self->volume = DEFAULT_PROP_VOLUME;
 +
++  /* For the Raspberry PI there's a big hw buffer and 400 ms seems a good
++   * size for our ringbuffer. OpenSL ES Sink also allocates a buffer of 400 ms
++   * in Android so I guess that this should be a sane value for OpenMax in
++   * general. */
++  GST_AUDIO_BASE_SINK (self)->buffer_time = 400000;
 +  gst_audio_base_sink_set_provide_clock (GST_AUDIO_BASE_SINK (self), TRUE);
 +}
 diff --git a/omx/gstomxaudiosink.h b/omx/gstomxaudiosink.h
 new file mode 100644
-index 0000000..61447cb
+index 0000000..7b9c221
 --- a/dev/null
 +++ b/omx/gstomxaudiosink.h
-@@ -0,0 +1,93 @@
+@@ -0,0 +1,91 @@
 +/*
 + * Copyright (C) 2014, Fluendo, S.A.
 + *   Author: Josep Torra <josep@fluendo.com>
@@ -1405,8 +1401,6 @@ index 0000000..61447cb
 +  guint channels;
 +  guint width;
 +
-+  GstOMXBuffer *current_buffer;
-+
 +  GMutex lock;
 +};
 +
@@ -1426,7 +1420,7 @@ index 0000000..61447cb
 +
 diff --git a/omx/gstomxhdmiaudiosink.c b/omx/gstomxhdmiaudiosink.c
 new file mode 100644
-index 0000000..12e5195
+index 0000000..75e5126
 --- a/dev/null
 +++ b/omx/gstomxhdmiaudiosink.c
 @@ -0,0 +1,70 @@
@@ -1464,8 +1458,8 @@ index 0000000..12e5195
 +/* class initialization */
 +
 +#define DEBUG_INIT \
-+  GST_DEBUG_CATEGORY_INIT (gst_omx_hdmi_audio_sink_debug_category, "omxhdmiaudiosink", 0, \
-+      "debug category for gst-omx hdmi audio sink");
++  GST_DEBUG_CATEGORY_INIT (gst_omx_hdmi_audio_sink_debug_category, \
++      "omxhdmiaudiosink", 0, "debug category for gst-omx hdmi audio sink");
 +
 +G_DEFINE_TYPE_WITH_CODE (GstOMXHdmiAudioSink, gst_omx_hdmi_audio_sink,
 +    GST_TYPE_OMX_AUDIO_SINK, DEBUG_INIT);
@@ -1480,7 +1474,7 @@ index 0000000..12e5195
 +      "audio/x-raw, "
 +      "format = (string) { S16LE, S32LE }, "
 +      "layout = (string) interleaved, "
-+      "rate = (int) [ 8000, 96000 ], "
++      "rate = (int) [ 8000, 192000 ], "
 +      "channels = (int) [ 1, 8 ]; "
 +      "audio/x-ac3, framed = (boolean) true;"
 +      "audio/x-eac3, framed = (boolean) true; "
