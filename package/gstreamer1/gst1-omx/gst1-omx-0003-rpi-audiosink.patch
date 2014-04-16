@@ -1,4 +1,4 @@
-From 90f0a2186d134745cc32828ed935e79936eb979a Mon Sep 17 00:00:00 2001
+From 5049ea1f1d6b735ec2078f91e78874b164ebbaf9 Mon Sep 17 00:00:00 2001
 From: Josep Torra <n770galaxy@gmail.com>
 Date: Fri, 04 Apr 2014 12:11:58 +0000
 Subject: omxaudiosink: Implements OpenMAX based audio sinks
@@ -226,7 +226,7 @@ index 0000000..c813416
 +
 diff --git a/omx/gstomxaudiosink.c b/omx/gstomxaudiosink.c
 new file mode 100644
-index 0000000..1d61c43
+index 0000000..d4fdab9
 --- a/dev/null
 +++ b/omx/gstomxaudiosink.c
 @@ -0,0 +1,1217 @@
@@ -643,7 +643,7 @@ index 0000000..1d61c43
 +    {
 +      guint out_channels = OUT_CHANNELS (self->channels);
 +
-+      self->samples = spec->segsize / self->channels / self->width;
++      self->samples = spec->segsize / self->channels / (self->width >> 3);
 +      if (self->channels == out_channels) {
 +        self->buffer_size = spec->segsize;
 +      } else {
