@@ -1,4 +1,4 @@
-From 8193b81397c2aec45a24b033481261c2feebc261 Mon Sep 17 00:00:00 2001
+From 90f0a2186d134745cc32828ed935e79936eb979a Mon Sep 17 00:00:00 2001
 From: Josep Torra <n770galaxy@gmail.com>
 Date: Fri, 04 Apr 2014 12:11:58 +0000
 Subject: omxaudiosink: Implements OpenMAX based audio sinks
@@ -226,10 +226,10 @@ index 0000000..c813416
 +
 diff --git a/omx/gstomxaudiosink.c b/omx/gstomxaudiosink.c
 new file mode 100644
-index 0000000..1fd9fa7
+index 0000000..1d61c43
 --- a/dev/null
 +++ b/omx/gstomxaudiosink.c
-@@ -0,0 +1,1091 @@
+@@ -0,0 +1,1217 @@
 +/*
 + * Copyright (C) 2014, Fluendo, S.A.
 + *   Author: Josep Torra <josep@fluendo.com>
@@ -286,6 +286,155 @@ index 0000000..1fd9fa7
 +G_DEFINE_ABSTRACT_TYPE_WITH_CODE (GstOMXAudioSink, gst_omx_audio_sink,
 +    GST_TYPE_AUDIO_SINK, G_IMPLEMENT_INTERFACE (GST_TYPE_STREAM_VOLUME, NULL);
 +    DEBUG_INIT);
++
++#define transform_3_4(type) \
++static inline void \
++transform_3_4_##type (gpointer psrc, gpointer pdst, guint len) \
++{ \
++  g##type *src = (g##type *) psrc; \
++  g##type *dst = (g##type *) pdst; \
++  for (; len > 0; len--) { \
++    dst[0] = src[0]; \
++    dst[1] = src[1]; \
++    dst[2] = src[2]; \
++    dst[3] = 0; \
++    src += 3; \
++    dst += 4; \
++  } \
++}
++
++#define transform_5_8(type) \
++static inline void \
++transform_5_8_##type (gpointer psrc, gpointer pdst, guint len) \
++{ \
++  g##type *src = (g##type *) psrc; \
++  g##type *dst = (g##type *) pdst; \
++  for (; len > 0; len--) { \
++    dst[0] = src[0]; \
++    dst[1] = src[1]; \
++    dst[2] = src[2]; \
++    dst[3] = src[3]; \
++    dst[4] = src[4]; \
++    dst[5] = 0; \
++    dst[6] = 0; \
++    dst[7] = 0; \
++    src += 5; \
++    dst += 8; \
++  } \
++}
++
++#define transform_6_8(type) \
++static inline void \
++transform_6_8_##type (gpointer psrc, gpointer pdst, guint len) \
++{ \
++  g##type *src = (g##type *) psrc; \
++  g##type *dst = (g##type *) pdst; \
++  for (; len > 0; len--) { \
++    dst[0] = src[0]; \
++    dst[1] = src[1]; \
++    dst[2] = src[2]; \
++    dst[3] = src[3]; \
++    dst[4] = src[4]; \
++    dst[5] = src[5]; \
++    dst[6] = 0; \
++    dst[7] = 0; \
++    src += 6; \
++    dst += 8; \
++  } \
++}
++
++#define transform_7_8(type) \
++static inline void \
++transform_7_8_##type (gpointer psrc, gpointer pdst, guint len) \
++{ \
++  g##type *src = (g##type *) psrc; \
++  g##type *dst = (g##type *) pdst; \
++  for (; len > 0; len--) { \
++    dst[0] = src[0]; \
++    dst[1] = src[1]; \
++    dst[2] = src[2]; \
++    dst[3] = src[3]; \
++    dst[4] = src[4]; \
++    dst[5] = src[5]; \
++    dst[6] = src[7]; \
++    dst[7] = 0; \
++    src += 7; \
++    dst += 8; \
++  } \
++}
++
++transform_3_4 (int16);
++transform_5_8 (int16);
++transform_6_8 (int16);
++transform_7_8 (int16);
++
++transform_3_4 (int32);
++transform_5_8 (int32);
++transform_6_8 (int32);
++transform_7_8 (int32);
++
++static void inline
++transform (guint in_chan, guint width, gpointer psrc, gpointer pdst, guint len)
++{
++  guint out_chan = OUT_CHANNELS (in_chan);
++  if (width == 16) {
++    switch (out_chan) {
++      case 4:
++        if (in_chan == 3) {
++          transform_3_4_int16 (psrc, pdst, len);
++        } else {
++          g_assert (FALSE);
++        }
++        break;
++      case 8:
++        switch (in_chan) {
++          case 5:
++            transform_5_8_int16 (psrc, pdst, len);
++            break;
++          case 6:
++            transform_6_8_int16 (psrc, pdst, len);
++            break;
++          case 7:
++            transform_7_8_int16 (psrc, pdst, len);
++            break;
++          default:
++            g_assert (FALSE);
++        }
++        break;
++      default:
++        g_assert (FALSE);
++    }
++  } else if (width == 32) {
++    switch (out_chan) {
++      case 4:
++        if (in_chan == 3) {
++          transform_3_4_int32 (psrc, pdst, len);
++        } else {
++          g_assert (FALSE);
++        }
++        break;
++      case 8:
++        switch (in_chan) {
++          case 5:
++            transform_5_8_int32 (psrc, pdst, len);
++            break;
++          case 6:
++            transform_6_8_int32 (psrc, pdst, len);
++            break;
++          case 7:
++            transform_7_8_int32 (psrc, pdst, len);
++            break;
++          default:
++            g_assert (FALSE);
++        }
++        break;
++      default:
++        g_assert (FALSE);
++    }
++  } else {
++    g_assert (FALSE);
++  }
++}
 +
 +static void
 +gst_omx_audio_sink_mute_set (GstOMXAudioSink * self, gboolean mute)
@@ -483,38 +632,40 @@ index 0000000..1fd9fa7
 +gst_omx_audio_sink_parse_spec (GstOMXAudioSink * self,
 +    GstAudioRingBufferSpec * spec)
 +{
-+  switch (spec->type) {
-+    case GST_AUDIO_RING_BUFFER_FORMAT_TYPE_RAW:
-+      if (GST_AUDIO_INFO_IS_INTEGER (&spec->info)) {
-+        self->encoding = OMX_AUDIO_CodingPCM;
-+      } else {
-+        goto error;
-+      }
-+      break;
-+    case GST_AUDIO_RING_BUFFER_FORMAT_TYPE_AC3:
-+    case GST_AUDIO_RING_BUFFER_FORMAT_TYPE_EAC3:
-+      self->encoding = OMX_AUDIO_CodingDDP;
-+      break;
-+    case GST_AUDIO_RING_BUFFER_FORMAT_TYPE_DTS:
-+      self->encoding = OMX_AUDIO_CodingDTS;
-+      break;
-+    default:
-+      goto error;
-+  }
-+
 +  self->endianness = GST_AUDIO_INFO_ENDIANNESS (&spec->info);
 +  self->rate = GST_AUDIO_INFO_RATE (&spec->info);
 +  self->channels = GST_AUDIO_INFO_CHANNELS (&spec->info);
 +  self->is_signed = GST_AUDIO_INFO_IS_SIGNED (&spec->info);
 +  self->width = GST_AUDIO_INFO_WIDTH (&spec->info);
 +
-+  return TRUE;
++  switch (spec->type) {
++    case GST_AUDIO_RING_BUFFER_FORMAT_TYPE_RAW:
++    {
++      guint out_channels = OUT_CHANNELS (self->channels);
 +
-+  /* ERRORS */
-+error:
-+  {
-+    return FALSE;
++      self->samples = spec->segsize / self->channels / self->width;
++      if (self->channels == out_channels) {
++        self->buffer_size = spec->segsize;
++      } else {
++        self->buffer_size = (spec->segsize / self->channels) * out_channels;
++      }
++      self->encoding = OMX_AUDIO_CodingPCM;
++      break;
++    }
++    case GST_AUDIO_RING_BUFFER_FORMAT_TYPE_AC3:
++    case GST_AUDIO_RING_BUFFER_FORMAT_TYPE_EAC3:
++      self->encoding = OMX_AUDIO_CodingDDP;
++      self->buffer_size = 1536;
++      break;
++    case GST_AUDIO_RING_BUFFER_FORMAT_TYPE_DTS:
++      self->encoding = OMX_AUDIO_CodingDTS;
++      self->buffer_size = 1536;
++      break;
++    default:
++      return FALSE;
 +  }
++
++  return TRUE;
 +}
 +
 +static inline void
@@ -601,7 +752,7 @@ index 0000000..1fd9fa7
 +
 +  GST_OMX_INIT_STRUCT (&param);
 +  param.nPortIndex = self->in_port->index;
-+  param.nChannels = self->channels;
++  param.nChannels = OUT_CHANNELS (self->channels);
 +  param.eNumData =
 +      (self->is_signed ? OMX_NumericalDataSigned : OMX_NumericalDataUnsigned);
 +  param.eEndian =
@@ -736,11 +887,7 @@ index 0000000..1fd9fa7
 +
 +  gst_omx_port_get_port_definition (self->in_port, &port_def);
 +
-+  if (self->encoding == OMX_AUDIO_CodingPCM) {
-+    port_def.nBufferSize = spec->segsize;
-+  } else {
-+    port_def.nBufferSize = 1536;
-+  }
++  port_def.nBufferSize = self->buffer_size;
 +  /* Only allocate a min number of buffers for transfers from our ringbuffer to
 +   * the hw ringbuffer as we want to keep our small */
 +  port_def.nBufferCountActual = MAX (port_def.nBufferCountMin, 2);
@@ -1044,53 +1191,32 @@ index 0000000..1fd9fa7
 +  GstOMXAudioSink *self = GST_OMX_AUDIO_SINK (audiosink);
 +  GstOMXBuffer *buf;
 +  OMX_ERRORTYPE err;
-+  guint offset = 0;
 +
 +  GST_OMX_AUDIO_SINK_LOCK (self);
 +
-+  while (offset < length) {
-+    if (!(buf = gst_omx_audio_sink_acquire_buffer (self))) {
-+      goto beach;
-+    }
-+
-+    if (buf->omx_buf->nAllocLen - buf->omx_buf->nOffset <= 0) {
-+      GST_LOG_OBJECT (self, "Full buffer %p (%p)", buf, buf->omx_buf);
-+      gst_omx_port_release_buffer (self->in_port, buf);
-+      goto full_buffer;
-+    }
-+
-+    /* Copy the buffer content in chunks of size as requested
-+     * by the port */
-+    GST_DEBUG_OBJECT (self, "Using buffer %p (%p)", buf, buf->omx_buf);
-+    GST_LOG_OBJECT (self, "  nFilledLen: %d nAllocLen: %d nOffset: %d",
-+        buf->omx_buf->nFilledLen, buf->omx_buf->nAllocLen,
-+        buf->omx_buf->nOffset);
-+    buf->omx_buf->nFilledLen =
-+        MIN (length - offset, buf->omx_buf->nAllocLen - buf->omx_buf->nOffset);
-+    memcpy (buf->omx_buf->pBuffer + buf->omx_buf->nOffset,
-+        (guint8 *) data + offset, buf->omx_buf->nFilledLen);
-+    GST_LOG_OBJECT (self, "received %d bytes, copied %d bytes from offset %d",
-+        length, buf->omx_buf->nFilledLen, offset);
-+    offset += buf->omx_buf->nFilledLen;
-+    err = gst_omx_port_release_buffer (self->in_port, buf);
-+    if (err != OMX_ErrorNone)
-+      goto release_error;
++  if (!(buf = gst_omx_audio_sink_acquire_buffer (self))) {
++    goto beach;
 +  }
++
++  if (buf->omx_buf->nAllocLen == length) {
++    memcpy (buf->omx_buf->pBuffer + buf->omx_buf->nOffset,
++        (guint8 *) data, length);
++  } else {
++    transform (self->channels, self->width, data,
++        buf->omx_buf->pBuffer + buf->omx_buf->nOffset, self->samples);
++  }
++  buf->omx_buf->nFilledLen = buf->omx_buf->nAllocLen;
++
++  err = gst_omx_port_release_buffer (self->in_port, buf);
++  if (err != OMX_ErrorNone)
++    goto release_error;
 +
 +beach:
 +
 +  GST_OMX_AUDIO_SINK_UNLOCK (self);
 +
-+  return offset;
++  return length;
 +
-+full_buffer:
-+  {
-+    GST_OMX_AUDIO_SINK_UNLOCK (self);
-+    GST_ELEMENT_ERROR (self, LIBRARY, FAILED, (NULL),
-+        ("Got OpenMAX buffer with no free space (%p, %u/%u)", buf,
-+            (guint) buf->omx_buf->nOffset, (guint) buf->omx_buf->nAllocLen));
-+    return 0;
-+  }
 +release_error:
 +  {
 +    GST_OMX_AUDIO_SINK_UNLOCK (self);
@@ -1323,10 +1449,10 @@ index 0000000..1fd9fa7
 +}
 diff --git a/omx/gstomxaudiosink.h b/omx/gstomxaudiosink.h
 new file mode 100644
-index 0000000..7b9c221
+index 0000000..6d4a8a7
 --- a/dev/null
 +++ b/omx/gstomxaudiosink.h
-@@ -0,0 +1,91 @@
+@@ -0,0 +1,93 @@
 +/*
 + * Copyright (C) 2014, Fluendo, S.A.
 + *   Author: Josep Torra <josep@fluendo.com>
@@ -1400,6 +1526,8 @@ index 0000000..7b9c221
 +  guint rate;
 +  guint channels;
 +  guint width;
++  guint buffer_size;
++  guint samples;
 +
 +  GMutex lock;
 +};
