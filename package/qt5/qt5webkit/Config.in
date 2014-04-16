@@ -40,13 +40,6 @@ config BR2_USE_ACCELERATED_CANVAS
 comment "Accelerated canvas depends on OpenGL (ES)"
 	depends on ! BR2_PACKAGE_HAS_OPENGL_ES
 
-config BR2_USE_DEPRECATED_GSTREAMER
-	bool "deprecated-gstreamer"
-	depends on BR2_PACKAGE_GSTREAMER
-	depends on !BR2_USE_GSTREAMER
-	help
-	  Use GStreamer 0.10 for media playback support.
-
 config BR2_USE_GSTREAMER
 	bool "gstreamer"
 	depends on BR2_PACKAGE_GSTREAMER1
