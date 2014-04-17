@@ -41,7 +41,8 @@ ifeq ($(BR2_USE_GSTREAMER),y)
 	QT5WEBKIT_GST_CONFIG = \
 		WEBKIT_CONFIG+=video \
 		WEBKIT_CONFIG+=use_gstreamer \
-		WEBKIT_CONFIG+=use_soup
+		WEBKIT_CONFIG+=use_soup \
+		WEBKIT_CONFIG+=web_audio
 endif
 
 ifeq ($(BR2_PACKAGE_MINIBROWSER),y)
