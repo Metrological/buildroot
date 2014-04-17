@@ -1,0 +1,7 @@
+config BR2_PACKAGE_GSSDP
+	bool "gssdp"
+	select BR2_PACKAGE_LIBSOUP
+	help
+	  GSSDP implements resource discovery and announcement over SSDP.
+
+	  http://www.gupnp.org
