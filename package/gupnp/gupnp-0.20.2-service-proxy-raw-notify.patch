@@ -1,0 +1,152 @@
+Subject: [PATCH] Add gupnp_service_proxy_*_raw_notify functions
+
+These functions allow access to the xmlDoc of the notification that was
+sent from the peer.
+
+https://bugzilla.gnome.org/show_bug.cgi?id=706127
+---
+diff --git a/doc/gupnp-sections.txt b/doc/gupnp-sections.txt
+index 92fa1f3..91297a6 100644
+--- a/doc/gupnp-sections.txt
++++ b/doc/gupnp-sections.txt
+@@ -84,7 +84,9 @@ gupnp_service_proxy_end_action_hash
+ gupnp_service_proxy_end_action_list
+ gupnp_service_proxy_cancel_action
+ gupnp_service_proxy_add_notify
++gupnp_service_proxy_add_raw_notify
+ gupnp_service_proxy_remove_notify
++gupnp_service_proxy_remove_raw_notify
+ gupnp_service_proxy_set_subscribed
+ gupnp_service_proxy_get_subscribed
+ <SUBSECTION Standard>
+diff --git a/libgupnp/gupnp-service-proxy.c b/libgupnp/gupnp-service-proxy.c
+index 69b345b..1ad6d48 100644
+--- a/libgupnp/gupnp-service-proxy.c
++++ b/libgupnp/gupnp-service-proxy.c
+@@ -1603,6 +1603,32 @@ gupnp_service_proxy_add_notify (GUPnPServiceProxy              *proxy,
+ }
+ 
+ /**
++ * gupnp_service_proxy_add_raw_notify:
++ * @proxy: A #GUPnPServiceProxy
++ * @callback: (scope async): The callback to call when the peer issues any
++ * variable notification.
++ * @user_data: User data for @callback
++ *
++ * Get a notification for anything that happens on the peer. @value in
++ * @callback will be of type #G_TYPE_POINTER and contain the pre-parsed
++ * #xmlDoc. Do NOT free or modify this document.
++ *
++ * Return value: %TRUE on success.
++ **/
++gboolean
++gupnp_service_proxy_add_raw_notify (GUPnPServiceProxy              *proxy,
++                                    GUPnPServiceProxyNotifyCallback callback,
++                                    gpointer                        user_data)
++{
++        return gupnp_service_proxy_add_notify (proxy,
++                                               "*",
++                                               G_TYPE_NONE,
++                                               callback,
++                                               user_data);
++}
++
++
++/**
+  * gupnp_service_proxy_remove_notify:
+  * @proxy: A #GUPnPServiceProxy
+  * @variable: The variable to add notification for
+@@ -1673,6 +1699,31 @@ gupnp_service_proxy_remove_notify (GUPnPServiceProxy              *proxy,
+         return found;
+ }
+ 
++/**
++ * gupnp_service_proxy_remove_raw_notify:
++ * @proxy: A #GUPnPServiceProxy
++ * @callback: (scope call): The callback to call when @variable changes
++ * @user_data: User data for @callback
++ *
++ * Cancels the variable change notification for @callback and @user_data.
++ *
++ * This function must not be called directly or indirectly from a
++ * #GUPnPServiceProxyNotifyCallback associated with this service proxy, even
++ * if it is for another variable.
++ *
++ * Return value: %TRUE on success.
++ **/
++gboolean
++gupnp_service_proxy_remove_raw_notify (GUPnPServiceProxy              *proxy,
++                                       GUPnPServiceProxyNotifyCallback callback,
++                                       gpointer                        user_data)
++{
++        return gupnp_service_proxy_remove_notify (proxy,
++                                                  "*",
++                                                  callback,
++                                                  user_data);
++}
++
+ static void
+ emit_notification (GUPnPServiceProxy *proxy,
+                    xmlNode           *var_node)
+@@ -1714,6 +1765,7 @@ static void
+ emit_notifications_for_doc (GUPnPServiceProxy *proxy,
+                             xmlDoc            *doc)
+ {
++        NotifyData *data = NULL;
+         xmlNode *node;
+ 
+         node = xmlDocGetRootElement (doc);
+@@ -1734,6 +1786,26 @@ emit_notifications_for_doc (GUPnPServiceProxy *proxy,
+                                 emit_notification (proxy, var_node);
+                 }
+         }
++
++        data = g_hash_table_lookup (proxy->priv->notify_hash, "*");
++        if (data != NULL) {
++                GValue value = {0, };
++                GList *it = NULL;
++
++                g_value_init (&value, G_TYPE_POINTER);
++                g_value_set_pointer (&value, doc);
++
++                for (it = data->callbacks; it != NULL; it = it->next) {
++                        CallbackData *callback_data = it->data;
++
++                        callback_data->callback (proxy,
++                                                 "*",
++                                                 &value,
++                                                 callback_data->user_data);
++                }
++
++                g_value_unset (&value);
++        }
+ }
+ 
+ /* Emit pending notifications. See comment below on why we do this. */
+diff --git a/libgupnp/gupnp-service-proxy.h b/libgupnp/gupnp-service-proxy.h
+index a11057a..ae2845f 100644
+--- a/libgupnp/gupnp-service-proxy.h
++++ b/libgupnp/gupnp-service-proxy.h
+@@ -223,11 +223,22 @@ gupnp_service_proxy_add_notify     (GUPnPServiceProxy              *proxy,
+                                     gpointer                        user_data);
+ 
+ gboolean
++gupnp_service_proxy_add_raw_notify (GUPnPServiceProxy              *proxy,
++                                    GUPnPServiceProxyNotifyCallback callback,
++                                    gpointer                        user_data);
++
++gboolean
+ gupnp_service_proxy_remove_notify  (GUPnPServiceProxy              *proxy,
+                                     const char                     *variable,
+                                     GUPnPServiceProxyNotifyCallback callback,
+                                     gpointer                        user_data);
+ 
++gboolean
++gupnp_service_proxy_remove_raw_notify
++                                   (GUPnPServiceProxy              *proxy,
++                                    GUPnPServiceProxyNotifyCallback callback,
++                                    gpointer                        user_data);
++
+ void
+ gupnp_service_proxy_set_subscribed (GUPnPServiceProxy              *proxy,
+                                     gboolean                        subscribed);
