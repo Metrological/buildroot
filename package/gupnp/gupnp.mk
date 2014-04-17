@@ -4,9 +4,9 @@
 #
 ################################################################################
 
-GUPNP_VERSION:=0.20.10
-GUPNP_SOURCE:=gupnp-$(GUPNP_VERSION).tar.xz
-GUPNP_SITE:=http://ftp.gnome.org/pub/GNOME/sources/gupnp/0.20/
+GUPNP_VERSION = 0.20.10
+GUPNP_SOURCE = gupnp-$(GUPNP_VERSION).tar.xz
+GUPNP_SITE = http://ftp.gnome.org/pub/GNOME/sources/gupnp/0.20/
 GUPNP_INSTALL_STAGING = YES
 GUPNP_INSTALL_TARGET = YES
 
