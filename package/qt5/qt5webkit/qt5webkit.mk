@@ -69,6 +69,7 @@ endif
 
 ifeq ($(BR2_USE_DISCOVERY), y)
 	QT5WEBKIT_CONFIG+=WEBKIT_CONFIG+=discovery
+	QT5WEBKIT_DEPENDENCIES += gupnp avahi
 endif
 
 define QT5WEBKIT_CONFIGURE_CMDS
