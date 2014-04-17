@@ -1,0 +1,8 @@
+config BR2_PACKAGE_GUPNP_AV
+	bool "gupnp-av"
+	select BR2_PACKAGE_GUPNP
+	help
+	  GUPnP-AV is a collection of helpers for building AV (audio/video)
+	  applications using GUPnP.
+
+	  http://www.gupnp.org
