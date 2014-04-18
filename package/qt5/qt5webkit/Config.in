@@ -24,27 +24,27 @@ config BR2_PACKAGE_QT5WEBKIT
 
 menu "Extra options"
 
-config BR2_USE_DISCOVERY
-	bool "qt5webkit_discovery"
+config BR2_QT5WEBKIT_USE_DISCOVERY
+	bool "discovery"
 	default y
 	select BR2_PACKAGE_DBUS
 	select BR2_PACKAGE_AVAHI
 	select BR2_PACKAGE_AVAHI_DAEMON
 	select BR2_PACKAGE_GUPNP
 	help
-	  Network Service Discovery
+	  Network Service Discovery API
 
-config BR2_USE_ACCELERATED_CANVAS
-	bool "qt5webkit_accelerated_canvas"
+config BR2_QT5WEBKIT_USE_ACCELERATED_CANVAS
+	bool "accelerated-canvas"
 	default y
 	depends on BR2_PACKAGE_HAS_OPENGL_ES
 	help
 	  Hardware accelerated canvas
 
 comment "Accelerated canvas depends on OpenGL (ES)"
-	depends on ! BR2_PACKAGE_HAS_OPENGL_ES
+	depends on !BR2_PACKAGE_HAS_OPENGL_ES
 
-config BR2_USE_GSTREAMER
+config BR2_QT5WEBKIT_USE_GSTREAMER
 	bool "gstreamer"
 	depends on BR2_PACKAGE_GSTREAMER1
 	default y

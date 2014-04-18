@@ -23,26 +23,35 @@ ifeq ($(BR2_PACKAGE_QT5BASE_XCB),y)
 QT5WEBKIT_DEPENDENCIES += xlib_libXext xlib_libXrender
 endif
 
-ifeq ($(BR2_PACKAGE_QT5DECLARATIVE),y)
-QT5WEBKIT_DEPENDENCIES += qt5declarative
-endif
-
 QT5WEBKIT_CONFIG = 
 
-ifeq ($(BR2_ENABLE_DEBUG),y)
-	QT5WEBKIT_DEBUG_CONFIG = "CONFIG+=debug"
-	QT5WEBKIT_DEBUG_CONFIG += "CONFIG-=release"
+ifeq ($(BR2_PACKAGE_QT5DECLARATIVE),y)
+QT5WEBKIT_DEPENDENCIES += qt5declarative
 else
-	QT5WEBKIT_DEBUG_CONFIG = "CONFIG-=debug"
-	QT5WEBKIT_DEBUG_CONFIG += "CONFIG+=release"
+QT5WEBKIT_CONFIG += \
+	CONFIG-=webkit2
 endif
 
-ifeq ($(BR2_USE_GSTREAMER),y)
-	QT5WEBKIT_GST_CONFIG = \
-		WEBKIT_CONFIG+=video \
-		WEBKIT_CONFIG+=use_gstreamer \
-		WEBKIT_CONFIG+=use_soup \
-		WEBKIT_CONFIG+=web_audio
+ifeq ($(BR2_ENABLE_DEBUG),y)
+QT5WEBKIT_CONFIG += \
+	CONFIG+=debug \
+	CONFIG-=release
+else
+QT5WEBKIT_CONFIG += \
+	CONFIG-=debug
+	CONFIG+=release
+endif
+
+ifeq ($(BR2_QT5WEBKIT_USE_GSTREAMER),y)
+QT5WEBKIT_CONFIG += \
+	WEBKIT_CONFIG+=video \
+	WEBKIT_CONFIG+=use_gstreamer \
+	WEBKIT_CONFIG+=web_audio
+endif
+
+ifeq ($(BR2_PACKAGE_LIBSOUP),y)
+QT5WEBKIT_CONFIG += \
+	WEBKIT_CONFIG+=use_soup
 endif
 
 ifeq ($(BR2_PACKAGE_MINIBROWSER),y)
@@ -59,16 +68,19 @@ endif
 
 ifeq ($(findstring y,$(BR2_PACKAGE_MINIBROWSER)$(BR2_PACKAGE_TESTBROWSER)$(BR2_PACKAGE_DUMPRENDERTREE)),y) 
 # CONFIG-=production_build enables the build of certain features/functionality required by some tools
-	QT5WEBKIT_TOOLS_CONFIG += "CONFIG-=production_build"
+	QT5WEBKIT_CONFIG += \
+		CONFIG-=production_build
 endif
 
 
-ifeq ($(BR2_USE_ACCELERATED_CANVAS), y)
-	QT5WEBKIT_CONFIG+=WEBKIT_CONFIG+=accelerated_2d_canvas
+ifeq ($(BR2_QT5WEBKIT_USE_ACCELERATED_CANVAS), y)
+	QT5WEBKIT_CONFIG += \
+		WEBKIT_CONFIG+=accelerated_2d_canvas
 endif
 
-ifeq ($(BR2_USE_DISCOVERY), y)
-	QT5WEBKIT_CONFIG+=WEBKIT_CONFIG+=discovery
+ifeq ($(BR2_QT5WEBKIT_USE_DISCOVERY), y)
+	QT5WEBKIT_CONFIG += \
+		WEBKIT_CONFIG+=discovery
 	QT5WEBKIT_DEPENDENCIES += gupnp avahi
 endif
 
@@ -77,9 +89,6 @@ define QT5WEBKIT_CONFIGURE_CMDS
 		$(TARGET_MAKE_ENV) \
 		$(HOST_DIR)/usr/bin/qmake \
 			$(QT5WEBKIT_CONFIG) \
-			$(QT5WEBKIT_GST_CONFIG) \
-			$(QT5WEBKIT_DEBUG_CONFIG) \
-			$(QT5WEBKIT_TOOLS_CONFIG) \
 	)
 endef
 
