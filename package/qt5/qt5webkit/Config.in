@@ -27,6 +27,10 @@ menu "Extra options"
 config BR2_USE_DISCOVERY
 	bool "qt5webkit_discovery"
 	default y
+	select BR2_PACKAGE_DBUS
+	select BR2_PACKAGE_AVAHI
+	select BR2_PACKAGE_AVAHI_DAEMON
+	select BR2_PACKAGE_GUPNP
 	help
 	  Network Service Discovery
 
