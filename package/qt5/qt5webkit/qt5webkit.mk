@@ -38,7 +38,7 @@ QT5WEBKIT_CONFIG += \
 	CONFIG-=release
 else
 QT5WEBKIT_CONFIG += \
-	CONFIG-=debug
+	CONFIG-=debug \
 	CONFIG+=release
 endif
 
