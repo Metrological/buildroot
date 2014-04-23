@@ -87,6 +87,14 @@ config BR2_QT5WEBKIT_USE_DXDRM_EME
 	help
 	  Enable Discretix DRM Encrypted Media Extensions backend.
 
+config BR2_QT5WEBKIT_USE_WEBRTC
+	bool "WebRTC"
+	default y
+	select BR2_PACKAGE_LIBNICE
+	depends on BR2_QT5WEBKIT_USE_GSTREAMER
+	help
+	  WebRTC mediastream/getUserMedia API
+
 config BR2_PACKAGE_MINIBROWSER
 	bool "minibrowser"
 	depends on BR2_PACKAGE_QT5DECLARATIVE
