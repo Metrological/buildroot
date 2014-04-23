@@ -38,8 +38,13 @@ ifeq ($(BR2_PREFER_STATIC_LIB),)
 define QT5DECLARATIVE_INSTALL_TARGET_LIBS
 	cp -dpf $(STAGING_DIR)/usr/lib/libQt5Qml*.so.* $(TARGET_DIR)/usr/lib
 	cp -dpf $(STAGING_DIR)/usr/lib/libQt5Quick*.so.* $(TARGET_DIR)/usr/lib
-	cp -dpfr $(STAGING_DIR)/usr/lib/qt/plugins/accessible $(TARGET_DIR)/usr/lib/qt/plugins
 	cp -dpfr $(STAGING_DIR)/usr/lib/qt/plugins/qml* $(TARGET_DIR)/usr/lib/qt/plugins
+endef
+endif
+
+ifeq ($(BR2_PACKAGE_QT5BASE_ACCESSIBILITY),y)
+define QT5DECLARATIVE_INSTALL_TARGET_ACCESSIBILITY
+	cp -dpfr $(STAGING_DIR)/usr/lib/qt/plugins/accessible $(TARGET_DIR)/usr/lib/qt/plugins
 endef
 endif
 
@@ -47,6 +52,7 @@ define QT5DECLARATIVE_INSTALL_TARGET_CMDS
 	cp -dpf $(STAGING_DIR)/usr/bin/qml* $(TARGET_DIR)/usr/bin
 	cp -dpfr $(STAGING_DIR)/usr/qml $(TARGET_DIR)/usr
 	$(QT5DECLARATIVE_INSTALL_TARGET_LIBS)
+	$(QT5DECLARATIVE_INSTALL_TARGET_ACCESSIBILITY)
 endef
 
 $(eval $(generic-package))
