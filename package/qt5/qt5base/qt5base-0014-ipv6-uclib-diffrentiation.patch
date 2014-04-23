@@ -1,0 +1,12 @@
+--- a/src/network/kernel/qdnslookup_unix.cpp
++++ b/src/network/kernel/qdnslookup_unix.cpp
+@@ -162,7 +162,9 @@
+             }
+             // Set nsmap[] to indicate that nsaddrs[0] is an IPv6 address
+             // See: https://sourceware.org/ml/libc-hacker/2002-05/msg00035.html
++#if defined(__GNU_LIBRARY__) && !defined(__UCLIBC__)
+             state._u._ext.nsmap[0] = MAXNS + 1;
++#endif
+             state._u._ext.nscount6 = 1;
+             ns->sin6_family = AF_INET6;
+             ns->sin6_port = htons(53);

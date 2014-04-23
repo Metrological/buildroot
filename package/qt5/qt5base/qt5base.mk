@@ -143,7 +143,6 @@ QT5BASE_EGLFS_PLATFORM_HOOKS_SOURCES = \
 	$(@D)/mkspecs/devices/linux-mipsel-broadcom-97425-g++/qeglfshooks_bcm_dawn.cpp
 endif
 ifeq ($(BR2_PACKAGE_RPI_USERLAND),y)
-QT5BASE_CONFIGURE_OPTS += -no-neon
 QT5BASE_EGLFS_PLATFORM_HOOKS_SOURCES = \
 	$(@D)/mkspecs/devices/linux-rasp-pi-g++/qeglfshooks_pi.cpp
 endif

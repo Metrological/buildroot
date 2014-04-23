@@ -1,8 +1,7 @@
 --- a/mkspecs/devices/linux-mipsel-broadcom-97425-g++/qeglfshooks_bcm_dawn.cpp
 --- b/mkspecs/devices/linux-mipsel-broadcom-97425-g++/qeglfshooks_bcm_dawn.cpp
-@@ -0,0 +1,295 @@
+@@ -0,0 +1,294 @@
 +#include "qeglfshooks.h"
-+#include "qeglfscursor.h"
 +
 +#include <QtDebug>
 +
