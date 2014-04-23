@@ -32,6 +32,14 @@ QT5WEBKIT_CONFIG += \
 	CONFIG-=webkit2
 endif
 
+ifeq ($(BR2_PACKAGE_WEBP),y)
+QT5WEBKIT_DEPENDENCIES += webp
+endif
+
+ifeq ($(BR2_PACKAGE_LIBXSLT),y)
+QT5WEBKIT_DEPENDENCIES += libxslt
+endif
+
 ifeq ($(BR2_ENABLE_DEBUG),y)
 QT5WEBKIT_CONFIG += \
 	CONFIG+=debug \
