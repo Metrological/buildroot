@@ -1,4 +1,5 @@
 TARGET_GENERIC_HOSTNAME = $(call qstrip,$(BR2_TARGET_GENERIC_HOSTNAME))
+TARGET_GENERIC_TIMESERVER= $(call qstrip,$(BR2_TARGET_GENERIC_TIMESERVER))
 TARGET_GENERIC_ISSUE = $(call qstrip,$(BR2_TARGET_GENERIC_ISSUE))
 TARGET_GENERIC_ROOT_PASSWD = $(call qstrip,$(BR2_TARGET_GENERIC_ROOT_PASSWD))
 TARGET_GENERIC_PASSWD_METHOD = $(call qstrip,$(BR2_TARGET_GENERIC_PASSWD_METHOD))
@@ -47,6 +48,13 @@ target-generic-do-remount-rw:
 target-generic-dont-remount-rw:
 	$(SED) '/^[^#].*# REMOUNT_ROOTFS_RW$$/s~^~#~' $(TARGET_DIR)/etc/inittab
 
+# install a time server to set the proper time once an interface comes up..
+target-generic-install-timeserver:
+	cp -f $(TARGET_SKELETON)/etc/network/if-up.d/rdate $(TARGET_DIR)/etc/network/if-up.d/rdate
+	$(SED) 's/__NTP_SERVER__/$(TARGET_GENERIC_TIMESERVER)/g' $(TARGET_DIR)/etc/network/if-up.d/rdate
+target-generic-remove-timeserver:
+	$(RM) $(TARGET_DIR)/etc/network/if-up.d/rdate
+
 ifeq ($(BR2_TARGET_GENERIC_GETTY),y)
 TARGETS += target-generic-securetty
 endif
@@ -60,7 +68,7 @@ TARGETS += target-generic-issue
 endif
 
 ifeq ($(BR2_ROOTFS_SKELETON_DEFAULT),y)
-TARGETS += target-root-passwd
+TARGETS += target-root-passwd 
 
 ifeq ($(BR2_TARGET_GENERIC_GETTY),y)
 TARGETS += target-generic-getty-$(if $(BR2_PACKAGE_SYSVINIT),sysvinit,busybox)
@@ -70,5 +78,11 @@ ifeq ($(BR2_TARGET_GENERIC_REMOUNT_ROOTFS_RW),y)
 TARGETS += target-generic-do-remount-rw
 else
 TARGETS += target-generic-dont-remount-rw
+endif
+
+ifneq ($(TARGET_GENERIC_TIMESERVER),)
+TARGETS += target-generic-install-timeserver
+else
+TARGETS += target-generic-remove-timeserver
 endif
 endif
