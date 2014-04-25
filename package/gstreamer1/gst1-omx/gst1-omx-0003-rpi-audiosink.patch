@@ -1,16 +1,33 @@
-From 5049ea1f1d6b735ec2078f91e78874b164ebbaf9 Mon Sep 17 00:00:00 2001
+From 9527ff41eb83072d7d26fa1407bd68b194fb5cd7 Mon Sep 17 00:00:00 2001
 From: Josep Torra <n770galaxy@gmail.com>
-Date: Fri, 04 Apr 2014 12:11:58 +0000
-Subject: omxaudiosink: Implements OpenMAX based audio sinks
+Date: Fri, 4 Apr 2014 14:11:58 +0200
+Subject: [PATCH] omxaudiosink: Implements OpenMAX based audio sinks
 
 Provides omxanalogaudiosink and omxhdmiaudiosink elements on the
 Raspberry PI.
 ---
+ config/rpi/gstomx.conf      |   20 +
+ omx/Makefile.am             |   10 +-
+ omx/gstomx.c                |    4 +
+ omx/gstomxanalogaudiosink.c |   63 +++
+ omx/gstomxanalogaudiosink.h |   60 +++
+ omx/gstomxaudiosink.c       | 1223 +++++++++++++++++++++++++++++++++++++++++++
+ omx/gstomxaudiosink.h       |  102 ++++
+ omx/gstomxhdmiaudiosink.c   |   65 +++
+ omx/gstomxhdmiaudiosink.h   |   60 +++
+ 9 files changed, 1605 insertions(+), 2 deletions(-)
+ create mode 100644 omx/gstomxanalogaudiosink.c
+ create mode 100644 omx/gstomxanalogaudiosink.h
+ create mode 100644 omx/gstomxaudiosink.c
+ create mode 100644 omx/gstomxaudiosink.h
+ create mode 100644 omx/gstomxhdmiaudiosink.c
+ create mode 100644 omx/gstomxhdmiaudiosink.h
+
 diff --git a/config/rpi/gstomx.conf b/config/rpi/gstomx.conf
-index a4b6f26..8f7eb97 100644
+index a4b6f26..8dc98b5 100644
 --- a/config/rpi/gstomx.conf
 +++ b/config/rpi/gstomx.conf
-@@ -80,3 +80,21 @@ in-port-index=200
+@@ -80,3 +80,23 @@ in-port-index=200
  out-port-index=201
  hacks=no-component-role
  
@@ -22,6 +39,7 @@ index a4b6f26..8f7eb97 100644
 +in-port-index=100
 +out-port-index=101
 +hacks=no-component-role
++sink-template-caps=audio/x-raw,format=(string){S16LE,S32LE},layout=(string)interleaved,rate=(int){8000,11025,16000,22050,24000,32000,41400,48000,88200,96000,176400,192000},channels=(int)[1,2]
 +
 +[omxhdmiaudiosink]
 +type-name=GstOMXHdmiAudioSink
@@ -31,9 +49,10 @@ index a4b6f26..8f7eb97 100644
 +in-port-index=100
 +out-port-index=101
 +hacks=no-component-role
++sink-template-caps=audio/x-raw,format=(string){S16LE,S32LE},layout=(string)interleaved,rate=(int){8000,11025,16000,22050,24000,32000,41400,48000,88200,96000,176400,192000},channels=(int)[1,8];audio/x-ac3,framed=(boolean)true;audio/x-dts,framed=(boolean)true,block-size=(int){512,1024,2048}
 +
 diff --git a/omx/Makefile.am b/omx/Makefile.am
-index bcdd60c..7a9f50b 100644
+index eb18e12..c9dcbb4 100644
 --- a/omx/Makefile.am
 +++ b/omx/Makefile.am
 @@ -28,7 +28,10 @@ libgstomx_la_SOURCES = \
@@ -91,8 +110,8 @@ index a37bb6b..4c05c0e 100644
    {gst_omx_audio_enc_get_type, G_STRUCT_OFFSET (GstOMXAudioEncClass, cdata)},
 diff --git a/omx/gstomxanalogaudiosink.c b/omx/gstomxanalogaudiosink.c
 new file mode 100644
-index 0000000..7a4e1b5
---- a/dev/null
+index 0000000..c8f988f
+--- /dev/null
 +++ b/omx/gstomxanalogaudiosink.c
 @@ -0,0 +1,63 @@
 +/*
@@ -142,9 +161,9 @@ index 0000000..7a4e1b5
 +  GstElementClass *element_class = GST_ELEMENT_CLASS (klass);
 +
 +  audiosink_class->cdata.default_sink_template_caps = "audio/x-raw, "
-+      "format = (string) { S16LE, S32LE }, "
++      "format = (string) " GST_AUDIO_FORMATS_ALL ", "
 +      "layout = (string) interleaved, "
-+      "rate = (int) [ 8000, 192000 ], " "channels = (int) [ 1, 2 ] ";
++      "rate = (int) [ 1, MAX ], " "channels = (int) [ 1, 2 ] ";
 +  audiosink_class->destination = "local";
 +
 +  gst_element_class_set_static_metadata (element_class,
@@ -161,7 +180,7 @@ index 0000000..7a4e1b5
 diff --git a/omx/gstomxanalogaudiosink.h b/omx/gstomxanalogaudiosink.h
 new file mode 100644
 index 0000000..c813416
---- a/dev/null
+--- /dev/null
 +++ b/omx/gstomxanalogaudiosink.h
 @@ -0,0 +1,60 @@
 +/*
@@ -226,10 +245,10 @@ index 0000000..c813416
 +
 diff --git a/omx/gstomxaudiosink.c b/omx/gstomxaudiosink.c
 new file mode 100644
-index 0000000..d4fdab9
---- a/dev/null
+index 0000000..ce46d0c
+--- /dev/null
 +++ b/omx/gstomxaudiosink.c
-@@ -0,0 +1,1217 @@
+@@ -0,0 +1,1223 @@
 +/*
 + * Copyright (C) 2014, Fluendo, S.A.
 + *   Author: Josep Torra <josep@fluendo.com>
@@ -439,72 +458,41 @@ index 0000000..d4fdab9
 +static void
 +gst_omx_audio_sink_mute_set (GstOMXAudioSink * self, gboolean mute)
 +{
-+  OMX_ERRORTYPE err;
-+  OMX_AUDIO_CONFIG_MUTETYPE param;
++  if (self->comp) {
++    OMX_ERRORTYPE err;
++    OMX_AUDIO_CONFIG_MUTETYPE param;
 +
-+  GST_OMX_INIT_STRUCT (&param);
-+  param.nPortIndex = self->in_port->index;
-+  param.bMute = (mute ? OMX_TRUE : OMX_FALSE);
-+  err = gst_omx_component_set_config (self->comp,
-+      OMX_IndexConfigAudioMute, &param);
-+  if (err != OMX_ErrorNone) {
-+    GST_ERROR_OBJECT (self, "Failed to set mute to %d: %s (0x%08x)",
-+        param.bMute, gst_omx_error_to_string (err), err);
-+  } else {
-+    self->mute = mute;
++    GST_OMX_INIT_STRUCT (&param);
++    param.nPortIndex = self->in_port->index;
++    param.bMute = (mute ? OMX_TRUE : OMX_FALSE);
++    err = gst_omx_component_set_config (self->comp,
++        OMX_IndexConfigAudioMute, &param);
++    if (err != OMX_ErrorNone) {
++      GST_ERROR_OBJECT (self, "Failed to set mute to %d: %s (0x%08x)",
++          param.bMute, gst_omx_error_to_string (err), err);
++    }
 +  }
++  self->mute = mute;
 +}
 +
 +static void
 +gst_omx_audio_sink_volume_set (GstOMXAudioSink * self, gdouble volume)
 +{
-+  OMX_ERRORTYPE err;
-+  OMX_AUDIO_CONFIG_VOLUMETYPE param;
-+  gdouble dbVol =
-+      log (volume * (self->exp_volume_max - self->exp_volume_min) +
-+      self->exp_volume_min);
-+
-+  GST_OMX_INIT_STRUCT (&param);
-+  param.nPortIndex = self->in_port->index;
-+  param.bLinear = OMX_FALSE;
-+  param.sVolume.nValue = dbVol;
-+  err = gst_omx_component_set_config (self->comp,
-+      OMX_IndexConfigAudioVolume, &param);
-+  if (err != OMX_ErrorNone) {
-+    GST_ERROR_OBJECT (self, "Failed to set volume to %d: %s (0x%08x)",
-+        param.sVolume.nValue, gst_omx_error_to_string (err), err);
-+  } else {
-+    self->volume = volume;
++  if (self->comp) {
++    OMX_ERRORTYPE err;
++    OMX_AUDIO_CONFIG_VOLUMETYPE param;
++    GST_OMX_INIT_STRUCT (&param);
++    param.nPortIndex = self->in_port->index;
++    param.bLinear = OMX_TRUE;
++    param.sVolume.nValue = volume * 100;
++    err = gst_omx_component_set_config (self->comp,
++        OMX_IndexConfigAudioVolume, &param);
++    if (err != OMX_ErrorNone) {
++      GST_ERROR_OBJECT (self, "Failed to set volume to %d: %s (0x%08x)",
++          param.sVolume.nValue, gst_omx_error_to_string (err), err);
++    }
 +  }
-+}
-+
-+static inline gboolean
-+gst_omx_audio_sink_volume_range_get (GstOMXAudioSink * self)
-+{
-+  OMX_S32 mbMax = 2;
-+  OMX_S32 mbMin = -6;
-+
-+#if !defined (USE_OMX_TARGET_RPI)
-+  OMX_ERRORTYPE err;
-+  OMX_AUDIO_CONFIG_VOLUMETYPE param;
-+
-+  GST_OMX_INIT_STRUCT (&param);
-+  param.nPortIndex = self->in_port->index;
-+  param.bLinear = OMX_FALSE;
-+  err = gst_omx_component_get_config (self->comp,
-+      OMX_IndexConfigAudioVolume, &param);
-+  if (err != OMX_ErrorNone) {
-+    GST_ERROR_OBJECT (self, "Failed to get volume range: %s (0x%08x)",
-+        gst_omx_error_to_string (err), err);
-+  } else {
-+    mbMax = param.sVolume.nMax;
-+    mbMin = param.sVolume.nMin;
-+  }
-+#endif
-+
-+  self->exp_volume_min = exp (mbMin);
-+  self->exp_volume_max = exp (mbMax);
-+  return TRUE;
++  self->volume = volume;
 +}
 +
 +static gboolean
@@ -632,11 +620,13 @@ index 0000000..d4fdab9
 +gst_omx_audio_sink_parse_spec (GstOMXAudioSink * self,
 +    GstAudioRingBufferSpec * spec)
 +{
++  self->iec61937 = FALSE;
 +  self->endianness = GST_AUDIO_INFO_ENDIANNESS (&spec->info);
 +  self->rate = GST_AUDIO_INFO_RATE (&spec->info);
 +  self->channels = GST_AUDIO_INFO_CHANNELS (&spec->info);
-+  self->is_signed = GST_AUDIO_INFO_IS_SIGNED (&spec->info);
 +  self->width = GST_AUDIO_INFO_WIDTH (&spec->info);
++  self->is_signed = GST_AUDIO_INFO_IS_SIGNED (&spec->info);
++  self->is_float = GST_AUDIO_INFO_IS_FLOAT (&spec->info);
 +
 +  switch (spec->type) {
 +    case GST_AUDIO_RING_BUFFER_FORMAT_TYPE_RAW:
@@ -649,17 +639,19 @@ index 0000000..d4fdab9
 +      } else {
 +        self->buffer_size = (spec->segsize / self->channels) * out_channels;
 +      }
-+      self->encoding = OMX_AUDIO_CodingPCM;
 +      break;
 +    }
 +    case GST_AUDIO_RING_BUFFER_FORMAT_TYPE_AC3:
 +    case GST_AUDIO_RING_BUFFER_FORMAT_TYPE_EAC3:
-+      self->encoding = OMX_AUDIO_CodingDDP;
-+      self->buffer_size = 1536;
-+      break;
 +    case GST_AUDIO_RING_BUFFER_FORMAT_TYPE_DTS:
-+      self->encoding = OMX_AUDIO_CodingDTS;
-+      self->buffer_size = 1536;
++    case GST_AUDIO_RING_BUFFER_FORMAT_TYPE_MPEG:
++      self->iec61937 = TRUE;
++      self->endianness = G_LITTLE_ENDIAN;
++      self->channels = 2;
++      self->width = 16;
++      self->is_signed = TRUE;
++      self->is_float = FALSE;
++      self->buffer_size = spec->segsize;
 +      break;
 +    default:
 +      return FALSE;
@@ -761,8 +753,19 @@ index 0000000..d4fdab9
 +  param.bInterleaved = OMX_TRUE;
 +  param.nBitPerSample = self->width;
 +  param.nSamplingRate = self->rate;
-+  param.ePCMMode = OMX_AUDIO_PCMModeLinear;
-+  channel_mapping (spec, &param.eChannelMapping[0]);
++
++  if (self->is_float) {
++    /* This is cherrypicked from xbmc but it doesn't seems to be valid on my RPI.
++     * https://github.com/xbmc/xbmc/blob/master/xbmc/cores/AudioEngine/Sinks/AESinkPi.cpp
++     */
++    param.ePCMMode = (OMX_AUDIO_PCMMODETYPE) 0x8000;
++  } else {
++    param.ePCMMode = OMX_AUDIO_PCMModeLinear;
++  }
++
++  if (spec->type == GST_AUDIO_RING_BUFFER_FORMAT_TYPE_RAW) {
++    channel_mapping (spec, &param.eChannelMapping[0]);
++  }
 +
 +  GST_DEBUG_OBJECT (self, "Setting PCM parameters");
 +  GST_DEBUG_OBJECT (self, "  nChannels: %d", param.nChannels);
@@ -773,7 +776,7 @@ index 0000000..d4fdab9
 +  GST_DEBUG_OBJECT (self, "  bInterleaved: %d", param.bInterleaved);
 +  GST_DEBUG_OBJECT (self, "  nBitPerSample: %d", param.nBitPerSample);
 +  GST_DEBUG_OBJECT (self, "  nSamplingRate: %d", param.nSamplingRate);
-+  GST_DEBUG_OBJECT (self, "  ePCMMode: %d", param.ePCMMode);
++  GST_DEBUG_OBJECT (self, "  ePCMMode: %04x", param.ePCMMode);
 +  GST_DEBUG_OBJECT (self, "  eChannelMapping: {%s, %s, %s, %s, %s, %s, %s, %s}",
 +      ch2str (param.eChannelMapping[0]), ch2str (param.eChannelMapping[1]),
 +      ch2str (param.eChannelMapping[2]), ch2str (param.eChannelMapping[3]),
@@ -785,88 +788,6 @@ index 0000000..d4fdab9
 +      &param);
 +  if (err != OMX_ErrorNone) {
 +    GST_ERROR_OBJECT (self, "Failed to set PCM parameters: %s (0x%08x)",
-+        gst_omx_error_to_string (err), err);
-+    return FALSE;
-+  }
-+
-+  return TRUE;
-+}
-+
-+static inline gboolean
-+gst_omx_audio_sink_configure_ddp (GstOMXAudioSink * self,
-+    GstAudioRingBufferSpec * spec)
-+{
-+  OMX_AUDIO_PARAM_DDPTYPE param;
-+  OMX_ERRORTYPE err;
-+
-+  GST_OMX_INIT_STRUCT (&param);
-+  param.nPortIndex = self->in_port->index;
-+  param.nChannels = self->channels;
-+  param.nSampleRate = self->rate;
-+  if (spec->type == GST_AUDIO_RING_BUFFER_FORMAT_TYPE_AC3) {
-+    param.eBitStreamId = OMX_AUDIO_DDPBitStreamIdAC3;
-+  } else if (spec->type == GST_AUDIO_RING_BUFFER_FORMAT_TYPE_EAC3) {
-+    param.eBitStreamId = OMX_AUDIO_DDPBitStreamIdEAC3;
-+  }
-+  param.nBitRate = 0;
-+  channel_mapping (spec, &param.eChannelMapping[0]);
-+
-+  GST_DEBUG_OBJECT (self, "Setting DDP parameters");
-+  GST_DEBUG_OBJECT (self, "  nChannels: %d", param.nChannels);
-+  GST_DEBUG_OBJECT (self, "  nBitRate: %d", param.nBitRate);
-+  GST_DEBUG_OBJECT (self, "  nSampleRate: %d", param.nSampleRate);
-+  GST_DEBUG_OBJECT (self, "  eBitStreamId: %d", param.eBitStreamId);
-+  GST_DEBUG_OBJECT (self, "  eBitStreamMode: %d", param.eBitStreamMode);
-+  GST_DEBUG_OBJECT (self, "  eDolbySurroundMode: %d", param.eDolbySurroundMode);
-+  GST_DEBUG_OBJECT (self, "  eChannelMapping: {%s, %s, %s, %s, %s, %s, %s, %s}",
-+      ch2str (param.eChannelMapping[0]), ch2str (param.eChannelMapping[1]),
-+      ch2str (param.eChannelMapping[2]), ch2str (param.eChannelMapping[3]),
-+      ch2str (param.eChannelMapping[4]), ch2str (param.eChannelMapping[5]),
-+      ch2str (param.eChannelMapping[6]), ch2str (param.eChannelMapping[7]));
-+
-+  err =
-+      gst_omx_component_set_parameter (self->comp, OMX_IndexParamAudioDdp,
-+      &param);
-+  if (err != OMX_ErrorNone) {
-+    GST_ERROR_OBJECT (self, "Failed to set DDP parameters: %s (0x%08x)",
-+        gst_omx_error_to_string (err), err);
-+    return FALSE;
-+  }
-+
-+  return TRUE;
-+}
-+
-+static inline gboolean
-+gst_omx_audio_sink_configure_dts (GstOMXAudioSink * self,
-+    GstAudioRingBufferSpec * spec)
-+{
-+  OMX_AUDIO_PARAM_DTSTYPE param;
-+  OMX_ERRORTYPE err;
-+
-+  GST_OMX_INIT_STRUCT (&param);
-+  param.nPortIndex = self->in_port->index;
-+  param.nChannels = self->channels;
-+  param.nBitRate = 0;
-+  channel_mapping (spec, &param.eChannelMapping[0]);
-+
-+  GST_DEBUG_OBJECT (self, "Setting DTS parameters");
-+  GST_DEBUG_OBJECT (self, "  nChannels: %d", param.nChannels);
-+  GST_DEBUG_OBJECT (self, "  nBitRate: %d", param.nBitRate);
-+  GST_DEBUG_OBJECT (self, "  nSampleRate: %d", param.nSampleRate);
-+  GST_DEBUG_OBJECT (self, "  nDtsType: %d", param.nDtsType);
-+  GST_DEBUG_OBJECT (self, "  nFormat: %d", param.nFormat);
-+  GST_DEBUG_OBJECT (self, "  nDtsFrameSizeBytes: %d", param.nDtsFrameSizeBytes);
-+  GST_DEBUG_OBJECT (self, "  eChannelMapping: {%s, %s, %s, %s, %s, %s, %s, %s}",
-+      ch2str (param.eChannelMapping[0]), ch2str (param.eChannelMapping[1]),
-+      ch2str (param.eChannelMapping[2]), ch2str (param.eChannelMapping[3]),
-+      ch2str (param.eChannelMapping[4]), ch2str (param.eChannelMapping[5]),
-+      ch2str (param.eChannelMapping[6]), ch2str (param.eChannelMapping[7]));
-+
-+  err =
-+      gst_omx_component_set_parameter (self->comp, OMX_IndexParamAudioDts,
-+      &param);
-+  if (err != OMX_ErrorNone) {
-+    GST_ERROR_OBJECT (self, "Failed to set DTS parameters: %s (0x%08x)",
 +        gst_omx_error_to_string (err), err);
 +    return FALSE;
 +  }
@@ -891,7 +812,7 @@ index 0000000..d4fdab9
 +  /* Only allocate a min number of buffers for transfers from our ringbuffer to
 +   * the hw ringbuffer as we want to keep our small */
 +  port_def.nBufferCountActual = MAX (port_def.nBufferCountMin, 2);
-+  port_def.format.audio.eEncoding = self->encoding;
++  port_def.format.audio.eEncoding = OMX_AUDIO_CodingPCM;
 +
 +  GST_DEBUG_OBJECT (self, "Updating outport port definition");
 +  GST_DEBUG_OBJECT (self, "  nBufferSize: %d", port_def.nBufferSize);
@@ -907,25 +828,8 @@ index 0000000..d4fdab9
 +    goto configuration;
 +  }
 +
-+  switch (self->encoding) {
-+    case OMX_AUDIO_CodingPCM:
-+      if (!gst_omx_audio_sink_configure_pcm (self, spec)) {
-+        goto configuration;
-+      }
-+      break;
-+    case OMX_AUDIO_CodingDDP:
-+      if (!gst_omx_audio_sink_configure_ddp (self, spec)) {
-+        goto configuration;
-+      }
-+      break;
-+    case OMX_AUDIO_CodingDTS:
-+      if (!gst_omx_audio_sink_configure_dts (self, spec)) {
-+        goto configuration;
-+      }
-+      break;
-+
-+    default:
-+      goto configuration;
++  if (!gst_omx_audio_sink_configure_pcm (self, spec)) {
++    goto configuration;
 +  }
 +
 +  err = gst_omx_component_set_state (self->comp, OMX_StateIdle);
@@ -975,9 +879,6 @@ index 0000000..d4fdab9
 +          GST_CLOCK_TIME_NONE) != OMX_StatePause)
 +    goto activation;
 +
-+  /* Collect some info from the component */
-+  gst_omx_audio_sink_volume_range_get (self);
-+
 +  /* Configure some parameters */
 +  GST_OBJECT_LOCK (self);
 +  gst_omx_audio_sink_mute_set (self, self->mute);
@@ -1009,6 +910,7 @@ index 0000000..d4fdab9
 +
 +  return TRUE;
 +
++  /* ERRORS */
 +spec_parse:
 +  {
 +    GST_ELEMENT_ERROR (self, RESOURCE, SETTINGS, (NULL),
@@ -1088,6 +990,7 @@ index 0000000..d4fdab9
 +
 +  return TRUE;
 +
++  /* ERRORS */
 +failed:
 +  {
 +    GST_ELEMENT_ERROR (self, LIBRARY, FAILED, (NULL),
@@ -1165,6 +1068,7 @@ index 0000000..d4fdab9
 +
 +  return buf;
 +
++  /* ERRORS */
 +component_error:
 +  {
 +    GST_ELEMENT_ERROR (self, LIBRARY, FAILED, (NULL),
@@ -1192,6 +1096,8 @@ index 0000000..d4fdab9
 +  GstOMXBuffer *buf;
 +  OMX_ERRORTYPE err;
 +
++  GST_LOG_OBJECT (self, "received audio samples buffer of %u bytes", length);
++
 +  GST_OMX_AUDIO_SINK_LOCK (self);
 +
 +  if (!(buf = gst_omx_audio_sink_acquire_buffer (self))) {
@@ -1199,8 +1105,7 @@ index 0000000..d4fdab9
 +  }
 +
 +  if (buf->omx_buf->nAllocLen == length) {
-+    memcpy (buf->omx_buf->pBuffer + buf->omx_buf->nOffset,
-+        (guint8 *) data, length);
++    memcpy (buf->omx_buf->pBuffer + buf->omx_buf->nOffset, data, length);
 +  } else {
 +    transform (self->channels, self->width, data,
 +        buf->omx_buf->pBuffer + buf->omx_buf->nOffset, self->samples);
@@ -1217,6 +1122,7 @@ index 0000000..d4fdab9
 +
 +  return length;
 +
++  /* ERRORS */
 +release_error:
 +  {
 +    GST_OMX_AUDIO_SINK_UNLOCK (self);
@@ -1270,8 +1176,121 @@ index 0000000..d4fdab9
 +
 +  gst_omx_port_set_flushing (self->in_port, 5 * GST_SECOND, FALSE);
 +
-+  gst_omx_audio_sink_delay (audiosink);
 +  GST_OMX_AUDIO_SINK_UNLOCK (self);
++}
++
++static GstBuffer *
++gst_omx_audio_sink_payload (GstAudioBaseSink * audiobasesink, GstBuffer * buf)
++{
++  GstOMXAudioSink *self = GST_OMX_AUDIO_SINK (audiobasesink);
++
++  if (self->iec61937) {
++    GstBuffer *out;
++    gint framesize;
++    GstMapInfo iinfo, oinfo;
++    GstAudioRingBufferSpec *spec = &audiobasesink->ringbuffer->spec;
++
++    framesize = gst_audio_iec61937_frame_size (spec);
++    if (framesize <= 0)
++      return NULL;
++
++    out = gst_buffer_new_and_alloc (framesize);
++
++    gst_buffer_map (buf, &iinfo, GST_MAP_READ);
++    gst_buffer_map (out, &oinfo, GST_MAP_WRITE);
++
++    if (!gst_audio_iec61937_payload (iinfo.data, iinfo.size,
++            oinfo.data, oinfo.size, spec, G_BIG_ENDIAN)) {
++      gst_buffer_unref (out);
++      return NULL;
++    }
++
++    gst_buffer_unmap (buf, &iinfo);
++    gst_buffer_unmap (out, &oinfo);
++
++    gst_buffer_copy_into (out, buf, GST_BUFFER_COPY_METADATA, 0, -1);
++    return out;
++  }
++
++  return gst_buffer_ref (buf);
++}
++
++static gboolean
++gst_omx_audio_sink_accept_caps (GstOMXAudioSink * self, GstCaps * caps)
++{
++  GstPad *pad = GST_BASE_SINK (self)->sinkpad;
++  GstCaps *pad_caps;
++  GstStructure *st;
++  gboolean ret = FALSE;
++  GstAudioRingBufferSpec spec = { 0 };
++
++  pad_caps = gst_pad_query_caps (pad, caps);
++  if (!pad_caps || gst_caps_is_empty (pad_caps)) {
++    if (pad_caps)
++      gst_caps_unref (pad_caps);
++    ret = FALSE;
++    goto done;
++  }
++  gst_caps_unref (pad_caps);
++
++  /* If we've not got fixed caps, creating a stream might fail, so let's just
++   * return from here with default acceptcaps behaviour */
++  if (!gst_caps_is_fixed (caps))
++    goto done;
++
++  /* parse helper expects this set, so avoid nasty warning
++   * will be set properly later on anyway  */
++  spec.latency_time = GST_SECOND;
++  if (!gst_audio_ring_buffer_parse_caps (&spec, caps))
++    goto done;
++
++  /* Make sure input is framed (one frame per buffer) and can be payloaded */
++  switch (spec.type) {
++    case GST_AUDIO_RING_BUFFER_FORMAT_TYPE_AC3:
++    case GST_AUDIO_RING_BUFFER_FORMAT_TYPE_EAC3:
++    case GST_AUDIO_RING_BUFFER_FORMAT_TYPE_DTS:
++    case GST_AUDIO_RING_BUFFER_FORMAT_TYPE_MPEG:
++    {
++      gboolean framed = FALSE, parsed = FALSE;
++      st = gst_caps_get_structure (caps, 0);
++
++      gst_structure_get_boolean (st, "framed", &framed);
++      gst_structure_get_boolean (st, "parsed", &parsed);
++      if ((!framed && !parsed) || gst_audio_iec61937_frame_size (&spec) <= 0)
++        goto done;
++    }
++    default:{
++    }
++  }
++  ret = TRUE;
++
++done:
++  gst_caps_replace (&spec.caps, NULL);
++  return ret;
++}
++
++static gboolean
++gst_omx_audio_sink_query (GstBaseSink * basesink, GstQuery * query)
++{
++  GstOMXAudioSink *self = GST_OMX_AUDIO_SINK (basesink);
++  gboolean ret;
++
++  switch (GST_QUERY_TYPE (query)) {
++    case GST_QUERY_ACCEPT_CAPS:
++    {
++      GstCaps *caps;
++
++      gst_query_parse_accept_caps (query, &caps);
++      ret = gst_omx_audio_sink_accept_caps (self, caps);
++      gst_query_set_accept_caps_result (query, ret);
++      ret = TRUE;
++      break;
++    }
++    default:
++      ret = GST_BASE_SINK_CLASS (parent_class)->query (basesink, query);
++      break;
++  }
++  return ret;
 +}
 +
 +static void
@@ -1402,23 +1421,13 @@ index 0000000..d4fdab9
 +{
 +  GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 +  GstElementClass *element_class = GST_ELEMENT_CLASS (klass);
-+  GstAudioSinkClass *audio_sink_class = GST_AUDIO_SINK_CLASS (klass);
++  GstBaseSinkClass *basesink_class = GST_BASE_SINK_CLASS (klass);
++  GstAudioBaseSinkClass *baudiosink_class = GST_AUDIO_BASE_SINK_CLASS (klass);
++  GstAudioSinkClass *audiosink_class = GST_AUDIO_SINK_CLASS (klass);
 +
 +  gobject_class->set_property = gst_omx_audio_sink_set_property;
 +  gobject_class->get_property = gst_omx_audio_sink_get_property;
 +  gobject_class->finalize = gst_omx_audio_sink_finalize;
-+
-+  audio_sink_class->open = GST_DEBUG_FUNCPTR (gst_omx_audio_sink_open);
-+  audio_sink_class->close = GST_DEBUG_FUNCPTR (gst_omx_audio_sink_close);
-+  audio_sink_class->prepare = GST_DEBUG_FUNCPTR (gst_omx_audio_sink_prepare);
-+  audio_sink_class->unprepare =
-+      GST_DEBUG_FUNCPTR (gst_omx_audio_sink_unprepare);
-+  audio_sink_class->write = GST_DEBUG_FUNCPTR (gst_omx_audio_sink_write);
-+  audio_sink_class->delay = GST_DEBUG_FUNCPTR (gst_omx_audio_sink_delay);
-+  audio_sink_class->reset = GST_DEBUG_FUNCPTR (gst_omx_audio_sink_reset);
-+
-+  element_class->change_state =
-+      GST_DEBUG_FUNCPTR (gst_omx_audio_sink_change_state);
 +
 +  g_object_class_install_property (gobject_class, PROP_MUTE,
 +      g_param_spec_boolean ("mute", "Mute", "mute channel",
@@ -1428,6 +1437,22 @@ index 0000000..d4fdab9
 +      g_param_spec_double ("volume", "Volume", "volume factor, 1.0=100%",
 +          0.0, VOLUME_MAX_DOUBLE, DEFAULT_PROP_VOLUME,
 +          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
++
++  element_class->change_state =
++      GST_DEBUG_FUNCPTR (gst_omx_audio_sink_change_state);
++
++  basesink_class->query = GST_DEBUG_FUNCPTR (gst_omx_audio_sink_query);
++
++  baudiosink_class->payload = GST_DEBUG_FUNCPTR (gst_omx_audio_sink_payload);
++
++  audiosink_class->open = GST_DEBUG_FUNCPTR (gst_omx_audio_sink_open);
++  audiosink_class->close = GST_DEBUG_FUNCPTR (gst_omx_audio_sink_close);
++  audiosink_class->prepare = GST_DEBUG_FUNCPTR (gst_omx_audio_sink_prepare);
++  audiosink_class->unprepare = GST_DEBUG_FUNCPTR (gst_omx_audio_sink_unprepare);
++  audiosink_class->write = GST_DEBUG_FUNCPTR (gst_omx_audio_sink_write);
++  audiosink_class->delay = GST_DEBUG_FUNCPTR (gst_omx_audio_sink_delay);
++  audiosink_class->reset = GST_DEBUG_FUNCPTR (gst_omx_audio_sink_reset);
++
 +
 +  klass->cdata.type = GST_OMX_COMPONENT_TYPE_SINK;
 +}
@@ -1449,10 +1474,10 @@ index 0000000..d4fdab9
 +}
 diff --git a/omx/gstomxaudiosink.h b/omx/gstomxaudiosink.h
 new file mode 100644
-index 0000000..6d4a8a7
---- a/dev/null
+index 0000000..fa3a791
+--- /dev/null
 +++ b/omx/gstomxaudiosink.h
-@@ -0,0 +1,93 @@
+@@ -0,0 +1,102 @@
 +/*
 + * Copyright (C) 2014, Fluendo, S.A.
 + *   Author: Josep Torra <josep@fluendo.com>
@@ -1505,6 +1530,14 @@ index 0000000..6d4a8a7
 +#define GST_OMX_AUDIO_SINK_LOCK(obj)	    (g_mutex_lock (GST_OMX_AUDIO_SINK_GET_LOCK (obj)))
 +#define GST_OMX_AUDIO_SINK_UNLOCK(obj)    (g_mutex_unlock (GST_OMX_AUDIO_SINK_GET_LOCK (obj)))
 +
++#define PASSTHROUGH_CAPS \
++    "audio/x-ac3, framed = (boolean) true;" \
++    "audio/x-eac3, framed = (boolean) true; " \
++    "audio/x-dts, framed = (boolean) true, " \
++      "block-size = (int) { 512, 1024, 2048 }; " \
++    "audio/mpeg, mpegversion = (int) 1, " \
++      "mpegaudioversion = (int) [ 1, 2 ], parsed = (boolean) true;"
++
 +typedef struct _GstOMXAudioSink GstOMXAudioSink;
 +typedef struct _GstOMXAudioSinkClass GstOMXAudioSinkClass;
 +
@@ -1518,14 +1551,15 @@ index 0000000..6d4a8a7
 +  
 +  gboolean mute;
 +  gdouble volume;
-+  gdouble exp_volume_min, exp_volume_max;
 +
-+  OMX_AUDIO_CODINGTYPE encoding;
++  gboolean iec61937;
 +  guint endianness;
-+  gboolean is_signed;
 +  guint rate;
 +  guint channels;
 +  guint width;
++  gboolean is_signed;
++  gboolean is_float;
++
 +  guint buffer_size;
 +  guint samples;
 +
@@ -1548,10 +1582,10 @@ index 0000000..6d4a8a7
 +
 diff --git a/omx/gstomxhdmiaudiosink.c b/omx/gstomxhdmiaudiosink.c
 new file mode 100644
-index 0000000..75e5126
---- a/dev/null
+index 0000000..03aec96
+--- /dev/null
 +++ b/omx/gstomxhdmiaudiosink.c
-@@ -0,0 +1,70 @@
+@@ -0,0 +1,65 @@
 +/*
 + * Copyright (C) 2014, Fluendo, S.A.
 + *   Author: Josep Torra <josep@fluendo.com>
@@ -1598,16 +1632,11 @@ index 0000000..75e5126
 +  GstOMXAudioSinkClass *audiosink_class = GST_OMX_AUDIO_SINK_CLASS (klass);
 +  GstElementClass *element_class = GST_ELEMENT_CLASS (klass);
 +
-+  audiosink_class->cdata.default_sink_template_caps =
-+      "audio/x-raw, "
-+      "format = (string) { S16LE, S32LE }, "
++  audiosink_class->cdata.default_sink_template_caps = "audio/x-raw, "
++      "format = (string) " GST_AUDIO_FORMATS_ALL ", "
 +      "layout = (string) interleaved, "
-+      "rate = (int) [ 8000, 192000 ], "
-+      "channels = (int) [ 1, 8 ]; "
-+      "audio/x-ac3, framed = (boolean) true;"
-+      "audio/x-eac3, framed = (boolean) true; "
-+      "audio/x-dts, framed = (boolean) true, "
-+      "block-size = (int) { 512, 1024, 2048 }; ";
++      "rate = (int) [ 1, MAX ], " "channels = (int) [ 1, MAX ]; "
++      PASSTHROUGH_CAPS;
 +  audiosink_class->destination = "hdmi";
 +
 +  gst_element_class_set_static_metadata (element_class,
@@ -1625,7 +1654,7 @@ index 0000000..75e5126
 diff --git a/omx/gstomxhdmiaudiosink.h b/omx/gstomxhdmiaudiosink.h
 new file mode 100644
 index 0000000..8bede0a
---- a/dev/null
+--- /dev/null
 +++ b/omx/gstomxhdmiaudiosink.h
 @@ -0,0 +1,60 @@
 +/*
@@ -1688,5 +1717,5 @@ index 0000000..8bede0a
 +
 +#endif /* __GST_OMX_HDMI_AUDIO_SINK_H__ */
 +
---
-cgit v0.9.0.2-2-gbebe
+-- 
+1.7.10.4
