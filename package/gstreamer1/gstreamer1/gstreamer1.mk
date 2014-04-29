@@ -4,12 +4,19 @@
 #
 ################################################################################
 
-GSTREAMER1_VERSION = 1.2.4
-GSTREAMER1_SOURCE = gstreamer-$(GSTREAMER1_VERSION).tar.xz
-GSTREAMER1_SITE = http://gstreamer.freedesktop.org/src/gstreamer
+GSTREAMER1_VERSION = 0a3bc6be1fc09a8aabde43505f9c3f0dfaf2ed94
+GSTREAMER1_SOURCE = gstreamer-$(GSTREAMER1_VERSION).tar.gz
+GSTREAMER1_SITE = http://cgit.freedesktop.org/gstreamer/gstreamer/snapshot/
 GSTREAMER1_INSTALL_STAGING = YES
 GSTREAMER1_LICENSE_FILES = COPYING
 GSTREAMER1_LICENSE = LGPLv2+ LGPLv2.1+
+
+GSTREAMER1_AUTORECONF = YES
+GSTREAMER1_AUTORECONF_OPT = -I $(@D)/m4 -I $(@D)/common/m4
+
+GSTREAMER1_POST_DOWNLOAD_HOOKS += GSTREAMER1_COMMON_DOWNLOAD
+GSTREAMER1_POST_EXTRACT_HOOKS += GSTREAMER1_COMMON_EXTRACT
+GSTREAMER1_PRE_CONFIGURE_HOOKS += GSTREAMER1_FIX_AUTOPOINT
 
 # Checking if unaligned memory access works correctly cannot be done when cross
 # compiling. For the following architectures there is no information available
@@ -35,6 +42,6 @@ GSTREAMER1_CONF_OPT = \
 	$(if $(BR2_PACKAGE_GSTREAMER1_PLUGIN_REGISTRY),,--disable-registry) \
 	$(if $(BR2_PACKAGE_GSTREAMER1_INSTALL_TOOLS),,--disable-tools)
 
-GSTREAMER1_DEPENDENCIES = libglib2 host-pkgconf host-bison host-flex
+GSTREAMER1_DEPENDENCIES = libglib2 host-pkgconf host-bison host-flex host-gettext
 
 $(eval $(autotools-package))

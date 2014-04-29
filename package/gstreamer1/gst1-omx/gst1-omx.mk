@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-GST1_OMX_VERSION = 718fd1bb93a09137a139d050e537f07daaf654b3
+GST1_OMX_VERSION = 420b0b62d33dcc45606cd862136866d5bf348d1f
 GST1_OMX_SOURCE = gst-omx-$(GST1_OMX_VERSION).tar.gz
 GST1_OMX_SITE = http://cgit.freedesktop.org/gstreamer/gst-omx/snapshot/
 
@@ -18,7 +18,7 @@ GST1_OMX_AUTORECONF = YES
 GST1_OMX_POST_DOWNLOAD_HOOKS += GSTREAMER1_COMMON_DOWNLOAD
 GST1_OMX_POST_EXTRACT_HOOKS += GSTREAMER1_COMMON_EXTRACT
 
-ifeq ($(BR2_PACKAGE_GST1_PLUGINS_BAD_PLUGIN_EGLGLES),y)
+ifeq ($(BR2_PACKAGE_GST1_PLUGINS_BAD_PLUGIN_GL),y)
 GST1_OMX_DEPENDENCIES += gst1-plugins-bad
 endif
 

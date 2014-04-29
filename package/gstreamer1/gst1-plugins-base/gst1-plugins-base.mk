@@ -4,12 +4,19 @@
 #
 ################################################################################
 
-GST1_PLUGINS_BASE_VERSION = 1.2.4
-GST1_PLUGINS_BASE_SOURCE = gst-plugins-base-$(GST1_PLUGINS_BASE_VERSION).tar.xz
-GST1_PLUGINS_BASE_SITE = http://gstreamer.freedesktop.org/src/gst-plugins-base
+GST1_PLUGINS_BASE_VERSION = 7c97a1c6cffbdc516ced11f7743c4292eae91e1d
+GST1_PLUGINS_BASE_SOURCE = gst-plugins-base-$(GST1_PLUGINS_BASE_VERSION).tar.gz
+GST1_PLUGINS_BASE_SITE = http://cgit.freedesktop.org/gstreamer/gst-plugins-base/snapshot/
 GST1_PLUGINS_BASE_INSTALL_STAGING = YES
 GST1_PLUGINS_BASE_LICENSE_FILES = COPYING.LIB
 GST1_PLUGINS_BASE_LICENSE = LGPLv2+ LGPLv2.1+
+
+GST1_PLUGINS_BASE_AUTORECONF = YES
+GST1_PLUGINS_BASE_AUTORECONF_OPT = -I $(@D)/m4 -I $(@D)/common/m4
+
+GST1_PLUGINS_BASE_POST_DOWNLOAD_HOOKS += GSTREAMER1_COMMON_DOWNLOAD
+GST1_PLUGINS_BASE_POST_EXTRACT_HOOKS += GSTREAMER1_COMMON_EXTRACT
+GST1_PLUGINS_BASE_PRE_CONFIGURE_HOOKS += GSTREAMER1_FIX_AUTOPOINT
 
 # freetype is only used by examples, but if it is not found
 # and the host has a freetype-config script, then the host
