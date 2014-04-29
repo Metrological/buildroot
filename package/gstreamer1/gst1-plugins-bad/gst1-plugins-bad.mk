@@ -643,12 +643,12 @@ GST1_PLUGINS_BAD_CONF_OPT += --disable-rsvg
 endif
 
 ifeq ($(BR2_PACKAGE_GST1_PLUGINS_BAD_PLUGIN_GL),y)
-GST1_PLUGINS_BAD_CONF_OPT += --enable-gl
+GST1_PLUGINS_BAD_CONF_OPT += --enable-egl
 GST1_PLUGINS_BAD_DEPENDENCIES += libegl libgles
 
 ifeq ($(BR2_PACKAGE_RPI_USERLAND),y)
 # RPI has odd locations for several required headers.
-GST1_PLUGINS_BAD_CONF_OPT += --with-egl-window-system=rpi
+GST1_PLUGINS_BAD_CONF_OPT += --enable-dispmanx
 GST1_PLUGINS_BAD_CONF_ENV += \
 	CFLAGS="$(TARGET_CFLAGS) \
 	-I$(STAGING_DIR)/usr/include/IL \
@@ -656,7 +656,7 @@ GST1_PLUGINS_BAD_CONF_ENV += \
 	-I$(STAGING_DIR)/usr/include/interface/vmcs_host/linux"
 endif
 else
-GST1_PLUGINS_BAD_CONF_OPT += --disable-eglgles
+GST1_PLUGINS_BAD_CONF_OPT += --disable-egl
 endif
 
 ifeq ($(BR2_PACKAGE_GST1_PLUGINS_BAD_PLUGIN_SDL),y)
