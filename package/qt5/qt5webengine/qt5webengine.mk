@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-QT5WEBENGINE_VERSION = 1a1ba34d8f94fec671b8b14f3f055e9b3bffafc4
+QT5WEBENGINE_VERSION = 7bb72a0b500f9ea7d8b3b37adc24a2700a309d2d
 QT5WEBENGINE_SITE = https://github.com/metrological/qtwebengine.git
 QT5WEBENGINE_SITE_METHOD = gitdev
 QT5WEBENGINE_DEPENDENCIES = qt5base qt5declarative libcap sqlite dbus libdrm pciutils host-ruby host-gperf host-bison host-flex
