@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-GST1_PLUGINS_UGLY_VERSION = 441e4f33b6a98a5ee11a51443c9c267a5f254340
+GST1_PLUGINS_UGLY_VERSION = 1.3.1
 GST1_PLUGINS_UGLY_SOURCE = gst-plugins-ugly-$(GST1_PLUGINS_UGLY_VERSION).tar.gz
 GST1_PLUGINS_UGLY_SITE = http://cgit.freedesktop.org/gstreamer/gst-plugins-ugly/snapshot/
 GST1_PLUGINS_UGLY_LICENSE_FILES = COPYING
