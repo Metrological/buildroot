@@ -643,7 +643,7 @@ GST1_PLUGINS_BAD_CONF_OPT += --disable-rsvg
 endif
 
 ifeq ($(BR2_PACKAGE_GST1_PLUGINS_BAD_PLUGIN_GL),y)
-GST1_PLUGINS_BAD_CONF_OPT += --enable-egl
+GST1_PLUGINS_BAD_CONF_OPT += --enable-egl --enable-gles2
 GST1_PLUGINS_BAD_DEPENDENCIES += libegl libgles
 
 ifeq ($(BR2_PACKAGE_RPI_USERLAND),y)
