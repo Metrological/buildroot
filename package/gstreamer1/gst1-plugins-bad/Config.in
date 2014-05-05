@@ -453,8 +453,8 @@ comment "rsvg plugin needs a toolchain w/ C++, wchar, threads"
 	depends on !BR2_INSTALL_LIBSTDCPP || !BR2_USE_WCHAR || \
 		!BR2_TOOLCHAIN_HAS_THREADS
 
-config BR2_PACKAGE_GST1_PLUGINS_BAD_PLUGIN_EGLGLES
-	bool "eglgles"
+config BR2_PACKAGE_GST1_PLUGINS_BAD_PLUGIN_GL
+	bool "gl"
 	depends on BR2_PACKAGE_HAS_OPENGL_EGL && BR2_PACKAGE_HAS_OPENGL_ES
 	help
 	  EGL/GLES sink

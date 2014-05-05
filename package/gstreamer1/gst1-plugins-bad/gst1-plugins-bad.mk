@@ -4,9 +4,9 @@
 #
 ################################################################################
 
-GST1_PLUGINS_BAD_VERSION = 1.2.4
-GST1_PLUGINS_BAD_SOURCE = gst-plugins-bad-$(GST1_PLUGINS_BAD_VERSION).tar.xz
-GST1_PLUGINS_BAD_SITE = http://gstreamer.freedesktop.org/src/gst-plugins-bad
+GST1_PLUGINS_BAD_VERSION = 1.3.1
+GST1_PLUGINS_BAD_SOURCE = gst-plugins-bad-$(GST1_PLUGINS_BAD_VERSION).tar.gz
+GST1_PLUGINS_BAD_SITE = http://cgit.freedesktop.org/gstreamer/gst-plugins-bad/snapshot/
 GST1_PLUGINS_BAD_INSTALL_STAGING = YES
 GST1_PLUGINS_BAD_LICENSE_FILES = COPYING COPYING.LIB
 # Unknown and GPL licensed plugins will append to GST1_PLUGINS_BAD_LICENSE if
@@ -14,7 +14,11 @@ GST1_PLUGINS_BAD_LICENSE_FILES = COPYING COPYING.LIB
 GST1_PLUGINS_BAD_LICENSE = LGPLv2+ LGPLv2.1+
 
 GST1_PLUGINS_BAD_AUTORECONF = YES
-GST1_PLUGINS_BAD_AUTORECONF_OPT = -I $(@D)/common/m4
+GST1_PLUGINS_BAD_AUTORECONF_OPT = -I $(@D)/m4 -I $(@D)/common/m4
+
+GST1_PLUGINS_BAD_POST_DOWNLOAD_HOOKS += GSTREAMER1_COMMON_DOWNLOAD
+GST1_PLUGINS_BAD_POST_EXTRACT_HOOKS += GSTREAMER1_COMMON_EXTRACT
+GST1_PLUGINS_BAD_PRE_CONFIGURE_HOOKS += GSTREAMER1_FIX_AUTOPOINT
 
 GST1_PLUGINS_BAD_CONF_OPT = \
 	--disable-examples \
@@ -638,13 +642,13 @@ else
 GST1_PLUGINS_BAD_CONF_OPT += --disable-rsvg
 endif
 
-ifeq ($(BR2_PACKAGE_GST1_PLUGINS_BAD_PLUGIN_EGLGLES),y)
-GST1_PLUGINS_BAD_CONF_OPT += --enable-eglgles
+ifeq ($(BR2_PACKAGE_GST1_PLUGINS_BAD_PLUGIN_GL),y)
+GST1_PLUGINS_BAD_CONF_OPT += --enable-egl --enable-gles2
 GST1_PLUGINS_BAD_DEPENDENCIES += libegl libgles
 
 ifeq ($(BR2_PACKAGE_RPI_USERLAND),y)
 # RPI has odd locations for several required headers.
-GST1_PLUGINS_BAD_CONF_OPT += --with-egl-window-system=rpi
+GST1_PLUGINS_BAD_CONF_OPT += --enable-dispmanx
 GST1_PLUGINS_BAD_CONF_ENV += \
 	CFLAGS="$(TARGET_CFLAGS) \
 	-I$(STAGING_DIR)/usr/include/IL \
@@ -652,7 +656,7 @@ GST1_PLUGINS_BAD_CONF_ENV += \
 	-I$(STAGING_DIR)/usr/include/interface/vmcs_host/linux"
 endif
 else
-GST1_PLUGINS_BAD_CONF_OPT += --disable-eglgles
+GST1_PLUGINS_BAD_CONF_OPT += --disable-egl
 endif
 
 ifeq ($(BR2_PACKAGE_GST1_PLUGINS_BAD_PLUGIN_SDL),y)

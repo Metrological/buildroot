@@ -1,4 +1,4 @@
-GSTREAMER1_COMMON_VERSION = bcb1518c08c889dd7eda06936fc26cad85fac755
+GSTREAMER1_COMMON_VERSION = b474fcc04cbb22ff65468b6b1040d65bdb1dde61
 GSTREAMER1_COMMON_SOURCE = common-$(GSTREAMER1_COMMON_VERSION).tar.gz
 GSTREAMER1_COMMON_SITE = http://cgit.freedesktop.org/gstreamer/common/snapshot/
 
@@ -13,6 +13,10 @@ define GSTREAMER1_COMMON_EXTRACT
 	mkdir -p $(@D)/m4
 	touch $(@D)/ABOUT-NLS
 	touch $(@D)/config.rpath
+endef
+
+define GSTREAMER1_FIX_AUTOPOINT
+	cd $(@D) && PATH=$(HOST_PATH) autopoint --force
 endef
 
 include package/gstreamer1/*/*.mk
