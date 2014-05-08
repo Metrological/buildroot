@@ -260,6 +260,18 @@ config BR2_CCACHE_DIR
 	help
 	  Where ccache should store cached files.
 
+config BR2_LOCAL_BUILD
+	bool "Enable build from local packages"
+	help
+	  This option will enable the build of manually downloaded packages.
+
+config BR2_LOCAL_BUILD_DIRECTORY
+	string "Local packages location"
+	depends on BR2_LOCAL_BUILD
+	default "$(TOPDIR)/local"
+	help
+	  Where local packages should be manually downloaded.
+
 config BR2_DEPRECATED
 	bool "Show packages that are deprecated or obsolete"
 	help
