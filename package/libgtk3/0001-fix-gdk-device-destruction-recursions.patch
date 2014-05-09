@@ -1,0 +1,41 @@
+--- a/gdk/gdkdevice.c
++++ b/gdk/gdkdevice.c
+@@ -268,6 +268,7 @@ static void
+ gdk_device_dispose (GObject *object)
+ {
+   GdkDevice *device = GDK_DEVICE (object);
++  GdkDevice *previous_associated;
+ 
+   if (device->type == GDK_DEVICE_TYPE_SLAVE)
+     _gdk_device_remove_slave (device->associated, device);
+@@ -277,8 +278,9 @@ gdk_device_dispose (GObject *object)
+       if (device->type == GDK_DEVICE_TYPE_MASTER)
+         _gdk_device_set_associated_device (device->associated, NULL);
+ 
+-      g_object_unref (device->associated);
++      previous_associated = device->associated;
+       device->associated = NULL;
++      g_object_unref (previous_associated);
+     }
+ 
+   if (device->axes)
+@@ -969,6 +971,8 @@ void
+ _gdk_device_set_associated_device (GdkDevice *device,
+                                    GdkDevice *associated)
+ {
++  GdkDevice *previous_associated;
++
+   g_return_if_fail (GDK_IS_DEVICE (device));
+   g_return_if_fail (associated == NULL || GDK_IS_DEVICE (associated));
+ 
+@@ -977,8 +981,9 @@ _gdk_device_set_associated_device (GdkDevice *device,
+ 
+   if (device->associated)
+     {
+-      g_object_unref (device->associated);
++      previous_associated = device->associated;
+       device->associated = NULL;
++      g_object_unref (previous_associated);
+     }
+ 
+   if (associated)
