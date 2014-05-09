@@ -4,8 +4,13 @@
 #
 ################################################################################
 
+ifeq ($(BR2_LOCAL_BUILD),y)
+QT5WEBKIT_SITE = $(BR2_LOCAL_BUILD_DIRECTORY)/qt5webkit
+QT5WEBKIT_SITE_METHOD = local
+else
 QT5WEBKIT_VERSION = 301d416ce591db676ff7348cbb37c24da8267f27
 QT5WEBKIT_SITE = $(call github,Metrological,qtwebkit,$(QT5WEBKIT_VERSION))
+endif
 
 QT5WEBKIT_DEPENDENCIES = qt5base sqlite host-ruby host-gperf host-bison host-flex
 QT5WEBKIT_INSTALL_STAGING = YES
