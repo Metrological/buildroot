@@ -1,0 +1,14 @@
+diff --git a/Source/WebCore/css/WebKitCSSMatrix.cpp b/Source/WebCore/css/WebKitCSSMatrix.cpp
+index 4f53657..009e6cb 100644
+--- a/Source/WebCore/css/WebKitCSSMatrix.cpp
++++ b/Source/WebCore/css/WebKitCSSMatrix.cpp
+@@ -177,6 +177,9 @@ PassRefPtr<WebKitCSSMatrix> WebKitCSSMatrix::skewY(double angle) const
+ 
+ String WebKitCSSMatrix::toString() const
+ {
++    // FIXME: Find the culprit that misaligns the stack and remove this workaround.
++    asm("bic sp, sp, #7");
++
+     // FIXME - Need to ensure valid CSS floating point values (https://bugs.webkit.org/show_bug.cgi?id=20674)
+     if (m_matrix.isAffine())
+         return String::format("matrix(%f, %f, %f, %f, %f, %f)",
