@@ -105,6 +105,7 @@ endif
 # Default is UCS2 w/o a conf opt
 ifeq ($(BR2_PACKAGE_PYTHON_UCS4),y)
 PYTHON_CONF_OPT += --enable-unicode=ucs4
+HOST_PYTHON_CONF_OPT += --enable-unicode=ucs4
 endif
 
 ifeq ($(BR2_PACKAGE_PYTHON_BZIP2),y)
