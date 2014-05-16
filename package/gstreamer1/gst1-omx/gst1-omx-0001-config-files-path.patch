@@ -117,3 +117,21 @@
  component-name=OMX.broadcom.video_encode
  rank=257
  in-port-index=200
+@@ -82,7 +82,7 @@
+ 
+ [omxanalogaudiosink]
+ type-name=GstOMXAnalogAudioSink
+-core-name=/opt/vc/lib/libopenmaxil.so
++core-name=/usr/lib/libopenmaxil.so
+ component-name=OMX.broadcom.audio_render
+ rank=256
+ in-port-index=100
+@@ -92,7 +92,7 @@
+ 
+ [omxhdmiaudiosink]
+ type-name=GstOMXHdmiAudioSink
+-core-name=/opt/vc/lib/libopenmaxil.so
++core-name=/usr/lib/libopenmaxil.so
+ component-name=OMX.broadcom.audio_render
+ rank=257
+ in-port-index=100
