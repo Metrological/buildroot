@@ -26,7 +26,6 @@ endif
 
 QT5WEBKIT_CONFIG = 
 QT5WEBKIT_MAKE_ENV = $(TARGET_MAKE_ENV) QMAKEPATH=$(@D)/Tools/qmake/
-QT5WEBKIT_BUILDDIR = $(@D)/build
 
 ifeq ($(BR2_PACKAGE_QT5DECLARATIVE),y)
 QT5WEBKIT_DEPENDENCIES += qt5declarative
@@ -44,10 +43,12 @@ QT5WEBKIT_DEPENDENCIES += libxslt
 endif
 
 ifeq ($(BR2_ENABLE_DEBUG),y)
+QT5WEBKIT_BUILDDIR = $(@D)/debug
 QT5WEBKIT_CONFIG += \
 	CONFIG+=debug \
 	CONFIG-=release
 else
+QT5WEBKIT_BUILDDIR = $(@D)/release
 QT5WEBKIT_CONFIG += \
 	CONFIG-=debug \
 	CONFIG+=release
