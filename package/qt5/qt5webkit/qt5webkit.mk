@@ -55,6 +55,7 @@ QT5WEBKIT_CONFIG += \
 endif
 
 ifeq ($(BR2_QT5WEBKIT_USE_GSTREAMER),y)
+QT5WEBKIT_DEPENDENCIES += gstreamer1 gst1-plugins-base gst1-plugins-good gst1-plugins-bad
 QT5WEBKIT_CONFIG += \
 	WEBKIT_CONFIG+=video \
 	WEBKIT_CONFIG+=use_gstreamer \
