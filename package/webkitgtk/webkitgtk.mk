@@ -8,7 +8,8 @@ WEBKITGTK_VERSION = 979e5ee3d8a4010b1fb387f4aea96f95bf152be5
 WEBKITGTK_SITE = $(call github,Metrological,webkitgtk,$(WEBKITGTK_VERSION))
 WEBKITGTK_INSTALL_STAGING = YES
 WEBKITGTK_DEPENDENCIES = host-flex host-bison host-gperf host-ruby \
-	icu libxml2 libxslt libgtk3 sqlite enchant libsoup jpeg webp
+	icu libxml2 libxslt libgtk3 sqlite enchant libsoup jpeg webp \
+	gstreamer1 gst1-plugins-base gst1-plugins-good gst1-plugins-bad
 
 WEBKITGTK_AUTORECONF = YES
 
@@ -27,7 +28,6 @@ WEBKITGTK_CONF_OPT = \
 	--disable-webkit1 \
 	--disable-credential-storage \
 	--disable-geolocation \
-	--disable-video \
 	--disable-web-audio
 
 ifeq ($(BR2_PACKAGE_XORG7),y)
