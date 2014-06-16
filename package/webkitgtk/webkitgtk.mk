@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-WEBKITGTK_VERSION = 979e5ee3d8a4010b1fb387f4aea96f95bf152be5
+WEBKITGTK_VERSION = cb4c12079cef9dedc4e7952e3c99f0542788f99b
 WEBKITGTK_SITE = $(call github,Metrological,webkitgtk,$(WEBKITGTK_VERSION))
 WEBKITGTK_INSTALL_STAGING = YES
 WEBKITGTK_DEPENDENCIES = host-flex host-bison host-gperf host-ruby \
@@ -21,8 +21,8 @@ WEBKITGTK_EGL_CFLAGS = $(shell PKG_CONFIG_LIBDIR=$(STAGING_DIR)/usr/lib/pkgconfi
 WEBKITGTK_CONF_ENV = \
 	ac_cv_path_icu_config=$(STAGING_DIR)/usr/bin/icu-config \
 	AR_FLAGS="cru" \
-	CFLAGS="$(TARGET_CFLAGS) -fno-omit-frame-pointer -I$(STAGING_DIR)/usr/include $(WEBKITGTK_EGL_CFLAGS)" \
-	CXXFLAGS="$(TARGET_CXXFLAGS) -fno-omit-frame-pointer -I$(STAGING_DIR)/usr/include $(WEBKITGTK_EGL_CFLAGS) -D_GLIBCXX_USE_SCHED_YIELD -D_GLIBCXX_USE_NANOSLEEP"
+	CFLAGS="$(TARGET_CFLAGS) -I$(STAGING_DIR)/usr/include $(WEBKITGTK_EGL_CFLAGS)" \
+	CXXFLAGS="$(TARGET_CXXFLAGS) -I$(STAGING_DIR)/usr/include $(WEBKITGTK_EGL_CFLAGS) -D_GLIBCXX_USE_SCHED_YIELD -D_GLIBCXX_USE_NANOSLEEP"
 
 WEBKITGTK_CONF_OPT = \
 	--disable-webkit1 \
