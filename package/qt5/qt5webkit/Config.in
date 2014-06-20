@@ -58,6 +58,20 @@ config BR2_QT5WEBKIT_USE_GSTREAMER
 	help
 	  Use GStreamer 1.x for media playback support. Recommended option.
 
+config BR2_QT5WEBKIT_USE_ENCRYPTED_MEDIA
+        bool "encrypted-media"
+        default n
+        help
+          Enable Encrypted Media Extensions.
+
+config BR2_QT5WEBKIT_USE_DXDRM_EME
+	bool "dxdrm-eme"
+	default n
+	depends on BR2_QT5WEBKIT_USE_ENCRYPTED_MEDIA
+	depends on BR2_PACKAGE_DXDRM
+	help
+	  Enable Discretix DRM Encrypted Media Extensions backend.
+
 config BR2_PACKAGE_MINIBROWSER
 	bool "minibrowser"
 	depends on BR2_PACKAGE_QT5DECLARATIVE

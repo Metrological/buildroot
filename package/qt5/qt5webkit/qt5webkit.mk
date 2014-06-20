@@ -75,6 +75,16 @@ QT5WEBKIT_CONFIG += \
 	WEBKIT_CONFIG+=web_audio
 endif
 
+ifeq ($(BR2_QT5WEBKIT_USE_DXDRM_EME),y)
+QT5WEBKIT_CONFIG += \
+	WEBKIT_CONFIG+=use_dxdrm
+endif
+
+ifeq ($(BR2_QT5WEBKIT_USE_ENCRYPTED_MEDIA),y)
+QT5WEBKIT_CONFIG += \
+	WEBKIT_CONFIG+=encrypted_media_v2
+endif
+
 ifeq ($(BR2_PACKAGE_LIBSOUP),y)
 QT5WEBKIT_CONFIG += \
 	WEBKIT_CONFIG+=use_soup \
