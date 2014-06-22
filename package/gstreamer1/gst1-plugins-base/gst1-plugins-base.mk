@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-GST1_PLUGINS_BASE_VERSION = 1.3.1
+GST1_PLUGINS_BASE_VERSION = 1.3.2
 GST1_PLUGINS_BASE_SOURCE = gst-plugins-base-$(GST1_PLUGINS_BASE_VERSION).tar.gz
 GST1_PLUGINS_BASE_SITE = http://cgit.freedesktop.org/gstreamer/gst-plugins-base/snapshot/
 GST1_PLUGINS_BASE_INSTALL_STAGING = YES
