@@ -8,6 +8,7 @@ WEBKITGTK_VERSION = 1df351ba45457ba739eb2c58292ed1fd8be8ecd5
 WEBKITGTK_SITE = $(call github,Metrological,webkitgtk,$(WEBKITGTK_VERSION))
 WEBKITGTK_INSTALL_STAGING = YES
 WEBKITGTK_DEPENDENCIES = host-flex host-bison host-gperf host-ruby \
+	host-pkgconf zlib pcre libgles libegl \
 	icu libxml2 libxslt libgtk3 sqlite enchant libsoup jpeg webp \
 	gstreamer1 gst1-plugins-base gst1-plugins-good gst1-plugins-bad
 
@@ -15,7 +16,14 @@ WEBKITGTK_AUTORECONF = YES
 
 WEBKITGTK_DEPENDENCIES += $(if $(BR2_PACKAGE_OPENSSL),ca-certificates)
 
-WEBKITGTK_EGL_CFLAGS = $(shell PKG_CONFIG_LIBDIR=$(STAGING_DIR)/usr/lib/pkgconfig pkg-config --define-variable=prefix=$(STAGING_DIR)/usr --cflags egl)
+WEBKITGTK_EGL_CFLAGS = \
+	$(shell PKG_CONFIG_LIBDIR=$(STAGING_DIR)/usr/lib/pkgconfig $(HOST_DIR)/usr/bin/pkg-config --define-variable=prefix=$(STAGING_DIR)/usr --cflags egl)
+
+ifeq ($(BR2_PACKAGE_RPI_USERLAND),y)
+WEBKITGTK_EGL_CFLAGS += \
+	-I$(STAGING_DIR)/usr/include/interface/vcos/pthreads \
+	-I$(STAGING_DIR)/usr/include/interface/vmcs_host/linux
+endif
 
 # Give explicit path to icu-config.
 WEBKITGTK_CONF_ENV = \
