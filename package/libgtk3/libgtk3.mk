@@ -4,8 +4,8 @@
 #
 ################################################################################
 
-LIBGTK3_VERSION_MAJOR = 3.11
-LIBGTK3_VERSION_MINOR = 5
+LIBGTK3_VERSION_MAJOR = 3.12
+LIBGTK3_VERSION_MINOR = 2
 LIBGTK3_VERSION = $(LIBGTK3_VERSION_MAJOR).$(LIBGTK3_VERSION_MINOR)
 
 LIBGTK3_SOURCE = gtk+-$(LIBGTK3_VERSION).tar.xz

@@ -1,0 +1,13 @@
+diff --git a/configure.ac b/configure.ac
+index a01e58d..0eaa3d5 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -52,6 +52,8 @@ m4_define([glib_lt_current_minus_age],
+ m4_define([glib_debug_default],
+           [m4_if(m4_eval(glib_minor_version % 2), [1], [yes], [minimum])])dnl
+ 
++m4_include([m4macros/gtk-doc.m4])
++
+ 
+ AC_INIT(glib, [glib_version],
+         [http://bugzilla.gnome.org/enter_bug.cgi?product=glib])
