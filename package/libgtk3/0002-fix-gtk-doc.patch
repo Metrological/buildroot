@@ -1,0 +1,13 @@
+diff --git a/configure.ac b/configure.ac
+index 1a4af9b..a8d92f6 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -19,6 +19,8 @@ m4_define([gtk_version],
+ # This is the X.Y used in -lgtk-FOO-X.Y
+ m4_define([gtk_api_version], [3.0])
+ 
++m4_include([m4/gtk-doc.m4])
++
+ AC_PREREQ([2.62])
+ AC_INIT([gtk+], [gtk_version],
+         [http://bugzilla.gnome.org/enter_bug.cgi?product=gtk%2B],
