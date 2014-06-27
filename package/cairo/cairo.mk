@@ -45,7 +45,7 @@ CAIRO_CONF_OPT = \
 	--enable-trace=no \
 	--enable-interpreter=no
 
-CAIRO_DEPENDENCIES = host-pkgconf fontconfig pixman
+CAIRO_DEPENDENCIES = host-pkgconf fontconfig pixman libglib2
 
 ifeq ($(BR2_PACKAGE_DIRECTFB),y)
 	CAIRO_CONF_OPT += --enable-directfb
