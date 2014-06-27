@@ -1,0 +1,70 @@
+diff --git a/qtbrowser.cpp b/qtbrowser.cpp
+index ff43bf2..633dcf8 100644
+--- a/qtbrowser.cpp
++++ b/qtbrowser.cpp
+@@ -85,6 +85,27 @@ protected:
+     }
+ };
+ 
++#ifdef QT_BUILD_WITH_OPENGL
++class GraphicsView : public QGraphicsView {
++public:
++    GraphicsView(QWidget* parent = 0) : QGraphicsView(parent) {
++    }
++
++protected:
++    bool eventFilter(QObject* obj, QEvent* ev)
++    {
++        // forward the update events from the widgetWindow and "sink" them
++        if (obj == QApplication::focusWindow() && ev->type() == QEvent::Expose) {
++            viewport()->update((static_cast<QExposeEvent*>(ev))->region());
++
++            return true;
++        }
++
++        return QGraphicsView::eventFilter(obj, ev);
++    }
++};
++#endif
++
+ void help(void) {
+   printf("%s",
+     " ------------------------------------------------------------------------------\n"
+@@ -132,12 +153,17 @@ int main(int argc, char *argv[]) {
+ 
+     QString path;
+ #if (QT_VERSION >= QT_VERSION_CHECK(5, 0, 0))
++    a.setAttribute(Qt::AA_DontCreateNativeWidgetSiblings);
+     path = QStandardPaths::writableLocation(QStandardPaths::DataLocation);
+ #else
+     path = QDesktopServices::storageLocation(QDesktopServices::DataLocation);
+ #endif
+ 
++#ifdef QT_BUILD_WITH_OPENGL
++    GraphicsView g;
++#else
+     QGraphicsView g;
++#endif
+     g.setScene(new QGraphicsScene(&g));
+     g.resize(size);
+     g.scene()->setItemIndexMethod(QGraphicsScene::NoIndex);
+@@ -148,6 +174,8 @@ int main(int argc, char *argv[]) {
+     g.setFrameStyle(QFrame::NoFrame);
+ #ifdef QT_BUILD_WITH_OPENGL
+     g.setViewport(new QGLWidget());
++    // uncomment this line to enable the onMouseOver animations
++    //g.viewport()->grabMouse();
+ #endif
+     g.showFullScreen();
+ 
+@@ -271,6 +299,10 @@ int main(int argc, char *argv[]) {
+ 
+     g.scene()->addItem(&view);
+ 
++#ifdef QT_BUILD_WITH_OPENGL
++    a.installEventFilter(&g);
++#endif
++
+     return a.exec();
+ }
+ 
