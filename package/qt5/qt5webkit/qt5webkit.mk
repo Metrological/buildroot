@@ -54,6 +54,19 @@ QT5WEBKIT_CONFIG += \
 	CONFIG+=release
 endif
 
+ifeq ($(findstring y,$(BR2_PACKAGE_MINIBROWSER)$(BR2_PACKAGE_TESTBROWSER)$(BR2_PACKAGE_DUMPRENDERTREE)),y) 
+QT5WEBKIT_CONFIG += \
+	CONFIG-=production_build \
+	WEBKIT_CONFIG-=build_tests \
+	WEBKIT_CONFIG-=build_drt \
+	WEBKIT_CONFIG-=build_wtr \
+	WEBKIT_CONFIG-=build_imagediff \
+	WEBKIT_CONFIG-=build_testbrowser \
+	WEBKIT_CONFIG-=build_minibrowser \
+	WEBKIT_CONFIG-=build_imagediff \
+	WEBKIT_CONFIG-=build_qttestsupport
+endif
+
 ifeq ($(BR2_QT5WEBKIT_USE_GSTREAMER),y)
 QT5WEBKIT_DEPENDENCIES += gstreamer1 gst1-plugins-base gst1-plugins-good gst1-plugins-bad
 QT5WEBKIT_CONFIG += \
@@ -69,23 +82,20 @@ QT5WEBKIT_CONFIG += \
 endif
 
 ifeq ($(BR2_PACKAGE_MINIBROWSER),y)
-	QT5WEBKIT_POST_BUILD_HOOKS += QT5WEBKIT_BUILD_MINIBROWSER
+QT5WEBKIT_CONFIG += \
+	WEBKIT_CONFIG+=build_minibrowser
 endif
 
 ifeq ($(BR2_PACKAGE_TESTBROWSER),y)
-	QT5WEBKIT_POST_BUILD_HOOKS += QT5WEBKIT_BUILD_TESTBROWSER
+QT5WEBKIT_CONFIG += \
+	WEBKIT_CONFIG+=build_testbrowser \
+	WEBKIT_CONFIG+=build_qttestsupport
 endif
 
 ifeq ($(BR2_PACKAGE_DUMPRENDERTREE), y)
-	QT5WEBKIT_POST_BUILD_HOOKS += QT5WEBKIT_BUILD_DUMPRENDERTREE
+QT5WEBKIT_CONFIG += \
+	WEBKIT_CONFIG+=build_drt
 endif
-
-ifeq ($(findstring y,$(BR2_PACKAGE_MINIBROWSER)$(BR2_PACKAGE_TESTBROWSER)$(BR2_PACKAGE_DUMPRENDERTREE)),y) 
-# CONFIG-=production_build enables the build of certain features/functionality required by some tools
-	QT5WEBKIT_CONFIG += \
-		CONFIG-=production_build
-endif
-
 
 ifeq ($(BR2_QT5WEBKIT_USE_ACCELERATED_CANVAS), y)
 	QT5WEBKIT_CONFIG += \
@@ -108,30 +118,6 @@ endef
 
 define QT5WEBKIT_BUILD_CMDS
 	$(QT5WEBKIT_MAKE_ENV) $(MAKE) -C $(QT5WEBKIT_BUILDDIR)
-endef
-
-define QT5WEBKIT_BUILD_MINIBROWSER
-	(mkdir -p $(QT5WEBKIT_BUILDDIR)/minibrowser; cd $(QT5WEBKIT_BUILDDIR)/minibrowser; \
-		$(QT5WEBKIT_MAKE_ENV) \
-		$(HOST_DIR)/usr/bin/qmake $(@D)/Tools/MiniBrowser/qt/MiniBrowser.pro \
-	)
-	$(QT5WEBKIT_MAKE_ENV) $(MAKE) LFLAGS="$(LFLAGS) -L$(QT5WEBKIT_BUILDDIR)/lib" -C $(QT5WEBKIT_BUILDDIR)/minibrowser
-endef
-
-define QT5WEBKIT_BUILD_TESTBROWSER
-	(mkdir -p $(QT5WEBKIT_BUILDDIR)/testbrowser; cd $(QT5WEBKIT_BUILDDIR)/testbrowser; \
-		$(QT5WEBKIT_MAKE_ENV) \
-		$(HOST_DIR)/usr/bin/qmake $(@D)/Tools/QtTestBrowser/QtTestBrowser.pro \
-	)
-	$(QT5WEBKIT_MAKE_ENV) $(MAKE) LFLAGS="$(LFLAGS) -L$(QT5WEBKIT_BUILDDIR)/lib" -C $(QT5WEBKIT_BUILDDIR)/testbrowser
-endef
-
-define QT5WEBKIT_BUILD_DUMPRENDERTREE
-	(mkdir -p $(QT5WEBKIT_BUILDDIR)/drt; cd $(QT5WEBKIT_BUILDDIR)/drt; \
-		$(QT5WEBKIT_MAKE_ENV) \
-		$(HOST_DIR)/usr/bin/qmake $(@D)/Tools/DumpRenderTree/qt/DumpRenderTree.pro \
-	)
-	$(QT5WEBKIT_MAKE_ENV) $(MAKE) LFLAGS="$(LFLAGS) -L$(QT5WEBKIT_BUILDDIR)/lib" -C $(QT5WEBKIT_BUILDDIR)/drt
 endef
 
 define QT5WEBKIT_INSTALL_STAGING_CMDS
