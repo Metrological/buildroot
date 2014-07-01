@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-GSTREAMER1_VERSION = 1.3.3
+GSTREAMER1_VERSION = 1.3.90
 GSTREAMER1_SOURCE = gstreamer-$(GSTREAMER1_VERSION).tar.gz
 GSTREAMER1_SITE = http://cgit.freedesktop.org/gstreamer/gstreamer/snapshot/
 GSTREAMER1_INSTALL_STAGING = YES

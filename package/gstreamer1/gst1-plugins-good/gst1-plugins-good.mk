@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-GST1_PLUGINS_GOOD_VERSION = 1.3.3
+GST1_PLUGINS_GOOD_VERSION = 1.3.90
 GST1_PLUGINS_GOOD_SOURCE = gst-plugins-good-$(GST1_PLUGINS_GOOD_VERSION).tar.gz
 GST1_PLUGINS_GOOD_SITE = http://cgit.freedesktop.org/gstreamer/gst-plugins-good/snapshot/
 GST1_PLUGINS_GOOD_INSTALL_STAGING = YES
