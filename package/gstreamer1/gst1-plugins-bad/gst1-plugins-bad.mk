@@ -4,7 +4,8 @@
 #
 ################################################################################
 
-GST1_PLUGINS_BAD_VERSION = 1.3.90
+GST1_PLUGINS_BAD_VERSION = $(GSTREAMER1_VERSION)
+
 GST1_PLUGINS_BAD_SOURCE = gst-plugins-bad-$(GST1_PLUGINS_BAD_VERSION).tar.gz
 GST1_PLUGINS_BAD_SITE = http://cgit.freedesktop.org/gstreamer/gst-plugins-bad/snapshot/
 GST1_PLUGINS_BAD_INSTALL_STAGING = YES
