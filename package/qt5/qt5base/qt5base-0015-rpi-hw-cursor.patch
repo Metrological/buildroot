@@ -1,0 +1,333 @@
+--- a/mkspecs/devices/linux-rasp-pi-g++/qeglfshooks_pi.cpp
++++ b/mkspecs/devices/linux-rasp-pi-g++/qeglfshooks_pi.cpp
+@@ -41,18 +41,23 @@
+ 
+ #include "qeglfshooks.h"
+ 
+-#include <QtDebug>
+-
+ #include <QtPlatformSupport/private/qeglconvenience_p.h>
+-#include <QtPlatformSupport/private/qeglplatformcontext_p.h>
++#include <QtPlatformSupport/private/qeglplatformcursor_p.h>
++#include <QtPlatformSupport/private/qeglplatformscreen_p.h>
++
++#include "qeglfsintegration.h"
+ 
+ #include <bcm_host.h>
+ 
++#define WINDOW_LAYER 1
++#define CURSOR_LAYER 50 /* the cursor should be on top */
++#define VC_DISPLAY 0
++
+ QT_BEGIN_NAMESPACE
+ 
+ static DISPMANX_DISPLAY_HANDLE_T dispman_display = 0;
+ 
+-static EGLNativeWindowType createDispmanxLayer(const QPoint &pos, const QSize &size, int z, DISPMANX_FLAGS_ALPHA_T flags)
++static EGLNativeWindowType createDispmanxLayer(const QPoint& pos, const QSize& size, int z, DISPMANX_FLAGS_ALPHA_T flags)
+ {
+     VC_RECT_T dst_rect;
+     dst_rect.x = pos.x();
+@@ -67,6 +72,7 @@
+     src_rect.height = size.height() << 16;
+ 
+     DISPMANX_UPDATE_HANDLE_T dispman_update = vc_dispmanx_update_start(0);
++    Q_ASSERT(0 != dispman_update);
+ 
+     VC_DISPMANX_ALPHA_T alpha;
+     alpha.flags = flags;
+@@ -75,11 +81,15 @@
+ 
+     DISPMANX_ELEMENT_HANDLE_T dispman_element = vc_dispmanx_element_add(
+             dispman_update, dispman_display, z, &dst_rect, 0, &src_rect,
+-            DISPMANX_PROTECTION_NONE, &alpha, (DISPMANX_CLAMP_T *)NULL, (DISPMANX_TRANSFORM_T)0);
++            DISPMANX_PROTECTION_NONE, &alpha, (DISPMANX_CLAMP_T*)NULL, (DISPMANX_TRANSFORM_T)0);
++    Q_ASSERT(0 != dispman_element);
+ 
+-    vc_dispmanx_update_submit_sync(dispman_update);
++    int ret = vc_dispmanx_update_submit_sync(dispman_update);
++    Q_ASSERT(-1 != ret);
++
++    EGL_DISPMANX_WINDOW_T* eglWindow = new EGL_DISPMANX_WINDOW_T;
++    Q_ASSERT(NULL != eglWindow);
+ 
+-    EGL_DISPMANX_WINDOW_T *eglWindow = new EGL_DISPMANX_WINDOW_T;
+     eglWindow->element = dispman_element;
+     eglWindow->width = size.width();
+     eglWindow->height = size.height();
+@@ -95,9 +105,11 @@
+ #define ELEMENT_CHANGE_MASK_RESOURCE  (1<<4)
+ #define ELEMENT_CHANGE_TRANSFORM      (1<<5)
+ 
+-static void moveDispmanxLayer(EGLNativeWindowType window, const QPoint &pos)
++static void moveDispmanxLayer(EGLNativeWindowType window, const QPoint& pos)
+ {
+-    EGL_DISPMANX_WINDOW_T *eglWindow = static_cast<EGL_DISPMANX_WINDOW_T *>(window);
++    EGL_DISPMANX_WINDOW_T* eglWindow = static_cast<EGL_DISPMANX_WINDOW_T*>(window);
++    Q_ASSERT(NULL != eglWindow);
++
+     QSize size(eglWindow->width, eglWindow->height);
+ 
+     VC_RECT_T dst_rect;
+@@ -107,7 +119,9 @@
+     dst_rect.height = size.height();
+ 
+     DISPMANX_UPDATE_HANDLE_T dispman_update = vc_dispmanx_update_start(0);
+-    vc_dispmanx_element_change_attributes(dispman_update,
++    Q_ASSERT(0 != dispman_update);
++
++    int ret = vc_dispmanx_element_change_attributes(dispman_update,
+                                           eglWindow->element,
+                                           ELEMENT_CHANGE_DEST_RECT /*change_flags*/,
+                                           0,
+@@ -116,30 +130,178 @@
+                                           NULL,
+                                           0,
+                                           (DISPMANX_TRANSFORM_T)0);
++    Q_ASSERT(-1 != ret);
+ 
+-    vc_dispmanx_update_submit_sync(dispman_update);
++    ret = vc_dispmanx_update_submit_sync(dispman_update);
++    Q_ASSERT(-1 != ret);
+ }
+ 
+ static void destroyDispmanxLayer(EGLNativeWindowType window)
+ {
+-    EGL_DISPMANX_WINDOW_T *eglWindow = static_cast<EGL_DISPMANX_WINDOW_T *>(window);
++    EGL_DISPMANX_WINDOW_T* eglWindow = static_cast<EGL_DISPMANX_WINDOW_T*>(window);
++    Q_ASSERT(NULL != eglWindow);
++
+     DISPMANX_UPDATE_HANDLE_T dispman_update = vc_dispmanx_update_start(0);
+-    vc_dispmanx_element_remove(dispman_update, eglWindow->element);
+-    vc_dispmanx_update_submit_sync(dispman_update);
++    Q_ASSERT( 0 != dispman_update);
++
++    int ret = vc_dispmanx_element_remove(dispman_update, eglWindow->element);
++    Q_ASSERT(-1 != ret);
++
++    ret = vc_dispmanx_update_submit_sync(dispman_update);
++    Q_ASSERT(-1 != ret);
++
+     delete eglWindow;
++    eglWindow = NULL;
+ }
+ 
+-class QEglFSPiHooks : public QEglFSHooks
++class QEglFSPiCursor: public QEGLPlatformCursor
++{
++public:
++    QEglFSPiCursor(QPlatformScreen* screen) : QEGLPlatformCursor(screen)
++    {
++        m_screen = dynamic_cast<QEGLPlatformScreen*>(screen);
++        Q_ASSERT(NULL != m_screen);
++
++        m_window = NULL;
++        m_surface = EGL_NO_SURFACE;
++        m_context = EGL_NO_CONTEXT;
++    }
++
++    ~QEglFSPiCursor()
++    {
++        destroySurface();
++    }
++
++    void changeCursor(QCursor* cursor, QWindow* window) Q_DECL_OVERRIDE
++    {
++        const QOpenGLContext* o_context = QOpenGLContext::currentContext();
++        if(NULL != o_context)
++        {
++            destroySurface();
++            createSurface();
++            paintCursor();
++        }
++
++        QEGLPlatformCursor::changeCursor(cursor, window);
++    }
++
++    void setPos(const QPoint& pos) Q_DECL_OVERRIDE
++    {
++        if(NULL != m_window)
++            moveDispmanxLayer(m_window, pos);
++        else
++            QEGLPlatformCursor::setPos(pos);
++    }
++
++    void pointerEvent(const QMouseEvent& event) Q_DECL_OVERRIDE
++    {
++        if(NULL != m_window)
++        {
++            if (event.type() == QEvent::MouseMove)
++                moveDispmanxLayer(m_window, event.pos());
++        }
++        else
++            QEGLPlatformCursor::pointerEvent(event);
++    }
++
++    void paintOnScreen() Q_DECL_OVERRIDE
++    {
++        // Expect a QOpenGLContext to exist
++        if(EGL_NO_SURFACE == m_surface)
++        {
++            createSurface();
++            paintCursor();
++        }
++    }
++
++private:
++    void paintCursor() Q_DECL_OVERRIDE
++    { 
++        EGLSurface surf_draw = eglGetCurrentSurface(EGL_DRAW);
++        Q_ASSERT(EGL_NO_SURFACE != surf_draw);
++        EGLSurface surf_read = eglGetCurrentSurface(EGL_READ);
++        Q_ASSERT(EGL_NO_SURFACE != surf_read);
++        EGLContext surf_context = eglGetCurrentContext();
++        Q_ASSERT(EGL_NO_CONTEXT != surf_context);
++
++        EGLBoolean ret = eglMakeCurrent(m_screen->display(), m_surface, m_surface, m_context);
++        Q_ASSERT(EGL_FALSE != ret);
++
++//        glClearColor(1, 1, 1, 0);
++        glClearColor(0, 0, 0, 0);
++        glClear(GL_COLOR_BUFFER_BIT);
++        Q_ASSERT(GL_INVALID_VALUE != glGetError());
++
++        QEGLPlatformCursor::paintOnScreen();
++
++        ret = eglSwapBuffers(m_screen->display(), m_surface);
++        Q_ASSERT(EGL_FALSE != ret);
++        ret = eglMakeCurrent(m_screen->display(), surf_draw, surf_read, surf_context);
++        Q_ASSERT(EGL_FALSE != ret);
++    }
++
++    void destroySurface()
++    { 
++        if (NULL != m_window)
++            destroyDispmanxLayer(m_window);
++
++        if (EGL_NO_SURFACE != m_surface)
++        {
++            EGLBoolean ret = eglDestroySurface(m_screen->display(), m_surface);
++            Q_ASSERT(EGL_FALSE != ret);
++        }
++
++        m_context = EGL_NO_CONTEXT;
++        m_surface = EGL_NO_SURFACE;
++        m_window = NULL;
++    }
++
++    void createSurface()
++    {
++        const QOpenGLContext* o_context = QOpenGLContext::currentContext();
++        Q_ASSERT(NULL != o_context);
++
++        QSurfaceFormat platformFormat(o_context->format());
++
++        // QEGLPlatformCursor uses screen geometry for coordinates
++        QRect screenRect(m_screen->geometry());
++        m_window = createDispmanxLayer(screenRect.topLeft(), screenRect.size(), CURSOR_LAYER, platformFormat.hasAlpha() ? DISPMANX_FLAGS_ALPHA_FROM_SOURCE : DISPMANX_FLAGS_ALPHA_FIXED_ALL_PIXELS);
++        Q_ASSERT(NULL != m_window);
++
++        m_display = m_screen->display();
++        Q_ASSERT(EGL_NO_DISPLAY != m_display);
++ 
++        m_config = q_configFromGLFormat(m_screen->display(), platformFormat);
++        Q_ASSERT(0 != m_config);
++
++        m_context = eglGetCurrentContext();
++        Q_ASSERT(EGL_NO_CONTEXT != m_context);
++
++        m_surface = eglCreateWindowSurface(m_screen->display(), m_config, m_window, NULL);
++        Q_ASSERT(EGL_NO_SURFACE != m_surface);
++    }
++
++    QEGLPlatformScreen* m_screen;
++
++    EGLNativeWindowType m_window;
++    EGLSurface m_surface;
++    EGLConfig m_config;
++    EGLContext m_context;
++    EGLDisplay m_display;
++};
++
++class QEglFSPiHooks: public QEglFSHooks
+ {
+ public:
+     virtual void platformInit();
+     virtual void platformDestroy();
+     virtual EGLNativeDisplayType platformDisplay() const;
+     virtual QSize screenSize() const;
+-    virtual EGLNativeWindowType createNativeWindow(QPlatformWindow *window, const QSize &size, const QSurfaceFormat &format);
++    virtual EGLNativeWindowType createNativeWindow(QPlatformWindow* window, const QSize& size, const QSurfaceFormat& format);
+     virtual void destroyNativeWindow(EGLNativeWindowType window);
+     virtual bool hasCapability(QPlatformIntegration::Capability cap) const;
+     virtual QSurfaceFormat surfaceFormatFor(const QSurfaceFormat &inputFormat) const;
++    virtual QEGLPlatformCursor* createCursor(QPlatformScreen* screen) const;
+ };
+ 
+ void QEglFSPiHooks::platformInit()
+@@ -149,30 +311,35 @@
+ 
+ EGLNativeDisplayType QEglFSPiHooks::platformDisplay() const
+ {
+-    dispman_display = vc_dispmanx_display_open(0/* LCD */);
++    dispman_display = vc_dispmanx_display_open(VC_DISPLAY);
++    Q_ASSERT(0 != dispman_display);
+     return EGL_DEFAULT_DISPLAY;
+ }
+ 
+ void QEglFSPiHooks::platformDestroy()
+ {
+-    vc_dispmanx_display_close(dispman_display);
++    Q_ASSERT(0 != dispman_display);
++    int ret = vc_dispmanx_display_close(dispman_display);
++    Q_ASSERT(-1 != ret);
+ }
+ 
+ QSize QEglFSPiHooks::screenSize() const
+ {
+     uint32_t width, height;
+-    graphics_get_display_size(0 /* LCD */, &width, &height);
++    int ret = graphics_get_display_size(VC_DISPLAY, &width, &height);
++    Q_ASSERT(-1 != ret);
+     return QSize(width, height);
+ }
+ 
+-EGLNativeWindowType QEglFSPiHooks::createNativeWindow(QPlatformWindow *window, const QSize &size, const QSurfaceFormat &format)
++EGLNativeWindowType QEglFSPiHooks::createNativeWindow(QPlatformWindow* window, const QSize& size, const QSurfaceFormat& format)
+ {
+     Q_UNUSED(window)
+-    return createDispmanxLayer(QPoint(0, 0), size, 1, format.hasAlpha() ? DISPMANX_FLAGS_ALPHA_FROM_SOURCE : DISPMANX_FLAGS_ALPHA_FIXED_ALL_PIXELS);
++    return createDispmanxLayer(QPoint(0, 0), size, WINDOW_LAYER, format.hasAlpha() ? DISPMANX_FLAGS_ALPHA_FROM_SOURCE : DISPMANX_FLAGS_ALPHA_FIXED_ALL_PIXELS);
+ }
+ 
+ void QEglFSPiHooks::destroyNativeWindow(EGLNativeWindowType window)
+ {
++//    Q_ASSERT(NULL != window);
+     destroyDispmanxLayer(window);
+ }
+ 
+@@ -189,8 +356,15 @@
+     }
+ }
+ 
+-QSurfaceFormat QEglFSPiHooks::surfaceFormatFor(const QSurfaceFormat &inputFormat) const
++QEGLPlatformCursor* QEglFSPiHooks::createCursor(QPlatformScreen* screen) const
++{
++    Q_ASSERT(NULL != screen);
++    return new QEglFSPiCursor(screen);
++}
++
++QSurfaceFormat QEglFSPiHooks::surfaceFormatFor(const QSurfaceFormat& inputFormat) const
+ {
++//TODO: rpi (initial) config
+     QSurfaceFormat format = inputFormat;
+     format.setDepthBufferSize(24);
+     format.setStencilBufferSize(8);
+@@ -202,6 +376,6 @@
+ }
+ 
+ QEglFSPiHooks eglFSPiHooks;
+-QEglFSHooks *platformHooks = &eglFSPiHooks;
++QEglFSHooks* platformHooks = &eglFSPiHooks;
+ 
+ QT_END_NAMESPACE
