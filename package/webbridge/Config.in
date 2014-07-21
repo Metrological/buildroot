@@ -1,0 +1,20 @@
+config BR2_PACKAGE_WEBBRIDGE
+	bool "webbridge"
+	depends on BR2_PACKAGE_CPPSDK_GENERICS
+	depends on BR2_PACKAGE_CPPSDK_WEBSOCKET
+	help
+	  This application allows plugins to be hosted in a process that 
+	  handles web request and websockets. 
+	  The webrequest and websocket serialization and deserialization
+	  is part of the WebBridge. The plugin will eceive objects and
+	  can send back the objects over a socket connection.
+
+if BR2_PACKAGE_WEBBRIDGE
+
+config BR2_PACKAGE_PLUGIN_FANCONTROL
+        bool "fancontrol"
+        help
+          An example plugin that shows the usage of the webbridge and
+	  actually controls a Fan in a household in Holland :-)
+endif
+
