@@ -16,9 +16,9 @@ ifeq ($(BR2_PACKAGE_PLUGIN_FANCONTROL),y)
 endif
 
 ifeq ($(BR2_PACKAGE_PLUGIN_SURFACECOMPOSITOR),y)
-	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) NEXUS_TOP=$(BCM_REFSW_DIR)/nexus CXX=$(TARGET_CXX) -C $(@D)/plugins/surfacecompositor build ;
-	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) NEXUS_TOP=$(BCM_REFSW_DIR)/nexus -C $(@D)/plugins/surfacecompositor target ;
-	WEBBRIDGE_PLUGIN_INSTALL_STAGING += $(MAKE) NEXUS_TOP=$(BCM_REFSW_DIR)/nexus -C $(@D)/plugins/surfacecompositor staging ;
+	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) NEXUS_TOP=$(BCM_REFSW_DIR)/nexus CXX=$(TARGET_CXX) CC=$(TARGET_CC) -C $(@D)/plugins/surfacecompositor build ;
+	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) NEXUS_TOP=$(BCM_REFSW_DIR)/nexus CXX=$(TARGET_CXX) CC=$(TARGET_CC) -C $(@D)/plugins/surfacecompositor target ;
+	WEBBRIDGE_PLUGIN_INSTALL_STAGING += $(MAKE) NEXUS_TOP=$(BCM_REFSW_DIR)/nexus CXX=$(TARGET_CXX) CC=$(TARGET_CC) -C $(@D)/plugins/surfacecompositor staging ;
 endif
 
 define WEBBRIDGE_BUILD_CMDS
