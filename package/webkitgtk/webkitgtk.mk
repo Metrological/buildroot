@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-WEBKITGTK_VERSION = 4c560c848c4cc0189e46d9df7c1c52102ad14ae1
+WEBKITGTK_VERSION = cc30f67ab701bdbba553f718342bfbe6b9805123
 WEBKITGTK_SITE = $(call github,Metrological,webkitgtk,$(WEBKITGTK_VERSION))
 WEBKITGTK_INSTALL_STAGING = YES
 WEBKITGTK_DEPENDENCIES = host-flex host-bison host-gperf host-ruby \
