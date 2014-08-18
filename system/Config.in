@@ -9,6 +9,14 @@ config BR2_TARGET_GENERIC_HOSTNAME
 	  Leave empty to not create /etc/hostname, or to keep the
 	  one from a custom skeleton.
 
+config BR2_TARGET_GENERIC_TIMESERVER
+	string "Time Server"
+	default "ntp.xs4all.nl"
+	help
+	  Select a server that can be used to ask the time.
+
+	  Create an empty setting to prevent a time request from being issued.
+
 config BR2_TARGET_GENERIC_ISSUE
 	string "System banner"
 	default "Welcome to Buildroot"
