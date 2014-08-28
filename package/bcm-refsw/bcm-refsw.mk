@@ -42,7 +42,7 @@ BCM_OUTPUT = "/obj.$(call qstrip,${BR2_PACKAGE_BCM_REFSW_PLATFORM})/"
 else
 BCM_OUTPUT = "/"
 endif
-
+        
 ifeq ($(BR2_PACKAGE_PLUGIN_SURFACECOMPOSITOR),Y)
 EGL_DESCRIPTION_FILE = egl.pc.sc
 else ifeq ($(BR2_PACKAGE_DAWN_SDK),Y)
