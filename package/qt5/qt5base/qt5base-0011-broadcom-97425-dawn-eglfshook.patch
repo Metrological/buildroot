@@ -14,7 +14,7 @@
 +#include <refsw/nexus_core_utils.h>
 +#include <refsw/default_nexus.h>
 +
-+#ifndef NEXUS_STANDALONE
++#ifdef NEXUS_SURFACE_COMPOSITION
 +#include <refsw/refsw_session_simple_client.h>
 +#endif
 +
@@ -30,7 +30,7 @@
 +static NEXUS_SurfaceClient* gs_native_window = 0;
 +static NXPL_PlatformHandle  nxpl_handle = 0;
 +
-+#ifdef NEXUS_STANDALONE
++#ifndef NEXUS_SURFACE_COMPOSITION
 +
 +#if NEXUS_NUM_HDMI_OUTPUTS && !NEXUS_DTV_PLATFORM
 +
@@ -101,7 +101,7 @@
 +   bool succeeded = true;
 +   NEXUS_Error err;
 +
-+#ifdef NEXUS_STANDALONE
++#ifndef NEXUS_SURFACE_COMPOSITION
 +
 +   NEXUS_PlatformSettings platform_settings;
 +
