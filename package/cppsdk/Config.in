@@ -33,6 +33,13 @@ config BR2_PACKAGE_CPPSDK_DEVICES
           Functionality to handle hardware specific device in an
 	  object oriented design.
 
+config BR2_PACKAGE_CPPSDK_TRACING
+        bool "tracing"
+        depends on BR2_PACKAGE_CPPSDK_GENERICS
+        help
+          Functionality to handle runtime enabling and disabling of 
+          tracing. This is NOT intended for LOGGING !!!
+
 endif
 
 endif
