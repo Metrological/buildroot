@@ -7,6 +7,7 @@ menuconfig BR2_PACKAGE_BCM_REFSW
 	select BR2_PACKAGE_HAS_OPENGL_EGL
 	select BR2_PACKAGE_HAS_OPENGL_ES
 	select BR2_PACKAGE_HAS_OPENVG
+	select BR2_PACKAGE_BCM_REFSW_LOCATION
 	help
 	  Broadcom Reference Software contains the necessary library to use the
 	  VideoCore driver.
@@ -39,12 +40,12 @@ choice
 config BR2_BCM_REFSW_VERSION_V12
         bool "V12"
         help
-	   Use official releas from Broadcom labeled V20121210
+	   Use official release from Broadcom labeled V20121210
 
 config BR2_BCM_REFSW_VERSION_V13
         bool "V13"
         help
-	   Use official releas from Broadcom labeled V20131218
+	   Use official release from Broadcom labeled V20131218
 
 config BR2_BCM_REFSW_CUSTOM
         bool "Custom"

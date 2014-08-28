@@ -43,6 +43,14 @@ else
 BCM_OUTPUT = "/"
 endif
 
+else ifeq ($(BR2_PACKAGE_PLUGIN_SURFACECOMPOSITOR),Y)
+	EGL_DESCRIPTION_FILE = egl.pc.sc
+else ifeq ($(BR2_PACKAGE_DAWN_SDK),Y)
+	EGL_DESCRIPTION_FILE = egl.pc.sc
+else
+	EGL_DESCRIPTION_FILE = egl.pc
+endif
+
 BCM_MAKEFLAGS  = CROSS_COMPILE="${TARGET_CROSS}"
 BCM_MAKEFLAGS += TOOLCHAIN_DIR="${HOST_DIR}/usr/bin"
 BCM_MAKEFLAGS += B_REFSW_ARCH=mipsel-linux
@@ -77,7 +85,7 @@ define BCM_REFSW_INSTALL_STAGING_CMDS
 	$(INSTALL) -m 755 -d $(STAGING_DIR)/usr/include/GLES2
 	$(INSTALL) -m 755 -d $(STAGING_DIR)/usr/include/EGL
 	$(INSTALL) -m 755 -d $(STAGING_DIR)/usr/include/refsw
-	$(INSTALL) -m 644 package/bcm-refsw/egl.pc $(STAGING_DIR)/usr/lib/pkgconfig/
+	$(INSTALL) -m 644 package/bcm-refsw/$(EGL_DESCRIPTION_FILE) $(STAGING_DIR)/usr/lib/pkgconfig/egl.pc
 	$(INSTALL) -m 644 package/bcm-refsw/glesv2.pc $(STAGING_DIR)/usr/lib/pkgconfig/
 	$(INSTALL) -m 644 $(@D)$(BCM_OUTPUT)nexus/bin/include/*.h $(STAGING_DIR)/usr/include/refsw/
 	$(INSTALL) -m 644 $(@D)/rockford/middleware/platform/nexus/*.h $(STAGING_DIR)/usr/include/refsw/

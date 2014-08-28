@@ -1,0 +1,46 @@
+config BR2_PACKAGE_CPPSDK
+	bool "cppsdk"
+	help
+	  Lightweight C++ platform abstraction wrapper classes 
+	  to assist C++ developers to build platform abstracted
+	  applications. 
+	  The library is developped to abstract the Windows OS
+	  and the linux OS.
+	  Abstractions for Threading, Sockets, Synchronisation,
+ 	  Web/WebSockets etc..
+
+if BR2_PACKAGE_CPPSDK
+
+config BR2_PACKAGE_CPPSDK_GENERICS
+        bool "generics"
+        help
+          Base set of platform abstraction wrappers, part opf cppsdk.
+          Minimal set, required to use any part of this library.
+
+if BR2_PACKAGE_CPPSDK_GENERICS
+
+config BR2_PACKAGE_CPPSDK_WEBSOCKET
+        bool "websocket"
+        depends on BR2_PACKAGE_CPPSDK_GENERICS
+        help
+          Functionality to handle web communiciation and web socket
+          communication.
+
+config BR2_PACKAGE_CPPSDK_DEVICES
+        bool "devices"
+        depends on BR2_PACKAGE_CPPSDK_GENERICS
+        help
+          Functionality to handle hardware specific device in an
+	  object oriented design.
+
+config BR2_PACKAGE_CPPSDK_TRACING
+        bool "tracing"
+        depends on BR2_PACKAGE_CPPSDK_GENERICS
+        help
+          Functionality to handle runtime enabling and disabling of 
+          tracing. This is NOT intended for LOGGING !!!
+
+endif
+
+endif
+
