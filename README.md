@@ -14,7 +14,7 @@ For host machines with kernel 3.8 or higher (e.g. Ubuntu 13.04) you can use the 
 
 	sudo apt-get install build-essential git subversion cvs unzip whois ncurses-dev bc mercurial f2fs-tools
 
-When creating a VM please allocate a minimal of 15GB disk space.
+When creating a VM please allocate a minimal of 20GB disk space.
 
 Building
 --------
