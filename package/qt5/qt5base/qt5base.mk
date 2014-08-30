@@ -64,6 +64,12 @@ QT5BASE_LICENSE = Commercial license
 QT5BASE_REDISTRIBUTE = NO
 endif
 
+ifeq ($(BR2_PACKAGE_PLUGIN_SURFACECOMPOSITOR),y)
+QT5BASE_DEPENDENCIES   += webbridge
+else ifeq ($(BR2_PACKAGE_DAWN_SDK),y)
+QT5BASE_DEPENDENCIES   += dawn-sdk
+endif
+
 # Qt5 SQL Plugins
 ifeq ($(BR2_PACKAGE_QT5BASE_SQL),y)
 ifeq ($(BR2_PACKAGE_QT5BASE_MYSQL),y)
