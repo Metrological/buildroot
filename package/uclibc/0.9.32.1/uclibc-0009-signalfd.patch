@@ -1,0 +1,12 @@
+--- a/include/sys/signalfd.h	2014-08-22 10:16:17.283113963 +0200
++++ b/include/sys/signalfd.h	2014-08-27 16:23:05.766199520 +0200
+@@ -79,7 +79,7 @@
+ /* Request notification for delivery of signals in MASK to be
+    performed using descriptor FD.*/
+ extern int signalfd (int __fd, const sigset_t *__mask, int __flags)
+-  __nonnull ((2)) __THROW;
++  __THROW __nonnull ((2));
+ 
+ __END_DECLS
+ 
+
