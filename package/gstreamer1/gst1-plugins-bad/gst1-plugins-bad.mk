@@ -412,6 +412,12 @@ else
 GST1_PLUGINS_BAD_CONF_OPT += --disable-sdp
 endif
 
+ifeq ($(BR2_PACKAGE_GST1_PLUGINS_BAD_PLUGIN_SRTP),y)
+GST1_PLUGINS_BAD_CONF_OPT += --enable-srtp
+else
+GST1_PLUGINS_BAD_CONF_OPT += --disable-srtp
+endif
+
 ifeq ($(BR2_PACKAGE_GST1_PLUGINS_BAD_PLUGIN_SEGMENTCLIP),y)
 GST1_PLUGINS_BAD_CONF_OPT += --enable-segmentclip
 else
