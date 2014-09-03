@@ -1,0 +1,9 @@
+config BR2_PACKAGE_LIBSRTP
+	bool "libsrtp"
+	help
+	  The libSRTP library is an open-source implementation of the
+	  Secure Real-time Transport Protocol (SRTP) originally
+	  authored by Cisco Systems, Inc. It is available under a
+	  BSD-style license.
+
+	  http://srtp.sourceforge.net/
