@@ -31,16 +31,21 @@ BCM_MAKE_ENV = \
 	TOOLCHAIN_ROOT=$(HOST_DIR)/usr/bin/ \
 	SC_PLATFORM=bcm$(call qstrip,${BR2_PACKAGE_BCM_REFSW_PLATFORM})nexus
 
-ifeq ($(BR2_ENABLE_DEBUG),y)
-BCM_MAKE_ENV += B_REFSW_DEBUG=y
-else
+ifeq ($(BR2_BCM_REFSW_DEBUG_LEVEL_OFF), y)
 BCM_MAKE_ENV += B_REFSW_DEBUG=n
+else 
+BCM_MAKE_ENV += B_REFSW_DEBUG=y
+ifeq ($(BR2_BCM_REFSW_DEBUG_LEVEL_ERROR), y)
+BCM_MAKE_ENV += B_REFSW_DEBUG_LEVEL=err
+else
+BCM_MAKE_ENV += B_REFSW_DEBUG_LEVEL=wrn
+endif
 endif
 
 ifneq ($(BCM_REFSW_VERSION),20121210)
-BCM_OUTPUT = "/obj.$(call qstrip,${BR2_PACKAGE_BCM_REFSW_PLATFORM})/"
+BCM_OUTPUT = /obj.$(call qstrip,${BR2_PACKAGE_BCM_REFSW_PLATFORM})/
 else
-BCM_OUTPUT = "/"
+BCM_OUTPUT = /
 endif
         
 ifeq ($(BR2_PACKAGE_PLUGIN_SURFACECOMPOSITOR),y)
@@ -49,6 +54,12 @@ else ifeq ($(BR2_PACKAGE_DAWN_SDK),y)
 EGL_DESCRIPTION_FILE = egl.pc.sc
 else
 EGL_DESCRIPTION_FILE = egl.pc
+endif
+
+ifeq ($(BR2_BCMREFSW_PROXY_MODE),y)
+BCM_MAKE_ENV += NEXUS_MODE=proxy
+else
+BCM_MAKE_ENV += NEXUS_MODE=client
 endif
 
 BCM_MAKEFLAGS  = CROSS_COMPILE="${TARGET_CROSS}"
@@ -66,15 +77,18 @@ endef
 
 define BCM_REFSW_BUILD_CMDS
 	$(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/nexus/build all
-	$(BCM_MAKE_ENV) NEXUS_MODE=client $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/nexus/build all
+	$(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/nexus/build all
 	$(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/middleware/v3d -f V3DDriver.mk
 	$(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/middleware/platform/nexus -f platform_nexus.mk
 	$(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/applications/khronos/v3d/nexus/cube
 endef
 
 define BCM_REFSW_INSTALL_LIBS
+	if [ -f $(@D)$(BCM_OUTPUT)nexus/bin/libnexus_client.so ] ; then 						\
+		$(INSTALL) -D $(@D)$(BCM_OUTPUT)nexus/bin/libnexus_client.so $1/usr/lib/libnexus_client.so ;		\
+	fi
+		
 	$(INSTALL) -D $(@D)$(BCM_OUTPUT)nexus/bin/libnexus.so $1/usr/lib/libnexus.so
-	$(INSTALL) -D $(@D)$(BCM_OUTPUT)nexus/bin/libnexus_client.so $1/usr/lib/libnexus_client.so
 	$(INSTALL) -D $(@D)$(BCM_OUTPUT)nexus/bin/libv3ddriver.so $1/usr/lib/libv3ddriver.so
 	$(INSTALL) -D $(@D)$(BCM_OUTPUT)nexus/bin/libnxpl.so $1/usr/lib/libnxpl.so
 endef
@@ -97,7 +111,12 @@ define BCM_REFSW_INSTALL_STAGING_CMDS
 endef
 
 define BCM_REFSW_INSTALL_TARGET_CMDS
-	$(INSTALL) -m 644 -D $(@D)$(BCM_OUTPUT)nexus/bin/bcmdriver.ko $(TARGET_DIR)/lib/modules/bcmdriver.ko
+	$(INSTALL) -m 750 -D $(@D)$(BCM_OUTPUT)nexus/bin/nexus $(TARGET_DIR)/sbin/nexus
+	if [ -f $(@D)$(BCM_OUTPUT)nexus/bin/bcmdriver.ko ] ; then 							\
+		$(INSTALL) -m 644 -D $(@D)$(BCM_OUTPUT)nexus/bin/bcmdriver.ko $(TARGET_DIR)/lib/modules/bcmdriver.ko ;	\
+	else														\
+		$(INSTALL) -m 644 -D $(@D)$(BCM_OUTPUT)nexus/bin/nexus.ko $(TARGET_DIR)/lib/modules/nexus.ko ;		\
+	fi
 	$(call BCM_REFSW_INSTALL_LIBS,$(TARGET_DIR))
 endef
 

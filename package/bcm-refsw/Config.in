@@ -34,6 +34,34 @@ config BR2_PACKAGE_BCM_REFSW_PLATFORM
 config BR2_PACKAGE_BCM_REFSW_PLATFORM_REV
 	string "Broadcom target platform revision"
 
+config BR2_BCMREFSW_PROXY_MODE
+	bool "proxy"
+	help
+	  In ProxyMode, the Broadcom Reference software is build i such a way that most of
+	  the functionality is placed in kermnel modules. This means that the client lib, 
+          included in the applications is just a proxy towards the kernel module.
+	  if enabled, NEXUS_MODE=proxy.
+
+choice
+        prompt "Broadcom reference software debug level "
+
+config BR2_BCM_REFSW_DEBUG_LEVEL_OFF
+        bool "none"
+        help
+	   No debugging at all (B_REFSW_DEBUG=n)
+
+config BR2_BCM_REFSW_DEBUG_LEVEL_ERROR
+        bool "error"
+        help
+	   Errors during the run will be reported (B_REFSW_DEBUG=y, B_REFSW_DEBUG_LEVEL=err)
+
+config BR2_BCM_REFSW_DEBUG_LEVEL_WARNING
+        bool "warning"
+        help
+	   Errors and warnings during the run will be reported (B_REFSW_DEBUG=y, B_REFSW_DEBUG_LEVEL=wrn)
+
+endchoice
+
 choice
         prompt "Broadcom reference software version"
 

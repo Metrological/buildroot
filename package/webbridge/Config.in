@@ -36,6 +36,7 @@ config BR2_PACKAGE_PLUGIN_DELAYEDRESPONSE
 config BR2_PACKAGE_PLUGIN_SURFACECOMPOSITOR
         bool "surfacecompositor"
 	depends on BR2_PACKAGE_BCM_REFSW
+	select BR2_BCMREFSW_PROXY_MODE
         help
           A nexus platform wrapper to allow multiple processes to
 	  access the display and modify properties of the allocated
