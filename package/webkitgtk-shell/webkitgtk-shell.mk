@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-WEBKITGTK_SHELL_VERSION = 85e10fbb2a9ee5ae34a78cb8f30c6515b518b07e
+WEBKITGTK_SHELL_VERSION = 2bb51068e5697b3b4e494968f78cfc1ce790424d
 WEBKITGTK_SHELL_SITE = $(call github,Metrological,webkitgtk-shell,$(WEBKITGTK_SHELL_VERSION))
 WEBKITGTK_SHELL_DEPENDENCIES = webkitgtk
 
