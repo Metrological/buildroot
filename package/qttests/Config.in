@@ -1,0 +1,5 @@
+config BR2_PACKAGE_QTTESTS
+	bool "qttests"
+	depends on BR2_PACKAGE_QT5
+        help
+	  Qt tests
