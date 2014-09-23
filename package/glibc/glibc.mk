@@ -36,12 +36,12 @@ ifeq ($(findstring 2.13,$(GLIBC_VERSION)),2.13)
 GLIBC_CONF_OPTIONS += libc_cv_c_cleanup=yes
 endif
 
+# glibc is part of the toolchain so disable the toolchain dependency
+GLIBC_ADD_TOOLCHAIN_DEPENDENCY = NO
+
 # Before (e)glibc is configured, we must have the first stage
 # cross-compiler and the kernel headers
 GLIBC_DEPENDENCIES = host-gcc-initial linux-headers host-gawk
-
-# Before (e)glibc is built, we must have the second stage cross-compiler
-glibc-build: host-gcc-intermediate
 
 GLIBC_SUBDIR = build
 
