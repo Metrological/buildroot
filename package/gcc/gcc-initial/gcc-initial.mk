@@ -38,7 +38,7 @@ HOST_GCC_INITIAL_CONF_OPT = \
 HOST_GCC_INITIAL_CONF_ENV = \
 	$(HOST_GCC_COMMON_CONF_ENV)
 
-HOST_GCC_INITIAL_MAKE_OPT = all-gcc all-target-libgcc
+HOST_GCC_INITIAL_MAKE_OPT = $(if $(BR2_TOOLCHAIN_HAS_SSP),gcc_cv_libc_provides_ssp=yes) all-gcc all-target-libgcc
 HOST_GCC_INITIAL_INSTALL_OPT = install-gcc install-target-libgcc
 
 $(eval $(host-autotools-package))
