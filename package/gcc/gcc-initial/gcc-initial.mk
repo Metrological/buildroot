@@ -29,7 +29,6 @@ HOST_GCC_INITIAL_CONF_OPT = \
 	--enable-languages=c \
 	--disable-shared \
 	--without-headers \
-	--disable-threads \
 	--with-newlib \
 	--disable-largefile \
 	--disable-nls \
@@ -38,7 +37,7 @@ HOST_GCC_INITIAL_CONF_OPT = \
 HOST_GCC_INITIAL_CONF_ENV = \
 	$(HOST_GCC_COMMON_CONF_ENV)
 
-HOST_GCC_INITIAL_MAKE_OPT = $(if $(BR2_TOOLCHAIN_HAS_SSP),gcc_cv_libc_provides_ssp=yes) all-gcc all-target-libgcc
-HOST_GCC_INITIAL_INSTALL_OPT = install-gcc install-target-libgcc
+HOST_GCC_INITIAL_MAKE_OPT = all-gcc
+HOST_GCC_INITIAL_INSTALL_OPT = install-gcc
 
 $(eval $(host-autotools-package))

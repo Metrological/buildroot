@@ -13,7 +13,7 @@
 # In terms of implementation, this generic infrastructure requires the
 # .mk file to specify:
 #
-#   1. Metadata information about the package: name, version,
+#   1. Metadata informations about the package: name, version,
 #      download URL, etc.
 #
 #   2. Description of the commands to be executed to configure, build
@@ -58,7 +58,7 @@ GLOBAL_INSTRUMENTATION_HOOKS += step_time
 # User-supplied script
 define step_user
 	@$(foreach user_hook, $(BR2_INSTRUMENTATION_SCRIPTS), \
-		$(EXTRA_ENV) $(user_hook) "$(1)" "$(2)" "$(3)"$(sep))
+		$(USER_HOOKS_EXTRA_ENV) $(user_hook) "$(1)" "$(2)" "$(3)"$(sep))
 endef
 ifneq ($(BR2_INSTRUMENTATION_SCRIPTS),)
 GLOBAL_INSTRUMENTATION_HOOKS += step_user
@@ -70,7 +70,6 @@ endif
 
 # Retrieve the archive
 $(BUILD_DIR)/%/.stamp_downloaded:
-	$(foreach hook,$($(PKG)_PRE_DOWNLOAD_HOOKS),$(call $(hook))$(sep))
 ifeq ($(DL_MODE),DOWNLOAD)
 # Only show the download message if it isn't already downloaded
 	$(Q)if test ! -e $(DL_DIR)/$($(PKG)_SOURCE); then \
@@ -102,7 +101,6 @@ endif
 $(BUILD_DIR)/%/.stamp_extracted:
 	@$(call step_start,extract)
 	@$(call MESSAGE,"Extracting")
-	$(foreach hook,$($(PKG)_PRE_EXTRACT_HOOKS),$(call $(hook))$(sep))
 	$(Q)mkdir -p $(@D)
 	$($(PKG)_EXTRACT_CMDS)
 # some packages have messed up permissions inside
@@ -116,7 +114,6 @@ $(BUILD_DIR)/%/.stamp_extracted:
 $(BUILD_DIR)/%/.stamp_rsynced:
 	@$(call MESSAGE,"Syncing from source dir $(SRCDIR)")
 	@test -d $(SRCDIR) || (echo "ERROR: $(SRCDIR) does not exist" ; exit 1)
-	$(foreach hook,$($(PKG)_PRE_RSYNC_HOOKS),$(call $(hook))$(sep))
 	rsync -au $(RSYNC_VCS_EXCLUSIONS) $(SRCDIR)/ $(@D)
 	$(foreach hook,$($(PKG)_POST_RSYNC_HOOKS),$(call $(hook))$(sep))
 	$(Q)touch $@
@@ -165,8 +162,8 @@ $(BUILD_DIR)/%/.stamp_patched:
 # Configure
 $(BUILD_DIR)/%/.stamp_configured:
 	@$(call step_start,configure)
-	@$(call MESSAGE,"Configuring")
 	$(foreach hook,$($(PKG)_PRE_CONFIGURE_HOOKS),$(call $(hook))$(sep))
+	@$(call MESSAGE,"Configuring")
 	$($(PKG)_CONFIGURE_CMDS)
 	$(foreach hook,$($(PKG)_POST_CONFIGURE_HOOKS),$(call $(hook))$(sep))
 	$(Q)touch $@
@@ -176,8 +173,7 @@ $(BUILD_DIR)/%/.stamp_configured:
 $(BUILD_DIR)/%/.stamp_built::
 	@$(call step_start,build)
 	@$(call MESSAGE,"Building")
-	$(foreach hook,$($(PKG)_PRE_BUILD_HOOKS),$(call $(hook))$(sep))
-	+$($(PKG)_BUILD_CMDS)
+	$($(PKG)_BUILD_CMDS)
 	$(foreach hook,$($(PKG)_POST_BUILD_HOOKS),$(call $(hook))$(sep))
 	$(Q)touch $@
 	@$(call step_end,build)
@@ -186,8 +182,7 @@ $(BUILD_DIR)/%/.stamp_built::
 $(BUILD_DIR)/%/.stamp_host_installed:
 	@$(call step_start,install-host)
 	@$(call MESSAGE,"Installing to host directory")
-	$(foreach hook,$($(PKG)_PRE_INSTALL_HOOKS),$(call $(hook))$(sep))
-	+$($(PKG)_INSTALL_CMDS)
+	$($(PKG)_INSTALL_CMDS)
 	$(foreach hook,$($(PKG)_POST_INSTALL_HOOKS),$(call $(hook))$(sep))
 	$(Q)touch $@
 	@$(call step_end,install-host)
@@ -196,18 +191,13 @@ $(BUILD_DIR)/%/.stamp_host_installed:
 $(BUILD_DIR)/%/.stamp_staging_installed:
 	@$(call step_start,install-staging)
 	@$(call MESSAGE,"Installing to staging directory")
-	$(foreach hook,$($(PKG)_PRE_INSTALL_STAGING_HOOKS),$(call $(hook))$(sep))
-	+$($(PKG)_INSTALL_STAGING_CMDS)
+	$($(PKG)_INSTALL_STAGING_CMDS)
 	$(foreach hook,$($(PKG)_POST_INSTALL_STAGING_HOOKS),$(call $(hook))$(sep))
 	$(Q)if test -n "$($(PKG)_CONFIG_SCRIPTS)" ; then \
 		$(call MESSAGE,"Fixing package configuration files") ;\
-			$(SED)  "s,$(BASE_DIR),@BASE_DIR@,g" \
-				-e "s,$(STAGING_DIR),@STAGING_DIR@,g" \
-				-e "s,^\(exec_\)\?prefix=.*,\1prefix=@STAGING_DIR@/usr,g" \
-				-e "s,-I/usr/,-I@STAGING_DIR@/usr/,g" \
-				-e "s,-L/usr/,-L@STAGING_DIR@/usr/,g" \
-				-e "s,@STAGING_DIR@,$(STAGING_DIR),g" \
-				-e "s,@BASE_DIR@,$(BASE_DIR),g" \
+			$(SED)  "s,^\(exec_\)\?prefix=.*,\1prefix=$(STAGING_DIR)/usr,g" \
+				-e "s,-I/usr/,-I$(STAGING_DIR)/usr/,g" \
+				-e "s,-L/usr/,-L$(STAGING_DIR)/usr/,g" \
 				$(addprefix $(STAGING_DIR)/usr/bin/,$($(PKG)_CONFIG_SCRIPTS)) ;\
 	fi
 	$(Q)touch $@
@@ -216,9 +206,8 @@ $(BUILD_DIR)/%/.stamp_staging_installed:
 # Install to images dir
 $(BUILD_DIR)/%/.stamp_images_installed:
 	@$(call step_start,install-image)
-	$(foreach hook,$($(PKG)_PRE_INSTALL_IMAGES_HOOKS),$(call $(hook))$(sep))
 	@$(call MESSAGE,"Installing to images directory")
-	+$($(PKG)_INSTALL_IMAGES_CMDS)
+	$($(PKG)_INSTALL_IMAGES_CMDS)
 	$(foreach hook,$($(PKG)_POST_INSTALL_IMAGES_HOOKS),$(call $(hook))$(sep))
 	$(Q)touch $@
 	@$(call step_end,install-image)
@@ -227,12 +216,11 @@ $(BUILD_DIR)/%/.stamp_images_installed:
 $(BUILD_DIR)/%/.stamp_target_installed:
 	@$(call step_start,install-target)
 	@$(call MESSAGE,"Installing to target")
-	$(foreach hook,$($(PKG)_PRE_INSTALL_TARGET_HOOKS),$(call $(hook))$(sep))
-	+$($(PKG)_INSTALL_TARGET_CMDS)
 	$(if $(BR2_INIT_SYSTEMD),\
 		$($(PKG)_INSTALL_INIT_SYSTEMD))
 	$(if $(BR2_INIT_SYSV)$(BR2_INIT_BUSYBOX),\
 		$($(PKG)_INSTALL_INIT_SYSV))
+	$($(PKG)_INSTALL_TARGET_CMDS)
 	$(foreach hook,$($(PKG)_POST_INSTALL_TARGET_HOOKS),$(call $(hook))$(sep))
 	$(Q)if test -n "$($(PKG)_CONFIG_SCRIPTS)" ; then \
 		$(RM) -f $(addprefix $(TARGET_DIR)/usr/bin/,$($(PKG)_CONFIG_SCRIPTS)) ; \
@@ -245,57 +233,15 @@ $(BUILD_DIR)/%/.stamp_dircleaned:
 	rm -Rf $(@D)
 
 ################################################################################
-# virt-provides-single -- check that provider-pkg is the declared provider for
-# the virtual package virt-pkg
-#
-# argument 1 is the lower-case name of the virtual package
-# argument 2 is the upper-case name of the virtual package
-# argument 3 is the lower-case name of the provider
-#
-# example:
-#   $(call virt-provides-single,libegl,LIBEGL,rpi-userland)
-################################################################################
-define virt-provides-single
-ifneq ($$(call qstrip,$$(BR2_PACKAGE_PROVIDES_$(2))),$(3))
-$$(error Configuration error: both "$(3)" and $$(BR2_PACKAGE_PROVIDES_$(2))\
-are selected as providers for virtual package "$(1)". Only one provider can\
-be selected at a time. Please fix your configuration)
-endif
-endef
-
-################################################################################
 # inner-generic-package -- generates the make targets needed to build a
 # generic package
 #
 #  argument 1 is the lowercase package name
-#  argument 2 is the uppercase package name, including a HOST_ prefix
+#  argument 2 is the uppercase package name, including an HOST_ prefix
 #             for host packages
 #  argument 3 is the uppercase package name, without the HOST_ prefix
 #             for host packages
 #  argument 4 is the type (target or host)
-#
-# Note about variable and function references: inside all blocks that are
-# evaluated with $(eval), which includes all 'inner-xxx-package' blocks,
-# specific rules apply with respect to variable and function references.
-# - Numbered variables (parameters to the block) can be referenced with a single
-#   dollar sign: $(1), $(2), $(3), etc.
-# - pkgdir and pkgname should be referenced with a single dollar sign too. These
-#   functions rely on 'the most recently parsed makefile' which is supposed to
-#   be the package .mk file. If we defer the evaluation of these functions using
-#   double dollar signs, then they may be evaluated too late, when other
-#   makefiles have already been parsed. One specific case is when $$(pkgdir) is
-#   assigned to a variable using deferred evaluation with '=' and this variable
-#   is used in a target rule outside the eval'ed inner block. In this case, the
-#   pkgdir will be that of the last makefile parsed by buildroot, which is not
-#   the expected value. This mechanism is for example used for the TARGET_PATCH
-#   rule.
-# - All other variables should be referenced with a double dollar sign:
-#   $$(TARGET_DIR), $$($(2)_VERSION), etc. Also all make functions should be
-#   referenced with a double dollar sign: $$(subst), $$(call), $$(filter-out),
-#   etc. This rule ensures that these variables and functions are only expanded
-#   during the $(eval) step, and not earlier. Otherwise, unintuitive and
-#   undesired behavior occurs with respect to these variables and functions.
-#
 ################################################################################
 
 define inner-generic-package
@@ -304,12 +250,12 @@ define inner-generic-package
 # already defined. For some variables (version, source, site and
 # subdir), if they are undefined, we try to see if a variable without
 # the HOST_ prefix is defined. If so, we use such a variable, so that
-# this information has only to be specified once, for both the
+# these informations have only to be specified once, for both the
 # target and host packages of a given .mk file.
 
 $(2)_TYPE                       =  $(4)
 $(2)_NAME			=  $(1)
-$(2)_RAWNAME			=  $$(patsubst host-%,%,$(1))
+$(2)_RAWNAME			=  $(patsubst host-%,%,$(1))
 
 # Keep the package version that may contain forward slashes in the _DL_VERSION
 # variable, then replace all forward slashes ('/') by underscores ('_') to
@@ -318,15 +264,15 @@ $(2)_RAWNAME			=  $$(patsubst host-%,%,$(1))
 # version control system branch or tag, for example remotes/origin/1_10_stable.
 ifndef $(2)_VERSION
  ifdef $(3)_VERSION
-  $(2)_DL_VERSION := $$($(3)_VERSION)
-  $(2)_VERSION := $$(subst /,_,$$($(3)_VERSION))
+  $(2)_DL_VERSION = $($(3)_VERSION)
+  $(2)_VERSION = $(subst /,_,$($(3)_VERSION))
  else
   $(2)_VERSION = undefined
   $(2)_DL_VERSION = undefined
  endif
 else
-  $(2)_DL_VERSION := $$($(2)_VERSION)
-  $(2)_VERSION := $$(subst /,_,$$($(2)_VERSION))
+  $(2)_DL_VERSION = $($(2)_VERSION)
+  $(2)_VERSION = $(subst /,_,$($(2)_VERSION))
 endif
 
 $(2)_BASE_NAME	=  $(1)-$$($(2)_VERSION)
@@ -350,7 +296,7 @@ endif
 
 ifndef $(2)_SOURCE
  ifdef $(3)_SOURCE
-  $(2)_SOURCE = $$($(3)_SOURCE)
+  $(2)_SOURCE = $($(3)_SOURCE)
  else
   $(2)_SOURCE			?= $$($(2)_RAWNAME)-$$($(2)_VERSION).tar.gz
  endif
@@ -358,22 +304,22 @@ endif
 
 ifndef $(2)_PATCH
  ifdef $(3)_PATCH
-  $(2)_PATCH = $$($(3)_PATCH)
+  $(2)_PATCH = $($(3)_PATCH)
  endif
 endif
 
 ifndef $(2)_SITE
  ifdef $(3)_SITE
-  $(2)_SITE = $$($(3)_SITE)
+  $(2)_SITE = $($(3)_SITE)
  endif
 endif
 
 ifndef $(2)_SITE_METHOD
  ifdef $(3)_SITE_METHOD
-  $(2)_SITE_METHOD = $$($(3)_SITE_METHOD)
+  $(2)_SITE_METHOD = $($(3)_SITE_METHOD)
  else
 	# Try automatic detection using the scheme part of the URI
-	$(2)_SITE_METHOD = $$(call geturischeme,$$($(2)_SITE))
+	$(2)_SITE_METHOD = $(call geturischeme,$($(2)_SITE))
  endif
 endif
 
@@ -385,7 +331,7 @@ endif
 
 ifndef $(2)_LICENSE
  ifdef $(3)_LICENSE
-  $(2)_LICENSE = $$($(3)_LICENSE)
+  $(2)_LICENSE = $($(3)_LICENSE)
  endif
 endif
 
@@ -393,35 +339,20 @@ $(2)_LICENSE			?= unknown
 
 ifndef $(2)_LICENSE_FILES
  ifdef $(3)_LICENSE_FILES
-  $(2)_LICENSE_FILES = $$($(3)_LICENSE_FILES)
+  $(2)_LICENSE_FILES = $($(3)_LICENSE_FILES)
  endif
 endif
 
 ifndef $(2)_REDISTRIBUTE
  ifdef $(3)_REDISTRIBUTE
-  $(2)_REDISTRIBUTE = $$($(3)_REDISTRIBUTE)
+  $(2)_REDISTRIBUTE = $($(3)_REDISTRIBUTE)
  endif
 endif
 
 $(2)_REDISTRIBUTE		?= YES
 
-# When a target package is a toolchain dependency set this variable to
-# 'NO' so the 'toolchain' dependency is not added to prevent a circular
-# dependency
-$(2)_ADD_TOOLCHAIN_DEPENDENCY	?= YES
 
-ifeq ($(4),host)
-$(2)_DEPENDENCIES ?= $$(filter-out  host-toolchain $(1),\
-	$$(patsubst host-host-%,host-%,$$(addprefix host-,$$($(3)_DEPENDENCIES))))
-endif
-ifeq ($(4),target)
-ifeq ($$($(2)_ADD_TOOLCHAIN_DEPENDENCY),YES)
-$(2)_DEPENDENCIES += toolchain
-endif
-endif
-
-# Eliminate duplicates in dependencies
-$(2)_FINAL_DEPENDENCIES = $$(sort $$($(2)_DEPENDENCIES))
+$(2)_DEPENDENCIES ?= $(filter-out $(1),$(patsubst host-host-%,host-%,$(addprefix host-,$($(3)_DEPENDENCIES))))
 
 $(2)_INSTALL_STAGING		?= NO
 $(2)_INSTALL_IMAGES		?= NO
@@ -443,31 +374,22 @@ $(2)_TARGET_DIRCLEAN =		$$($(2)_DIR)/.stamp_dircleaned
 
 # default extract command
 $(2)_EXTRACT_CMDS ?= \
-	$$(if $$($(2)_SOURCE),$$(INFLATE$$(suffix $$($(2)_SOURCE))) $$(DL_DIR)/$$($(2)_SOURCE) | \
-	$$(TAR) $$(TAR_STRIP_COMPONENTS)=1 -C $$($(2)_DIR) $$(TAR_OPTIONS) -)
+	$$(if $$($(2)_SOURCE),$$(INFLATE$$(suffix $$($(2)_SOURCE))) $(DL_DIR)/$$($(2)_SOURCE) | \
+	$(TAR) $(TAR_STRIP_COMPONENTS)=1 -C $$($(2)_DIR) $(TAR_OPTIONS) -)
 
-# pre/post-steps hooks
-$(2)_PRE_DOWNLOAD_HOOKS         ?=
+# post-steps hooks
 $(2)_POST_DOWNLOAD_HOOKS        ?=
-$(2)_PRE_EXTRACT_HOOKS          ?=
 $(2)_POST_EXTRACT_HOOKS         ?=
-$(2)_PRE_RSYNC_HOOKS            ?=
 $(2)_POST_RSYNC_HOOKS           ?=
 $(2)_PRE_PATCH_HOOKS            ?=
 $(2)_POST_PATCH_HOOKS           ?=
 $(2)_PRE_CONFIGURE_HOOKS        ?=
 $(2)_POST_CONFIGURE_HOOKS       ?=
-$(2)_PRE_BUILD_HOOKS            ?=
 $(2)_POST_BUILD_HOOKS           ?=
-$(2)_PRE_INSTALL_HOOKS          ?=
 $(2)_POST_INSTALL_HOOKS         ?=
-$(2)_PRE_INSTALL_STAGING_HOOKS  ?=
 $(2)_POST_INSTALL_STAGING_HOOKS ?=
-$(2)_PRE_INSTALL_TARGET_HOOKS   ?=
 $(2)_POST_INSTALL_TARGET_HOOKS  ?=
-$(2)_PRE_INSTALL_IMAGES_HOOKS   ?=
 $(2)_POST_INSTALL_IMAGES_HOOKS  ?=
-$(2)_PRE_LEGAL_INFO_HOOKS       ?=
 $(2)_POST_LEGAL_INFO_HOOKS      ?=
 
 # human-friendly targets and target sequencing
@@ -480,47 +402,30 @@ $(1)-install:		$(1)-install-staging $(1)-install-target $(1)-install-images
 endif
 
 ifeq ($$($(2)_INSTALL_TARGET),YES)
-$(1)-install-target:		$$($(2)_TARGET_INSTALL_TARGET)
-$$($(2)_TARGET_INSTALL_TARGET):	$$($(2)_TARGET_BUILD)
+$(1)-install-target:	$(1)-build \
+			$$($(2)_TARGET_INSTALL_TARGET)
 else
 $(1)-install-target:
 endif
 
 ifeq ($$($(2)_INSTALL_STAGING),YES)
-$(1)-install-staging:			$$($(2)_TARGET_INSTALL_STAGING)
-$$($(2)_TARGET_INSTALL_STAGING):	$$($(2)_TARGET_BUILD)
-# Some packages use install-staging stuff for install-target
-$$($(2)_TARGET_INSTALL_TARGET):		$$($(2)_TARGET_INSTALL_STAGING)
+$(1)-install-staging:	$(1)-build \
+			$$($(2)_TARGET_INSTALL_STAGING)
 else
 $(1)-install-staging:
 endif
 
 ifeq ($$($(2)_INSTALL_IMAGES),YES)
-$(1)-install-images:		$$($(2)_TARGET_INSTALL_IMAGES)
-$$($(2)_TARGET_INSTALL_IMAGES):	$$($(2)_TARGET_BUILD)
+$(1)-install-images:	$(1)-build \
+			$$($(2)_TARGET_INSTALL_IMAGES)
 else
 $(1)-install-images:
 endif
 
-$(1)-install-host:      	$$($(2)_TARGET_INSTALL_HOST)
-$$($(2)_TARGET_INSTALL_HOST):	$$($(2)_TARGET_BUILD)
+$(1)-install-host:      $(1)-build $$($(2)_TARGET_INSTALL_HOST)
 
-$(1)-build:		$$($(2)_TARGET_BUILD)
-$$($(2)_TARGET_BUILD):	$$($(2)_TARGET_CONFIGURE)
-
-# Since $(2)_FINAL_DEPENDENCIES are phony targets, they are always "newer"
-# than $(2)_TARGET_CONFIGURE. This would force the configure step (and
-# therefore the other steps as well) to be re-executed with every
-# invocation of make.  Therefore, make $(2)_FINAL_DEPENDENCIES an order-only
-# dependency by using |.
-
-$(1)-configure:			$$($(2)_TARGET_CONFIGURE)
-$$($(2)_TARGET_CONFIGURE):	| $$($(2)_FINAL_DEPENDENCIES)
-
-$$($(2)_TARGET_SOURCE) $$($(2)_TARGET_RSYNC): | dirs prepare
-ifeq ($$(filter $(1),$$(DEPENDENCIES_HOST_PREREQ)),)
-$$($(2)_TARGET_SOURCE) $$($(2)_TARGET_RSYNC): | dependencies
-endif
+$(1)-build:		$(1)-configure \
+			$$($(2)_TARGET_BUILD)
 
 ifeq ($$($(2)_OVERRIDE_SRCDIR),)
 # In the normal case (no package override), the sequence of steps is
@@ -529,15 +434,15 @@ ifeq ($$($(2)_OVERRIDE_SRCDIR),)
 #  extract
 #  patch
 #  configure
-$$($(2)_TARGET_CONFIGURE):	$$($(2)_TARGET_PATCH)
+$(1)-configure:		$(1)-patch $(1)-depends \
+			$$($(2)_TARGET_CONFIGURE)
 
-$(1)-patch:		$$($(2)_TARGET_PATCH)
-$$($(2)_TARGET_PATCH):	$$($(2)_TARGET_EXTRACT)
+$(1)-patch:		$(1)-extract $$($(2)_TARGET_PATCH)
 
-$(1)-extract:			$$($(2)_TARGET_EXTRACT)
-$$($(2)_TARGET_EXTRACT):	$$($(2)_TARGET_SOURCE)
+$(1)-extract:		$(1)-source \
+			$$($(2)_TARGET_EXTRACT)
 
-$(1)-depends:		$$($(2)_FINAL_DEPENDENCIES)
+$(1)-depends:		$$($(2)_DEPENDENCIES)
 
 $(1)-source:		$$($(2)_TARGET_SOURCE)
 else
@@ -545,12 +450,10 @@ else
 #  source, by rsyncing
 #  depends
 #  configure
+$(1)-configure:		$(1)-depends \
+			$$($(2)_TARGET_CONFIGURE)
 
-# Use an order-only dependency so the "<pkg>-clean-for-rebuild" rule
-# can remove the stamp file without triggering the configure step.
-$$($(2)_TARGET_CONFIGURE): | $$($(2)_TARGET_RSYNC)
-
-$(1)-depends:		$$($(2)_FINAL_DEPENDENCIES)
+$(1)-depends:		$(1)-rsync $$($(2)_DEPENDENCIES)
 
 $(1)-patch:		$(1)-rsync
 $(1)-extract:		$(1)-rsync
@@ -561,14 +464,13 @@ $(1)-source:		$$($(2)_TARGET_RSYNC_SOURCE)
 endif
 
 $(1)-show-depends:
-			@echo $$($(2)_FINAL_DEPENDENCIES)
+			@echo $$($(2)_DEPENDENCIES)
 
-$(1)-graph-depends: graph-depends-requirements
-			@$$(INSTALL) -d $$(O)/graphs
-			@cd "$$(CONFIG_DIR)"; \
-			$$(TOPDIR)/support/scripts/graph-depends -p $(1) $$(BR2_GRAPH_DEPS_OPTS) \
-			|tee $$(O)/graphs/$$(@).dot \
-			|dot $$(BR2_GRAPH_DOT_OPTS) -T$$(BR_GRAPH_OUT) -o $$(O)/graphs/$$(@).$$(BR_GRAPH_OUT)
+$(1)-graph-depends:
+			@$(INSTALL) -d $(O)/graphs
+			@cd "$(CONFIG_DIR)"; \
+			$(TOPDIR)/support/scripts/graph-depends $(1) \
+			|dot -T$(_BR2_GRAPH_OUT) -o $(O)/graphs/$$(@).$(_BR2_GRAPH_OUT)
 
 $(1)-dirclean:		$$($(2)_TARGET_DIRCLEAN)
 
@@ -602,11 +504,10 @@ $$($(2)_TARGET_RSYNC):                  PKG=$(2)
 $$($(2)_TARGET_RSYNC_SOURCE):		SRCDIR=$$($(2)_OVERRIDE_SRCDIR)
 $$($(2)_TARGET_RSYNC_SOURCE):		PKG=$(2)
 $$($(2)_TARGET_PATCH):			PKG=$(2)
-$$($(2)_TARGET_PATCH):			RAWNAME=$$(patsubst host-%,%,$(1))
+$$($(2)_TARGET_PATCH):			RAWNAME=$(patsubst host-%,%,$(1))
 $$($(2)_TARGET_PATCH):			PKGDIR=$(pkgdir)
 $$($(2)_TARGET_EXTRACT):		PKG=$(2)
 $$($(2)_TARGET_SOURCE):			PKG=$(2)
-$$($(2)_TARGET_SOURCE):			PKGDIR=$(pkgdir)
 $$($(2)_TARGET_DIRCLEAN):		PKG=$(2)
 
 # Compute the name of the Kconfig option that correspond to the
@@ -614,9 +515,9 @@ $$($(2)_TARGET_DIRCLEAN):		PKG=$(2)
 # kernel case, the bootloaders case, and the normal packages case.
 ifeq ($(1),linux)
 $(2)_KCONFIG_VAR = BR2_LINUX_KERNEL
-else ifneq ($$(filter boot/%,$(pkgdir)),)
+else ifneq ($(filter boot/%,$(pkgdir)),)
 $(2)_KCONFIG_VAR = BR2_TARGET_$(2)
-else ifneq ($$(filter toolchain/%,$(pkgdir)),)
+else ifneq ($(filter toolchain/%,$(pkgdir)),)
 $(2)_KCONFIG_VAR = BR2_$(2)
 else
 $(2)_KCONFIG_VAR = BR2_PACKAGE_$(2)
@@ -628,91 +529,62 @@ $(2)_MANIFEST_LICENSE_FILES = $$($(2)_LICENSE_FILES)
 endif
 $(2)_MANIFEST_LICENSE_FILES ?= not saved
 
-# If the package declares _LICENSE_FILES, we need to extract it,
-# for overriden, local or normal remote packages alike, whether
-# we want to redistribute it or not.
-ifneq ($$($(2)_LICENSE_FILES),)
-$(1)-legal-info: $(1)-patch
-endif
-
-# We only save the sources of packages we want to redistribute, that are
-# non-local, and non-overriden. So only store, in the manifest, the tarball
-# name of those packages.
 ifeq ($$($(2)_REDISTRIBUTE),YES)
 ifneq ($$($(2)_SITE_METHOD),local)
 ifneq ($$($(2)_SITE_METHOD),override)
-# Packages that have a tarball need it downloaded beforehand
-$(1)-legal-info: $(1)-source $$(REDIST_SOURCES_DIR_$$(call UPPERCASE,$(4)))
+# Packages that have a tarball need it downloaded and extracted beforehand
+$(1)-legal-info: $(1)-extract $(REDIST_SOURCES_DIR_$(call UPPERCASE,$(4)))
 $(2)_MANIFEST_TARBALL = $$($(2)_SOURCE)
-$(2)_MANIFEST_SITE = $$(call qstrip,$$($(2)_SITE))
 endif
 endif
 endif
 $(2)_MANIFEST_TARBALL ?= not saved
-$(2)_MANIFEST_SITE ?= not saved
 
 # legal-info: produce legally relevant info.
 $(1)-legal-info:
 # Packages without a source are assumed to be part of Buildroot, skip them.
-	$$(foreach hook,$$($(2)_PRE_LEGAL_INFO_HOOKS),$$(call $$(hook))$$(sep))
-ifneq ($$(call qstrip,$$($(2)_SOURCE)),)
-
-# Save license files if defined
-# We save the license files for any kind of package: normal, local,
-# overridden, or non-redistributable alike.
-# The reason to save license files even for no-redistribute packages
-# is that the license still applies to the files distributed as part
-# of the rootfs, even if the sources are not themselves redistributed.
-ifeq ($$(call qstrip,$$($(2)_LICENSE_FILES)),)
-	@$$(call legal-license-nofiles,$$($(2)_RAWNAME),$$(call UPPERCASE,$(4)))
-	@$$(call legal-warning-pkg,$$($(2)_RAWNAME),cannot save license ($(2)_LICENSE_FILES not defined))
-else
-	@$$(foreach F,$$($(2)_LICENSE_FILES),$$(call legal-license-file,$$($(2)_RAWNAME),$$(F),$$($(2)_DIR)/$$(F),$$(call UPPERCASE,$(4)))$$(sep))
-endif # license files
+ifneq ($(call qstrip,$$($(2)_SOURCE)),)
 
 ifeq ($$($(2)_SITE_METHOD),local)
 # Packages without a tarball: don't save and warn
-	@$$(call legal-warning-nosource,$$($(2)_RAWNAME),local)
+	@$(call legal-warning-pkg-savednothing,$$($(2)_RAWNAME),local)
 
 else ifneq ($$($(2)_OVERRIDE_SRCDIR),)
-	@$$(call legal-warning-nosource,$$($(2)_RAWNAME),override)
+	@$(call legal-warning-pkg-savednothing,$$($(2)_RAWNAME),override)
 
 else
 # Other packages
 
+# Save license files if defined
+ifeq ($(call qstrip,$$($(2)_LICENSE_FILES)),)
+	@$(call legal-license-nofiles,$$($(2)_RAWNAME),$(call UPPERCASE,$(4)))
+	@$(call legal-warning-pkg,$$($(2)_RAWNAME),cannot save license ($(2)_LICENSE_FILES not defined))
+else
+# Double dollar signs are really needed here, to catch host packages
+# without explicit HOST_FOO_LICENSE_FILES assignment, also in case they
+# have multiple license files.
+	@$$(foreach F,$$($(2)_LICENSE_FILES),$$(call legal-license-file,$$($(2)_RAWNAME),$$(F),$$($(2)_DIR)/$$(F),$(call UPPERCASE,$(4)))$$(sep))
+endif # license files
+
 ifeq ($$($(2)_REDISTRIBUTE),YES)
 # Copy the source tarball (just hardlink if possible)
-	@cp -l $$(DL_DIR)/$$($(2)_SOURCE) $$(REDIST_SOURCES_DIR_$$(call UPPERCASE,$(4))) 2>/dev/null || \
-	   cp $$(DL_DIR)/$$($(2)_SOURCE) $$(REDIST_SOURCES_DIR_$$(call UPPERCASE,$(4)))
+	@cp -l $(DL_DIR)/$$($(2)_SOURCE) $(REDIST_SOURCES_DIR_$(call UPPERCASE,$(4))) 2>/dev/null || \
+	   cp $(DL_DIR)/$$($(2)_SOURCE) $(REDIST_SOURCES_DIR_$(call UPPERCASE,$(4)))
 endif # redistribute
 
 endif # other packages
-	@$$(call legal-manifest,$$($(2)_RAWNAME),$$($(2)_VERSION),$$($(2)_LICENSE),$$($(2)_MANIFEST_LICENSE_FILES),$$($(2)_MANIFEST_TARBALL),$$($(2)_MANIFEST_SITE),$$(call UPPERCASE,$(4)))
-endif # ifneq ($$(call qstrip,$$($(2)_SOURCE)),)
-	$$(foreach hook,$$($(2)_POST_LEGAL_INFO_HOOKS),$$(call $$(hook))$$(sep))
+	@$(call legal-manifest,$$($(2)_RAWNAME),$$($(2)_VERSION),$$($(2)_LICENSE),$$($(2)_MANIFEST_LICENSE_FILES),$$($(2)_MANIFEST_TARBALL),$(call UPPERCASE,$(4)))
+endif # ifneq ($(call qstrip,$$($(2)_SOURCE)),)
+	$(foreach hook,$($(2)_POST_LEGAL_INFO_HOOKS),$(call $(hook))$(sep))
 
 # add package to the general list of targets if requested by the buildroot
 # configuration
 ifeq ($$($$($(2)_KCONFIG_VAR)),y)
 
-# Ensure the calling package is the declared provider for all the virtual
-# packages it claims to be an implementation of.
-ifneq ($$($(2)_PROVIDES),)
-$$(foreach pkg,$$($(2)_PROVIDES),\
-	$$(eval $$(call virt-provides-single,$$(pkg),$$(call UPPERCASE,$$(pkg)),$(1))$$(sep)))
-endif
-
 TARGETS += $(1)
-
-ifneq ($$($(2)_PERMISSIONS),)
 PACKAGES_PERMISSIONS_TABLE += $$($(2)_PERMISSIONS)$$(sep)
-endif
-ifneq ($$($(2)_DEVICES),)
 PACKAGES_DEVICES_TABLE += $$($(2)_DEVICES)$$(sep)
-endif
-ifneq ($$($(2)_USERS),)
 PACKAGES_USERS += $$($(2)_USERS)$$(sep)
-endif
 
 ifeq ($$($(2)_SITE_METHOD),svn)
 DL_TOOLS_DEPENDENCIES += svn
@@ -732,8 +604,8 @@ endif # SITE_METHOD
 # ZCAT="gzip -d -c", and to check for the dependency we only want 'gzip'.
 # Do not add xzcat to the list of required dependencies, as it gets built
 # automatically if it isn't found.
-ifneq ($$(call suitable-extractor,$$($(2)_SOURCE)),$$(XZCAT))
-DL_TOOLS_DEPENDENCIES += $$(firstword $$(call suitable-extractor,$$($(2)_SOURCE)))
+ifneq ($(call suitable-extractor,$($(2)_SOURCE)),$(XZCAT))
+DL_TOOLS_DEPENDENCIES += $(firstword $(call suitable-extractor,$($(2)_SOURCE)))
 endif
 
 endif # $(2)_KCONFIG_VAR

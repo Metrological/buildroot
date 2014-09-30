@@ -9,7 +9,7 @@
 # infrastructure
 #
 # In terms of implementation, this autotools infrastructure requires
-# the .mk file to only specify metadata information about the
+# the .mk file to only specify metadata informations about the
 # package: name, version, download URL, etc.
 #
 # We still allow the package .mk file to override what the different
@@ -36,16 +36,6 @@ define CONFIG_UPDATE
 	done
 endef
 
-# This function generates the ac_cv_file_<foo> value for a given
-# filename. This is needed to convince configure script doing
-# AC_CHECK_FILE() tests that the file actually exists, since such
-# tests cannot be done in a cross-compilation context. This function
-# takes as argument the path of the file. An example usage is:
-#
-#  FOOBAR_CONF_ENV = \
-#	$(call AUTOCONF_AC_CHECK_FILE_VAL,/dev/random)=yes
-AUTOCONF_AC_CHECK_FILE_VAL = ac_cv_file_$(subst -,_,$(subst /,_,$(subst .,_,$(1))))
-
 ################################################################################
 # inner-autotools-package -- defines how the configuration, compilation and
 # installation of an autotools package should be done, implements a
@@ -54,7 +44,7 @@ AUTOCONF_AC_CHECK_FILE_VAL = ac_cv_file_$(subst -,_,$(subst /,_,$(subst .,_,$(1)
 # make targets
 #
 #  argument 1 is the lowercase package name
-#  argument 2 is the uppercase package name, including a HOST_ prefix
+#  argument 2 is the uppercase package name, including an HOST_ prefix
 #             for host packages
 #  argument 3 is the uppercase package name, without the HOST_ prefix
 #             for host packages
@@ -65,7 +55,7 @@ define inner-autotools-package
 
 ifndef $(2)_LIBTOOL_PATCH
  ifdef $(3)_LIBTOOL_PATCH
-  $(2)_LIBTOOL_PATCH = $$($(3)_LIBTOOL_PATCH)
+  $(2)_LIBTOOL_PATCH = $($(3)_LIBTOOL_PATCH)
  else
   $(2)_LIBTOOL_PATCH ?= YES
  endif
@@ -73,40 +63,25 @@ endif
 
 ifndef $(2)_MAKE
  ifdef $(3)_MAKE
-  $(2)_MAKE = $$($(3)_MAKE)
+  $(2)_MAKE = $($(3)_MAKE)
  else
-  $(2)_MAKE ?= $$(MAKE)
+  $(2)_MAKE ?= $(MAKE)
  endif
 endif
 
 ifndef $(2)_AUTORECONF
  ifdef $(3)_AUTORECONF
-  $(2)_AUTORECONF = $$($(3)_AUTORECONF)
+  $(2)_AUTORECONF = $($(3)_AUTORECONF)
  else
   $(2)_AUTORECONF ?= NO
  endif
-endif
-
-ifndef $(2)_GETTEXTIZE
- ifdef $(3)_GETTEXTIZE
-  $(2)_GETTEXTIZE = $$($(3)_GETTEXTIZE)
- else
-  $(2)_GETTEXTIZE ?= NO
- endif
-endif
-
-ifeq ($(4),host)
- $(2)_GETTEXTIZE_OPT ?= $$($(3)_GETTEXTIZE_OPT)
-endif
-
-ifeq ($(4),host)
- $(2)_AUTORECONF_OPT ?= $$($(3)_AUTORECONF_OPT)
 endif
 
 $(2)_CONF_ENV			?=
 $(2)_CONF_OPT			?=
 $(2)_MAKE_ENV			?=
 $(2)_MAKE_OPT			?=
+$(2)_AUTORECONF_OPT		?= $($(3)_AUTORECONF_OPT)
 $(2)_INSTALL_OPT                ?= install
 $(2)_INSTALL_STAGING_OPT	?= DESTDIR=$$(STAGING_DIR) install
 $(2)_INSTALL_TARGET_OPT		?= DESTDIR=$$(TARGET_DIR)  install
@@ -126,7 +101,6 @@ define $(2)_CONFIGURE_CMDS
 	$$(TARGET_CONFIGURE_OPTS) \
 	$$(TARGET_CONFIGURE_ARGS) \
 	$$($$(PKG)_CONF_ENV) \
-	CONFIG_SITE=/dev/null \
 	./configure \
 		--target=$$(GNU_TARGET_NAME) \
 		--host=$$(GNU_TARGET_NAME) \
@@ -141,7 +115,6 @@ define $(2)_CONFIGURE_CMDS
 		--disable-documentation \
 		--with-xmlto=no \
 		--with-fop=no \
-		--disable-dependency-tracking \
 		$$(DISABLE_NLS) \
 		$$(DISABLE_LARGEFILE) \
 		$$(DISABLE_IPV6) \
@@ -161,7 +134,6 @@ define $(2)_CONFIGURE_CMDS
 		CFLAGS="$$(HOST_CFLAGS)" \
 		LDFLAGS="$$(HOST_LDFLAGS)" \
                 $$($$(PKG)_CONF_ENV) \
-		CONFIG_SITE=/dev/null \
 		./configure \
 		--prefix="$$(HOST_DIR)/usr" \
 		--sysconfdir="$$(HOST_DIR)/etc" \
@@ -172,7 +144,6 @@ define $(2)_CONFIGURE_CMDS
 		--disable-documentation \
 		--with-xmlto=no \
 		--with-fop=no \
-		--disable-dependency-tracking \
 		$$(QUIET) $$($$(PKG)_CONF_OPT) \
 	)
 endef
@@ -194,7 +165,7 @@ $(2)_POST_PATCH_HOOKS += UPDATE_CONFIG_HOOK
 #
 define LIBTOOL_PATCH_HOOK
 	@$$(call MESSAGE,"Patching libtool")
-	$$(Q)if test "$$($$(PKG)_LIBTOOL_PATCH)" = "YES" \
+	$(Q)if test "$$($$(PKG)_LIBTOOL_PATCH)" = "YES" \
 		-a "$$($$(PKG)_AUTORECONF)" != "YES"; then \
 		for i in `find $$($$(PKG)_SRCDIR) -name ltmain.sh`; do \
 			ltmain_version=`sed -n '/^[ 	]*VERSION=/{s/^[ 	]*VERSION=//;p;q;}' $$$$i | \
@@ -216,20 +187,12 @@ $(2)_POST_PATCH_HOOKS += LIBTOOL_PATCH_HOOK
 endif
 
 #
-# Hook to gettextize the package if needed
-#
-define GETTEXTIZE_HOOK
-	@$$(call MESSAGE,"Gettextizing")
-	$(Q)cd $$($$(PKG)_SRCDIR) && $$(GETTEXTIZE) $$($$(PKG)_GETTEXTIZE_OPT)
-endef
-
-#
 # Hook to autoreconf the package if needed
 #
 define AUTORECONF_HOOK
 	@$$(call MESSAGE,"Autoreconfiguring")
-	$$(Q)cd $$($$(PKG)_SRCDIR) && $$($$(PKG)_AUTORECONF_ENV) $$(AUTORECONF) $$($$(PKG)_AUTORECONF_OPT)
-	$$(Q)if test "$$($$(PKG)_LIBTOOL_PATCH)" = "YES"; then \
+	$(Q)cd $$($$(PKG)_SRCDIR) && $(AUTORECONF) $$($$(PKG)_AUTORECONF_OPT)
+	$(Q)if test "$$($$(PKG)_LIBTOOL_PATCH)" = "YES"; then \
 		for i in `find $$($$(PKG)_SRCDIR) -name ltmain.sh`; do \
 			ltmain_version=`sed -n '/^[ 	]*VERSION=/{s/^[ 	]*VERSION=//;p;q;}' $$$$i | \
 			sed -e 's/\([0-9].[0-9]*\).*/\1/' -e 's/\"//'`; \
@@ -246,19 +209,12 @@ endef
 
 # This must be repeated from inner-generic-package, otherwise we get an empty
 # _DEPENDENCIES if _AUTORECONF is YES.  Also filter the result of _AUTORECONF
-# and _GETTEXTIZE away from the non-host rule
-ifeq ($(4),host)
-$(2)_DEPENDENCIES ?= $$(filter-out host-automake host-autoconf host-libtool \
-				host-gettext host-toolchain $(1),\
-    $$(patsubst host-host-%,host-%,$$(addprefix host-,$$($(3)_DEPENDENCIES))))
-endif
+# away from the non-host rule
+$(2)_DEPENDENCIES ?= $(filter-out host-automake host-autoconf host-libtool $(1),\
+    $(patsubst host-host-%,host-%,$(addprefix host-,$($(3)_DEPENDENCIES))))
+
 
 ifeq ($$($(2)_AUTORECONF),YES)
-# This has to come before autoreconf
-ifeq ($$($(2)_GETTEXTIZE),YES)
-$(2)_PRE_CONFIGURE_HOOKS += GETTEXTIZE_HOOK
-$(2)_DEPENDENCIES += host-gettext
-endif
 $(2)_PRE_CONFIGURE_HOOKS += AUTORECONF_HOOK
 $(2)_DEPENDENCIES += host-automake host-autoconf host-libtool
 endif
@@ -293,29 +249,13 @@ endif
 # Staging installation step. Only define it if not already defined by
 # the package .mk file.
 #
-# Most autotools packages install libtool .la files alongside any
-# installed libraries. These .la files sometimes refer to paths
-# relative to the sysroot, which libtool will interpret as absolute
-# paths to host libraries instead of the target libraries. Since this
-# is not what we want, these paths are fixed by prefixing them with
-# $(STAGING_DIR).  As we configure with --prefix=/usr, this fix
-# needs to be applied to any path that starts with /usr.
-#
-# To protect against the case that the output or staging directories
-# themselves are under /usr, we first substitute away any occurrences
-# of these directories as @BASE_DIR@ and @STAGING_DIR@. Note that
-# STAGING_DIR can be outside BASE_DIR when the user sets BR2_HOST_DIR
-# to a custom value.
-#
 ifndef $(2)_INSTALL_STAGING_CMDS
 define $(2)_INSTALL_STAGING_CMDS
 	$$(TARGET_MAKE_ENV) $$($$(PKG)_MAKE_ENV) $$($$(PKG)_MAKE) $$($$(PKG)_INSTALL_STAGING_OPT) -C $$($$(PKG)_SRCDIR)
-	find $$(STAGING_DIR)/usr/lib* -name "*.la" | xargs --no-run-if-empty \
-		$$(SED) "s:$$(BASE_DIR):@BASE_DIR@:g" \
-			-e "s:$$(STAGING_DIR):@STAGING_DIR@:g" \
-			-e "s:\(['= ]\)/usr:\\1@STAGING_DIR@/usr:g" \
-			-e "s:@STAGING_DIR@:$$(STAGING_DIR):g" \
-			-e "s:@BASE_DIR@:$$(BASE_DIR):g"
+	for i in $$$$(find $(STAGING_DIR)/usr/lib* -name "*.la"); do \
+		cp -f $$$$i $$$$i~; \
+		$$(SED) "s:\(['= ]\)/usr:\\1$(STAGING_DIR)/usr:g" $$$$i; \
+	done
 endef
 endif
 

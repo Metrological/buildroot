@@ -6,9 +6,6 @@
 
 TOOLCHAIN_SOURCE =
 
-
-TOOLCHAIN_DEPENDENCIES = $(HOST_DIR)/usr/share/buildroot/toolchainfile.cmake
-
 ifeq ($(BR2_TOOLCHAIN_BUILDROOT),y)
 TOOLCHAIN_DEPENDENCIES += toolchain-buildroot
 else ifeq ($(BR2_TOOLCHAIN_EXTERNAL),y)
