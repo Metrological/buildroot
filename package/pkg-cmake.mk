@@ -172,9 +172,4 @@ $(HOST_DIR)/usr/share/buildroot/toolchainfile.cmake:
 	set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)\n\
 	set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)\n\
 	set(ENV{PKG_CONFIG_SYSROOT_DIR} \"$(STAGING_DIR)\")\n\
-	set(CMAKE_MAKE_PROGRAM \"$(MAKE)\" CACHE STRING \"make program\" FORCE)\n\
 	" > $@
-
-#	# fix make
-	$(SED) 's/ -\([a-zA-Z][0-9]\)//' $(HOST_DIR)/usr/share/buildroot/toolchainfile.cmake
-

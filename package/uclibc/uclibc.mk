@@ -26,8 +26,8 @@ UCLIBC_INSTALL_STAGING = YES
 # cross-compiler and the kernel headers
 UCLIBC_DEPENDENCIES = host-gcc-initial linux-headers
 
-# uClibc is part of the toolchain so disable the toolchain dependency
-GLIBC_ADD_TOOLCHAIN_DEPENDENCY = NO
+# Before uClibc is built, we must have the second stage cross-compiler
+uclibc-build: host-gcc-intermediate
 
 # specifying UCLIBC_CONFIG_FILE on the command-line overrides the .config
 # setting.
