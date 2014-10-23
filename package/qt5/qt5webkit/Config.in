@@ -60,6 +60,7 @@ config BR2_QT5WEBKIT_USE_GSTREAMER
 
 config BR2_QT5WEBKIT_USE_ENCRYPTED_MEDIA
         bool "encrypted-media"
+	depends on BR2_QT5WEBKIT_USE_GSTREAMER
         default n
         help
           Enable Encrypted Media Extensions.
