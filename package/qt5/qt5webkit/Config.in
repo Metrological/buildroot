@@ -58,6 +58,16 @@ config BR2_QT5WEBKIT_USE_GSTREAMER
 	help
 	  Use GStreamer 1.x for media playback support. Recommended option.
 
+config BR2_QT5WEBKIT_USE_GSTREAMER010
+	bool "gstreamer-0.10"
+	depends on BR2_PACKAGE_GSTREAMER
+	depends on !BR2_QT5WEBKIT_USE_GSTREAMER
+	default n
+	select BR2_PACKAGE_GST_PLUGINS_BASE
+	select BR2_PACKAGE_GST_PLUGINS_GOOD
+	help
+	  Use GStreamer 0.10 for media playback support. Un-recommended option.
+
 config BR2_QT5WEBKIT_USE_ENCRYPTED_MEDIA
         bool "encrypted-media"
 	depends on BR2_QT5WEBKIT_USE_GSTREAMER

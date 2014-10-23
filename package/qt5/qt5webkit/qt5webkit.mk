@@ -75,6 +75,13 @@ QT5WEBKIT_CONFIG += \
 	WEBKIT_CONFIG+=web_audio
 endif
 
+ifeq ($(BR2_QT5WEBKIT_USE_GSTREAMER010),y)
+QT5WEBKIT_DEPENDENCIES += gstreamer gst-plugins-base gst-plugins-good gst-plugins-bad
+QT5WEBKIT_CONFIG += \
+	WEBKIT_CONFIG+=video \
+	WEBKIT_CONFIG+=use_gstreamer010
+endif
+
 ifeq ($(BR2_QT5WEBKIT_USE_DXDRM_EME),y)
 QT5WEBKIT_CONFIG += \
 	WEBKIT_CONFIG+=use_dxdrm
