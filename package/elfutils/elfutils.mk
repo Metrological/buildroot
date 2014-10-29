@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-ELFUTILS_VERSION = 0.155
+ELFUTILS_VERSION = 0.160
 ELFUTILS_SOURCE = elfutils-$(ELFUTILS_VERSION).tar.bz2
 ELFUTILS_SITE = https://fedorahosted.org/releases/e/l/elfutils/$(ELFUTILS_VERSION)
 ELFUTILS_LICENSE = GPLv3 GPLv2 LGPLv3
@@ -14,8 +14,7 @@ ELFUTILS_LICENSE_FILES = COPYING COPYING-GPLV2 COPYING-LGPLV3
 ELFUTILS_AUTORECONF = YES
 ELFUTILS_CONF_OPT += --disable-werror
 ELFUTILS_PATCH = \
-	elfutils-portability.patch \
-	elfutils-robustify.patch
+	elfutils-portability.patch
 
 ELFUTILS_INSTALL_STAGING = YES
 

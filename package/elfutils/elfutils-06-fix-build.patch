@@ -1,0 +1,19 @@
+--- a/libdwfl/fts.c.orig	2014-10-29 12:37:52.928690550 +0100
++++ b/libdwfl/fts.c	2014-10-29 12:39:01.693604448 +0100
+@@ -468,6 +468,7 @@
+ int
+ fts_set(FTS *sp, FTSENT *p, int instr)
+ {
++    (void) sp;
+ 	if (instr != 0 && instr != FTS_AGAIN && instr != FTS_FOLLOW &&
+ 	    instr != FTS_NOINSTR && instr != FTS_SKIP) {
+ 		errno = EINVAL;
+@@ -739,6 +740,8 @@
+ 				p->fts_info = FTS_NSOK;
+ 			p->fts_accpath = cur->fts_accpath;
+ 		} else
++#else
++                    (void) cderrno;
+ #endif
+ 		if (nlinks == 0
+ #if defined DT_DIR && defined _DIRENT_HAVE_D_TYPE
