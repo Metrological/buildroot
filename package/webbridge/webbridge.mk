@@ -34,16 +34,19 @@ ifeq ($(BR2_PACKAGE_PLUGIN_SURFACECOMPOSITOR),y)
 endif
 
 define WEBBRIDGE_BUILD_CMDS
+	$(MAKE) CXX="$(TARGET_CXX)" CXX=$(TARGET_CXX) -C $(@D)/WebBridgeSupport build
 	$(MAKE) CXX="$(TARGET_CXX)" CXX=$(TARGET_CXX) -C $(@D)/WebBridge build
 	$(WEBBRIDGE_PLUGIN_BUILD)
 endef
 
 define WEBBRIDGE_INSTALL_STAGING_CMDS
+	$(MAKE) -C $(@D)/WebBridgeSupport staging
 	$(MAKE) -C $(@D)/WebBridge staging
 	$(WEBBRIDGE_PLUGIN_INSTALL_STAGING)
 endef
 
 define WEBBRIDGE_INSTALL_TARGET_CMDS
+	$(MAKE) -C $(@D)/WebBridgeSupport target
 	$(MAKE) -C $(@D)/WebBridge target
 	$(WEBBRIDGE_PLUGIN_INSTALL_TARGET)
 endef
