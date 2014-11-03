@@ -16,12 +16,14 @@ DXDRM_DEPENDENCIES = libcurl
 
 define DXDRM_INSTALL_STAGING_CMDS
 	$(INSTALL) -m 755 $(@D)/dxdrm.$(call qstrip,$(BR2_ARCH)) $(STAGING_DIR)/usr/lib/libDxDrm.so
+	$(INSTALL) -m 755 $(@D)/trusted.$(call qstrip,$(BR2_ARCH)) $(STAGING_DIR)/usr/lib/libTrusted.so
 	$(INSTALL) -d -m 755 $(STAGING_DIR)/usr/include/dxdrm
 	$(INSTALL) -m 644 $(@D)/include/*.h $(STAGING_DIR)/usr/include/dxdrm
 endef
 
 define DXDRM_INSTALL_TARGET_CMDS
 	$(INSTALL) -m 755 $(@D)/dxdrm.$(call qstrip,$(BR2_ARCH)) $(TARGET_DIR)/usr/lib/libDxDrm.so
+	$(INSTALL) -m 755 $(@D)/trusted.$(call qstrip,$(BR2_ARCH)) $(TARGET_DIR)/usr/lib/libTrusted.so
 	$(INSTALL) -d -m 755 $(TARGET_DIR)/etc/dxdrm
 	$(INSTALL) -m 644 $(@D)/dxdrm.config $(TARGET_DIR)/etc/dxdrm
 	$(INSTALL) -m 644 $(@D)/credentials/* $(TARGET_DIR)/etc/dxdrm
