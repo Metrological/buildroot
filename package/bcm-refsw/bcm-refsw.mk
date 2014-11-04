@@ -85,7 +85,7 @@ endef
 
 define BCM_REFSW_INSTALL_LIBS
 	if [ -f $(@D)$(BCM_OUTPUT)nexus/bin/libnexus_client.so ] ; then 					\
-		$(INSTALL) -D $(@D)$(BCM_OUTPUT)nexus/bin/libnexus_client.so $1/usr/lib/libnexus_client.so ;	\
+		$(INSTALL) -D $(@D)$(BCM_OUTPUT)nexus/bin/libnexus_client.so $1/usr/lib/libnxclient.so ;	\
 	fi
 	if [ -f $(@D)$(BCM_OUTPUT)nexus/bin/libnxclient.so ] ; then 						\
 		$(INSTALL) -D $(@D)$(BCM_OUTPUT)nexus/bin/libnxclient.so $1/usr/lib/libnxclient.so ;		\
