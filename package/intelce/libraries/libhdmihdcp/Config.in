@@ -1,0 +1,13 @@
+config BR2_PACKAGE_LIBHDMI_HDCP
+	bool "libhdmi-hdcp"
+	depends on BR2_TOOLCHAIN_HAS_THREADS
+	depends on BR2_PACKAGE_OPENSSL
+	select BR2_PACKAGE_LIBOSAL
+	select BR2_PACKAGE_LIBPAL
+	select BR2_PACKAGE_LIBSEC
+	select BR2_PACKAGE_LIBFLASH
+	help
+		Intel CE HDMI HDCP library
+
+comment "libhdmi-hdcp requires a toolchain with thread support and openssl support"
+	depends on !BR2_TOOLCHAIN_HAS_THREADS || !BR2_PACKAGE_OPENSSL
