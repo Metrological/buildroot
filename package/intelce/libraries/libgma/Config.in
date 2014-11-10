@@ -1,0 +1,8 @@
+config BR2_PACKAGE_LIBGMA
+	bool "libgma"
+	depends on BR2_TOOLCHAIN_HAS_THREADS
+	help
+		Intel CE GMA library
+
+comment "libgma requires a toolchain with thread support"
+	depends on !BR2_TOOLCHAIN_HAS_THREADS
