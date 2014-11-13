@@ -11,6 +11,9 @@ CPPSDK_SITE = git@github.com:Metrological/cppsdk.git
 CPPSDK_INSTALL_STAGING = YES
 CPPSDK_INSTALL_TARGET = YES
 
+CPPSDK_CONF_OPT += \
+  -DCMAKE_TOOLCHAIN_FILE=$(HOST_DIR)/usr/share/buildroot/toolchainfile.cmake
+
 ifeq ($(BR2_PACKAGE_CPPSDK_GENERICS),n)
 CPPSDK_CONF_OPT += \
 	-DCPPSDK_INCLUDE_GENERICS=false
