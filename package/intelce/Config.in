@@ -27,13 +27,4 @@ source "package/intelce/libraries/libsven/Config.in"
 source "package/intelce/libraries/libsystemutils/Config.in"
 endmenu
 
-#config BR2_PACKAGE_PROVIDES_OPENGL_EGL
-#	default "khronos"
-
-#config BR2_PACKAGE_PROVIDES_OPENGL_ES
-#	default "khronos"
-
-#config BR2_PACKAGE_PROVIDES_OPENVG
-#	default "khronos"
-
 endif
