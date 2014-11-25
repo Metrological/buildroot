@@ -12,47 +12,47 @@ WEBBRIDGE_INSTALL_STAGING = YES
 WEBBRIDGE_DEPENDENCIES += cppsdk
 
 ifeq ($(BR2_PACKAGE_PLUGIN_FANCONTROL),y)
-	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX=$(TARGET_CXX) -C $(@D)/plugins/fancontrol build ;
-	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/plugins/fancontrol target ;
+	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX=$(TARGET_CXX) -C $(@D)/Plugins/FanControl build ;
+	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/FanControl target ;
 endif
 
 ifeq ($(BR2_PACKAGE_PLUGIN_TRACECONTROL),y)
-	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX=$(TARGET_CXX) -C $(@D)/plugins/tracecontrol build ;
-	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/plugins/tracecontrol target ;
+	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX=$(TARGET_CXX) -C $(@D)/Plugins/TraceControl build ;
+	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/TraceControl target ;
 endif
 
 ifeq ($(BR2_PACKAGE_PLUGIN_DELAYEDRESPONSE),y)
-	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX=$(TARGET_CXX) -C $(@D)/plugins/delayedresponse build ;
-	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/plugins/delayedresponse target ;
+	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX=$(TARGET_CXX) -C $(@D)/Plugins/DelayedResponse build ;
+	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/DelayedResponse target ;
 endif
 
 ifeq ($(BR2_PACKAGE_PLUGIN_DEVICEINFO),y)
-  CPPSDK_CONF_OPT += \
-	  -DCPPSDK_INCLUDE_DEVICE_INFO=true
-else
-  CPPSDK_CONF_OPT += \
-	  -DCPPSDK_INCLUDE_DEVICE_INFO=false
+	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX=$(TARGET_CXX) -C $(@D)/Plugins/DeviceInfo build ;
+	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/DeviceInfo target ;
 endif
 
 ifeq ($(BR2_PACKAGE_PLUGIN_SURFACECOMPOSITOR),y)
-	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) NEXUS_TOP=$(BCM_REFSW_DIR) CXX=$(TARGET_CXX) CC=$(TARGET_CC) -C $(@D)/plugins/surfacecompositor build ;
-	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) NEXUS_TOP=$(BCM_REFSW_DIR) CXX=$(TARGET_CXX) CC=$(TARGET_CC) -C $(@D)/plugins/surfacecompositor target ;
-	WEBBRIDGE_PLUGIN_INSTALL_STAGING += $(MAKE) NEXUS_TOP=$(BCM_REFSW_DIR) CXX=$(TARGET_CXX) CC=$(TARGET_CC) -C $(@D)/plugins/surfacecompositor staging ;
+	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) NEXUS_TOP=$(BCM_REFSW_DIR) CXX=$(TARGET_CXX) CC=$(TARGET_CC) -C $(@D)/Plugins/SurfaceCompositor build ;
+	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) NEXUS_TOP=$(BCM_REFSW_DIR) CXX=$(TARGET_CXX) CC=$(TARGET_CC) -C $(@D)/Plugins/SurfaceCompositor target ;
+	WEBBRIDGE_PLUGIN_INSTALL_STAGING += $(MAKE) NEXUS_TOP=$(BCM_REFSW_DIR) CXX=$(TARGET_CXX) CC=$(TARGET_CC) -C $(@D)/Plugins/SurfaceCompositor staging ;
 	WEBBRIDGE_DEPENDENCIES += bcm-refsw
 endif
 
 define WEBBRIDGE_BUILD_CMDS
-	$(MAKE) CXX="$(TARGET_CXX)" CXX=$(TARGET_CXX) -C $(@D)/webbridge build
+	$(MAKE) CXX="$(TARGET_CXX)" CXX=$(TARGET_CXX) -C $(@D)/WebBridgeSupport build
+	$(MAKE) CXX="$(TARGET_CXX)" CXX=$(TARGET_CXX) -C $(@D)/WebBridge build
 	$(WEBBRIDGE_PLUGIN_BUILD)
 endef
 
 define WEBBRIDGE_INSTALL_STAGING_CMDS
-	$(MAKE) -C $(@D)/webbridge staging
+	$(MAKE) -C $(@D)/WebBridgeSupport staging
+	$(MAKE) -C $(@D)/WebBridge staging
 	$(WEBBRIDGE_PLUGIN_INSTALL_STAGING)
 endef
 
 define WEBBRIDGE_INSTALL_TARGET_CMDS
-	$(MAKE) -C $(@D)/webbridge target
+	$(MAKE) -C $(@D)/WebBridgeSupport target
+	$(MAKE) -C $(@D)/WebBridge target
 	$(WEBBRIDGE_PLUGIN_INSTALL_TARGET)
 endef
 
