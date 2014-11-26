@@ -1,0 +1,21 @@
+interface: remove faulty assert() to make weston happy at runtime
+
+This was removed after a discussion on IRC with the weston guys
+('daniels' on irc.freenode.net/#wayland).
+
+Signed-off-by: "Yann E. MORIN" <yann.morin.1998@free.fr>
+---
+Upstream status: no, will be pushed by weston guys later.
+If not, I'll do it.
+
+diff -durN a/interface/vmcs_host/vc_vchi_dispmanx.c b/interface/vmcs_host/vc_vchi_dispmanx.c
+--- a/interface/vmcs_host/vc_vchi_dispmanx.c	2013-10-04 17:43:44.000000000 +0200
++++ b/interface/vmcs_host/vc_vchi_dispmanx.c	2013-10-08 22:28:51.611433539 +0200
+@@ -1296,7 +1296,6 @@
+          // Decrement the use count - the corresponding "use" is in vc_dispmanx_update_submit.
+          vchi_service_release(dispmanx_client.notify_handle[0]);
+          if (dispmanx_client.update_callback ) {
+-            vcos_assert( dispmanx_client.pending_update_handle == handle);
+             dispmanx_client.update_callback(handle, dispmanx_client.update_callback_param);
+          }
+       } else {
