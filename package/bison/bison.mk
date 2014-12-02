@@ -14,8 +14,6 @@ endif
 
 BISON_SITE = $(BR2_GNU_MIRROR)/bison
 
-#http://ftp.gnu.org/gnu/bison/
-
 BISON_LICENSE = GPLv3+
 BISON_LICENSE_FILES = COPYING
 BISON_CONF_ENV = ac_cv_path_M4=/usr/bin/m4
