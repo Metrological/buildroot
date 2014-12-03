@@ -1,0 +1,25 @@
+config BR2_PACKAGE_KHRONOS
+	bool "khronos"
+	depends on BR2_PACKAGE_LIBGDL
+	depends on BR2_PACKAGE_LIBGMA
+	select BR2_PACKAGE_HAS_OPENGL_EGL
+	select BR2_PACKAGE_HAS_OPENGL_ES
+	select BR2_PACKAGE_HAS_OPENVG
+	help
+		Intel CE Khronos Graphical libraries
+	
+comment "Khronos requires libgdl and libgma"
+	depends on !BR2_PACKAGE_LIBGDL || !BR2_PACKAGE_LIBGMA
+ 
+if BR2_PACKAGE_KHRONOS
+
+config BR2_PACKAGE_PROVIDES_OPENGL_EGL
+	default "khronos"
+
+config BR2_PACKAGE_PROVIDES_OPENGL_ES
+	default "khronos"
+
+config BR2_PACKAGE_PROVIDES_OPENVG
+	default "khronos"
+
+endif
