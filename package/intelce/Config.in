@@ -12,6 +12,7 @@ if BR2_PACKAGE_INTELCE
 
 menu "Libraries"
 source "package/intelce/autoeas/Config.in"
+source "package/intelce/multimedia/khronos/Config.in"
 source "package/intelce/libraries/libclockcontrol/Config.in"
 source "package/intelce/libraries/libflash/Config.in"
 source "package/intelce/libraries/libgdl/Config.in"
