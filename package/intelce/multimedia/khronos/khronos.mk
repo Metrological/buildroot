@@ -70,6 +70,7 @@ define KHRONOS_INSTALL_STAGING_CMDS
 	$(INSTALL) -m 755 $(@D)/src/include/KHR/*.h $(STAGING_DIR)/usr/include/intelce/khronos/KHR/
 	mkdir -p $(STAGING_DIR)/usr/include/intelce/khronos/VG/
 	$(INSTALL) -m 755 $(@D)/src/include/VG/*.h $(STAGING_DIR)/usr/include/intelce/khronos/VG/
+	$(INSTALL) -m 644 package/intelce/multimedia/khronos/files/*.pc $(STAGING_DIR)/usr/lib/pkgconfig/
 endef
 
 define KHRONOS_INSTALL_TARGET_CMDS
