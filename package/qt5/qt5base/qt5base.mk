@@ -152,6 +152,10 @@ ifeq ($(BR2_PACKAGE_RPI_USERLAND),y)
 QT5BASE_EGLFS_PLATFORM_HOOKS_SOURCES = \
 	$(@D)/mkspecs/devices/linux-rasp-pi-g++/qeglfshooks_pi.cpp
 endif
+ifeq ($(BR2_PACKAGE_KHRONOS),y)
+QT5BASE_EGLFS_PLATFORM_HOOKS_SOURCES = \
+	$(@D)/mkspecs/devices/linux-intelce-g++/qeglfshooks_intelce_3100.cpp
+endif
 else
 QT5BASE_CONFIGURE_OPTS += -no-opengl -no-eglfs
 endif

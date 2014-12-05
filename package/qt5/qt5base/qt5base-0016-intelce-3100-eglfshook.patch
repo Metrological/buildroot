@@ -1,0 +1,12 @@
+--- /dev/null
++++ b/mkspecs/devices/linux-intelce-g++/qeglfshooks_intelce_3100.cpp
+@@ -0,0 +1 @@
++/* Intel CE 3100 (qeglfshooks_intelce_3100.cpp) */
+--- /dev/null
++++ b/mkspecs/devices/linux-intelce-g++/qplatformdefs.h
+@@ -0,0 +1 @@
++/* Intel CE 3100 (qplatformdefs.h) */
+--- /dev/null
++++ b/mkspecs/devices/linux-intelce-g++/qmake.conf
+@@ -0,0 +1 @@
++/* Intel CE 3100 (qmake.conf) */
