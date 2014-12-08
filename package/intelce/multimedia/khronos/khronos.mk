@@ -49,7 +49,7 @@ PVR_BUILD_OPTIONS+= \
 	LINUX_HEADERS_DIR="$(LINUX_HEADERS_DIR)"
 
 define KHRONOS_BUILD_CMDS
-	$(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/src/eurasia/eurasiacon/build/linux/sgx_intel_ce/  \
+	$(TARGET_MAKE_ENV) $(MAKE1) -C $(@D)/src/eurasia/eurasiacon/build/linux/sgx_intel_ce/  \
 	$(PVR_BUILD_OPTIONS)
 endef
 
