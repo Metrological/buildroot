@@ -27,8 +27,7 @@ LIBGDL_CFLAGS = \
 	-I$(STAGING_DIR)/usr/include/intelce/libsystem-utils/
 
 LIBGDL_LDFLAGS = \
-	$(TARGET_LDFLAGS) \
-	-L$(STAGING_DIR)/usr/lib/intelce/
+	$(TARGET_LDFLAGS) 
 
 define LIBGDL_BUILD_CMDS
 	$(TARGET_MAKE_ENV) $(MAKE) CC="$(TARGET_CC)" CPPFLAGS="$(TARGET_CPPFLAGS)" CFLAGS="$(LIBGDL_CFLAGS)" LDFLAGS="$(LIBGDL_LDFLAGS)" AR="$(TARGET_CROSS)ar" RANLIB="$(TARGET_RANLIB)" -C $(@D)/src/disputil/
@@ -39,11 +38,11 @@ define LIBGDL_BUILD_CMDS
 endef
 
 define LIBGDL_INSTALL_STAGING_CMDS
-	mkdir -p $(STAGING_DIR)/usr/lib/intelce/
-	$(INSTALL) -m 755 $(@D)/src/gdl/{*.a,*.so} $(STAGING_DIR)/usr/lib/intelce/
-	$(INSTALL) -m 755 $(@D)/src/disputil/*.a $(STAGING_DIR)/usr/lib/intelce/
-	$(INSTALL) -m 755 $(@D)/src/pd/pd_hdmi/{*.a,*.so} $(STAGING_DIR)/usr/lib/intelce/
-	$(INSTALL) -m 755 $(@D)/src/pd/pd_null/{*.a,*.so} $(STAGING_DIR)/usr/lib/intelce/
+	mkdir -p $(STAGING_DIR)/usr/lib/
+	$(INSTALL) -m 755 $(@D)/src/gdl/{*.a,*.so} $(STAGING_DIR)/usr/lib/
+	$(INSTALL) -m 755 $(@D)/src/disputil/*.a $(STAGING_DIR)/usr/lib/
+	$(INSTALL) -m 755 $(@D)/src/pd/pd_hdmi/{*.a,*.so} $(STAGING_DIR)/usr/lib/
+	$(INSTALL) -m 755 $(@D)/src/pd/pd_null/{*.a,*.so} $(STAGING_DIR)/usr/lib/
 	mkdir -p $(STAGING_DIR)/usr/include/intelce/libgdl/
 	$(INSTALL) -m 755 $(@D)/src/include/*.h $(STAGING_DIR)/usr/include/intelce/libgdl/
 	mkdir -p $(STAGING_DIR)/usr/include/intelce/libgdl/gdl/
@@ -59,10 +58,10 @@ define LIBGDL_INSTALL_STAGING_CMDS
 endef
 
 define LIBGDL_INSTALL_TARGET_CMDS
-	mkdir -p $(TARGET_DIR)/usr/lib/intelce/
-	$(INSTALL) -m 755 $(@D)/src/gdl/*.so $(TARGET_DIR)/usr/lib/intelce/
-	$(INSTALL) -m 755 $(@D)/src/pd/pd_hdmi/*.so $(TARGET_DIR)/usr/lib/intelce/
-	$(INSTALL) -m 755 $(@D)/src/pd/pd_null/*.so $(TARGET_DIR)/usr/lib/intelce/
+	mkdir -p $(TARGET_DIR)/usr/lib/
+	$(INSTALL) -m 755 $(@D)/src/gdl/*.so $(TARGET_DIR)/usr/lib/
+	$(INSTALL) -m 755 $(@D)/src/pd/pd_hdmi/*.so $(TARGET_DIR)/usr/lib/
+	$(INSTALL) -m 755 $(@D)/src/pd/pd_null/*.so $(TARGET_DIR)/usr/lib/
 endef
 
 $(eval $(generic-package))

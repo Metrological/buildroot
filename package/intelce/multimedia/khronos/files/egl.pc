@@ -1,7 +1,7 @@
 prefix=/usr
 exec_prefix=${prefix}
-libdir=${exec_prefix}/lib/intelce/
-includedir=${prefix}/include/intelce/
+libdir=${exec_prefix}/lib/
+includedir=${prefix}/include/intelce
 
 Name: egl
 Description: Intel CE EGL implementation

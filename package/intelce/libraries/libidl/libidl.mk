@@ -27,9 +27,9 @@ define LIBIDL_BUILD_CMDS
 endef
 
 define LIBIDL_INSTALL_STAGING_CMDS
-	mkdir -p $(STAGING_DIR)/usr/lib/intelce/
-	$(INSTALL) -m 755 $(@D)/src/gpio/{*.a,*.so} $(STAGING_DIR)/usr/lib/intelce/
-	$(INSTALL) -m 755 $(@D)/src/i2c/{*.a,*.so} $(STAGING_DIR)/usr/lib/intelce/
+	mkdir -p $(STAGING_DIR)/usr/lib/
+	$(INSTALL) -m 755 $(@D)/src/gpio/{*.a,*.so} $(STAGING_DIR)/usr/lib/
+	$(INSTALL) -m 755 $(@D)/src/i2c/{*.a,*.so} $(STAGING_DIR)/usr/lib/
 	mkdir -p $(STAGING_DIR)/usr/include/intelce/libidl/
 	$(INSTALL) -m 755 $(@D)/src/include/*.h $(STAGING_DIR)/usr/include/intelce/libidl/
 	mkdir -p $(STAGING_DIR)/usr/include/intelce/libidl/i2c/
@@ -39,9 +39,9 @@ define LIBIDL_INSTALL_STAGING_CMDS
 endef
 
 define LIBIDL_INSTALL_TARGET_CMDS
-	mkdir -p $(TARGET_DIR)/usr/lib/intelce/
-	$(INSTALL) -m 755 $(@D)/src/gpio/*.so $(TARGET_DIR)/usr/lib/intelce/
-	$(INSTALL) -m 755 $(@D)/src/i2c/*.so $(TARGET_DIR)/usr/lib/intelce/
+	mkdir -p $(TARGET_DIR)/usr/lib/
+	$(INSTALL) -m 755 $(@D)/src/gpio/*.so $(TARGET_DIR)/usr/lib/
+	$(INSTALL) -m 755 $(@D)/src/i2c/*.so $(TARGET_DIR)/usr/lib/
 endef
 
 $(eval $(generic-package))

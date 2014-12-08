@@ -32,7 +32,7 @@ endef
 
 define LIBSVEN_INSTALL_STAGING_CMDS
 	mkdir -p $(STAGING_DIR)/usr/lib/intelce/
-	$(INSTALL) -m 755 $(@D)/src/{*.a,*.so} $(STAGING_DIR)/usr/lib/intelce/
+	$(INSTALL) -m 755 $(@D)/src/{*.a,*.so} $(STAGING_DIR)/usr/lib/
 	mkdir -p $(STAGING_DIR)/usr/include/intelce/libsven/
 	$(INSTALL) -m 755 $(@D)/src/include/*.h $(STAGING_DIR)/usr/include/intelce/libsven/
 	mkdir -p $(STAGING_DIR)/usr/include/intelce/libsven/eas/ce31xx/
@@ -41,7 +41,7 @@ endef
 
 define LIBSVEN_INSTALL_TARGET_CMDS
 	mkdir -p $(TARGET_DIR)/usr/lib/intelce/
-	$(INSTALL) -m 755 $(@D)/src/*.so $(TARGET_DIR)/usr/lib/intelce/
+	$(INSTALL) -m 755 $(@D)/src/*.so $(TARGET_DIR)/usr/lib/
 endef
 
 $(eval $(generic-package))

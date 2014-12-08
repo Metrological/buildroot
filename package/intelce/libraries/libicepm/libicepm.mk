@@ -19,23 +19,22 @@ LIBICEPM_CFLAGS = \
 	-I$(@D)/src/include/
 
 LIBICEPM_LDFLAGS = \
-        $(TARGET_LDFLAGS) \
-        -L$(STAGING_DIR)/usr/lib/intelce/
+        $(TARGET_LDFLAGS)
 
 define LIBICEPM_BUILD_CMDS
 	$(TARGET_MAKE_ENV) $(MAKE) CC="$(TARGET_CC)" CPPFLAGS="$(TARGET_CPPFLAGS)" CFLAGS="$(LIBICEPM_CFLAGS)" LDFLAGS="$(LIBICEPM_LDFLAGS)" AR="$(TARGET_CROSS)ar" RANLIB="$(TARGET_CROSS)ranlib" -C $(@D)/src/
 endef
 
 define LIBICEPM_INSTALL_STAGING_CMDS
-	mkdir -p $(STAGING_DIR)/usr/lib/intelce/
-	$(INSTALL) -m 755 $(@D)/src/{*.a,*.so} $(STAGING_DIR)/usr/lib/intelce/
+	mkdir -p $(STAGING_DIR)/usr/lib/
+	$(INSTALL) -m 755 $(@D)/src/{*.a,*.so} $(STAGING_DIR)/usr/lib/
 	mkdir -p $(STAGING_DIR)/usr/include/intelce/libicepm/
 	$(INSTALL) -m 755 $(@D)/src/include/*.h $(STAGING_DIR)/usr/include/intelce/libicepm/
 endef
 
 define LIBICEPM_INSTALL_TARGET_CMDS
-	mkdir -p $(TARGET_DIR)/usr/lib/intelce/
-	$(INSTALL) -m 755 $(@D)/src/*.so $(TARGET_DIR)/usr/lib/intelce/
+	mkdir -p $(TARGET_DIR)/usr/lib/
+	$(INSTALL) -m 755 $(@D)/src/*.so $(TARGET_DIR)/usr/lib/
 endef
 
 $(eval $(generic-package))

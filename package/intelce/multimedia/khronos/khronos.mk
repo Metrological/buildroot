@@ -44,8 +44,8 @@ PVR_BUILD_OPTIONS+= \
 	KARCH_CFLAGS="" \
 	ARCH_CFLAGS="$(TARGET_CFLAGS)" \
 \
-	SYS_LIB_LDFLAGS="$(TARGET_LDFLAGS) -L$(STAGING_DIR)/usr/lib/intelce" \
-	SYS_EXE_LDFLAGS="-Xlinker -rpath-link=$(STAGING_DIR)/usr/lib/intelce" \
+	SYS_LIB_LDFLAGS="$(TARGET_LDFLAGS) -L$(STAGING_DIR)/usr/lib/" \
+	SYS_EXE_LDFLAGS="-Xlinker -rpath-link=$(STAGING_DIR)/usr/lib/" \
 	LINUX_HEADERS_DIR="$(LINUX_HEADERS_DIR)"
 
 define KHRONOS_BUILD_CMDS
@@ -54,8 +54,8 @@ define KHRONOS_BUILD_CMDS
 endef
 
 define KHRONOS_INSTALL_STAGING_CMDS
-	mkdir -p $(STAGING_DIR)/usr/lib/intelce/
-	$(INSTALL) -m 755 $(@D)/src/eurasia/eurasiacon/binary_sgx_intel_ce_release/{*.a,*.so} $(STAGING_DIR)/usr/lib/intelce/
+	mkdir -p $(STAGING_DIR)/usr/lib/
+	$(INSTALL) -m 755 $(@D)/src/eurasia/eurasiacon/binary_sgx_intel_ce_release/{*.a,*.so} $(STAGING_DIR)/usr/lib/
 	mkdir -p $(STAGING_DIR)/usr/include/intelce/khronos/
 	$(INSTALL) -m 755 $(@D)/src/eurasia/eurasiacon/binary_sgx_intel_ce_release/*.h $(STAGING_DIR)/usr/include/intelce/khronos/
 	$(INSTALL) -m 755 $(@D)/src/eurasia/pvr2d/pvr2d.h $(STAGING_DIR)/usr/include/intelce/khronos/
@@ -74,10 +74,10 @@ define KHRONOS_INSTALL_STAGING_CMDS
 endef
 
 define KHRONOS_INSTALL_TARGET_CMDS
-	mkdir -p $(TARGET_DIR)/usr/bin/intelce/
-	$(INSTALL) -m 755 $(@D)/src/eurasia/eurasiacon/binary_sgx_intel_ce_release/pvrsrvinit $(TARGET_DIR)/usr/bin/intelce/
-	mkdir -p $(TARGET_DIR)/usr/lib/intelce/
-	$(INSTALL) -m 755 $(@D)/src/eurasia/eurasiacon/binary_sgx_intel_ce_release/*.so $(TARGET_DIR)/usr/lib/intelce/
+	mkdir -p $(TARGET_DIR)/usr/bin/
+	$(INSTALL) -m 755 $(@D)/src/eurasia/eurasiacon/binary_sgx_intel_ce_release/pvrsrvinit $(TARGET_DIR)/usr/bin/
+	mkdir -p $(TARGET_DIR)/usr/lib/
+	$(INSTALL) -m 755 $(@D)/src/eurasia/eurasiacon/binary_sgx_intel_ce_release/*.so $(TARGET_DIR)/usr/lib/
 	mkdir -p $(TARGET_DIR)/etc/init.d/
 	$(INSTALL) -m 755 $(@D)/files/graphics.init $(TARGET_DIR)/etc/init.d/graphics
 #	mkdir -p $(TARGET_DIR)/etc/

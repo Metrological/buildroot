@@ -24,8 +24,8 @@ define LIBOSAL_BUILD_CMDS
 endef
 
 define LIBOSAL_INSTALL_STAGING_CMDS
-	mkdir -p $(STAGING_DIR)/usr/lib/intelce/
-	$(INSTALL) -m 755 $(@D)/src/{*.a,*.so} $(STAGING_DIR)/usr/lib/intelce/
+	mkdir -p $(STAGING_DIR)/usr/lib/
+	$(INSTALL) -m 755 $(@D)/src/{*.a,*.so} $(STAGING_DIR)/usr/lib/
 	mkdir -p $(STAGING_DIR)/usr/include/intelce/libosal/
 	$(INSTALL) -m 755 $(@D)/src/include/*.h $(STAGING_DIR)/usr/include/intelce/libosal/
 	mkdir -p $(STAGING_DIR)/usr/include/intelce/libosal/os/
@@ -33,8 +33,8 @@ define LIBOSAL_INSTALL_STAGING_CMDS
 endef
 
 define LIBOSAL_INSTALL_TARGET_CMDS
-	mkdir -p $(TARGET_DIR)/usr/lib/intelce/
-	$(INSTALL) -m 755 $(@D)/src/*.so $(TARGET_DIR)/usr/lib/intelce/
+	mkdir -p $(TARGET_DIR)/usr/lib/
+	$(INSTALL) -m 755 $(@D)/src/*.so $(TARGET_DIR)/usr/lib/
 endef
 
 $(eval $(generic-package))
