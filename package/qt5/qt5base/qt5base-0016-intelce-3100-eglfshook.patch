@@ -1,8 +1,4 @@
 --- /dev/null
-+++ b/mkspecs/devices/linux-intelce-g++/qeglfshooks_intelce_3100.cpp
-@@ -0,0 +1 @@
-+/* Intel CE 3100 (qeglfshooks_intelce_3100.cpp) */
---- /dev/null
 +++ b/mkspecs/devices/linux-intelce-g++/qplatformdefs.h
 @@ -0,0 +1 @@
 +/* Intel CE 3100 (qplatformdefs.h) */
@@ -10,3 +6,189 @@
 +++ b/mkspecs/devices/linux-intelce-g++/qmake.conf
 @@ -0,0 +1 @@
 +/* Intel CE 3100 (qmake.conf) */
+--- /dev/null	2014-12-08 21:25:55.126526912 +0100
++++ b/mkspecs/devices/linux-intelce-g++/qeglfshooks_intelce_3100.cpp
+@@ -0,0 +1,183 @@
++/* Intel CE 3100 (qeglfshooks_intelce_3100.cpp) */
++
++#include <qeglfshooks.h>
++#include <qeglfsintegration.h>
++
++#include <QtPlatformSupport/private/qeglconvenience_p.h>
++#include <QtPlatformSupport/private/qeglplatformscreen_p.h>
++
++#include <intelce/libgdl/libgdl.h>
++
++#ifdef __cplusplus
++extern "C"
++{
++#endif //__cplusplus
++
++bool platform_init(gdl_display_info_t* display_info)
++{
++    gdl_ret_t gdl_ret = gdl_init(NULL);
++
++    if (GDL_SUCCESS == gdl_ret)
++         gdl_ret = gdl_get_display_info(display_info->id, display_info);
++
++    if (GDL_SUCCESS != gdl_ret)
++        qFatal("gdl error: %s", gdl_get_error_string(gdl_ret));
++
++    return (GDL_SUCCESS == gdl_ret);
++}
++
++bool platform_deinit(gdl_display_info_t display_info)
++{
++    Q_UNUSED(display_info)
++
++    gdl_ret_t gdl_ret = gdl_close();
++
++    if (GDL_SUCCESS != gdl_ret)
++        qFatal("gdl error: %s", gdl_get_error_string(gdl_ret));
++
++    return (GDL_SUCCESS == gdl_ret);
++}
++
++bool create_platform_window(gdl_display_id_t display_id, gdl_plane_id_t plane_id, gdl_rectangle_t size, gdl_pixel_format_t pixel_format)
++{
++    Q_UNUSED(display_id)
++
++    /* Reset to defaults */
++    gdl_ret_t gdl_ret = gdl_plane_reset(plane_id);
++
++    if (GDL_SUCCESS == gdl_ret)
++        gdl_ret = gdl_plane_config_begin(plane_id);
++
++    if (GDL_SUCCESS == gdl_ret)
++    {
++        /* Assume RGB */
++        gdl_color_space_t color_space = GDL_COLOR_SPACE_RGB;
++        gdl_ret = gdl_plane_set_attr(GDL_PLANE_SRC_COLOR_SPACE, &color_space);
++    }
++
++    if (GDL_SUCCESS == gdl_ret)
++        gdl_ret = gdl_plane_set_attr(GDL_PLANE_PIXEL_FORMAT, &pixel_format);
++
++    if (GDL_SUCCESS == gdl_ret)
++    {
++        gdl_rectangle_t rectangle;
++
++        /* Full scale */
++        rectangle.origin.x = 0;
++        rectangle.origin.y = 0;
++        rectangle.width = size.width;
++        rectangle.height = size.height;
++
++        gdl_ret = gdl_plane_set_attr(GDL_PLANE_DST_RECT, &rectangle);
++    }
++
++    if (GDL_SUCCESS == gdl_ret)
++        gdl_ret = gdl_plane_set_uint(GDL_PLANE_NUM_GFX_SURFACES, 3);
++
++    if (GDL_SUCCESS == gdl_ret)
++        gdl_ret = gdl_plane_config_end(GDL_FALSE);
++    else
++    {
++        gdl_plane_config_end(GDL_TRUE);
++        qFatal("gdl error: %s", gdl_get_error_string(gdl_ret));
++    }
++
++    return (GDL_SUCCESS == gdl_ret);
++}
++
++bool destroy_platform_window(gdl_display_id_t display_id, gdl_plane_id_t plane_id)
++{
++    Q_UNUSED(display_id)
++
++    gdl_ret_t gdl_ret = gdl_plane_reset(plane_id);
++
++    if (GDL_SUCCESS != gdl_ret)
++        qFatal("gdl error: %s", gdl_get_error_string(gdl_ret));
++
++    return (GDL_SUCCESS == gdl_ret);
++}
++
++#ifdef __cplusplus
++}
++#endif //__cplusplus
++
++QT_BEGIN_NAMESPACE
++
++class QEglFSIntelCEHooks: public QEglFSHooks
++{
++public:
++    virtual void platformInit();
++    virtual void platformDestroy();
++    virtual EGLNativeDisplayType platformDisplay() const;
++    virtual QSize screenSize() const;
++    virtual EGLNativeWindowType createNativeWindow(QPlatformWindow* window, const QSize& size, const QSurfaceFormat& format);
++    virtual void destroyNativeWindow(EGLNativeWindowType window);
++//    virtual bool hasCapability(QPlatformIntegration::Capability cap) const;
++//    virtual QSurfaceFormat surfaceFormatFor(const QSurfaceFormat &inputFormat) const;
++//    virtual QEGLPlatformCursor* createCursor(QPlatformScreen* screen) const;
++
++private:
++    gdl_display_id_t   display_id;
++    gdl_plane_id_t     plane_id;
++    gdl_pixel_format_t pixel_format;
++    gdl_rectangle_t    screen_size;
++};
++
++void QEglFSIntelCEHooks::platformInit()
++{
++    gdl_display_info_t display_info;
++
++    display_id = GDL_DISPLAY_ID_0; // HDMI
++    plane_id = GDL_PLANE_ID_UPP_C; // default plane
++    pixel_format = GDL_PF_ARGB_32; // default format
++
++    display_info.id = display_id;
++
++    platform_init(&display_info);
++
++    screen_size.origin.x = 0;
++    screen_size.origin.y = 0;
++    screen_size.width = display_info.tvmode.width;
++    screen_size.height = display_info.tvmode.height;
++}
++
++EGLNativeDisplayType QEglFSIntelCEHooks::platformDisplay() const
++{
++    return static_cast<EGLNativeDisplayType>(display_id);
++}
++
++void QEglFSIntelCEHooks::platformDestroy()
++{
++    gdl_display_info_t display_info;
++
++    platform_deinit(display_info);
++}
++
++QSize QEglFSIntelCEHooks::screenSize() const
++{
++    return QSize(screen_size.width, screen_size.height);
++}
++
++EGLNativeWindowType QEglFSIntelCEHooks::createNativeWindow(QPlatformWindow* window, const QSize& size, const QSurfaceFormat& format)
++{
++/* Currently, only support a single plane */
++/* Assume screen size equals window size */
++/* Qt prefers 16 bit EGL configs. 32 bit can be enforced by QT_QPA_EGLFS_FORCE888 */
++
++    if ( (5 == format.redBufferSize()) && (6 == format.greenBufferSize()) && (5 == format.blueBufferSize()) )
++        pixel_format = GDL_PF_RGB_16; // 5:6:5 LE
++
++    create_platform_window(display_id, plane_id, screen_size, pixel_format);
++
++    return reinterpret_cast<EGLNativeWindowType>(plane_id); 
++}
++
++void QEglFSIntelCEHooks::destroyNativeWindow(EGLNativeWindowType window)
++{
++    destroy_platform_window(display_id, plane_id);
++}
++
++QEglFSIntelCEHooks eglFSIntelCEHooks;
++QEglFSHooks* platformHooks = &eglFSIntelCEHooks;
++
++QT_END_NAMESPACE
