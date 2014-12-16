@@ -17,7 +17,12 @@ endif
 else
 ifeq ($(BR2_TOOLCHAIN_BUILDROOT_EGLIBC),y)
 GLIBC_VERSION = $(call qstrip,$(BR2_TOOLCHAIN_BUILDROOT_EGLIBC_VERSION))
+ifeq ($(findstring 2.13,$(GLIBC_VERSION)),2.13)
+GLIBC_SITE = ../intelce-gfx/eglibc/$(GLIBC_VERSION)/
+GLIBC_SITE_METHOD = local
+else
 GLIBC_SITE = http://downloads.yoctoproject.org/releases/eglibc/
+endif
 GLIBC_SOURCE = eglibc-$(GLIBC_VERSION).tar.bz2
 GLIBC_SRC_SUBDIR = libc
 else
