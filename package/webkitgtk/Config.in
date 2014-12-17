@@ -34,3 +34,21 @@ comment "webkitgtk needs libgtk3 and a toolchain w/ C++, wchar, threads"
 		    BR2_powerpc || BR2_sh || BR2_sparc || BR2_x86_64)
 	depends on !BR2_PACKAGE_LIBGTK2 || !BR2_INSTALL_LIBSTDCPP || \
 		!BR2_USE_WCHAR || !BR2_TOOLCHAIN_HAS_THREADS
+
+menu "Extra options"
+
+config BR2_PACKAGE_WEBKITGTK_USE_ENCRYPTED_MEDIA
+        bool "encrypted-media"
+        default n
+        help
+          Enable Encrypted Media Extensions.
+
+config BR2_PACKAGE_WEBKITGTK_USE_DXDRM_EME
+	bool "dxdrm-eme"
+	default n
+	depends on BR2_PACKAGE_WEBKITGTK_USE_ENCRYPTED_MEDIA
+	depends on BR2_PACKAGE_DXDRM
+	help
+	  Enable Discretix DRM Encrypted Media Extensions backend.
+
+endmenu
