@@ -24,13 +24,14 @@ diff --git a/Modules/FindQt4.cmake b/Modules/FindQt4.cmake
 index 28b8454..0b8ce92 100644
 --- a/Modules/FindQt4.cmake
 +++ b/Modules/FindQt4.cmake
-@@ -760,7 +760,7 @@ if (QT_QMAKE_EXECUTABLE AND QTVERSION)
+@@ -549,7 +549,7 @@
      endforeach()
      set(QT_MKSPECS_DIR NOTFOUND)
      find_path(QT_MKSPECS_DIR NAMES qconfig.pri
 -      HINTS ${qt_cross_paths} ${qt_mkspecs_dirs}
 +      HINTS ${qt_cross_paths} ${qt_mkspecs_dirs} NO_CMAKE_FIND_ROOT_PATH
-       DOC "The location of the Qt mkspecs containing qconfig.pri")
+       DOC "The location of the Qt mkspecs containing qconfig.pri"
+       NO_CMAKE_FIND_ROOT_PATH)
    endif()
  
 -- 
