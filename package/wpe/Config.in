@@ -22,3 +22,21 @@ config BR2_PACKAGE_WPE
 	select BR2_PACKAGE_WESTON
 	help
       Here be dragons.
+
+menu "Extra options"
+
+config BR2_PACKAGE_WPE_USE_ENCRYPTED_MEDIA
+        bool "encrypted-media"
+        default n
+        help
+          Enable Encrypted Media Extensions.
+
+config BR2_PACKAGE_WPE_USE_DXDRM_EME
+	bool "dxdrm-eme"
+	default n
+	depends on BR2_PACKAGE_WPE_USE_ENCRYPTED_MEDIA
+	depends on BR2_PACKAGE_DXDRM
+	help
+	  Enable Discretix DRM Encrypted Media Extensions backend.
+
+endmenu
