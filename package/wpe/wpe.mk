@@ -29,4 +29,6 @@ WPE_CONF_OPT = -DPORT=WPE \
  -DCMAKE_BUILD_TYPE=$(BUILDTYPE) \
  $(FLAGS)
 
+RSYNC_VCS_EXCLUSIONS += --exclude LayoutTests
+
 $(eval $(cmake-package))
