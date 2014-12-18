@@ -15,9 +15,18 @@ WPE_DEPENDENCIES = host-flex host-bison host-gperf host-ruby \
 	gstreamer1 gst1-plugins-base gst1-plugins-good gst1-plugins-bad \
 	wayland weston athol
 
-WPE_CONF_OPT = -DPORT=WPE \
- -DCMAKE_BUILD_TYPE=Release \
- -DCMAKE_C_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align" \
+ifeq ($(BR2_ENABLE_DEBUG),y)
+BUILDTYPE=Debug
+FLAGS= -DCMAKE_C_FLAGS_DEBUG="-O0 -g -Wno-cast-align" \
+ -DCMAKE_CXX_FLAGS_DEBUG="-O0 -g -Wno-cast-align"
+else
+BUILDTYPE=Release
+FLAGS= -DCMAKE_C_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align" \
  -DCMAKE_CXX_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align"
+endif
+
+WPE_CONF_OPT = -DPORT=WPE \
+ -DCMAKE_BUILD_TYPE=$(BUILDTYPE) \
+ $(FLAGS)
 
 $(eval $(cmake-package))
