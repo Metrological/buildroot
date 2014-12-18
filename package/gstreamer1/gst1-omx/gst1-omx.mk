@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-GST1_OMX_VERSION = 1.2.0
+GST1_OMX_VERSION = 8936f6634c878973d966df53d23505a7c05e0f0c
 GST1_OMX_SOURCE = gst-omx-$(GST1_OMX_VERSION).tar.gz
 GST1_OMX_SITE = http://cgit.freedesktop.org/gstreamer/gst-omx/snapshot/
 
