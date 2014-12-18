@@ -4,9 +4,9 @@
 #
 ################################################################################
 
-WPE_VERSION = 0.1
-WPE_SOURCE = wpe-prerelease.tar.xz
-WPE_SITE = http://tmp.igalia.com/wpe/
+WPE_VERSION = 16122014
+WPE_SITE = https://github.com/WebKitForWayland/webkit/archive
+WPE_SOURCE = wpe-$(WPE_VERSION).tar.gz
 
 WPE_INSTALL_STAGING = YES
 WPE_DEPENDENCIES = host-flex host-bison host-gperf host-ruby \
