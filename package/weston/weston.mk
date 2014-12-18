@@ -4,12 +4,12 @@
 #
 ################################################################################
 
-WESTON_VERSION = 1.5.0
-WESTON_SITE = http://wayland.freedesktop.org/releases/
-WESTON_SOURCE = weston-$(WESTON_VERSION).tar.xz
+WESTON_VERSION = 920a0331cf5340942a9d39ac3b48ce207f7970b6
+WESTON_SITE = $(call github,zdobersek,weston,$(WESTON_VERSION))
 WESTON_LICENSE = MIT
 WESTON_LICENSE_FILES = COPYING
 
+WESTON_INSTALL_STAGING = YES
 WESTON_DEPENDENCIES = host-pkgconf wayland libxkbcommon pixman libpng \
 	jpeg mtdev udev cairo linux-pam
 

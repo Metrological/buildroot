@@ -1,0 +1,5 @@
+config BR2_PACKAGE_ATHOL
+	bool "athol"
+    select BR2_PACKAGE_LIBINPUT
+	help
+      Here be dragons.

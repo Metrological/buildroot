@@ -1,0 +1,14 @@
+diff --git a/interface/khronos/egl/egl_client.c b/interface/khronos/egl/egl_client.c
+index 024f3ed..075212b 100644
+--- a/interface/khronos/egl/egl_client.c
++++ b/interface/khronos/egl/egl_client.c
+@@ -2361,8 +2361,7 @@ EGLAPI EGLBoolean EGLAPIENTRY eglSwapBuffers(EGLDisplay dpy, EGLSurface surf)
+                                     surface->width, surface->height);
+                   wl_surface_commit(wl_egl_window->wl_surface);
+ 
+-                  while(ret != -1 && surface->back_wl_buffer->in_use)
+-                     ret = wl_display_dispatch_queue(wl_display, process->wl_queue);
++                  wl_display_flush(wl_display);
+                } else
+ #endif
+                RPC_CALL6(eglIntSwapBuffers_impl,

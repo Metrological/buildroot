@@ -1,0 +1,16 @@
+diff --git a/interface/vmcs_host/vc_dispmanx.h b/interface/vmcs_host/vc_dispmanx.h
+index c3019da..acbdbb9 100755
+--- a/interface/vmcs_host/vc_dispmanx.h
++++ b/interface/vmcs_host/vc_dispmanx.h
+@@ -36,6 +36,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ #include "interface/vmcs_host/vc_dispmanx_types.h"
+ #include "interface/vchi/vchi.h"
+ 
++#ifdef BUILD_WAYLAND
++#include <wayland-server.h>
++#include "interface/vmcs_host/wayland-dispmanx-server-protocol.h"
++#endif
++
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
