@@ -32,8 +32,8 @@ ifeq ($(BR2_PACKAGE_PLUGIN_DEVICEINFO),y)
 endif
 
 ifeq ($(BR2_PACKAGE_PLUGIN_BROWSER),y)
-	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX=$(TARGET_CXX) -C $(@D)/Plugins/QtBrowser build ;
-	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/QtBrowser target ;
+	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX=$(TARGET_CXX) -C $(@D)/Plugins/Browser build ;
+	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/Browser target ;
 endif
 
 ifeq ($(BR2_PACKAGE_PLUGIN_SURFACECOMPOSITOR),y)
