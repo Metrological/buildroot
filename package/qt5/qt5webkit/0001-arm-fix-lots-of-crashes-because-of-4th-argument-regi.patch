@@ -1,0 +1,202 @@
+From 22190988b355ffef93e43c763bcda78f5c5bf7d0 Mon Sep 17 00:00:00 2001
+From: Julien Brianceau <jbriance@cisco.com>
+Date: Wed, 22 Oct 2014 18:25:24 +0200
+Subject: [PATCH] [arm] Fix lots of crashes because of 4th argument register
+ trampling. https://bugs.webkit.org/show_bug.cgi?id=123421
+
+Reviewed by Michael Saboff.
+
+r3 register is the 4th argument register for ARM and also a scratch
+register in the baseline JIT for this architecture. We can use r6
+instead, as this used to be the timeoutCheckRegister and it is no
+longer used since r148119.
+
+* assembler/ARMAssembler.h: Temp register is now r6 instead of r3 for ARM.
+* assembler/MacroAssemblerARMv7.h: Temp register is now r6 instead of r3 for ARMv7.
+* dfg/DFGGPRInfo.h: Add r3 properly in GPRInfo for ARM.
+* jit/JITStubs.cpp: Remove obsolete timeoutCheckRegister init.
+* yarr/YarrJIT.cpp: Use r3 and not the new scratch register r6 and r8 register
+doesn't need to be saved.
+
+git-svn-id: http://svn.webkit.org/repository/webkit/trunk@158208 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+---
+ Source/JavaScriptCore/assembler/ARMAssembler.h        |  4 ++--
+ Source/JavaScriptCore/assembler/MacroAssemblerARMv7.h |  5 +----
+ Source/JavaScriptCore/dfg/DFGGPRInfo.h                | 13 +++++--------
+ Source/JavaScriptCore/jit/JITStubs.cpp                |  5 -----
+ Source/JavaScriptCore/yarr/YarrJIT.cpp                | 14 +++-----------
+ 5 files changed, 11 insertions(+), 30 deletions(-)
+
+diff --git a/Source/JavaScriptCore/assembler/ARMAssembler.h b/Source/JavaScriptCore/assembler/ARMAssembler.h
+index c950e47..19db71d 100644
+--- a/Source/JavaScriptCore/assembler/ARMAssembler.h
++++ b/Source/JavaScriptCore/assembler/ARMAssembler.h
+@@ -41,10 +41,10 @@ namespace JSC {
+             r0 = 0,
+             r1,
+             r2,
+-            r3, S0 = r3, /* Same as thumb assembler. */
++            r3,
+             r4,
+             r5,
+-            r6,
++            r6, S0 = r6,
+             r7,
+             r8,
+             r9,
+diff --git a/Source/JavaScriptCore/assembler/MacroAssemblerARMv7.h b/Source/JavaScriptCore/assembler/MacroAssemblerARMv7.h
+index b1bc417..8f11bc6 100644
+--- a/Source/JavaScriptCore/assembler/MacroAssemblerARMv7.h
++++ b/Source/JavaScriptCore/assembler/MacroAssemblerARMv7.h
+@@ -35,11 +35,8 @@
+ namespace JSC {
+ 
+ class MacroAssemblerARMv7 : public AbstractMacroAssembler<ARMv7Assembler> {
+-    // FIXME: switch dataTempRegister & addressTempRegister, or possibly use r7?
+-    //        - dTR is likely used more than aTR, and we'll get better instruction
+-    //        encoding if it's in the low 8 registers.
+     static const RegisterID dataTempRegister = ARMRegisters::ip;
+-    static const RegisterID addressTempRegister = ARMRegisters::r3;
++    static const RegisterID addressTempRegister = ARMRegisters::r6;
+ 
+     static const ARMRegisters::FPDoubleRegisterID fpTempRegister = ARMRegisters::d7;
+     inline ARMRegisters::FPSingleRegisterID fpTempRegisterAsSingle() { return ARMRegisters::asSingle(fpTempRegister); }
+diff --git a/Source/JavaScriptCore/dfg/DFGGPRInfo.h b/Source/JavaScriptCore/dfg/DFGGPRInfo.h
+index d889cf5..4b7aaee 100644
+--- a/Source/JavaScriptCore/dfg/DFGGPRInfo.h
++++ b/Source/JavaScriptCore/dfg/DFGGPRInfo.h
+@@ -393,7 +393,7 @@ private:
+ class GPRInfo {
+ public:
+     typedef GPRReg RegisterType;
+-    static const unsigned numberOfRegisters = 8;
++    static const unsigned numberOfRegisters = 9;
+ 
+     // Temporary registers.
+     static const GPRReg regT0 = ARMRegisters::r0;
+@@ -404,6 +404,7 @@ public:
+     static const GPRReg regT5 = ARMRegisters::r9;
+     static const GPRReg regT6 = ARMRegisters::r10;
+     static const GPRReg regT7 = ARMRegisters::r11;
++    static const GPRReg regT8 = ARMRegisters::r3;
+     // These registers match the baseline JIT.
+     static const GPRReg cachedResultRegister = regT0;
+     static const GPRReg cachedResultRegister2 = regT1;
+@@ -412,11 +413,7 @@ public:
+     static const GPRReg argumentGPR0 = ARMRegisters::r0; // regT0
+     static const GPRReg argumentGPR1 = ARMRegisters::r1; // regT1
+     static const GPRReg argumentGPR2 = ARMRegisters::r2; // regT2
+-    // FIXME: r3 is currently used be the MacroAssembler as a temporary - it seems
+-    // This could threoretically be a problem if this is used in code generation
+-    // between the arguments being set up, and the call being made. That said,
+-    // any change introducing a problem here is likely to be immediately apparent!
+-    static const GPRReg argumentGPR3 = ARMRegisters::r3; // FIXME!
++    static const GPRReg argumentGPR3 = ARMRegisters::r3; // regT8
+     static const GPRReg nonArgGPR0 = ARMRegisters::r4; // regT3
+     static const GPRReg nonArgGPR1 = ARMRegisters::r8; // regT4
+     static const GPRReg nonArgGPR2 = ARMRegisters::r9; // regT5
+@@ -427,7 +424,7 @@ public:
+     static GPRReg toRegister(unsigned index)
+     {
+         ASSERT(index < numberOfRegisters);
+-        static const GPRReg registerForIndex[numberOfRegisters] = { regT0, regT1, regT2, regT3, regT4, regT5, regT6, regT7 };
++        static const GPRReg registerForIndex[numberOfRegisters] = { regT0, regT1, regT2, regT3, regT4, regT5, regT6, regT7, regT8 };
+         return registerForIndex[index];
+     }
+ 
+@@ -435,7 +432,7 @@ public:
+     {
+         ASSERT(static_cast<unsigned>(reg) != InvalidGPRReg);
+         ASSERT(static_cast<unsigned>(reg) < 16);
+-        static const unsigned indexForRegister[16] = { 0, 1, 2, InvalidIndex, 3, InvalidIndex, InvalidIndex, InvalidIndex, 4, 5, 6, 7, InvalidIndex, InvalidIndex, InvalidIndex, InvalidIndex };
++        static const unsigned indexForRegister[16] = { 0, 1, 2, 8, 3, InvalidIndex, InvalidIndex, InvalidIndex, 4, 5, 6, 7, InvalidIndex, InvalidIndex, InvalidIndex, InvalidIndex };
+         unsigned result = indexForRegister[reg];
+         ASSERT(result != InvalidIndex);
+         return result;
+diff --git a/Source/JavaScriptCore/jit/JITStubs.cpp b/Source/JavaScriptCore/jit/JITStubs.cpp
+index 7aaa278..9be418e 100644
+--- a/Source/JavaScriptCore/jit/JITStubs.cpp
++++ b/Source/JavaScriptCore/jit/JITStubs.cpp
+@@ -653,7 +653,6 @@ SYMBOL_STRING(ctiTrampoline) ":" "\n"
+     "str r11, [sp, #" STRINGIZE_VALUE_OF(PRESERVED_R11_OFFSET) "]" "\n"
+     "str r1, [sp, #" STRINGIZE_VALUE_OF(REGISTER_FILE_OFFSET) "]" "\n"
+     "mov r5, r2" "\n"
+-    "mov r6, #512" "\n"
+     "blx r0" "\n"
+     "ldr r11, [sp, #" STRINGIZE_VALUE_OF(PRESERVED_R11_OFFSET) "]" "\n"
+     "ldr r10, [sp, #" STRINGIZE_VALUE_OF(PRESERVED_R10_OFFSET) "]" "\n"
+@@ -730,7 +729,6 @@ SYMBOL_STRING(ctiTrampoline) ":" "\n"
+     "stmdb sp!, {r4-r6, r8-r11, lr}" "\n"
+     "sub sp, sp, #" STRINGIZE_VALUE_OF(PRESERVEDR4_OFFSET) "\n"
+     "mov r5, r2" "\n"
+-    "mov r6, #512" "\n"
+     // r0 contains the code
+     "blx r0" "\n"
+     "add sp, sp, #" STRINGIZE_VALUE_OF(PRESERVEDR4_OFFSET) "\n"
+@@ -780,7 +778,6 @@ __asm EncodedJSValue ctiTrampoline(void*, JSStack*, CallFrame*, void* /*unused1*
+     str r11, [sp, # PRESERVED_R11_OFFSET ]
+     str r1, [sp, # REGISTER_FILE_OFFSET ]
+     mov r5, r2
+-    mov r6, #512
+     blx r0
+     ldr r11, [sp, # PRESERVED_R11_OFFSET ]
+     ldr r10, [sp, # PRESERVED_R10_OFFSET ]
+@@ -840,7 +837,6 @@ __asm EncodedJSValue ctiTrampoline(void*, JSStack*, CallFrame*, void* /*unused1*
+     stmdb sp!, {r4-r6, r8-r11, lr}
+     sub sp, sp, # PRESERVEDR4_OFFSET
+     mov r5, r2
+-    mov r6, #512
+     mov lr, pc
+     bx r0
+     add sp, sp, # PRESERVEDR4_OFFSET
+@@ -1387,7 +1383,6 @@ MSVC_BEGIN(    stmdb sp!, {r1-r3})
+ MSVC_BEGIN(    stmdb sp!, {r4-r6, r8-r11, lr})
+ MSVC_BEGIN(    sub sp, sp, #68 ; sync with PRESERVEDR4_OFFSET)
+ MSVC_BEGIN(    mov r5, r2)
+-MSVC_BEGIN(    mov r6, #512)
+ MSVC_BEGIN(    ; r0 contains the code)
+ MSVC_BEGIN(    mov lr, pc)
+ MSVC_BEGIN(    bx r0)
+diff --git a/Source/JavaScriptCore/yarr/YarrJIT.cpp b/Source/JavaScriptCore/yarr/YarrJIT.cpp
+index 1b2b031..d337cf7 100644
+--- a/Source/JavaScriptCore/yarr/YarrJIT.cpp
++++ b/Source/JavaScriptCore/yarr/YarrJIT.cpp
+@@ -46,10 +46,10 @@ class YarrGenerator : private MacroAssembler {
+     static const RegisterID input = ARMRegisters::r0;
+     static const RegisterID index = ARMRegisters::r1;
+     static const RegisterID length = ARMRegisters::r2;
+-    static const RegisterID output = ARMRegisters::r4;
++    static const RegisterID output = ARMRegisters::r3;
+ 
+-    static const RegisterID regT0 = ARMRegisters::r5;
+-    static const RegisterID regT1 = ARMRegisters::r6;
++    static const RegisterID regT0 = ARMRegisters::r4;
++    static const RegisterID regT1 = ARMRegisters::r5;
+ 
+     static const RegisterID returnRegister = ARMRegisters::r0;
+     static const RegisterID returnRegister2 = ARMRegisters::r1;
+@@ -2553,11 +2553,6 @@ class YarrGenerator : private MacroAssembler {
+         push(ARMRegisters::r4);
+         push(ARMRegisters::r5);
+         push(ARMRegisters::r6);
+-#if CPU(ARM_TRADITIONAL)
+-        push(ARMRegisters::r8); // scratch register
+-#endif
+-        if (compileMode == IncludeSubpatterns)
+-            move(ARMRegisters::r3, output);
+ #elif CPU(SH4)
+         push(SH4Registers::r11);
+         push(SH4Registers::r13);
+@@ -2583,9 +2578,6 @@ class YarrGenerator : private MacroAssembler {
+         pop(X86Registers::ebx);
+         pop(X86Registers::ebp);
+ #elif CPU(ARM)
+-#if CPU(ARM_TRADITIONAL)
+-        pop(ARMRegisters::r8); // scratch register
+-#endif
+         pop(ARMRegisters::r6);
+         pop(ARMRegisters::r5);
+         pop(ARMRegisters::r4);
+-- 
+1.8.0
+
