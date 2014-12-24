@@ -1,0 +1,32 @@
+From d3c1f581037efde000b0716b55c8ca830bae0482 Mon Sep 17 00:00:00 2001
+From: Allan Sandfeld Jensen <allan.jensen@digia.com>
+Date: Thu, 23 Oct 2014 19:04:53 +0200
+Subject: [PATCH] LLInt is not built with ARM softfp ABI
+
+In fixing QTBUG-35681 we disabled LLInt when hard fp is not set. This
+is however too strong a condition as we only need to be allowed to use
+floating point instructions, not use the hard floating point ABI.
+
+LLInt is also disabled on Android because it currently doesn't build.
+
+Task-number: QTBUG-35681
+Change-Id: Ibe109b0f8fe6acaec90d42305c6151a440141ea9
+Reviewed-by: Julien Brianceau <jbriance@cisco.com>
+Reviewed-by: Michael Bruning <michael.bruning@digia.com>
+---
+ Source/WTF/wtf/Platform.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Source/WTF/wtf/Platform.h b/Source/WTF/wtf/Platform.h
+index a53c60d..a4635a4 100644
+--- a/Source/WTF/wtf/Platform.h
++++ b/Source/WTF/wtf/Platform.h
+@@ -805,7 +805,7 @@
+ #endif
+ 
+ /* LLINT on ARM depends on an FPU */
+-#if !defined(ENABLE_LLINT) && CPU(ARM) && !CPU(ARM_HARDFP)
++#if !defined(ENABLE_LLINT) && CPU(ARM) && (!CPU(ARM_VFP) || OS(ANDROID))
+ #define ENABLE_LLINT 0
+ #endif
+ 

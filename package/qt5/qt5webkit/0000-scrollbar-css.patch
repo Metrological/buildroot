@@ -1,0 +1,28 @@
+From ba4c0fc7927b0fd6d2fa71aceda8136094581e2d Mon Sep 17 00:00:00 2001
+From: Allan Sandfeld Jensen <allan.jensen@digia.com>
+Date: Tue, 18 Nov 2014 17:47:06 +0100
+Subject: [PATCH] Avoid crashing when applying CSS to disconnected scrollbars
+
+Assume the scrollbar has no scroll corner if it isn't attached to
+any scrollable area.
+
+Task-number: QTBUG-37679
+Change-Id: Ib1bd2a4b1aa504885d52932b6c0fbd76daa356a5
+Reviewed-by: Jocelyn Turcotte <jocelyn.turcotte@digia.com>
+---
+ Source/WebCore/css/SelectorChecker.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Source/WebCore/css/SelectorChecker.cpp b/Source/WebCore/css/SelectorChecker.cpp
+index dce3138..dd466bb 100644
+--- a/Source/WebCore/css/SelectorChecker.cpp
++++ b/Source/WebCore/css/SelectorChecker.cpp
+@@ -880,7 +880,7 @@ bool SelectorChecker::checkScrollbarPseudoClass(const SelectorCheckingContext& c
+             return false;
+         }
+     case CSSSelector::PseudoCornerPresent:
+-        return scrollbar->scrollableArea()->isScrollCornerVisible();
++        return scrollbar->scrollableArea() ? scrollbar->scrollableArea()->isScrollCornerVisible() : false;
+     default:
+         return false;
+     }
