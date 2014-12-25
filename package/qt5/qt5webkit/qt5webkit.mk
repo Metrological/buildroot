@@ -67,6 +67,15 @@ QT5WEBKIT_CONFIG += \
 	WEBKIT_CONFIG-=build_qttestsupport
 endif
 
+QT5WEBKIT_CONFIG += \
+	WEBKIT_CONFIG+=page_visibility_api \
+	WEBKIT_CONFIG+=css_variables \
+	WEBKIT_CONFIG+=css_image_orientation \
+	WEBKIT_CONFIG+=css3_text \
+	WEBKIT_CONFIG+=css3_text_line_break \
+	WEBKIT_CONFIG+=mathml \
+	WEBKIT_CONFIG+=mircodata
+
 ifeq ($(BR2_QT5WEBKIT_USE_GSTREAMER),y)
 QT5WEBKIT_DEPENDENCIES += gstreamer1 gst1-plugins-base gst1-plugins-good gst1-plugins-bad
 QT5WEBKIT_CONFIG += \
@@ -117,6 +126,19 @@ ifeq ($(BR2_QT5WEBKIT_USE_DISCOVERY), y)
 	QT5WEBKIT_CONFIG += \
 		WEBKIT_CONFIG+=discovery
 	QT5WEBKIT_DEPENDENCIES += gupnp avahi
+endif
+
+ifeq ($(BR2_QT5WEBKIT_USE_LOCATION), y)
+	QT5WEBKIT_CONFIG += \
+		WEBKIT_CONFIG+=location
+	QT5WEBKIT_DEPENDENCIES += qt5location
+endif
+
+ifeq ($(BR2_QT5WEBKIT_USE_ORIENTATION), y)
+	QT5WEBKIT_CONFIG += \
+		WEBKIT_CONFIG+=device_orientation \
+		WEBKIT_CONFIG+=orientation_events
+	QT5WEBKIT_DEPENDENCIES += qt5sensors
 endif
 
 define QT5WEBKIT_CONFIGURE_CMDS

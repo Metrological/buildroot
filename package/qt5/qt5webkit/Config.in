@@ -34,6 +34,20 @@ config BR2_QT5WEBKIT_USE_DISCOVERY
 	help
 	  Network Service Discovery API
 
+config BR2_QT5WEBKIT_USE_LOCATION
+	bool "location"
+	default y
+	select BR2_PACKAGE_QT5LOCATION
+	help
+	  Location API
+
+config BR2_QT5WEBKIT_USE_ORIENTATION
+	bool "orientation"
+	default y
+	select BR2_PACKAGE_QT5SENSORS
+	help
+	  Device Orientation API
+
 config BR2_QT5WEBKIT_USE_ACCELERATED_CANVAS
 	bool "accelerated-canvas"
 	default y
@@ -59,16 +73,16 @@ config BR2_QT5WEBKIT_USE_GSTREAMER
 	  Use GStreamer 1.x for media playback support. Recommended option.
 
 config BR2_QT5WEBKIT_USE_ENCRYPTED_MEDIA
-        bool "encrypted-media"
+	bool "encrypted-media"
 	depends on BR2_QT5WEBKIT_USE_GSTREAMER
-        default n
-        help
-          Enable Encrypted Media Extensions.
+	default n
+	help
+	  Enable Encrypted Media Extensions.
 
 config BR2_QT5WEBKIT_USE_DXDRM_EME
 	bool "dxdrm-eme"
-	default n
-	depends on BR2_QT5WEBKIT_USE_ENCRYPTED_MEDIA
+	default y if BR2_PACKAGE_DXDRM
+	select BR2_QT5WEBKIT_USE_ENCRYPTED_MEDIA
 	depends on BR2_PACKAGE_DXDRM
 	help
 	  Enable Discretix DRM Encrypted Media Extensions backend.
