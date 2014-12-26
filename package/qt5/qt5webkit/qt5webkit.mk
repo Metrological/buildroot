@@ -74,7 +74,7 @@ QT5WEBKIT_CONFIG += \
 	WEBKIT_CONFIG+=css3_text \
 	WEBKIT_CONFIG+=css3_text_line_break \
 	WEBKIT_CONFIG+=mathml \
-	WEBKIT_CONFIG+=mircodata
+	WEBKIT_CONFIG+=microdata
 
 ifeq ($(BR2_QT5WEBKIT_USE_GSTREAMER),y)
 QT5WEBKIT_DEPENDENCIES += gstreamer1 gst1-plugins-base gst1-plugins-good gst1-plugins-bad
