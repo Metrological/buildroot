@@ -1,0 +1,13 @@
+diff --git a/interface/khronos/common/linux/khrn_client_platform_linux.c b/interface/khronos/common/linux/khrn_client_platform_linux.c
+index 13c8c25..8daa5c2 100644
+--- a/interface/khronos/common/linux/khrn_client_platform_linux.c
++++ b/interface/khronos/common/linux/khrn_client_platform_linux.c
+@@ -836,7 +836,7 @@ void platform_get_dimensions(EGLDisplay dpy, EGLNativeWindowType win,
+       *height = wl_egl_window->height;
+       /* This seems to be used for sync'ing with the VC on buffer creation, but
+          we are managing them on the CPU side */
+-      *swapchain_count = 1;
++      *swapchain_count = 0;
+    } else {
+ #endif
+       EGL_DISPMANX_WINDOW_T *dwin = check_default(win);
