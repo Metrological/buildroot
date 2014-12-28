@@ -5,6 +5,10 @@
 ################################################################################
 
 QT5WEBKIT_VERSION = 3eddba879bbda7cbc0692c17d16afd32576f20fb
+ifeq ($(BR2_QT5WEBKIT_USE_WEBRTC),y)
+QT5WEBKIT_VERSION = de07f58fb904c81794af37238e2c0c2989a59898
+endif
+
 QT5WEBKIT_SITE = $(call github,Metrological,qtwebkit,$(QT5WEBKIT_VERSION))
 
 QT5WEBKIT_DEPENDENCIES = qt5base sqlite host-ruby host-gperf host-bison host-flex
@@ -117,31 +121,31 @@ QT5WEBKIT_CONFIG += \
 	WEBKIT_CONFIG+=build_drt
 endif
 
-ifeq ($(BR2_QT5WEBKIT_USE_ACCELERATED_CANVAS), y)
+ifeq ($(BR2_QT5WEBKIT_USE_ACCELERATED_CANVAS),y)
 	QT5WEBKIT_CONFIG += \
 		WEBKIT_CONFIG+=accelerated_2d_canvas
 endif
 
-ifeq ($(BR2_QT5WEBKIT_USE_DISCOVERY), y)
+ifeq ($(BR2_QT5WEBKIT_USE_DISCOVERY),y)
 	QT5WEBKIT_CONFIG += \
 		WEBKIT_CONFIG+=discovery
 	QT5WEBKIT_DEPENDENCIES += gupnp avahi
 endif
 
-ifeq ($(BR2_QT5WEBKIT_USE_LOCATION), y)
+ifeq ($(BR2_QT5WEBKIT_USE_LOCATION),y)
 	QT5WEBKIT_CONFIG += \
 		WEBKIT_CONFIG+=location
 	QT5WEBKIT_DEPENDENCIES += qt5location
 endif
 
-ifeq ($(BR2_QT5WEBKIT_USE_ORIENTATION), y)
+ifeq ($(BR2_QT5WEBKIT_USE_ORIENTATION),y)
 	QT5WEBKIT_CONFIG += \
 		WEBKIT_CONFIG+=device_orientation \
 		WEBKIT_CONFIG+=orientation_events
 	QT5WEBKIT_DEPENDENCIES += qt5sensors
 endif
 
-ifeq ($(BR2_QT5WEBKIT_USE_WEBRTC), y)
+ifeq ($(BR2_QT5WEBKIT_USE_WEBRTC),y)
 	QT5WEBKIT_CONFIG += \
 		WEBKIT_CONFIG+=media_stream
 	QT5WEBKIT_DEPENDENCIES += libnice

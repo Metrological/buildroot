@@ -89,7 +89,7 @@ config BR2_QT5WEBKIT_USE_DXDRM_EME
 
 config BR2_QT5WEBKIT_USE_WEBRTC
 	bool "WebRTC"
-	default y
+	default n
 	select BR2_PACKAGE_LIBNICE
 	depends on BR2_QT5WEBKIT_USE_GSTREAMER
 	help
