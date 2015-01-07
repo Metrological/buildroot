@@ -31,6 +31,12 @@ config BR2_PACKAGE_PROVIDES_OPENVG
 config BR2_PACKAGE_PROVIDES_OPENMAX
 	default "rpi-userland"
 
+config BR2_PACKAGE_RPI_USERLAND_INSTALL_TOOLS
+	bool "install tools"
+	default n
+	help
+	  Select this option to install the raspi* programs on target.
+
 endif
 
 comment "rpi-userland needs a toolchain w/ C++, largefile, threads"

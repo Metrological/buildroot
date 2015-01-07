@@ -482,4 +482,10 @@ config BR2_PACKAGE_GST1_PLUGINS_BAD_PLUGIN_HLS
 	help
 	  Fragmented streaming plugins
 
+config BR2_PACKAGE_GST1_PLUGINS_BAD_PLUGIN_SRTP
+	bool "srtp"
+	select BR2_PACKAGE_LIBSRTP
+	help
+	  Secure Real Time Protocol support
+
 endif

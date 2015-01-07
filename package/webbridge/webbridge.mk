@@ -31,6 +31,11 @@ ifeq ($(BR2_PACKAGE_PLUGIN_DEVICEINFO),y)
 	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/DeviceInfo target ;
 endif
 
+ifeq ($(BR2_PACKAGE_PLUGIN_BROWSER),y)
+	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX=$(TARGET_CXX) -C $(@D)/Plugins/Browser build ;
+	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/Browser target ;
+endif
+
 ifeq ($(BR2_PACKAGE_PLUGIN_SURFACECOMPOSITOR),y)
 	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) NEXUS_TOP=$(BCM_REFSW_DIR) CXX=$(TARGET_CXX) CC=$(TARGET_CC) -C $(@D)/Plugins/SurfaceCompositor build ;
 	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) NEXUS_TOP=$(BCM_REFSW_DIR) CXX=$(TARGET_CXX) CC=$(TARGET_CC) -C $(@D)/Plugins/SurfaceCompositor target ;

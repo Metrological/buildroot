@@ -37,6 +37,12 @@ config BR2_PACKAGE_PLUGIN_DEVICEINFO
   help
     A plugin displaying information on system resources
 
+config BR2_PACKAGE_PLUGIN_BROWSER
+  bool "browser"
+	depends on BR2_PACKAGE_QT5WEBKIT
+  help
+    A plugin that has browser functionality (QtWebKit)
+
 config BR2_PACKAGE_PLUGIN_SURFACECOMPOSITOR
   bool "surfacecompositor"
 	depends on BR2_PACKAGE_BCM_REFSW

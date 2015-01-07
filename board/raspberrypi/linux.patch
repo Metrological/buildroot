@@ -1,14 +1,3 @@
---- a/tools/lib/lk/Makefile
-+++ b/tools/lib/lk/Makefile
-@@ -16,6 +16,8 @@ ALL_CFLAGS = $(CFLAGS) $(BASIC_CFLAGS) -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS
- ALL_LDFLAGS = $(LDFLAGS)
- 
- RM = rm -f
-+AR = $(CROSS_COMPILE)ar
-+CC = $(CROSS_COMPILE)cc
- 
- $(LIBFILE): $(LIB_OBJS)
- 	$(QUIET_AR)$(RM) $@ && $(AR) rcs $(OUTPUT)$@ $(LIB_OBJS)
 --- a/arch/arm/Makefile
 +++ b/arch/arm/Makefile
 @@ -60,7 +60,7 @@

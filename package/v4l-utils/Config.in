@@ -1,0 +1,9 @@
+config BR2_PACKAGE_V4L_UTILS
+	bool "v4l-utils"
+	help
+	  Provides a series of utilities for media devices, allowing to handle
+	  the proprietary formats available at most webcams (libv4l), and
+	  providing tools to test V4L devices.
+
+	  It also provides tools to manage the remote controller tables
+	  available on most media devices.

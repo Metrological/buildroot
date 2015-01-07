@@ -1,0 +1,31 @@
+From e80c93a02b6f7d09e38cffc9302ac8a94dc3ea4b Mon Sep 17 00:00:00 2001
+From: Allan Sandfeld Jensen <allan.jensen@digia.com>
+Date: Wed, 12 Nov 2014 17:02:12 +0100
+Subject: [PATCH] Support DELETE requests with a body
+
+While non-standard, other browsers allow DELETE requests to send a body
+in the HTTP request. Since there is no specific API for delete requests
+with a body in QNetworkAccessManager, we use custom HTTP request for
+this.
+
+Task-number: QTBUG-42456
+Change-Id: I01a055ea173b5a65086f97d0c6ef14a9e01141b3
+Reviewed-by: Milian Wolff <milian.wolff@kdab.com>
+Reviewed-by: Jocelyn Turcotte <jocelyn.turcotte@digia.com>
+---
+ Source/WebCore/platform/network/qt/QNetworkReplyHandler.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Source/WebCore/platform/network/qt/QNetworkReplyHandler.cpp b/Source/WebCore/platform/network/qt/QNetworkReplyHandler.cpp
+index fc69546..f884a9f 100644
+--- a/Source/WebCore/platform/network/qt/QNetworkReplyHandler.cpp
++++ b/Source/WebCore/platform/network/qt/QNetworkReplyHandler.cpp
+@@ -453,7 +453,7 @@ QNetworkReplyHandler::QNetworkReplyHandler(ResourceHandle* handle, LoadType load
+         m_method = QNetworkAccessManager::PostOperation;
+     else if (r.httpMethod() == "PUT")
+         m_method = QNetworkAccessManager::PutOperation;
+-    else if (r.httpMethod() == "DELETE")
++    else if (r.httpMethod() == "DELETE" && !r.httpBody()) // A delete with a body is a custom operation.
+         m_method = QNetworkAccessManager::DeleteOperation;
+     else
+         m_method = QNetworkAccessManager::CustomOperation;
