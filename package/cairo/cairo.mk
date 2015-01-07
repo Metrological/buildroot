@@ -4,8 +4,8 @@
 #
 ################################################################################
 
-CAIRO_VERSION = 76e4107cf473503748292b51cdaef26dbc2d6ec3
-CAIRO_SITE = $(call github,zdobersek,cairo,$(CAIRO_VERSION))
+CAIRO_VERSION = dd8e6a461d53add34008ea9f33e7f1dba5d2c5cb
+CAIRO_SITE = $(call github,WebKitForWayland,cairo,$(CAIRO_VERSION))
 CAIRO_LICENSE = LGPLv2.1+
 CAIRO_LICENSE_FILES = COPYING
 CAIRO_INSTALL_STAGING = YES
