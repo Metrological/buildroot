@@ -5,7 +5,7 @@
 ################################################################################
 
 WESTON_VERSION = 920a0331cf5340942a9d39ac3b48ce207f7970b6
-WESTON_SITE = $(call github,zdobersek,WebKitForWayland,$(WESTON_VERSION))
+WESTON_SITE = $(call github,WebKitForWayland,$(WESTON_VERSION))
 WESTON_LICENSE = MIT
 WESTON_LICENSE_FILES = COPYING
 
