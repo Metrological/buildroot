@@ -4,8 +4,9 @@
 #
 ################################################################################
 
-WPE_VERSION = baee22bcbfa5da76324263cf86a4ec4329fc4a3b
-WPE_SITE = $(call github,Metrological,WebKitForWayland,$(WPE_VERSION))
+WPE_VERSION = 16122014
+WPE_SITE = https://github.com/WebKitForWayland/webkit/archive
+WPE_SOURCE = wpe-$(WPE_VERSION).tar.gz
 
 WPE_INSTALL_STAGING = YES
 WPE_DEPENDENCIES = host-flex host-bison host-gperf host-ruby \
