@@ -4,12 +4,17 @@
 #
 ################################################################################
 
-CAIRO_VERSION = 1.12.16
-CAIRO_SOURCE = cairo-$(CAIRO_VERSION).tar.xz
+CAIRO_VERSION = dd8e6a461d53add34008ea9f33e7f1dba5d2c5cb
+CAIRO_SITE = $(call github,WebKitForWayland,cairo,$(CAIRO_VERSION))
 CAIRO_LICENSE = LGPLv2.1+
 CAIRO_LICENSE_FILES = COPYING
-CAIRO_SITE = http://cairographics.org/releases
 CAIRO_INSTALL_STAGING = YES
+CAIRO_AUTORECONF = YES
+
+define CAIRO_MAKEFILE_AM_FEATURES
+       cd $(@D) && touch boilerplate/Makefile.am.features src/Makefile.am.features
+endef
+CAIRO_PRE_CONFIGURE_HOOKS += CAIRO_MAKEFILE_AM_FEATURES
 
 CAIRO_CONF_ENV = ac_cv_func_posix_getpwuid_r=yes glib_cv_stack_grows=no \
 		glib_cv_uscore=no ac_cv_func_strtod=yes \
