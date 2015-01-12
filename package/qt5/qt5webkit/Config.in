@@ -26,7 +26,7 @@ menu "Extra options"
 
 config BR2_QT5WEBKIT_USE_DISCOVERY
 	bool "discovery"
-	default y
+	default n
 	select BR2_PACKAGE_DBUS
 	select BR2_PACKAGE_AVAHI
 	select BR2_PACKAGE_AVAHI_DAEMON
