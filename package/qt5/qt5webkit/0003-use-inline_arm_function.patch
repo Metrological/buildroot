@@ -1,0 +1,41 @@
+From 400872d024cee95d1cfc1253d009c0c6777ea5a3 Mon Sep 17 00:00:00 2001
+From: Allan Sandfeld Jensen <allan.jensen@digia.com>
+Date: Fri, 24 Oct 2014 11:10:13 +0200
+Subject: [PATCH] Use INLINE_ARM_FUNCTION in OFFLINE_ASM_GLOBAL_LABEL
+
+We can get rid of an ifdef in LowLevelInterpreter by reusing logic
+from InlineAsm.h. This also fixes ARM_TRADITIONAL when forced on when
+thumb2 is available to the compiler.
+
+Change-Id: Iac5ad22a4a41757fa03c3cbc2e8f68e44d085bae
+Reviewed-by: Julien Brianceau <jbriance@cisco.com>
+Reviewed-by: Michael Bruning <michael.bruning@digia.com>
+---
+ Source/JavaScriptCore/llint/LowLevelInterpreter.cpp | 10 +---------
+ 1 file changed, 1 insertion(+), 9 deletions(-)
+
+diff --git a/Source/JavaScriptCore/llint/LowLevelInterpreter.cpp b/Source/JavaScriptCore/llint/LowLevelInterpreter.cpp
+index a616ce9..c8f7254 100644
+--- a/Source/JavaScriptCore/llint/LowLevelInterpreter.cpp
++++ b/Source/JavaScriptCore/llint/LowLevelInterpreter.cpp
+@@ -530,19 +530,11 @@ JSValue CLoop::execute(CallFrame* callFrame, OpcodeID bootstrapOpcodeId,
+ #define OFFLINE_ASM_OPCODE_LABEL(__opcode) OFFLINE_ASM_GLOBAL_LABEL(llint_##__opcode)
+ #define OFFLINE_ASM_GLUE_LABEL(__opcode)   OFFLINE_ASM_GLOBAL_LABEL(__opcode)
+ 
+-#if CPU(ARM_THUMB2)
+-#define OFFLINE_ASM_GLOBAL_LABEL(label)          \
+-    ".globl " SYMBOL_STRING(label) "\n"          \
+-    HIDE_SYMBOL(label) "\n"                      \
+-    ".thumb\n"                                   \
+-    ".thumb_func " THUMB_FUNC_PARAM(label) "\n"  \
+-    SYMBOL_STRING(label) ":\n"
+-#else
+ #define OFFLINE_ASM_GLOBAL_LABEL(label)         \
+     ".globl " SYMBOL_STRING(label) "\n"         \
+     HIDE_SYMBOL(label) "\n"                     \
++    INLINE_ARM_FUNCTION(label)                  \
+     SYMBOL_STRING(label) ":\n"
+-#endif
+ 
+ #define OFFLINE_ASM_LOCAL_LABEL(label)   LOCAL_LABEL_STRING(label) ":\n"
+ 
