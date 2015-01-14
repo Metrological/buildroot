@@ -1,0 +1,8 @@
+config BR2_PACKAGE_RTL8192DU
+	bool "rtl8192du"
+	depends on BR2_LINUX_KERNEL
+	help
+	  This package provides various binary firmware files for
+	  the RTL8192DU present in the rpistick (rev2) hardware.
+
+	  https://github.com/lwfinger/rtl8192du.git
