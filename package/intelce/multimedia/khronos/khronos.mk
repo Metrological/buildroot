@@ -10,8 +10,7 @@ KHRONOS_SITE_METHOD = local
 KHRONOS_LICENSE = PROPRIETARY
 KHRONOS_REDISTRIBUTE = NO
 
-KHRONOS_DEPENDENCIES = host-bison linux-headers linux libgdl libgma
-#tofrodos dos2unix
+KHRONOS_DEPENDENCIES = host-flex host-bison linux-headers linux libgdl libgma
 
 KHRONOS_INSTALL_STAGING = YES
 
