@@ -6,5 +6,5 @@ includedir=${prefix}/include
 Name: egl
 Description: Broadcom implementation of EGL
 Version: 1
-Libs: -L${libdir} -lrt -lnexus -lnxpl -lv3ddriver -lbipc
-Cflags: -I${includedir} -I${includedir}/refsw -DNEXUS_SURFACE_COMPOSITION
+Libs: -L${libdir} -lrt -lnexus %NEXUS_CLIENT% -lnxpl -lv3ddriver
+Cflags: -I${includedir} -I${includedir}/refsw %NEXUS_COMPOSITION%

@@ -49,17 +49,19 @@ BCM_OUTPUT = /
 endif
         
 ifeq ($(BR2_PACKAGE_PLUGIN_SURFACECOMPOSITOR),y)
-EGL_DESCRIPTION_FILE = egl.pc.sc
+BCM_COMPOSITIONDEFINE=-DNEXUS_SURFACE_COMPOSITION
 else ifeq ($(BR2_PACKAGE_DAWN_SDK),y)
-EGL_DESCRIPTION_FILE = egl.pc.sc
+BCM_COMPOSITIONDEFINE=-DNEXUS_SURFACE_COMPOSITION
 else
-EGL_DESCRIPTION_FILE = egl.pc
+BCM_COMPOSITIONDEFINE=
 endif
 
 ifeq ($(BR2_BCMREFSW_PROXY_MODE),y)
 BCM_MAKE_ENV += NEXUS_MODE=proxy
+BCM_CLIENTLIB = 
 else
 BCM_MAKE_ENV += NEXUS_MODE=client
+BCM_CLIENTLIB = -lnxclient
 endif
 
 BCM_MAKEFLAGS  = CROSS_COMPILE="${TARGET_CROSS}"
@@ -102,7 +104,7 @@ define BCM_REFSW_INSTALL_STAGING_CMDS
 	$(INSTALL) -m 755 -d $(STAGING_DIR)/usr/include/GLES2
 	$(INSTALL) -m 755 -d $(STAGING_DIR)/usr/include/EGL
 	$(INSTALL) -m 755 -d $(STAGING_DIR)/usr/include/refsw
-	$(INSTALL) -m 644 package/bcm-refsw/$(EGL_DESCRIPTION_FILE) $(STAGING_DIR)/usr/lib/pkgconfig/egl.pc
+	sed 's/%NEXUS_COMPOSITION%/$(BCM_COMPOSITIONDEFINE)/g' package/bcm-refsw/egl.pc.in | sed 's/%NEXUS_CLIENT%/$(BCM_CLIENTLIB)/g' >$(STAGING_DIR)/usr/lib/pkgconfig/egl.pc
 	$(INSTALL) -m 644 package/bcm-refsw/glesv2.pc $(STAGING_DIR)/usr/lib/pkgconfig/
 	$(INSTALL) -m 644 $(@D)$(BCM_OUTPUT)nexus/bin/include/*.h $(STAGING_DIR)/usr/include/refsw/
 	$(INSTALL) -m 644 $(@D)/rockford/middleware/platform/nexus/*.h $(STAGING_DIR)/usr/include/refsw/
