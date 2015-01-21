@@ -4,9 +4,8 @@
 #
 ################################################################################
 
-ATHOL_VERSION = 0.1
-ATHOL_SOURCE = athol-prerelease.tar.xz
-ATHOL_SITE = http://tmp.igalia.com/wpe/
+ATHOL_VERSION = 45f4bb4c133b8e302636735e4e93527efec4f250
+ATHOL_SITE = $(call github,WebKitForWayland,athol,$(ATHOL_VERSION))
 
 ATHOL_INSTALL_STAGING = YES
 ATHOL_DEPENDENCIES = wayland libegl libglib2 libinput
