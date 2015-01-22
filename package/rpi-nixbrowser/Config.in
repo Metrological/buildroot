@@ -1,6 +1,0 @@
-config BR2_PACKAGE_RPI_NIXBROWSER
-	bool "rpi-nixbrowser"
-	depends on BR2_PACKAGE_RPI_USERLAND
-	select BR2_PACKAGE_WEBKITNIX
-	help
-	  Raspberry Pi WebKitNix Browser
