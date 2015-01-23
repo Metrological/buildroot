@@ -4,8 +4,9 @@
 #
 ################################################################################
 
-ORC_VERSION = 0.4.18
-ORC_SITE = http://code.entropywave.com/download/orc/
+ORC_VERSION = 0.4.22
+ORC_SOURCE = orc-$(ORC_VERSION).tar.xz
+ORC_SITE = http://gstreamer.freedesktop.org/src/orc/
 ORC_LICENSE = BSD-2c, BSD-3c
 ORC_LICENSE_FILES = COPYING
 ORC_INSTALL_STAGING = YES
