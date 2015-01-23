@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-DXDRM_VERSION = 1.5.0
+DXDRM_VERSION = 1.6.0
 DXDRM_SITE = ../dxdrm
 DXDRM_SITE_METHOD = local
 DXDRM_LICENSE = PROPRIETARY
