@@ -10,6 +10,8 @@ GST1_LIBAV_SOURCE = gst-libav-$(GST1_LIBAV_VERSION).tar.xz
 GST1_LIBAV_SITE = http://gstreamer.freedesktop.org/src/gst-libav
 
 GST1_LIBAV_DEPENDENCIES = host-pkgconf gstreamer1 gst1-plugins-base
+GST1_LIBAV_AUTORECONF = YES
+GST1_LIBAV_AUTORECONF_OPT = -I $(@D)/m4 -I $(@D)/common/m4
 
 GST1_LIBAV_CONF_EXTRA_OPT = \
 	--cross-prefix=$(TARGET_CROSS) \
