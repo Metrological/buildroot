@@ -22,17 +22,17 @@ ifeq ($(BR2_PACKAGE_GST1_PLUGINS_BAD_PLUGIN_GL),y)
 GST1_OMX_DEPENDENCIES += gst1-plugins-bad
 endif
 
-ifeq ($(BR2_PACKAGE_RPI_USERLAND),y)
 GST1_OMX_CONF_OPT = \
+	--disable-examples
+
+ifeq ($(BR2_PACKAGE_RPI_USERLAND),y)
+GST1_OMX_CONF_OPT += \
 	--with-omx-target=rpi
 GST1_OMX_CONF_ENV = \
 	CFLAGS="$(TARGET_CFLAGS) \
 		-I$(STAGING_DIR)/usr/include/IL \
 		-I$(STAGING_DIR)/usr/include/interface/vcos/pthreads \
 		-I$(STAGING_DIR)/usr/include/interface/vmcs_host/linux"
-else
-GST1_OMX_CONF_OPT = \
-	--disable-examples
 endif
 
 ifeq ($(BR2_PACKAGE_BELLAGIO),y)
