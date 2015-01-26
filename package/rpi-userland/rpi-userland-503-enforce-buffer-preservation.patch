@@ -1,0 +1,14 @@
+diff --git a/interface/khronos/egl/egl_client_surface.c b/interface/khronos/egl/egl_client_surface.c
+index a429724..ef3042b 100644
+--- a/interface/khronos/egl/egl_client_surface.c
++++ b/interface/khronos/egl/egl_client_surface.c
+@@ -405,6 +405,9 @@ EGL_SURFACE_T *egl_surface_create(
+       surface->back_wl_buffer = allocate_wl_buffer(
+             surface->wl_egl_window, color);
+       resource = surface->back_wl_buffer->resource;
++
++      // Enforce buffer preservation under Wayland, no matter the buffer count.
++      surface->swap_behavior = EGL_BUFFER_PRESERVED;
+    } else {
+       surface->wl_egl_window = NULL;
+       surface->front_wl_buffer = NULL;

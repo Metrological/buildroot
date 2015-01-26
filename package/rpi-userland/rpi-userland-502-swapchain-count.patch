@@ -7,7 +7,7 @@ index 13c8c25..8daa5c2 100644
        /* This seems to be used for sync'ing with the VC on buffer creation, but
           we are managing them on the CPU side */
 -      *swapchain_count = 1;
-+      *swapchain_count = 0;
++      *swapchain_count = 2;
     } else {
  #endif
        EGL_DISPMANX_WINDOW_T *dwin = check_default(win);
