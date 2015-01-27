@@ -1,6 +1,6 @@
 menuconfig BR2_PACKAGE_BCM_REFSW
 	bool "bcm-refsw"
-	depends on BR2_mipsel
+	depends on BR2_mipsel || BR2_arm
 	depends on BR2_INSTALL_LIBSTDCPP
 	depends on BR2_LARGEFILE
 	depends on BR2_TOOLCHAIN_HAS_THREADS
@@ -74,6 +74,11 @@ config BR2_BCM_REFSW_VERSION_V13
         bool "V13"
         help
 	   Use official release from Broadcom labeled V20131218
+
+config BR2_BCM_REFSW_VERSION_V14
+        bool "V14"
+        help
+	   Use official release from Broadcom labeled V20141217
 
 config BR2_BCM_REFSW_CUSTOM
         bool "Custom"

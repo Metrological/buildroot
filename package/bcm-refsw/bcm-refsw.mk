@@ -11,6 +11,10 @@ else ifeq ($(BR2_BCM_REFSW_VERSION_V13), y)
     BCM_REFSW_SITE = file://../bcm-refsw
     BCM_REFSW_VERSION = 20131218
     BCM_REFSW_SOURCE = refsw_release_unified_$(BCM_REFSW_VERSION).src.tar.xz
+else ifeq ($(BR2_BCM_REFSW_VERSION_V14), y)
+    BCM_REFSW_SITE = file://../bcm-refsw
+    BCM_REFSW_VERSION = 20141217
+    BCM_REFSW_SOURCE = refsw_release_unified_$(BCM_REFSW_VERSION).src.tar.xz
 else
     BCM_REFSW_SITE = file:///
     BCM_REFSW_VERSION = CUSTOM
