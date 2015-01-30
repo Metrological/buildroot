@@ -7,6 +7,9 @@ config BR2_PACKAGE_NRD
 	select BR2_PACKAGE_LIBPNG
 	select BR2_PACKAGE_JPEG
 	select BR2_PACKAGE_FREETYPE
+	select BR2_PACKAGE_EXPAT
+	select BR2_PACKAGE_OPENSSL
+	select BR2_PACKAGE_C_ARES
 	help
       A Resource Development Kit for playing content from a thirdparty
 
