@@ -2,6 +2,11 @@ config BR2_PACKAGE_NRD
 	bool "nrd"
 	depends on BR2_PACKAGE_DXDRM
         select BR2_PACKAGE_ALSA_LIB
+	select BR2_PACKAGE_WEBP
+	select BR2_PACKAGE_LIBMNG
+	select BR2_PACKAGE_LIBPNG
+	select BR2_PACKAGE_JPEG
+	select BR2_PACKAGE_FREETYPE
 	help
       A Resource Development Kit for playing content from a thirdparty
 

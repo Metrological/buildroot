@@ -7,6 +7,7 @@
 NRD_VERSION = master
 NRD_SITE_METHOD = git
 NRD_SITE = git@github.com:Metrological/nrd.git
+NRD_DEPENDENCIES = alsa-lib libjpeg libpng libmng freetype webp
 
 NRD_INSTALL_STAGING = YES
 

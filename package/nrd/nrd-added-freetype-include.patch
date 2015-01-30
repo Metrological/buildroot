@@ -1,0 +1,10 @@
+--- a/netflix/src/platform/gibbon/CMakeLists.txt	2015-01-30 16:38:41.625905063 +0100
++++ b/netflix/src/platform/gibbon/CMakeLists.txt	2015-01-30 16:02:55.725943492 +0100
+@@ -257,6 +257,7 @@
+ # FreeType
+ # -----------------------------------------------------------------------------------------------------------
+ if (NOT HAVE_LIBFREETYPE AND (GIBBON_TEXT STREQUAL "auto" OR GIBBON_TEXT STREQUAL "freetype"))
++    set(CMAKE_REQUIRED_INCLUDES "$ENV{STAGING_DIR}/usr/include/freetype2")
+     set(CMAKE_REQUIRED_LIBRARIES "freetype;z;png")
+     set(LIBFREETYPE_TEST "
+         #include <ft2build.h>
