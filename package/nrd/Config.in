@@ -1,0 +1,21 @@
+config BR2_PACKAGE_NRD
+	bool "nrd"
+	depends on BR2_PACKAGE_DXDRM
+	help
+      A Resource Development Kit for playing content from a thirdparty
+
+if BR2_PACKAGE_NRD
+
+config BR2_PACKAGE_NRD_MIDDLEWARE
+        bool "middleware"
+        default y
+        help
+          Build the middleware componentn for integration in a TEE (libnrd.a)
+
+config BR2_PACKAGE_NRD_APPLICATION
+	bool "application"
+	default y
+	help
+	  Build the application that plays the content and interacts with the TEE.
+
+endif
