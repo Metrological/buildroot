@@ -1,0 +1,20 @@
+--- nrd-master/netflix/src/platform/gibbon/GibbonConsole.org	2015-01-31 17:58:52.230650528 +0100
++++ nrd-master/netflix/src/platform/gibbon/GibbonConsole.cpp	2015-01-31 17:59:42.158651009 +0100
+@@ -64,7 +64,7 @@
+ #include <sys/types.h>
+ #include <unistd.h>
+ 
+-#if defined(NF_PLATFORM_LINUX) && !defined(__APPLE__)
++#if defined(NF_PLATFORM_LINUX) && !defined(__APPLE__) && !defined(__UCLIBC__)
+ # include <gnu/libc-version.h>
+ #endif
+ 
+@@ -1804,7 +1804,7 @@
+ #endif
+ #if defined(NF_PLATFORM_LINUX) && !defined(__APPLE__)
+ #if defined(__UCLIBC__)
+-            Log::warn(TRACE_UI_ENGINE) << "uclibc version: " << __UCLIBC__MAJOR << "." << __UCLIBC_MINOR__ << "." << __UCLIBC_SUBLEVEL__;
++            Log::warn(TRACE_UI_ENGINE) << "uclibc version: " << __UCLIBC_MAJOR__ << "." << __UCLIBC_MINOR__ << "." << __UCLIBC_SUBLEVEL__;
+ #elif defined(__GLIBC__)
+             Log::warn(TRACE_UI_ENGINE) << "glibc version - Compiled: " << __GLIBC__ << "." << __GLIBC_MINOR__ << " - Runtime: " << gnu_get_libc_version() << " " << gnu_get_libc_release();
+ # endif
