@@ -1,0 +1,11 @@
+--- nrd-master/netflix/nrdlib/src/base/BaseApplication.org	2015-01-31 12:35:12.458463433 +0100
++++ nrd-master/netflix/nrdlib/src/base/BaseApplication.cpp	2015-01-31 12:44:44.506468944 +0100
+@@ -84,7 +84,7 @@
+ 
+ #if defined(__UCLIBC__)
+     std::ostringstream uclibc;
+-    uclibc << __UCLIBC__MAJOR << "." << __UCLIBC_MINOR__ << "." << __UCLIBC_SUBLEVEL__;
++    uclibc << __UCLIBC_MAJOR__ << "." << __UCLIBC_MINOR__ << "." << __UCLIBC_SUBLEVEL__;
+     map["compiler"]["libc"]["type"] = "uclibc";
+     map["compiler"]["libc"]["version"] = uclibc.str();
+ #elif defined(__GLIBC__)

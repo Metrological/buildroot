@@ -1,6 +1,7 @@
 config BR2_PACKAGE_NRD
 	bool "nrd"
 	depends on BR2_PACKAGE_DXDRM
+	depends on BR2_PACKAGE_DIRECTFB
         select BR2_PACKAGE_ALSA_LIB
 	select BR2_PACKAGE_WEBP
 	select BR2_PACKAGE_LIBMNG
@@ -10,6 +11,7 @@ config BR2_PACKAGE_NRD
 	select BR2_PACKAGE_EXPAT
 	select BR2_PACKAGE_OPENSSL
 	select BR2_PACKAGE_C_ARES
+	select BR2_PACKAGE_PORTAUDIO
 	help
       A Resource Development Kit for playing content from a thirdparty
 
