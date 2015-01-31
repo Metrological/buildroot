@@ -1,0 +1,9 @@
+config BR2_PACKAGE_LIBAV
+	bool "libav"
+	depends on BR2_PACKAGE_ZLIB
+	depends on BR2_TOOLCHAIN_BUILDROOT_INET_IPV6
+	default n
+	help
+		Libav provides cross-platform tools and libraries to 
+		convert, manipulate and stream a wide range of 
+		multimedia formats and protocols		
