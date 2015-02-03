@@ -96,6 +96,12 @@ config BR2_QT5WEBKIT_USE_WEBRTC
 	help
 	  WebRTC mediastream/getUserMedia API
 
+config BR2_QT5WEBKIT_ENABLE_JS_MEMORY_TRACKING
+	bool "JavaScript memory tracking"
+	default n
+	help
+	  Whether to compile in the javascript memory tracking option (which then needs to be activated with the JSC_showAllocationBacktraces environment variable).
+
 config BR2_PACKAGE_MINIBROWSER
 	bool "minibrowser"
 	depends on BR2_PACKAGE_QT5DECLARATIVE
