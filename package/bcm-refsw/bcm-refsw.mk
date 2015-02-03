@@ -7,6 +7,7 @@ ifeq ($(BR2_BCM_REFSW_VERSION_V12), y)
     BCM_REFSW_SITE = file://../bcm-refsw
     BCM_REFSW_VERSION = 20121210
     BCM_REFSW_SOURCE = refsw_release_unified_$(BCM_REFSW_VERSION).src.tar.xz
+    B_REFSW_ARCH
 else ifeq ($(BR2_BCM_REFSW_VERSION_V13), y)
     BCM_REFSW_SITE = file://../bcm-refsw
     BCM_REFSW_VERSION = 20131218
@@ -70,7 +71,7 @@ endif
 
 BCM_MAKEFLAGS  = CROSS_COMPILE="${TARGET_CROSS}"
 BCM_MAKEFLAGS += TOOLCHAIN_DIR="${HOST_DIR}/usr/bin"
-BCM_MAKEFLAGS += B_REFSW_ARCH=mipsel-linux
+BCM_MAKEFLAGS += B_REFSW_ARCH=${BR2_ARCH}-linux
 BCM_MAKEFLAGS += PATH=${HOST_DIR}/usr/bin:${PATH}
 BCM_MAKEFLAGS += PKG_CONFIG_PATH="$(STAGING_DIR)/usr/lib/pkgconfig:$(STAGING_DIR)/usr/share/pkgconfig"
 BCM_MAKEFLAGS += HOST_DIR="${HOST_DIR}"
