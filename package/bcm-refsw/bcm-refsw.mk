@@ -7,7 +7,6 @@ ifeq ($(BR2_BCM_REFSW_VERSION_V12), y)
     BCM_REFSW_SITE = file://../bcm-refsw
     BCM_REFSW_VERSION = 20121210
     BCM_REFSW_SOURCE = refsw_release_unified_$(BCM_REFSW_VERSION).src.tar.xz
-    B_REFSW_ARCH
 else ifeq ($(BR2_BCM_REFSW_VERSION_V13), y)
     BCM_REFSW_SITE = file://../bcm-refsw
     BCM_REFSW_VERSION = 20131218
