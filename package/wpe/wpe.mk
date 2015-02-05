@@ -16,10 +16,12 @@ WPE_DEPENDENCIES = host-flex host-bison host-gperf host-ruby \
 
 ifeq ($(BR2_ENABLE_DEBUG),y)
 BUILDTYPE=Debug
+WPE_BUILDDIR = $(@D)/debug
 FLAGS= -DCMAKE_C_FLAGS_DEBUG="-O0 -g -Wno-cast-align" \
  -DCMAKE_CXX_FLAGS_DEBUG="-O0 -g -Wno-cast-align"
 else
 BUILDTYPE=Release
+WPE_BUILDDIR = $(@D)/release
 FLAGS= -DCMAKE_C_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align" \
  -DCMAKE_CXX_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align"
 endif
