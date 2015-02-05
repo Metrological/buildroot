@@ -25,7 +25,8 @@ WESTON_CONF_OPT = \
 	--disable-wayland-compositor \
 	--disable-headless-compositor \
 	--disable-colord \
-	--disable-libunwind
+	--disable-libunwind \
+	--disable-setuid-install 
 
 ifeq ($(BR2_PACKAGE_WESTON_FBDEV),y)
 WESTON_CONF_OPT += \
