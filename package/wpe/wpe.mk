@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-WPE_VERSION = 89d5f766b326eeaf72648dd656f42476ed9f0303
+WPE_VERSION = e3e09736b8733d726d682b441e8412689d476c1f
 WPE_SITE = $(call github,Metrological,WebKitForWayland,$(WPE_VERSION))
 
 WPE_INSTALL_STAGING = YES
@@ -16,10 +16,12 @@ WPE_DEPENDENCIES = host-flex host-bison host-gperf host-ruby \
 
 ifeq ($(BR2_ENABLE_DEBUG),y)
 BUILDTYPE=Debug
+WPE_BUILDDIR = $(@D)/debug
 FLAGS= -DCMAKE_C_FLAGS_DEBUG="-O0 -g -Wno-cast-align" \
  -DCMAKE_CXX_FLAGS_DEBUG="-O0 -g -Wno-cast-align"
 else
 BUILDTYPE=Release
+WPE_BUILDDIR = $(@D)/release
 FLAGS= -DCMAKE_C_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align" \
  -DCMAKE_CXX_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align"
 endif
