@@ -17,30 +17,34 @@ config BR2_PACKAGE_CPPSDK_GENERICS
     Base set of platform abstraction wrappers, part opf cppsdk.
     Minimal set, required to use any part of this library.
 
-if BR2_PACKAGE_CPPSDK_GENERICS
-
-config BR2_PACKAGE_CPPSDK_WEBSOCKET
-  bool "websocket"
-  depends on BR2_PACKAGE_CPPSDK_GENERICS
+config BR2_PACKAGE_CPPSDK_CRYPTALGO
+  bool "cryptalgo"
+  select BR2_PACKAGE_CPPSDK_GENERICS
   help
-    Functionality to handle web communiciation and web socket
-    communication.
+    Functionality to realize crypto algorithms used to encrypt and
+    decrypt contenet in an object oriented design.
 
 config BR2_PACKAGE_CPPSDK_DEVICES
   bool "devices"
-  depends on BR2_PACKAGE_CPPSDK_GENERICS
+  select BR2_PACKAGE_CPPSDK_GENERICS
   help
     Functionality to handle hardware specific device in an
 	  object oriented design.
 
 config BR2_PACKAGE_CPPSDK_TRACING
   bool "tracing"
-  depends on BR2_PACKAGE_CPPSDK_GENERICS
+  select BR2_PACKAGE_CPPSDK_GENERICS
   help
     Functionality to handle runtime enabling and disabling of 
     tracing. This is NOT intended for LOGGING !!!
 
-endif
+config BR2_PACKAGE_CPPSDK_WEBSOCKET
+  bool "websocket"
+  select BR2_PACKAGE_CPPSDK_GENERICS
+  select BR2_PACKAGE_CPPSDK_CRYPTALGO
+  help
+    Functionality to handle web communiciation and web socket
+    communication.
 
 endif
 
