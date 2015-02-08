@@ -36,6 +36,16 @@ ifeq ($(BR2_PACKAGE_PLUGIN_BROWSER),y)
 	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/Browser target ;
 endif
 
+ifeq ($(BR2_PACKAGE_PLUGIN_I2CCONTROL),y)
+	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX=$(TARGET_CXX) -C $(@D)/Plugins/I2CControl build ;
+	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/I2CControl target ;
+endif
+
+ifeq ($(BR2_PACKAGE_PLUGIN_FILESERVER),y)
+	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX=$(TARGET_CXX) -C $(@D)/Plugins/FileServer build ;
+	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/FileServer target ;
+endif
+
 ifeq ($(BR2_PACKAGE_PLUGIN_SURFACECOMPOSITOR),y)
 	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) NEXUS_TOP=$(BCM_REFSW_DIR) CXX=$(TARGET_CXX) CC=$(TARGET_CC) -C $(@D)/Plugins/SurfaceCompositor build ;
 	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) NEXUS_TOP=$(BCM_REFSW_DIR) CXX=$(TARGET_CXX) CC=$(TARGET_CC) -C $(@D)/Plugins/SurfaceCompositor target ;
