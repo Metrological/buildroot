@@ -1,0 +1,10 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: vg
+Description: Broadcom implementation of OpenVG
+Version: 1.0
+Libs: -L${libdir} -lv3ddriver
+Cflags: -I${includedir} -I${includedir}/refsw
