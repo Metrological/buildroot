@@ -33,7 +33,7 @@ BCM_MAKE_ENV = \
 	LINUX=${LINUX_DIR} \
 	BCHP_VER=$(call qstrip,${BR2_PACKAGE_BCM_REFSW_PLATFORM_REV}) \
 	NEXUS_HEADERS=y \
-	TOOLCHAIN_ROOT=$(HOST_DIR)/usr/bin/ \ 
+	TOOLCHAIN_ROOT=$(HOST_DIR)/usr/bin/ \
 	SC_PLATFORM=bcm$(call qstrip,${BR2_PACKAGE_BCM_REFSW_PLATFORM})nexus
 
 ifeq ($BR2_PACKAGE_BCM_REFSW_PLATFORM_REV), D0)
@@ -96,7 +96,6 @@ define BCM_REFSW_EXTRACT_CMDS
 endef
 
 define BCM_REFSW_BUILD_CMDS
-	$(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/nexus/build all
 	$(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/nexus/build all
 	$(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/middleware/v3d -f V3DDriver.mk
 	$(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/middleware/platform/nexus -f platform_nexus.mk
