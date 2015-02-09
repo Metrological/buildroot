@@ -8,7 +8,7 @@ WPE_VERSION = 553282e6683f23e80f17b1458d02d1aa3b17b7b7
 WPE_SITE = $(call github,Metrological,WebKitForWayland,$(WPE_VERSION))
 
 WPE_INSTALL_STAGING = YES
-WPE_DEPENDENCIES = host-flex host-bison host-gperf host-ruby \
+WPE_DEPENDENCIES = host-flex host-bison host-gperf host-ruby host-ninja \
 	host-pkgconf zlib pcre libgles libegl cairo freetype fontconfig \
 	harfbuzz icu libxml2 libxslt sqlite libsoup jpeg webp \
 	gstreamer1 gst1-plugins-base gst1-plugins-good gst1-plugins-bad \
@@ -38,10 +38,28 @@ ifeq ($(BR2_PACKAGE_WPE_USE_MEDIA_SOURCE),y)
 FLAGS += -DENABLE_MEDIA_SOURCE=ON
 endif
 
-WPE_CONF_OPT = -DPORT=WPE \
+WPE_CONF_OPT = -DPORT=WPE -G Ninja \
  -DCMAKE_BUILD_TYPE=$(BUILDTYPE) \
  $(FLAGS)
 
 RSYNC_VCS_EXCLUSIONS += --exclude LayoutTests
+
+define WPE_BUILD_CMDS
+	$(WPE_MAKE_ENV) $(HOST_DIR)/usr/bin/ninja -C $(WPE_BUILDDIR)
+endef
+
+define WPE_INSTALL_STAGING_CMDS
+	(cd $(WPE_BUILDDIR) && \
+	cp bin/WPE* $(STAGING_DIR)/bin/ && \
+	cp -d lib/libWebKit* $(STAGING_DIR)/usr/lib/ && \
+	cp lib/libWPE* $(STAGING_DIR)/usr/lib/ )
+endef
+
+define WPE_INSTALL_TARGET_CMDS
+	(cd $(WPE_BUILDDIR) && \
+	cp bin/WPE* $(TARGET_DIR)/bin/ && \
+	cp -d lib/libWebKit* $(TARGET_DIR)/usr/lib/ && \
+	cp lib/libWPE* $(TARGET_DIR)/usr/lib/ )
+endef
 
 $(eval $(cmake-package))

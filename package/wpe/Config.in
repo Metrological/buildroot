@@ -20,6 +20,7 @@ config BR2_PACKAGE_WPE
 	select BR2_PACKAGE_SQLITE
 	select BR2_PACKAGE_WEBP
 	select BR2_PACKAGE_WESTON
+	select BR2_PACKAGE_NINJA
 	help
       Here be dragons.
 
