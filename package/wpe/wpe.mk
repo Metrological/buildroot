@@ -45,19 +45,19 @@ WPE_CONF_OPT = -DPORT=WPE -G Ninja \
 RSYNC_VCS_EXCLUSIONS += --exclude LayoutTests
 
 define WPE_BUILD_CMDS
-	$(WPE_MAKE_ENV) $(HOST_DIR)/usr/bin/ninja -C $(WPE_BUILDDIR)
+	$(WPE_MAKE_ENV) $(HOST_DIR)/usr/bin/ninja -C $(WPE_BUILDDIR) jsc libWebKit2.so WPE{Web,Network}Process WPE{Athol,Weston}Shell
 endef
 
 define WPE_INSTALL_STAGING_CMDS
 	(cd $(WPE_BUILDDIR) && \
-	cp bin/WPE* $(STAGING_DIR)/bin/ && \
+	cp bin/WPE{Network,Web}Process $(STAGING_DIR)/usr/bin/ && \
 	cp -d lib/libWebKit* $(STAGING_DIR)/usr/lib/ && \
 	cp lib/libWPE* $(STAGING_DIR)/usr/lib/ )
 endef
 
 define WPE_INSTALL_TARGET_CMDS
 	(cd $(WPE_BUILDDIR) && \
-	cp bin/WPE* $(TARGET_DIR)/bin/ && \
+	cp bin/WPE{Network,Web}Process $(TARGET_DIR)/usr/bin/ && \
 	cp -d lib/libWebKit* $(TARGET_DIR)/usr/lib/ && \
 	cp lib/libWPE* $(TARGET_DIR)/usr/lib/ )
 endef
