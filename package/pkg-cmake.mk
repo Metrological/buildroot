@@ -156,7 +156,20 @@ host-cmake-package = $(call inner-cmake-package,host-$(pkgname),$(call UPPERCASE
 # Generation of the CMake toolchain file
 ################################################################################
 
-$(HOST_DIR)/usr/share/buildroot/toolchainfile.cmake:
+ifeq ($(BR2_CCACHE),y)
+$(HOST_DIR)/usr/share/buildroot/toolchainccache.cmake:
+	@mkdir -p $(@D)
+	@echo -en "\
+	SET_PROPERTY(GLOBAL PROPERTY RULE_LAUNCH_COMPILE $(CCACHE))\n\
+	SET_PROPERTY(GLOBAL PROPERTY RULE_LAUNCH_LINK $(CCACHE))\n\
+	" > $@
+else
+$(HOST_DIR)/usr/share/buildroot/toolchainccache.cmake:
+	@mkdir -p $(@D)
+	@echo "" > $@
+endif
+
+$(HOST_DIR)/usr/share/buildroot/toolchainfile.cmake: $(HOST_DIR)/usr/share/buildroot/toolchainccache.cmake
 	@mkdir -p $(@D)
 	@echo -en "\
 	set(CMAKE_SYSTEM_NAME Linux)\n\
@@ -173,3 +186,4 @@ $(HOST_DIR)/usr/share/buildroot/toolchainfile.cmake:
 	set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)\n\
 	set(ENV{PKG_CONFIG_SYSROOT_DIR} \"$(STAGING_DIR)\")\n\
 	" > $@
+	@cat $(HOST_DIR)/usr/share/buildroot/toolchainccache.cmake >> $@
