@@ -110,6 +110,11 @@ define BCM_REFSW_INSTALL_LIBS
 	$(INSTALL) -D $(@D)$(BCM_OUTPUT)nexus/bin/libnexus.so $1/usr/lib/libnexus.so
 	$(INSTALL) -D $(@D)$(BCM_OUTPUT)nexus/bin/libv3ddriver.so $1/usr/lib/libv3ddriver.so
 	$(INSTALL) -D $(@D)$(BCM_OUTPUT)nexus/bin/libnxpl.so $1/usr/lib/libnxpl.so
+
+	# Some packages search for the common names
+	ln -s $1/usr/lib/libv3ddriver.so $1/usr/lib/libEGL.so
+	ln -s $1/usr/lib/libv3ddriver.so $1/usr/lib/libGLESv2.so
+	ln -s $1/usr/lib/libv3ddriver.so $1/usr/lib/libOpenVG.so
 endef
 
 define BCM_REFSW_INSTALL_STAGING_CMDS
@@ -117,14 +122,17 @@ define BCM_REFSW_INSTALL_STAGING_CMDS
 	$(INSTALL) -m 755 -d $(STAGING_DIR)/usr/include/GLES
 	$(INSTALL) -m 755 -d $(STAGING_DIR)/usr/include/GLES2
 	$(INSTALL) -m 755 -d $(STAGING_DIR)/usr/include/EGL
+	$(INSTALL) -m 755 -d $(STAGING_DIR)/usr/include/VG
 	$(INSTALL) -m 755 -d $(STAGING_DIR)/usr/include/refsw
 	sed 's/%NEXUS_COMPOSITION%/$(BCM_COMPOSITIONDEFINE)/g' package/bcm-refsw/egl.pc.in | sed 's/%NEXUS_CLIENT%/$(BCM_CLIENTLIB)/g' >$(STAGING_DIR)/usr/lib/pkgconfig/egl.pc
 	$(INSTALL) -m 644 package/bcm-refsw/glesv2.pc $(STAGING_DIR)/usr/lib/pkgconfig/
+	$(INSTALL) -m 644 package/bcm-refsw/vg.pc $(STAGING_DIR)/usr/lib/pkgconfig/
 	$(INSTALL) -m 644 $(@D)$(BCM_OUTPUT)nexus/bin/include/*.h $(STAGING_DIR)/usr/include/refsw/
 	$(INSTALL) -m 644 $(@D)/rockford/middleware/platform/nexus/*.h $(STAGING_DIR)/usr/include/refsw/
 	$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/interface/khronos/include/GLES/*.h $(STAGING_DIR)/usr/include/GLES/
 	$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/interface/khronos/include/GLES2/*.h $(STAGING_DIR)/usr/include/GLES2/
 	$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/interface/khronos/include/EGL/*.h $(STAGING_DIR)/usr/include/EGL/
+	$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/interface/khronos/include/VG/*.h $(STAGING_DIR)/usr/include/VG/
 	$(INSTALL) -m 644 -D $(@D)/rockford/middleware/v3d/interface/khronos/include/KHR/khrplatform.h $(STAGING_DIR)/usr/include/KHR/khrplatform.h
 	$(call BCM_REFSW_INSTALL_LIBS,$(STAGING_DIR))
 endef
