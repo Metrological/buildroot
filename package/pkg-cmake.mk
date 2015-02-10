@@ -39,7 +39,7 @@ define inner-cmake-package
 $(2)_CONF_ENV			?= PATH="$$(TARGET_PATH)"
 $(2)_CONF_OPT			?=
 $(2)_MAKE			?= $(MAKE)
-$(2)_MAKE_ENV			?=
+$(2)_MAKE_ENV			?= PATH="$$(TARGET_PATH)"
 $(2)_MAKE_OPT			?=
 $(2)_INSTALL_HOST_OPT		?= install
 $(2)_INSTALL_STAGING_OPT	?= DESTDIR=$$(STAGING_DIR) install
