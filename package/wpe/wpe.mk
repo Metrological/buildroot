@@ -59,7 +59,8 @@ define WPE_INSTALL_TARGET_CMDS
 	(cd $(WPE_BUILDDIR) && \
 	cp bin/WPE{Network,Web}Process $(TARGET_DIR)/usr/bin/ && \
 	cp -d lib/libWebKit* $(TARGET_DIR)/usr/lib/ && \
-	cp lib/libWPE* $(TARGET_DIR)/usr/lib/ )
+	cp lib/libWPE* $(TARGET_DIR)/usr/lib/ && \
+	$(STRIPCMD) $(TARGET_DIR)/usr/lib/libWebKit2.so.0.0.1 )
 endef
 
 $(eval $(cmake-package))
