@@ -4,11 +4,6 @@ config BR2_PACKAGE_WPE
 	select BR2_PACKAGE_FREETYPE
 	select BR2_PACKAGE_FONTCONFIG
 	select BR2_PACKAGE_GLIB_NETWORKING
-	select BR2_PACKAGE_GSTREAMER1
-	select BR2_PACKAGE_GST1_PLUGINS_BASE
-	select BR2_PACKAGE_GST1_PLUGINS_GOOD
-	select BR2_PACKAGE_GST1_PLUGINS_BAD
-	select BR2_PACKAGE_GST1_PLUGINS_BAD_PLUGIN_GL
 	select BR2_PACKAGE_HARFBUZZ
 	select BR2_PACKAGE_ICU
 	select BR2_PACKAGE_JPEG
@@ -24,13 +19,40 @@ config BR2_PACKAGE_WPE
 	help
       Here be dragons.
 
-menu "Extra options"
+config BR2_WPE_ATHOL
+	bool "wpe-athol"
+	default y
+	depends on BR2_PACKAGE_RPI_USERLAND
+	help
+	  Athol compositor
+comment "wpe-athol depends on rpi-userland"
+	depends on !BR2_PACKAGE_RPI_USERLAND
 
+
+menu "Extra options"
+ 
+
+config BR2_WPE_GSTREAMER
+	bool "wpe-gstreamer"
+	default y
+	depends on BR2_PACKAGE_GSTREAMER1
+	select BR2_PACKAGE_GST1_PLUGINS_BASE
+	select BR2_PACKAGE_GST1_PLUGINS_GOOD
+	select BR2_PACKAGE_GST1_PLUGINS_BAD
+	select BR2_PACKAGE_GST1_PLUGINS_BAD_PLUGIN_GL
+	help
+	  Enable GStreamer playback.
+comment "wpe-gstreamer requires gstreamer 1.x"
+	depends on !BR2_PACKAGE_GSTREAMER1
+ 
 config BR2_PACKAGE_WPE_USE_ENCRYPTED_MEDIA
         bool "encrypted-media"
+	depends on BR2_WPE_GSTREAMER
         default n
         help
           Enable Encrypted Media Extensions.
+comment "encrypted-media requires wpe-gstreamer"
+	depends on !BR2_WPE_GSTREAMER
 
 config BR2_PACKAGE_WPE_USE_DXDRM_EME
 	bool "dxdrm-eme"
@@ -39,12 +61,17 @@ config BR2_PACKAGE_WPE_USE_DXDRM_EME
 	depends on BR2_PACKAGE_DXDRM
 	help
 	  Enable Discretix DRM Encrypted Media Extensions backend.
+comment "dxdrm-eme requires encrypted-media and dxdrm"
+	depends on !BR2_PACKAGE_WPE_USE_ENCRYPTED_MEDIA || !BR2_PACKAGE_DXDRM
 
 config BR2_PACKAGE_WPE_USE_MEDIA_SOURCE
         bool "media-source"
         default n
+	depends on BR2_WPE_GSTREAMER
         help
           Enable Media Source Extensions API.
+comment "media-source requires wpe-gstreamer"
+	depends on !BR2_WPE_GSTREAMER
 
 
 endmenu

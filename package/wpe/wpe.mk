@@ -11,18 +11,33 @@ WPE_INSTALL_STAGING = YES
 WPE_DEPENDENCIES = host-flex host-bison host-gperf host-ruby host-ninja \
 	host-pkgconf zlib pcre libgles libegl cairo freetype fontconfig \
 	harfbuzz icu libxml2 libxslt sqlite libsoup jpeg webp \
-	gstreamer1 gst1-plugins-base gst1-plugins-good gst1-plugins-bad \
-	wayland weston athol
+	wayland weston
 
+ifeq ($(BR2_WPE_GSTREAMER),y)
+WPE_DEPENDENCIES += \
+	gstreamer1 gst1-plugins-base gst1-plugins-good gst1-plugins-bad
+else
+FLAGS+= \
+	-DENABLE_VIDEO="OFF" -DENABLE_VIDEO_TRACK="OFF"
+endif
+
+WPE_TARGETS = Weston
+
+ifeq ($(WPE_ATHOL),y)
+WPE_DEPENDENCIES += \
+	athol
+WPE_TARGETS += {$(WPE_TARGETS),Athol}
+endif
+ 
 ifeq ($(BR2_ENABLE_DEBUG),y)
 BUILDTYPE=Debug
 WPE_BUILDDIR = $(@D)/debug
-FLAGS= -DCMAKE_C_FLAGS_DEBUG="-O0 -g -Wno-cast-align" \
+FLAGS+= -DCMAKE_C_FLAGS_DEBUG="-O0 -g -Wno-cast-align" \
  -DCMAKE_CXX_FLAGS_DEBUG="-O0 -g -Wno-cast-align"
 else
 BUILDTYPE=Release
 WPE_BUILDDIR = $(@D)/release
-FLAGS= -DCMAKE_C_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align" \
+FLAGS+= -DCMAKE_C_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align" \
  -DCMAKE_CXX_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align"
 endif
 
@@ -45,7 +60,7 @@ WPE_CONF_OPT = -DPORT=WPE -G Ninja \
 RSYNC_VCS_EXCLUSIONS += --exclude LayoutTests
 
 define WPE_BUILD_CMDS
-	$(WPE_MAKE_ENV) $(HOST_DIR)/usr/bin/ninja -C $(WPE_BUILDDIR) jsc libWebKit2.so WPE{Web,Network}Process WPE{Athol,Weston}Shell
+	$(WPE_MAKE_ENV) $(HOST_DIR)/usr/bin/ninja -C $(WPE_BUILDDIR) jsc libWebKit2.so WPE{Web,Network}Process WPE$(WPE_TARGETS)Shell
 endef
 
 define WPE_INSTALL_STAGING_CMDS
