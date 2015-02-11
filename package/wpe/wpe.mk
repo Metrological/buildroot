@@ -26,7 +26,7 @@ WPE_TARGETS = Weston
 ifeq ($(WPE_ATHOL),y)
 WPE_DEPENDENCIES += \
 	athol
-WPE_TARGETS += {$(WPE_TARGETS),Athol}
+WPE_TARGETS = {$(WPE_TARGETS),Athol}
 endif
  
 ifeq ($(BR2_ENABLE_DEBUG),y)
