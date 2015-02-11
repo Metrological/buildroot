@@ -60,7 +60,7 @@ WPE_CONF_OPT = -DPORT=WPE -G Ninja \
 RSYNC_VCS_EXCLUSIONS += --exclude LayoutTests
 
 define WPE_BUILD_CMDS
-	$(WPE_MAKE_ENV) $(HOST_DIR)/usr/bin/ninja -C $(WPE_BUILDDIR) jsc libWebKit2.so WPE{Web,Network}Process WPE$(WPE_TARGETS)Shell
+	$(WPE_MAKE_ENV) $(HOST_DIR)/usr/bin/ninja -C $(WPE_BUILDDIR) libWebKit2.so WPE{Web,Network}Process WPE$(WPE_TARGETS)Shell
 endef
 
 define WPE_INSTALL_STAGING_CMDS
