@@ -11,7 +11,7 @@ WPE_INSTALL_STAGING = YES
 WPE_DEPENDENCIES = host-flex host-bison host-gperf host-ruby host-ninja \
 	host-pkgconf zlib pcre libgles libegl cairo freetype fontconfig \
 	harfbuzz icu libxml2 libxslt sqlite libsoup jpeg webp \
-	wayland
+	wayland libxkbcommon
 
 ifeq ($(BR2_WPE_GSTREAMER),y)
 	WPE_DEPENDENCIES += \
