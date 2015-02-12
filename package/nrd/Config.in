@@ -1,8 +1,7 @@
 config BR2_PACKAGE_NRD
 	bool "nrd"
 	depends on BR2_PACKAGE_DXDRM
-	depends on BR2_PACKAGE_DIRECTFB
-	depends on BR2_TOOLCHAIN_BUILDROOT_INET_IPV6
+	depends on BR2_INET_IPV6
         select BR2_PACKAGE_ALSA_LIB
 	select BR2_PACKAGE_WEBP
 	select BR2_PACKAGE_LIBMNG
@@ -31,5 +30,36 @@ config BR2_PACKAGE_NRD_APPLICATION
 	default y
 	help
 	  Build the application that plays the content and interacts with the TEE.
+
+if BR2_PACKAGE_NRD_APPLICATION
+choice
+        prompt "What graphics access system layer to be used"
+
+config BR2_NRD_GRAPHICS_DIRECTFB
+        bool "directfb"
+	depends on BR2_PACKAGE_DIRECTFB
+        help
+           Use the DirectFB access layer.
+
+config BR2_NRD_GRAPHICS_GLES2
+        bool "gles2"
+	depends on BR2_PACKAGE_HAS_OPENGL_ES
+        help
+           Use the GLESV2 access layer.
+
+config BR2_NRD_GRAPHICS_GLES2_EGL
+        bool "gles2-egl"
+	depends on BR2_PACKAGE_HAS_OPENGL_EGL
+        help
+           Use the GLESV2-EGL  access layer.
+ 
+config BR2_NRD_GRAPHICS_NULL
+        bool "null"
+        help
+           Use the NULL access layer.
+ 
+endchoice
+
+endif
 
 endif
