@@ -1,0 +1,120 @@
+diff --git a/netflix/nrdlib/cmake/Toolchain.cmake b/netflix/nrdlib/cmake/Toolchain.cmake
+index bc035ba..58cdfdf 100644
+--- a/netflix/nrdlib/cmake/Toolchain.cmake
++++ b/netflix/nrdlib/cmake/Toolchain.cmake
+@@ -148,7 +148,7 @@ if(NOT toolchain_processed)
+         list(REMOVE_ITEM CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES "/usr/include")
+ 
+         # add some common system paths
+-        set(CMAKE_LIBRARY_PATH /lib/i386-linux-gnu /usr/lib/i386-linux-gnu /lib32 /usr/lib32)
++        set(CMAKE_LIBRARY_PATH ENV{PKG_CONFIG_SYSROOT_DIR}/lib32 ENV{PKG_CONFIG_SYSROOT_DIR}/usr/lib32)
+ 
+         add_definitions(-DLINUX) #-D_FILE_OFFSET_BITS=64
+         set(BUILD_INSTALL_TARGET OFF)
+diff --git a/netflix/src/platform/gibbon/netflix.supp b/netflix/src/platform/gibbon/netflix.supp
+index b48ef77..2e75f94 100644
+--- a/netflix/src/platform/gibbon/netflix.supp
++++ b/netflix/src/platform/gibbon/netflix.supp
+@@ -49,13 +49,13 @@
+ {
+    <insert_a_suppression_name_here>
+    Memcheck:Value4
+-   obj:/usr/lib/i386-linux-gnu/libstdc++.so.6.0.16
++   obj:libstdc++.so.6.0.16
+    obj:*
+ }
+ {
+    <insert_a_suppression_name_here>
+    Memcheck:Cond
+-   obj:/usr/lib/i386-linux-gnu/libstdc++.so.6.0.16
++   obj:libstdc++.so.6.0.16
+    obj:*
+ }
+ {
+@@ -157,7 +157,7 @@
+    Memcheck:Param
+    writev(vector[...])
+    fun:writev
+-   obj:/usr/lib/i386-linux-gnu/libX11.so.6.3.0
++   obj:libX11.so.6.3.0
+    fun:_XSend
+    obj:*
+ }
+@@ -166,7 +166,7 @@
+    Memcheck:Param
+    writev(vector[...])
+    fun:writev
+-   obj:/usr/lib/i386-linux-gnu/libX11.so.6.3.0
++   obj:libX11.so.6.3.0
+ }
+ {
+    <insert_a_suppression_name_here>
+diff --git a/partner/graphics/gles2/gibbon_graphics.cmake b/partner/graphics/gles2/gibbon_graphics.cmake
+index e23cefc..675c011 100644
+--- a/partner/graphics/gles2/gibbon_graphics.cmake
++++ b/partner/graphics/gles2/gibbon_graphics.cmake
+@@ -70,8 +70,8 @@ if(GIBBON_GRAPHICS_GL_WSYS STREQUAL "glx")
+         endforeach()
+ 
+         # Link against the system's libc, as X11 or OpenGL might require it
+-        if(EXISTS /lib/i386-linux-gnu/libc.so.6)
+-            gibbon_add_libraries(/lib/i386-linux-gnu/libc.so.6)
++        if(EXISTS libc.so.6)
++            gibbon_add_libraries(libc.so.6)
+         endif()
+ 
+     endif()
+@@ -89,4 +89,4 @@ elseif(GIBBON_GRAPHICS_GL_WSYS STREQUAL "egl")
+     gibbon_add_libraries(GLESv2 EGL)
+ endif()
+ 
+-gibbon_copy_resource(graphics.xml ${APP_DATA_DIR}/etc/conf/graphics.xml "")
+\ No newline at end of file
++gibbon_copy_resource(graphics.xml ${APP_DATA_DIR}/etc/conf/graphics.xml "")
+diff --git a/partner/input/x11/gibbon_input.cmake b/partner/input/x11/gibbon_input.cmake
+index db4b2e7..f9f42d7 100644
+--- a/partner/input/x11/gibbon_input.cmake
++++ b/partner/input/x11/gibbon_input.cmake
+@@ -16,8 +16,8 @@ add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/include/X11
+ add_custom_target(gibbon_x11_links DEPENDS "${CMAKE_BINARY_DIR}/include/X11")
+ gibbon_add_dependencies(gibbon_x11_links)
+ 
+-if(EXISTS /lib/i386-linux-gnu/libc.so.6)
+-    gibbon_add_libraries(/lib/i386-linux-gnu/libc.so.6)
++if(EXISTS libc.so.6)
++    gibbon_add_libraries(libc.so.6)
+ endif()
+ 
+-gibbon_add_libraries(${X11_LIBRARIES})
+\ No newline at end of file
++gibbon_add_libraries(${X11_LIBRARIES})
+diff --git a/partner/dpi/reference/CMakeLists.txt b/partner/dpi/reference/CMakeLists.txt
+index 1daab09..6cede79 100644
+--- a/partner/dpi/reference/CMakeLists.txt
++++ b/partner/dpi/reference/CMakeLists.txt
+@@ -137,8 +137,8 @@ else()
+     #    list(APPEND SOURCES x86/VideoRendererOpenGL.cpp)
+     #    include_directories(/usr/include)
+     #    list(APPEND LIBRARIES GL)
+-#if(EXISTS /lib/i386-linux-gnu/libc.so.6)
+-    #        list(APPEND LIBRARIES /lib/i386-linux-gnu/libc.so.6)
++#if(EXISTS libc.so.6)
++    #        list(APPEND LIBRARIES libc.so.6)
+     #    endif()
+     #endif()
+ 
+@@ -199,10 +199,10 @@ else()
+ 
+     list(APPEND LIBRARIES ${AUDIO_LIBRARY})
+ 
+-    if(EXISTS /lib/i386-linux-gnu/libc.so.6)
+-        list(APPEND LIBRARIES /lib/i386-linux-gnu/libc.so.6)
+-        if(EXISTS /lib/i386-linux-gnu/ld-linux.so.2)
+-            list(APPEND LIBRARIES /lib/i386-linux-gnu/ld-linux.so.2)
++    if(EXISTS libc.so.6)
++        list(APPEND LIBRARIES libc.so.6)
++        if(EXISTS ld-linux.so.2)
++            list(APPEND LIBRARIES ld-linux.so.2)
+         endif()
+     endif()
+ endif()
