@@ -3157,3 +3157,16 @@ diff -crBN Orig/nexus/platforms/common/build/platform_generic_options.inc SeaCha
   # DMA is part of XPT block
   NEXUS_DMA_SUPPORT := n
   NEXUS_PLATFORM_DEFINES += NEXUS_HAS_XPT_DMA
+--- a/nexus/build/os/linuxkernel/os_flags.inc	2015-02-14 14:51:01.593898503 +0100
++++ b/nexus/build/os/linuxkernel/os_flags.inc	2015-02-14 14:51:26.121898063 +0100
+@@ -168,7 +168,8 @@
+         -I$(LINUX)/include/generated/uapi
+ 
+ NEXUS_CFLAGS+=  -Wstrict-prototypes -Wno-trigraphs -fno-strict-aliasing -fno-common -Werror-implicit-function-declaration -Wno-format-security -fno-delete-null-pointer-checks -fno-dwarf2-cfi-asm -mabi=aapcs-linux -mno-thumb-interwork -funwind-tables -marm -D__LINUX_ARM_ARCH__=7 -march=armv7-a -Uarm -fno-stack-protector -fomit-frame-pointer -femit-struct-debug-baseonly -fno-var-tracking -Wdeclaration-after-statement -fno-strict-overflow -fconserve-stack -Werror=implicit-int -Werror=strict-prototypes -Wno-unused-but-set-variable
+-NEXUS_CFLAGS += -msoft-float -mfloat-abi=softfp
++# We are using -mfpu=vfpv3-d16 to force off generation of NEON instructions for fixed point code, when compiler comes with default -mfpu=neon-vfpv4
++NEXUS_CFLAGS += -msoft-float -mfloat-abi=softfp -mfpu=vfpv3-d16
+ NEXUS_CFLAGS += -fno-pic
+ endif
+ 
+
