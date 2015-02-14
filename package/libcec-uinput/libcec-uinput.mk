@@ -15,7 +15,7 @@ LIBCEC_UINPUT_DEPENDENCIES = libcec boost log4cplus
 
 define LIBCEC_UINPUT_BUILD_CMDS
 	$(TARGET_MAKE_ENV) $(TARGET_CONFIGURE_OPTS) $(MAKE) -C $(@D) \
-		LDFLAGS="-lcec -ldl -lboost_program_options -llog4cplus -lbcm_host -lvcos -lvchiq_arm"
+		LDFLAGS="-lcec -ldl -lboost_program_options -lboost_thread -lboost_system -llog4cplus -lbcm_host -lvcos -lvchiq_arm"
 endef
 
 define LIBCEC_UINPUT_INSTALL_TARGET_CMDS
