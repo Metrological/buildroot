@@ -4,10 +4,10 @@
 #
 ################################################################################
 
-EVTEST_VERSION = 1.30
+EVTEST_VERSION = 1.32
 EVTEST_SOURCE = evtest-$(EVTEST_VERSION).tar.bz2
 # no official upstream tarball
-EVTEST_SITE = http://pkgs.fedoraproject.org/repo/pkgs/evtest/evtest-1.30.tar.bz2/27c0902839babfd07136f232c63c895c/
+EVTEST_SITE = http://pkgs.fedoraproject.org/repo/pkgs/evtest/evtest-1.32.tar.bz2/66077d03b5ea5703d8ef7bc346b39646/
 EVTEST_LICENSE = GPLv2
 EVTEST_LICENSE_FILES = COPYING
 EVTEST_DEPENDENCIES = host-pkgconf
