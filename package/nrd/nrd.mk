@@ -9,29 +9,26 @@ NRD_SITE_METHOD = git
 NRD_SITE = git@github.com:Metrological/nrd.git
 NRD_DEPENDENCIES = alsa-lib libjpeg libpng libmng freetype webp expat openssl c-ares portaudio directfb ffmpeg tremor
 
-NRD_INSTALL_STAGING = YES
-
-NRD_LIBC_VERSION = "-D__UCLIBC__MAJOR=9 -D__UCLIBC_MINOR__=33 -D__UCLIBC_SUBLEVEL__=2"
-#NRD_LIBC_VERSION = "-D__GLIBC__=1 -D__GLIBC_MINOR__=3"
-
-ifeq ($(BR2_ENABLE_DEBUG),y)
-BUILDTYPE=Debug
-  FLAGS= -DCMAKE_C_FLAGS_DEBUG="-O0 -g -Wno-cast-align" -DCMAKE_CXX_FLAGS_DEBUG="-O0 -g -Wno-cast-align"
-else
-BUILDTYPE=Release
-  FLAGS= -DCMAKE_C_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align" -DCMAKE_CXX_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align"
+ifeq ($(BR2_PACKAGE_DDPSTUB),y)
+NRD_DEPENDENCIES += stubs
 endif
 
-NRD_CMAKE_FLAGS = -DCMAKE_BUILD_TYPE=$(BUILDTYPE) $(FLAGS)
+NRD_INSTALL_STAGING = YES
+
+ifeq ($(BR2_ENABLE_DEBUG),y)
+  FLAGS= -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS_DEBUG="-O0 -g -Wno-cast-align" -DCMAKE_CXX_FLAGS_DEBUG="-O0 -g -Wno-cast-align"
+else
+  FLAGS= -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align" -DCMAKE_CXX_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align"
+endif
 
 ifeq ($(BR2_NRD_GRAPHICS_DIRECTFB),y)
-NRD_CMAKE_FLAGS="$(NRD_CMAKE_FLAGS) -DGIBBON_GRAPHICS=\"directfb\"
+NRD_CMAKE_FLAGS=$(FLAGS) -DGIBBON_GRAPHICS=directfb
 else ifeq ($(BR2_NRD_GRAPHICS_GLES2),y)
-NRD_CMAKE_FLAGS="$(NRD_CMAKE_FLAGS) -DGIBBON_GRAPHICS=\"gles2\"
+NRD_CMAKE_FLAGS=$(FLAGS) -DGIBBON_GRAPHICS=gles2
 else ifeq ($(BR2_NRD_GRAPHICS_GLES2_EGL),y)
-NRD_CMAKE_FLAGS="$(NRD_CMAKE_FLAGS) -DGIBBON_GRAPHICS=\"gles2-egl\"
+NRD_CMAKE_FLAGS=$(FLAGS) -DGIBBON_GRAPHICS=gles2-egl
 else 
-NRD_CMAKE_FLAGS="$(NRD_CMAKE_FLAGS) -DGIBBON_GRAPHICS=\"null\"
+NRD_CMAKE_FLAGS="$(FLAGS) -DGIBBON_GRAPHICS=null"
 endif
 
 NRD_CONFIGURE_CMDS = 		\
@@ -39,7 +36,7 @@ NRD_CONFIGURE_CMDS = 		\
 	cd $(@D)/output;	\
 	VERBOSE=1 cmake $(@D)/netflix  \
 		-DCMAKE_TOOLCHAIN_FILE=$(HOST_DIR)/usr/share/buildroot/toolchainfile.cmake	\
-		-DCMAKE_FLAGS="$(NRD_CMAKE_FLAGS)						\
+		-DCMAKE_FLAGS="$(NRD_CMAKE_FLAGS)"						\
 		-DSMALL_FLAGS:STRING="-s -O3" -DSMALL_CFLAGS:STRING="" -DSMALL_CXXFLAGS:STRING="-fvisibility=hidden -fvisibility-inlines-hidden" -DNRDAPP_TOOLS="manufSSgenerator" -DDPI_REFERENCE_DRM="none"
 
 NRD_BUILD_CMDS = cd $(@D)/output ; make 

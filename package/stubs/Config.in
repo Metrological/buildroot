@@ -1,0 +1,5 @@
+config BR2_PACKAGE_DDPSTUB
+	bool "ddpstub"
+	help
+	  A null implementation of the Dobly Digital Plus interface 
+

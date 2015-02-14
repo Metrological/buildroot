@@ -1,6 +1,5 @@
 config BR2_PACKAGE_NRD
 	bool "nrd"
-	depends on BR2_PACKAGE_DXDRM
 	depends on BR2_INET_IPV6
         select BR2_PACKAGE_ALSA_LIB
 	select BR2_PACKAGE_WEBP
@@ -21,6 +20,7 @@ if BR2_PACKAGE_NRD
 
 config BR2_PACKAGE_NRD_MIDDLEWARE
         bool "middleware"
+	depends on BR2_PACKAGE_DXDRM
         default y
         help
           Build the middleware componentn for integration in a TEE (libnrd.a)
@@ -60,6 +60,12 @@ config BR2_NRD_GRAPHICS_NULL
  
 endchoice
 
+config BR2_NRD_DOLYDIGITALPLUS_STUBBED
+	bool "DDPlus stub"
+	select BR2_PACKAGE_DDPSTUB
+	help
+	  There is no actual implementation for the DolbyDigital Plus 
+	  audio component. Please use the stub.
 endif
 
 endif
