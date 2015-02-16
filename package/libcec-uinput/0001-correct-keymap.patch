@@ -1,0 +1,20 @@
+--- a/src/main.cpp	2015-02-16 21:21:03.560856624 +0100
++++ b/src/main.cpp	2015-02-16 21:17:31.416863757 +0100
+@@ -231,7 +231,7 @@
+ 
+ 	if (uinputCecMap.empty()) {
+ 		uinputCecMap.resize(CEC_USER_CONTROL_CODE_MAX + 1, {});
+-		uinputCecMap[CEC_USER_CONTROL_CODE_SELECT                      ] = { KEY_OK };
++		uinputCecMap[CEC_USER_CONTROL_CODE_SELECT                      ] = { KEY_ENTER };
+ 		uinputCecMap[CEC_USER_CONTROL_CODE_UP                          ] = { KEY_UP };
+ 		uinputCecMap[CEC_USER_CONTROL_CODE_DOWN                        ] = { KEY_DOWN };
+ 		uinputCecMap[CEC_USER_CONTROL_CODE_LEFT                        ] = { KEY_LEFT };
+@@ -244,7 +244,7 @@
+ 		uinputCecMap[CEC_USER_CONTROL_CODE_SETUP_MENU                  ] = { KEY_SETUP };
+ 		uinputCecMap[CEC_USER_CONTROL_CODE_CONTENTS_MENU               ] = { KEY_MENU };
+ 		uinputCecMap[CEC_USER_CONTROL_CODE_FAVORITE_MENU               ] = { KEY_FAVORITES };
+-		uinputCecMap[CEC_USER_CONTROL_CODE_EXIT                        ] = { KEY_EXIT };
++		uinputCecMap[CEC_USER_CONTROL_CODE_EXIT                        ] = { KEY_BACKSPACE };
+ 		uinputCecMap[CEC_USER_CONTROL_CODE_NUMBER0                     ] = { KEY_0 };
+ 		uinputCecMap[CEC_USER_CONTROL_CODE_NUMBER1                     ] = { KEY_1 };
+ 		uinputCecMap[CEC_USER_CONTROL_CODE_NUMBER2                     ] = { KEY_2 };

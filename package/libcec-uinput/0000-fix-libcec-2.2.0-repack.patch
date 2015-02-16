@@ -1,0 +1,11 @@
+--- a/src/libcec.cpp	2014-04-19 23:33:13.000000000 +0200
++++ b/src/libcec.cpp	2015-02-16 15:04:57.988358208 +0100
+@@ -153,7 +153,7 @@
+ 	config.bSendInactiveSource = 0;
+ 	config.bPowerOffOnStandby = 0;
+ 	config.bShutdownOnStandby = 0;
+-	config.iDoubleTapTimeoutMs = 0;
++	config.iDoubleTapTimeout50Ms = 0;
+ 
+ 	callbacks.CBCecLogMessage           = &::cecLogMessage;
+ 	callbacks.CBCecKeyPress             = &::cecKeyPress;
