@@ -18,3 +18,19 @@
  
  message("=============================================================")
  message(" ")
+@@ -798,8 +798,12 @@
+     endif()
+ 
+     get_environment_variable(DUMP_SYMS "Path to breakpad's DUMP_SYMS executable" "${TOOLCHAIN_DIRECTORY}/netflix/bin/dump_syms")
+-    get_environment_variable(STRIP "Path to the strip executable" "strip")
+-    get_environment_variable(OBJCOPY "Path to the objcopy executable" "objcopy")
++    message ("########################################################")
++    message ("LOOKING FOR -------[$ENV{BUILDROOT_TOOL_PREFIX}strip]------------")
++    message ("LOOKING FOR ------[$ENV{BUILDROOT_TOOL_PREFIX}objcopy]-----------")
++    message ("########################################################")
++    get_environment_variable(STRIP "Path to the strip executable" "$ENV{BUILDROOT_TOOL_PREFIX}strip")
++    get_environment_variable(OBJCOPY "Path to the objcopy executable" "$ENV{BUILDROOT_TOOL_PREFIX}objcopy")
+ 
+     if(GIBBON_MODE STREQUAL "executable")
+         set(APPLICATION_EXECUTABLE "netflix")
+
