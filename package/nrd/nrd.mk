@@ -13,7 +13,7 @@ ifeq ($(BR2_PACKAGE_DDPSTUB),y)
 NRD_DEPENDENCIES += stubs
 endif
 
-NRD_INSTALL_STAGING = YES
+NRD_INSTALL_STAGING = NO
 
 ifeq ($(BR2_ENABLE_DEBUG),y)
   NRD_CMAKE_FLAGS= -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS_DEBUG="-O0 -g -Wno-cast-align" -DCMAKE_CXX_FLAGS_DEBUG="-O0 -g -Wno-cast-align"
@@ -44,5 +44,12 @@ NRD_CONFIGURE_CMDS = 		\
 		-DSMALL_FLAGS:STRING="-s -O3" -DSMALL_CFLAGS:STRING="" -DSMALL_CXXFLAGS:STRING="-fvisibility=hidden -fvisibility-inlines-hidden" -DNRDAPP_TOOLS="manufSSgenerator" -DDPI_REFERENCE_DRM="none"
 
 NRD_BUILD_CMDS = cd $(@D)/output ; $(TARGET_MAKE_ENV) make 
+
+define NRD_INSTALL_TARGET_CMDS
+	cp $(@D)/output/src/platform/gibbon/libJavaScriptCore.so $(TARGET_DIR)/usr/lib
+	cp $(@D)/output/src/platform/gibbon/libWTF.so $(TARGET_DIR)/usr/lib
+	cp $(@D)/output/src/platform/gibbon/netflix $(TARGET_DIR)/usr/bin
+	cp $(@D)/output/src/platform/gibbon/manufss $(TARGET_DIR)/usr/bin
+endef
 
 $(eval $(cmake-package))
