@@ -116,9 +116,12 @@ define BCM_REFSW_INSTALL_LIBS
 	$(INSTALL) -D $(@D)$(BCM_OUTPUT)nexus/bin/libnxpl.so $1/usr/lib/libnxpl.so
 
 	# Some packages search for the common names
-	ln -s $1/usr/lib/libv3ddriver.so $1/usr/lib/libEGL.so
-	ln -s $1/usr/lib/libv3ddriver.so $1/usr/lib/libGLESv2.so
-	ln -s $1/usr/lib/libv3ddriver.so $1/usr/lib/libOpenVG.so
+	rm -rf $1/usr/lib/libEGL.so $1/usr/lib/libGLESv2.so $1/usr/lib/libOpenVG.so
+	cd $1/usr/lib/
+	ln -s libv3ddriver.so libEGL.so
+	ln -s libv3ddriver.so libGLESv2.so
+	ln -s libv3ddriver.so libOpenVG.so
+	cd -
 endef
 
 define BCM_REFSW_INSTALL_STAGING_CMDS
