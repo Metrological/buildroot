@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-ATHOL_VERSION = a835a4450866a90691e72cc7d550bb6c14bc554e
+ATHOL_VERSION = bda02c3915d2994b4cc4374b3aa5ae3719ad91f4
 ATHOL_SITE = $(call github,WebKitForWayland,athol,$(ATHOL_VERSION))
 
 ATHOL_INSTALL_STAGING = YES
