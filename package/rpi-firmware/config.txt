@@ -6,6 +6,7 @@ arm_freq=1000
 [pi2]
 arm_freq=1100
 [all]
+gpu_freq=500
 sdram_freq=500
 core_freq=500
 over_voltage=6
