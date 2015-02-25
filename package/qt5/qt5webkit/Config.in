@@ -102,6 +102,12 @@ config BR2_QT5WEBKIT_ENABLE_JS_MEMORY_TRACKING
 	help
 	  Whether to compile in the javascript memory tracking option (which then needs to be activated with the JSC_showAllocationBacktraces environment variable).
 
+config BR2_QT5WEBKIT_ENABLE_DUMP_NODE_STATISTICS
+	bool "DOM Nodes allocation tracking"
+	default n
+	help
+	  Whether keep track of the allocated DOM Nodes or not. If this is enabled then at runtime one can set the WEBKIT_DUMP_NODE_STATISTICS env var to an integer. Setting the variable to 5 for instance, the browser will dump node statistics on stdout every 5 seconds.
+
 config BR2_PACKAGE_MINIBROWSER
 	bool "minibrowser"
 	depends on BR2_PACKAGE_QT5DECLARATIVE

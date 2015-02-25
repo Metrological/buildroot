@@ -157,6 +157,11 @@ ifeq ($(BR2_QT5WEBKIT_ENABLE_JS_MEMORY_TRACKING),y)
 		WEBKIT_CONFIG+=enable_js_memory_tracking
 endif
 
+ifeq ($(BR2_QT5WEBKIT_ENABLE_DUMP_NODE_STATISTICS),y)
+	QT5WEBKIT_CONFIG += \
+		WEBKIT_CONFIG+=dump_node_statistics
+endif
+
 
 define QT5WEBKIT_CONFIGURE_CMDS
 	(mkdir -p $(QT5WEBKIT_BUILDDIR); cd $(QT5WEBKIT_BUILDDIR); \
