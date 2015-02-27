@@ -126,13 +126,13 @@ ifeq ($(BR2_ENABLE_DEBUG),y)
 	BUILDTYPE = Debug
 	WPE_BUILDDIR = $(@D)/debug
 	WPE_FLAGS += \
-		-DCMAKE_C_FLAGS_DEBUG="-O0 -g -Wno-cast-align" \
+		-DCMAKE_C_FLAGS_DEBUG="-O0 -g -Wno-cast-align -std=c99" \
 		-DCMAKE_CXX_FLAGS_DEBUG="-O0 -g -Wno-cast-align"
 else
 	BUILDTYPE = Release
 	WPE_BUILDDIR = $(@D)/release
 	WPE_FLAGS += \
-		-DCMAKE_C_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align" \
+		-DCMAKE_C_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align -std=c99" \
 		-DCMAKE_CXX_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align"
 endif
 

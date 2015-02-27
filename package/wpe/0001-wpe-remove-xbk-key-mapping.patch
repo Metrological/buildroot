@@ -1,0 +1,1179 @@
+--- a/Source/WebKit2/Shared/wpe/WebEventFactory.cpp
++++ b/Source/WebKit2/Shared/wpe/WebEventFactory.cpp
+@@ -29,480 +29,527 @@
+ #include "WindowsKeyboardCodes.h"
+ #include "WPEInputEvents.h"
+ #include <wtf/gobject/GUniquePtr.h>
+-#include <xkbcommon/xkbcommon-keysyms.h>
++
++#include <linux/input.h>
+ 
+ namespace WebKit {
+ 
+ static String identifierForKeyEvent(const WPE::KeyboardEvent& event)
+ {
+     switch (event.keyCode) {
+-        case XKB_KEY_Menu:
+-        case XKB_KEY_Alt_L:
+-        case XKB_KEY_Alt_R:
++// "Accept" The Accept (Commit) key.
++// "Again" The Again key.
++// "AllCandidates" The All Candidates key.
++// "Alphanumeric" The Alphanumeric key.
++// "AltGraph" The Alt-Graph key.
++        case KEY_MENU:
++        case KEY_LEFTALT:
++        case KEY_RIGHTALT:
+             return "Alt";
+-        case XKB_KEY_Clear:
++// "Apps" The Application key.
++// "Attn" The ATTN key.
++// "BrowserBack" The Browser Back key.
++// "BrowserFavorites" The Browser Favorites key.
++// "BrowserForward" The Browser Forward key.
++// "BrowserHome" The Browser Home key.
++// "BrowserRefresh" The Browser Refresh key.
++// "BrowserSearch" The Browser Search key.
++// "BrowserStop" The Browser Stop key.
++// "CapsLock" The Caps Lock (Capital) key.
++        case KEY_CLEAR:
+             return "Clear";
+-        case XKB_KEY_Down:
++// "CodeInput" The Code Input key.
++// "Compose" The Compose key.
++// "Control" The Control (Ctrl) key.
++// "Crsel" The Crsel key.
++// "Convert" The Convert key.
++// "Copy" The Copy key.
++// "Cut" The Cut key.
++        case KEY_DOWN:
+             return "Down";
+-        case XKB_KEY_End:
++        case KEY_END:
+             return "End";
+-        case XKB_KEY_ISO_Enter:
+-        case XKB_KEY_KP_Enter:
+-        case XKB_KEY_Return:
++        case KEY_ENTER:
++        case KEY_KPENTER:
+             return "Enter";
+-        case XKB_KEY_Execute:
+-            return "Execute";
+-        case XKB_KEY_F1:
++// "EraseEof" The Erase EOF key.
++// "Execute" The Execute key.
++// "Exsel" The Exsel key.
++        case KEY_F1:
+             return "F1";
+-        case XKB_KEY_F2:
++        case KEY_F2:
+             return "F2";
+-        case XKB_KEY_F3:
++        case KEY_F3:
+             return "F3";
+-        case XKB_KEY_F4:
++        case KEY_F4:
+             return "F4";
+-        case XKB_KEY_F5:
++        case KEY_F5:
+             return "F5";
+-        case XKB_KEY_F6:
++        case KEY_F6:
+             return "F6";
+-        case XKB_KEY_F7:
++        case KEY_F7:
+             return "F7";
+-        case XKB_KEY_F8:
++        case KEY_F8:
+             return "F8";
+-        case XKB_KEY_F9:
++        case KEY_F9:
+             return "F9";
+-        case XKB_KEY_F10:
++        case KEY_F10:
+             return "F10";
+-        case XKB_KEY_F11:
++        case KEY_F11:
+             return "F11";
+-        case XKB_KEY_F12:
++        case KEY_F12:
+             return "F12";
+-        case XKB_KEY_F13:
++        case KEY_F13:
+             return "F13";
+-        case XKB_KEY_F14:
++        case KEY_F14:
+             return "F14";
+-        case XKB_KEY_F15:
++        case KEY_F15:
+             return "F15";
+-        case XKB_KEY_F16:
++        case KEY_F16:
+             return "F16";
+-        case XKB_KEY_F17:
++        case KEY_F17:
+             return "F17";
+-        case XKB_KEY_F18:
++        case KEY_F18:
+             return "F18";
+-        case XKB_KEY_F19:
++        case KEY_F19:
+             return "F19";
+-        case XKB_KEY_F20:
++        case KEY_F20:
+             return "F20";
+-        case XKB_KEY_F21:
++        case KEY_F21:
+             return "F21";
+-        case XKB_KEY_F22:
++        case KEY_F22:
+             return "F22";
+-        case XKB_KEY_F23:
++        case KEY_F23:
+             return "F23";
+-        case XKB_KEY_F24:
++        case KEY_F24:
+             return "F24";
+-        case XKB_KEY_Help:
++// "FinalMode" The Final Mode (Final) key used on some asian keyboards.
++// "Find" The Find key.
++// "FullWidth" The Full-Width Characters key.
++// "HalfWidth" The Half-Width Characters key.
++// "HangulMode" The Hangul (Korean characters) Mode key.
++// "HanjaMode" The Hanja (Korean characters) Mode key.
++        case KEY_HELP:
+             return "Help";
+-        case XKB_KEY_Home:
++// "Hiragana" The Hiragana (Japanese Kana characters) key.
++        case KEY_HOME:
+             return "Home";
+-        case XKB_KEY_Insert:
++        case KEY_INSERT:
+             return "Insert";
+-        case XKB_KEY_Left:
++// "JapaneseHiragana" The Japanese-Hiragana key.
++// "JapaneseKatakana" The Japanese-Katakana key.
++// "JapaneseRomaji" The Japanese-Romaji key.
++// "JunjaMode" The Junja Mode key.
++// "KanaMode" The Kana Mode (Kana Lock) key.
++// "KanjiMode" The Kanji (Japanese name for ideographic characters of Chinese origin) Mode key.
++// "Katakana" The Katakana (Japanese Kana characters) key.
++// "LaunchApplication1" The Start Application One key.
++// "LaunchApplication2" The Start Application Two key.
++// "LaunchMail" The Start Mail key.
++        case KEY_LEFT:
+             return "Left";
+-        case XKB_KEY_Page_Down:
++// "Meta" The Meta key.
++// "MediaNextTrack" The Media Next Track key.
++// "MediaPlayPause" The Media Play Pause key.
++// "MediaPreviousTrack" The Media Previous Track key.
++// "MediaStop" The Media Stok key.
++// "ModeChange" The Mode Change key.
++// "Nonconvert" The Nonconvert (Don't Convert) key.
++// "NumLock" The Num Lock key.
++        case KEY_PAGEDOWN:
+             return "PageDown";
+-        case XKB_KEY_Page_Up:
++        case KEY_PAGEUP:
+             return "PageUp";
+-        case XKB_KEY_Pause:
++// "Paste" The Paste key.
++        case KEY_PAUSE:
+             return "Pause";
+-        case XKB_KEY_3270_PrintScreen:
+-        case XKB_KEY_Print:
++// "Play" The Play key.
++// "PreviousCandidate" The Previous Candidate function key.
++        case KEY_PRINT:
+             return "PrintScreen";
+-        case XKB_KEY_Right:
++// "Process" The Process key.
++// "Props" The Props key.
++        case KEY_RIGHT:
+             return "Right";
+-        case XKB_KEY_Select:
++// "RomanCharacters" The Roman Characters function key.
++// "Scroll" The Scroll Lock key.
++        case KEY_SELECT:
+             return "Select";
+-        case XKB_KEY_Up:
++// "SelectMedia" The Select Media key.
++        case KEY_LEFTSHIFT:
++        case KEY_RIGHTSHIFT:
++            return "Shift";
++        case KEY_STOP:
++            return "Stop";
++        case KEY_UP:
+             return "Up";
+-            // Standard says that DEL becomes U+007F.
+-        case XKB_KEY_Delete:
+-            return "U+007F";
+-        case XKB_KEY_BackSpace:
+-            return "U+0008";
+-        case XKB_KEY_ISO_Left_Tab:
+-        case XKB_KEY_3270_BackTab:
+-        case XKB_KEY_Tab:
+-            return "U+0009";
++// "Undo" The Undo key.
++// "VolumeDown" The Volume Down key.
++// "VolumeMute" The Volume Mute key.
++// "VolumeUp" The Volume Up key.
++// "Win" The Windows Logo key.
++// "Zoom" The Zoom key.
++// "U+0008" The Backspace (Back) key.
++// "U+0009" The Horizontal Tabulation (Tab) key.
++// "U+0018" The Cancel key.
++// "U+001B" The Escape (Esc) key.
++// "U+0020" The Space (Spacebar) key.
++// "U+0021" The Exclamation Mark (Factorial, Bang) key (!).
++// "U+0022" The Quotation Mark (Quote Double) key (").
++// "U+0023" The Number Sign (Pound Sign, Hash, Crosshatch, Octothorpe) key (#).
++// "U+0024" The Dollar Sign (milreis, escudo) key ($).
++// "U+0026" The Ampersand key (&).
++// "U+0027" The Apostrophe (Apostrophe-Quote, APL Quote) key (').
++// "U+0028" The Left Parenthesis (Opening Parenthesis) key (().
++// "U+0029" The Right Parenthesis (Closing Parenthesis) key ()).
++// "U+002A" The Asterix (Star) key (*).
++// "U+002B" The Plus Sign (Plus) key (+).
++// "U+002C" The Comma (decimal separator) sign key (,).
++// "U+002D" The Hyphen-minus (hyphen or minus sign) key (-).
++// "U+002E" The Full Stop (period, dot, decimal point) key (.).
++// "U+002F" The Solidus (slash, virgule, shilling) key (/).
++// "U+0030" The Digit Zero key (0).
++// "U+0031" The Digit One key (1).
++// "U+0032" The Digit Two key (2).
++// "U+0033" The Digit Three key (3).
++// "U+0034" The Digit Four key (4).
++// "U+0035" The Digit Five key (5).
++// "U+0036" The Digit Six key (6).
++// "U+0037" The Digit Seven key (7).
++// "U+0038" The Digit Eight key (8).
++// "U+0039" The Digit Nine key (9).
++// "U+003A" The Colon key (:).
++// "U+003B" The Semicolon key (;).
++// "U+003C" The Less-Than Sign key (<).
++// "U+003D" The Equals Sign key (=).
++// "U+003E" The Greater-Than Sign key (>).
++// "U+003F" The Question Mark key (?).
++// "U+0040" The Commercial At (@) key.
++// "U+0041" The Latin Capital Letter A key (A).
++// "U+0042" The Latin Capital Letter B key (B).
++// "U+0043" The Latin Capital Letter C key (C).
++// "U+0044" The Latin Capital Letter D key (D).
++// "U+0045" The Latin Capital Letter E key (E).
++// "U+0046" The Latin Capital Letter F key (F).
++// "U+0047" The Latin Capital Letter G key (G).
++// "U+0048" The Latin Capital Letter H key (H).
++// "U+0049" The Latin Capital Letter I key (I).
++// "U+004A" The Latin Capital Letter J key (J).
++// "U+004B" The Latin Capital Letter K key (K).
++// "U+004C" The Latin Capital Letter L key (L).
++// "U+004D" The Latin Capital Letter M key (M).
++// "U+004E" The Latin Capital Letter N key (N).
++// "U+004F" The Latin Capital Letter O key (O).
++// "U+0050" The Latin Capital Letter P key (P).
++// "U+0051" The Latin Capital Letter Q key (Q).
++// "U+0052" The Latin Capital Letter R key (R).
++// "U+0053" The Latin Capital Letter S key (S).
++// "U+0054" The Latin Capital Letter T key (T).
++// "U+0055" The Latin Capital Letter U key (U).
++// "U+0056" The Latin Capital Letter V key (V).
++// "U+0057" The Latin Capital Letter W key (W).
++// "U+0058" The Latin Capital Letter X key (X).
++// "U+0059" The Latin Capital Letter Y key (Y).
++// "U+005A" The Latin Capital Letter Z key (Z).
++// "U+005B" The Left Square Bracket (Opening Square Bracket) key ([).
++// "U+005C" The Reverse Solidus (Backslash) key (\).
++// "U+005D" The Right Square Bracket (Closing Square Bracket) key (]).
++// "U+005E" The Circumflex Accent key (^).
++// "U+005F" The Low Sign (Spacing Underscore, Underscore) key (_).
++// "U+0060" The Grave Accent (Back Quote) key (`).
++// "U+007B" The Left Curly Bracket (Opening Curly Bracket, Opening Brace, Brace Left) key ({).
++// "U+007C" The Vertical Line (Vertical Bar, Pipe) key (|).
++// "U+007D" The Right Curly Bracket (Closing Curly Bracket, Closing Brace, Brace Right) key (}).
++// "U+007F" The Delete (Del) Key.
++// "U+00A1" The Inverted Exclamation Mark key (¡).
++// "U+0300" The Combining Grave Accent (Greek Varia, Dead Grave) key.
++// "U+0301" The Combining Acute Accent (Stress Mark, Greek Oxia, Tonos, Dead Eacute) key.
++// "U+0302" The Combining Circumflex Accent (Hat, Dead Circumflex) key.
++// "U+0303" The Combining Tilde (Dead Tilde) key.
++// "U+0304" The Combining Macron (Long, Dead Macron) key.
++// "U+0306" The Combining Breve (Short, Dead Breve) key.
++// "U+0307" The Combining Dot Above (Derivative, Dead Above Dot) key.
++// "U+0308" The Combining Diaeresis (Double Dot Abode, Umlaut, Greek Dialytika, Double Derivative, Dead Diaeresis) key.
++// "U+030A" The Combining Ring Above (Dead Above Ring) key.
++// "U+030B" The Combining Double Acute Accent (Dead Doubleacute) key.
++// "U+030C" The Combining Caron (Hacek, V Above, Dead Caron) key.
++// "U+0327" The Combining Cedilla (Dead Cedilla) key.
++// "U+0328" The Combining Ogonek (Nasal Hook, Dead Ogonek) key.
++// "U+0345" The Combining Greek Ypogegrammeni (Greek Non-Spacing Iota Below, Iota Subscript, Dead Iota) key.
++// "U+20AC" The Euro Currency Sign key (€).
++// "U+3099" The Combining Katakana-Hiragana Voiced Sound Mark (Dead Voiced Sound) key.
++// "U+309A" The Combining Katakana-Hiragana Semi-Voiced Sound Mark (Dead Semivoiced Sound) key.
+         default:
++{
+             return String::format("U+%04X", event.unicode);
++}
+     }
+ }
+ 
+ static int windowsKeyCodeForKeyEvent(const WPE::KeyboardEvent& event)
+ {
+-    switch (event.keyCode) {
+-        case XKB_KEY_KP_0:
+-            return VK_NUMPAD0;// (60) Numeric keypad 0 key
+-        case XKB_KEY_KP_1:
+-            return VK_NUMPAD1;// (61) Numeric keypad 1 key
+-        case XKB_KEY_KP_2:
+-            return  VK_NUMPAD2; // (62) Numeric keypad 2 key
+-        case XKB_KEY_KP_3:
+-            return VK_NUMPAD3; // (63) Numeric keypad 3 key
+-        case XKB_KEY_KP_4:
+-            return VK_NUMPAD4; // (64) Numeric keypad 4 key
+-        case XKB_KEY_KP_5:
+-            return VK_NUMPAD5; //(65) Numeric keypad 5 key
+-        case XKB_KEY_KP_6:
+-            return VK_NUMPAD6; // (66) Numeric keypad 6 key
+-        case XKB_KEY_KP_7:
+-            return VK_NUMPAD7; // (67) Numeric keypad 7 key
+-        case XKB_KEY_KP_8:
+-            return VK_NUMPAD8; // (68) Numeric keypad 8 key
+-        case XKB_KEY_KP_9:
+-            return VK_NUMPAD9; // (69) Numeric keypad 9 key
+-        case XKB_KEY_KP_Multiply:
+-            return VK_MULTIPLY; // (6A) Multiply key
+-        case XKB_KEY_KP_Add:
+-            return VK_ADD; // (6B) Add key
+-        case XKB_KEY_KP_Subtract:
+-            return VK_SUBTRACT; // (6D) Subtract key
+-        case XKB_KEY_KP_Decimal:
+-            return VK_DECIMAL; // (6E) Decimal key
+-        case XKB_KEY_KP_Divide:
+-            return VK_DIVIDE; // (6F) Divide key
+-
+-        case XKB_KEY_KP_Page_Up:
+-            return VK_PRIOR; // (21) PAGE UP key
+-        case XKB_KEY_KP_Page_Down:
+-            return VK_NEXT; // (22) PAGE DOWN key
+-        case XKB_KEY_KP_End:
+-            return VK_END; // (23) END key
+-        case XKB_KEY_KP_Home:
+-            return VK_HOME; // (24) HOME key
+-        case XKB_KEY_KP_Left:
+-            return VK_LEFT; // (25) LEFT ARROW key
+-        case XKB_KEY_KP_Up:
+-            return VK_UP; // (26) UP ARROW key
+-        case XKB_KEY_KP_Right:
+-            return VK_RIGHT; // (27) RIGHT ARROW key
+-        case XKB_KEY_KP_Down:
+-            return VK_DOWN; // (28) DOWN ARROW key
+-
+-        case XKB_KEY_BackSpace:
+-            return VK_BACK; // (08) BACKSPACE key
+-        case XKB_KEY_ISO_Left_Tab:
+-        case XKB_KEY_3270_BackTab:
+-        case XKB_KEY_Tab:
+-            return VK_TAB; // (09) TAB key
+-        case XKB_KEY_Clear:
+-            return VK_CLEAR; // (0C) CLEAR key
+-        case XKB_KEY_ISO_Enter:
+-        case XKB_KEY_KP_Enter:
+-        case XKB_KEY_Return:
+-            return VK_RETURN; //(0D) Return key
+-
+-            // VK_SHIFT (10) SHIFT key
+-            // VK_CONTROL (11) CTRL key
+-
+-        case XKB_KEY_Menu:
+-            return VK_APPS;  // (5D) Applications key (Natural keyboard)
+ 
+-            // VK_MENU (12) ALT key
+-
+-        case XKB_KEY_Pause:
+-            return VK_PAUSE; // (13) PAUSE key
+-        case XKB_KEY_Caps_Lock:
+-            return VK_CAPITAL; // (14) CAPS LOCK key
+-        case XKB_KEY_Kana_Lock:
+-        case XKB_KEY_Kana_Shift:
+-            return VK_KANA; // (15) Input Method Editor (IME) Kana mode
+-        case XKB_KEY_Hangul:
+-            return VK_HANGUL; // VK_HANGUL (15) IME Hangul mode
+-            // VK_JUNJA (17) IME Junja mode
+-            // VK_FINAL (18) IME final mode
+-        case XKB_KEY_Hangul_Hanja:
+-            return VK_HANJA; // (19) IME Hanja mode
+-        case XKB_KEY_Kanji:
+-            return VK_KANJI; // (19) IME Kanji mode
+-        case XKB_KEY_Escape:
+-            return VK_ESCAPE; // (1B) ESC key
+-            // VK_CONVERT (1C) IME convert
+-            // VK_NONCONVERT (1D) IME nonconvert
+-            // VK_ACCEPT (1E) IME accept
+-            // VK_MODECHANGE (1F) IME mode change request
+-        case XKB_KEY_space:
+-            return VK_SPACE; // (20) SPACEBAR
+-        case XKB_KEY_Page_Up:
+-            return VK_PRIOR; // (21) PAGE UP key
+-        case XKB_KEY_Page_Down:
+-            return VK_NEXT; // (22) PAGE DOWN key
+-        case XKB_KEY_End:
+-            return VK_END; // (23) END key
+-        case XKB_KEY_Home:
+-            return VK_HOME; // (24) HOME key
+-        case XKB_KEY_Left:
+-            return VK_LEFT; // (25) LEFT ARROW key
+-        case XKB_KEY_Up:
+-            return VK_UP; // (26) UP ARROW key
+-        case XKB_KEY_Right:
+-            return VK_RIGHT; // (27) RIGHT ARROW key
+-        case XKB_KEY_Down:
+-            return VK_DOWN; // (28) DOWN ARROW key
+-        case XKB_KEY_Select:
+-            return VK_SELECT; // (29) SELECT key
+-        case XKB_KEY_Print:
+-            return VK_SNAPSHOT; // (2C) PRINT SCREEN key
+-        case XKB_KEY_Execute:
+-            return VK_EXECUTE;// (2B) EXECUTE key
+-        case XKB_KEY_Insert:
+-        case XKB_KEY_KP_Insert:
+-            return VK_INSERT; // (2D) INS key
+-        case XKB_KEY_Delete:
+-        case XKB_KEY_KP_Delete:
+-            return VK_DELETE; // (2E) DEL key
+-        case XKB_KEY_Help:
+-            return VK_HELP; // (2F) HELP key
+-        case XKB_KEY_0:
+-        case XKB_KEY_parenright:
+-            return VK_0;    //  (30) 0) key
+-        case XKB_KEY_1:
+-        case XKB_KEY_exclam:
+-            return VK_1; //  (31) 1 ! key
+-        case XKB_KEY_2:
+-        case XKB_KEY_at:
+-            return VK_2; //  (32) 2 & key
+-        case XKB_KEY_3:
+-        case XKB_KEY_numbersign:
+-            return VK_3; //case '3': case '#';
+-        case XKB_KEY_4:
+-        case XKB_KEY_dollar: //  (34) 4 key '$';
+-            return VK_4;
+-        case XKB_KEY_5:
+-        case XKB_KEY_percent:
+-            return VK_5; //  (35) 5 key  '%'
+-        case XKB_KEY_6:
+-        case XKB_KEY_asciicircum:
+-            return VK_6; //  (36) 6 key  '^'
+-        case XKB_KEY_7:
+-        case XKB_KEY_ampersand:
+-            return VK_7; //  (37) 7 key  case '&'
+-        case XKB_KEY_8:
+-        case XKB_KEY_asterisk:
+-            return VK_8; //  (38) 8 key  '*'
+-        case XKB_KEY_9:
+-        case XKB_KEY_parenleft:
+-            return VK_9; //  (39) 9 key '('
+-        case XKB_KEY_a:
+-        case XKB_KEY_A:
+-            return VK_A; //  (41) A key case 'a': case 'A': return 0x41;
+-        case XKB_KEY_b:
+-        case XKB_KEY_B:
+-            return VK_B; //  (42) B key case 'b': case 'B': return 0x42;
+-        case XKB_KEY_c:
+-        case XKB_KEY_C:
+-            return VK_C; //  (43) C key case 'c': case 'C': return 0x43;
+-        case XKB_KEY_d:
+-        case XKB_KEY_D:
+-            return VK_D; //  (44) D key case 'd': case 'D': return 0x44;
+-        case XKB_KEY_e:
+-        case XKB_KEY_E:
+-            return VK_E; //  (45) E key case 'e': case 'E': return 0x45;
+-        case XKB_KEY_f:
+-        case XKB_KEY_F:
+-            return VK_F; //  (46) F key case 'f': case 'F': return 0x46;
+-        case XKB_KEY_g:
+-        case XKB_KEY_G:
+-            return VK_G; //  (47) G key case 'g': case 'G': return 0x47;
+-        case XKB_KEY_h:
+-        case XKB_KEY_H:
+-            return VK_H; //  (48) H key case 'h': case 'H': return 0x48;
+-        case XKB_KEY_i:
+-        case XKB_KEY_I:
+-            return VK_I; //  (49) I key case 'i': case 'I': return 0x49;
+-        case XKB_KEY_j:
+-        case XKB_KEY_J:
+-            return VK_J; //  (4A) J key case 'j': case 'J': return 0x4A;
+-        case XKB_KEY_k:
+-        case XKB_KEY_K:
+-            return VK_K; //  (4B) K key case 'k': case 'K': return 0x4B;
+-        case XKB_KEY_l:
+-        case XKB_KEY_L:
+-            return VK_L; //  (4C) L key case 'l': case 'L': return 0x4C;
+-        case XKB_KEY_m:
+-        case XKB_KEY_M:
+-            return VK_M; //  (4D) M key case 'm': case 'M': return 0x4D;
+-        case XKB_KEY_n:
+-        case XKB_KEY_N:
+-            return VK_N; //  (4E) N key case 'n': case 'N': return 0x4E;
+-        case XKB_KEY_o:
+-        case XKB_KEY_O:
+-            return VK_O; //  (4F) O key case 'o': case 'O': return 0x4F;
+-        case XKB_KEY_p:
+-        case XKB_KEY_P:
+-            return VK_P; //  (50) P key case 'p': case 'P': return 0x50;
+-        case XKB_KEY_q:
+-        case XKB_KEY_Q:
+-            return VK_Q; //  (51) Q key case 'q': case 'Q': return 0x51;
+-        case XKB_KEY_r:
+-        case XKB_KEY_R:
+-            return VK_R; //  (52) R key case 'r': case 'R': return 0x52;
+-        case XKB_KEY_s:
+-        case XKB_KEY_S:
+-            return VK_S; //  (53) S key case 's': case 'S': return 0x53;
+-        case XKB_KEY_t:
+-        case XKB_KEY_T:
+-            return VK_T; //  (54) T key case 't': case 'T': return 0x54;
+-        case XKB_KEY_u:
+-        case XKB_KEY_U:
+-            return VK_U; //  (55) U key case 'u': case 'U': return 0x55;
+-        case XKB_KEY_v:
+-        case XKB_KEY_V:
+-            return VK_V; //  (56) V key case 'v': case 'V': return 0x56;
+-        case XKB_KEY_w:
+-        case XKB_KEY_W:
+-            return VK_W; //  (57) W key case 'w': case 'W': return 0x57;
+-        case XKB_KEY_x:
+-        case XKB_KEY_X:
+-            return VK_X; //  (58) X key case 'x': case 'X': return 0x58;
+-        case XKB_KEY_y:
+-        case XKB_KEY_Y:
+-            return VK_Y; //  (59) Y key case 'y': case 'Y': return 0x59;
+-        case XKB_KEY_z:
+-        case XKB_KEY_Z:
+-            return VK_Z; //  (5A) Z key case 'z': case 'Z': return 0x5A;
+-        case XKB_KEY_Meta_L:
+-            return VK_LWIN; // (5B) Left Windows key (Microsoft Natural keyboard)
+-        case XKB_KEY_Meta_R:
+-            return VK_RWIN; // (5C) Right Windows key (Natural keyboard)
+-            // VK_SLEEP (5F) Computer Sleep key
+-            // VK_SEPARATOR (6C) Separator key
+-            // VK_SUBTRACT (6D) Subtract key
+-            // VK_DECIMAL (6E) Decimal key
+-            // VK_DIVIDE (6F) Divide key
+-            // handled by key code above
+-
+-        case XKB_KEY_Num_Lock:
+-            return VK_NUMLOCK; // (90) NUM LOCK key
+-
+-        case XKB_KEY_Scroll_Lock:
+-            return VK_SCROLL; // (91) SCROLL LOCK key
+-
+-        case XKB_KEY_Shift_L:
+-            return VK_LSHIFT; // (A0) Left SHIFT key
+-        case XKB_KEY_Shift_R:
+-            return VK_RSHIFT; // (A1) Right SHIFT key
+-        case XKB_KEY_Control_L:
+-            return VK_LCONTROL; // (A2) Left CONTROL key
+-        case XKB_KEY_Control_R:
+-            return VK_RCONTROL; // (A3) Right CONTROL key
+-        case XKB_KEY_Alt_L:
+-            return VK_LMENU; // (A4) Left MENU key
+-        case XKB_KEY_Alt_R:
+-            return VK_RMENU; // (A5) Right MENU key
+-
+-            // VK_BROWSER_BACK (A6) Windows 2000/XP: Browser Back key
+-            // VK_BROWSER_FORWARD (A7) Windows 2000/XP: Browser Forward key
+-            // VK_BROWSER_REFRESH (A8) Windows 2000/XP: Browser Refresh key
+-            // VK_BROWSER_STOP (A9) Windows 2000/XP: Browser Stop key
+-            // VK_BROWSER_SEARCH (AA) Windows 2000/XP: Browser Search key
+-            // VK_BROWSER_FAVORITES (AB) Windows 2000/XP: Browser Favorites key
+-            // VK_BROWSER_HOME (AC) Windows 2000/XP: Browser Start and Home key
+-            // VK_VOLUME_MUTE (AD) Windows 2000/XP: Volume Mute key
+-            // VK_VOLUME_DOWN (AE) Windows 2000/XP: Volume Down key
+-            // VK_VOLUME_UP (AF) Windows 2000/XP: Volume Up key
+-            // VK_MEDIA_NEXT_TRACK (B0) Windows 2000/XP: Next Track key
+-            // VK_MEDIA_PREV_TRACK (B1) Windows 2000/XP: Previous Track key
+-            // VK_MEDIA_STOP (B2) Windows 2000/XP: Stop Media key
+-            // VK_MEDIA_PLAY_PAUSE (B3) Windows 2000/XP: Play/Pause Media key
+-            // VK_LAUNCH_MAIL (B4) Windows 2000/XP: Start Mail key
+-            // VK_LAUNCH_MEDIA_SELECT (B5) Windows 2000/XP: Select Media key
+-            // VK_LAUNCH_APP1 (B6) Windows 2000/XP: Start Application 1 key
+-            // VK_LAUNCH_APP2 (B7) Windows 2000/XP: Start Application 2 key
+-
+-            // VK_OEM_1 (BA) Used for miscellaneous characters; it can vary by keyboard. Windows 2000/XP: For the US standard keyboard, the ';:' key
+-        case XKB_KEY_semicolon:
+-        case XKB_KEY_colon:
+-            return VK_OEM_1; //case ';': case ':': return 0xBA;
+-            // VK_OEM_PLUS (BB) Windows 2000/XP: For any country/region, the '+' key
+-        case XKB_KEY_plus:
+-        case XKB_KEY_equal:
+-            return VK_OEM_PLUS; //case '=': case '+': return 0xBB;
+-            // VK_OEM_COMMA (BC) Windows 2000/XP: For any country/region, the ',' key
+-        case XKB_KEY_comma:
+-        case XKB_KEY_less:
+-            return VK_OEM_COMMA; //case ',': case '<': return 0xBC;
+-            // VK_OEM_MINUS (BD) Windows 2000/XP: For any country/region, the '-' key
+-        case XKB_KEY_minus:
+-        case XKB_KEY_underscore:
+-            return VK_OEM_MINUS; //case '-': case '_': return 0xBD;
+-            // VK_OEM_PERIOD (BE) Windows 2000/XP: For any country/region, the '.' key
+-        case XKB_KEY_period:
+-        case XKB_KEY_greater:
+-            return VK_OEM_PERIOD; //case '.': case '>': return 0xBE;
+-            // VK_OEM_2 (BF) Used for miscellaneous characters; it can vary by keyboard. Windows 2000/XP: For the US standard keyboard, the '/?' key
+-        case XKB_KEY_slash:
+-        case XKB_KEY_question:
+-            return VK_OEM_2; //case '/': case '?': return 0xBF;
+-            // VK_OEM_3 (C0) Used for miscellaneous characters; it can vary by keyboard. Windows 2000/XP: For the US standard keyboard, the '`~' key
+-        case XKB_KEY_asciitilde:
+-        case XKB_KEY_quoteleft:
+-            return VK_OEM_3; //case '`': case '~': return 0xC0;
+-            // VK_OEM_4 (DB) Used for miscellaneous characters; it can vary by keyboard. Windows 2000/XP: For the US standard keyboard, the '[{' key
+-        case XKB_KEY_bracketleft:
+-        case XKB_KEY_braceleft:
+-            return VK_OEM_4; //case '[': case '{': return 0xDB;
+-            // VK_OEM_5 (DC) Used for miscellaneous characters; it can vary by keyboard. Windows 2000/XP: For the US standard keyboard, the '\|' key
+-        case XKB_KEY_backslash:
+-        case XKB_KEY_bar:
+-            return VK_OEM_5; //case '\\': case '|': return 0xDC;
+-            // VK_OEM_6 (DD) Used for miscellaneous characters; it can vary by keyboard. Windows 2000/XP: For the US standard keyboard, the ']}' key
+-        case XKB_KEY_bracketright:
+-        case XKB_KEY_braceright:
+-            return VK_OEM_6; // case ']': case '}': return 0xDD;
+-            // VK_OEM_7 (DE) Used for miscellaneous characters; it can vary by keyboard. Windows 2000/XP: For the US standard keyboard, the 'single-quote/double-quote' key
+-        case XKB_KEY_quoteright:
+-        case XKB_KEY_quotedbl:
+-            return VK_OEM_7; // case '\'': case '"': return 0xDE;
+-            // VK_OEM_8 (DF) Used for miscellaneous characters; it can vary by keyboard.
+-            // VK_OEM_102 (E2) Windows 2000/XP: Either the angle bracket key or the backslash key on the RT 102-key keyboard
+-            // VK_PROCESSKEY (E5) Windows 95/98/Me, Windows NT 4.0, Windows 2000/XP: IME PROCESS key
+-            // VK_PACKET (E7) Windows 2000/XP: Used to pass Unicode characters as if they were keystrokes. The VK_PACKET key is the low word of a 32-bit Virtual Key value used for non-keyboard input methods. For more information, see Remark in KEYBDINPUT,SendInput, WM_KEYDOWN, and WM_KEYUP
+-            // VK_ATTN (F6) Attn key
+-            // VK_CRSEL (F7) CrSel key
+-            // VK_EXSEL (F8) ExSel key
+-            // VK_EREOF (F9) Erase EOF key
+-            // VK_PLAY (FA) Play key
+-            // VK_ZOOM (FB) Zoom key
+-            // VK_NONAME (FC) Reserved for future use
+-            // VK_PA1 (FD) PA1 key
+-            // VK_OEM_CLEAR (FE) Clear key
+-        case XKB_KEY_F1:
+-        case XKB_KEY_F2:
+-        case XKB_KEY_F3:
+-        case XKB_KEY_F4:
+-        case XKB_KEY_F5:
+-        case XKB_KEY_F6:
+-        case XKB_KEY_F7:
+-        case XKB_KEY_F8:
+-        case XKB_KEY_F9:
+-        case XKB_KEY_F10:
+-        case XKB_KEY_F11:
+-        case XKB_KEY_F12:
+-        case XKB_KEY_F13:
+-        case XKB_KEY_F14:
+-        case XKB_KEY_F15:
+-        case XKB_KEY_F16:
+-        case XKB_KEY_F17:
+-        case XKB_KEY_F18:
+-        case XKB_KEY_F19:
+-        case XKB_KEY_F20:
+-        case XKB_KEY_F21:
+-        case XKB_KEY_F22:
+-        case XKB_KEY_F23:
+-        case XKB_KEY_F24:
+-            return VK_F1 + (event.keyCode - XKB_KEY_F1);
+-        case XKB_KEY_VoidSymbol:
+-            return VK_PROCESSKEY;
++    switch (event.keyCode) {
++        case KEY_BACKSPACE:
++            return VK_BACK;       // (0x08) BACKSPACE key
++        case KEY_TAB:
++            return VK_TAB;        // (0x09) TAB key
++        case KEY_CLEAR:
++            return VK_CLEAR;      // (0x0C) CLEAR key
++        case KEY_ENTER:
++            return VK_RETURN;     // (0x0D) Return key
++// VK_SHIFT (0x10)
++// VK_CONTROL (0x11) // CTRL key
++// VK_MENU (0x12) // ALT key
++        case KEY_PAUSE:
++            return VK_PAUSE;      // (0x13) PAUSE key
++        case KEY_CAPSLOCK:
++            return VK_CAPITAL;    // (0x14) CAPS LOCK key
++// VK_KANA (0x15) // Input Method Editor (IME) Kana mode
++// VK_HANGUL (0x15) // IME Hangul mode
++// VK_JUNJA (0x17) // IME Junja mode
++// VK_FINAL (0x18) // IME final mode
++// VK_HANJA (0x19) // IME Hanja mode
++// VK_KANJI (0x19) // IME Kanji mode
++        case KEY_ESC:
++            return VK_ESCAPE;     // (0x1B) ESC key
++// VK_CONVERT (0x1C) // IME convert
++// VK_NONCONVERT (0x1D) // IME nonconvert
++// VK_ACCEPT (0x1E) // IME accept
++// VK_MODECHANGE (0x1F) // IME mode change request
++        case KEY_SPACE:
++            return VK_SPACE;      // (0x20) SPACEBAR
++        case KEY_PAGEUP:
++            return VK_PRIOR;      // (0x21) PAGE UP key
++        case KEY_PAGEDOWN:
++            return VK_NEXT;       // (0x22) PAGE DOWN key
++        case KEY_END:
++            return VK_END;        // (0x23) END key
++        case KEY_HOME:
++            return VK_HOME;       // (0x24) HOME key
++        case KEY_LEFT:
++            return VK_LEFT;       // (0x25) LEFT ARROW key
++        case KEY_UP:
++            return VK_UP;         // (0x26) UP ARROW key
++        case KEY_RIGHT:
++            return VK_RIGHT;      // (0x27) RIGHT ARROW key
++        case KEY_DOWN:
++            return VK_DOWN;       // (0x28) DOWN ARROW key
++        case KEY_SELECT:
++            return VK_SELECT;     // (0x29) SELECT key
++// VK_PRINT (0x2A) // PRINT key
++// VK_EXECUTE (0x2B) // EXECUTE key
++        case KEY_PRINT:
++            return VK_SNAPSHOT;   // (0x2C) PRINT SCREEN key
++       case KEY_INSERT:
++            return VK_INSERT;     // (0x2D) INS key
++        case KEY_DELETE:
++            return VK_DELETE;     // (0x2E) DEL key
++        case KEY_HELP:
++            return VK_HELP;       // (0x2F) HELP key
++        case KEY_0:
++            return VK_0;          // (0x30) 0 key
++        case KEY_1:
++            return VK_1;          // (0x31) 1 key
++        case KEY_2:
++            return VK_2;          // (0x32) 2 key
++        case KEY_3:
++            return VK_3;          // (0x33) 3 key
++        case KEY_4:
++            return VK_4;          // (0x34) 4 key
++        case KEY_5:
++            return VK_5;          // (0x35) 5 key
++        case KEY_6:
++            return VK_6;          // (0x36) 6 key
++        case KEY_7:
++            return VK_7;          // (0x37) 7 key
++        case KEY_8:
++            return VK_8;          // (0x38) 8 key
++        case KEY_9:
++            return VK_9;          // (0x39) 9 key
++        case KEY_A:
++            return VK_A;          // (0x41) A key
++        case KEY_B:
++            return VK_B;          // (0x42) B key
++        case KEY_C:
++            return VK_C;          // (0x43) C key
++        case KEY_D:
++            return VK_D;          // (0x44) D key
++        case KEY_E:
++            return VK_E;          // (0x45) E key
++        case KEY_F:
++            return VK_F;          // (0x46) F key
++        case KEY_G:
++            return VK_G;          // (0x47) G key
++        case KEY_H:
++            return VK_H;          // (0x48) H key
++        case KEY_I:
++            return VK_I;          // (0x49) I key
++        case KEY_J:
++            return VK_J;          // (0x4A) J key
++        case KEY_K:
++            return VK_K;          // (0x4B) K key
++        case KEY_L:
++            return VK_L;          // (0x4C) L key
++        case KEY_M:
++            return VK_M;          // (0x4D) M key
++        case KEY_N:
++            return VK_N;          // (0x4E) N key
++        case KEY_O:
++            return VK_O;          // (0x4F) O key
++        case KEY_P:
++            return VK_P;          // (0x50) P key
++        case KEY_Q:
++            return VK_Q;          // (0x51) Q key
++        case KEY_R:
++            return VK_R;          // (0x52) R key
++        case KEY_S:
++            return VK_S;          // (0x53) S key
++        case KEY_T:
++            return VK_T;          // (0x54) T key
++        case KEY_U:
++            return VK_U;          // (0x55) U key
++        case KEY_V:
++            return VK_V;          // (0x56) V key
++        case KEY_W:
++            return VK_W;          // (0x57) W key
++        case KEY_X:
++            return VK_X;          // (0x58) X key
++        case KEY_Y:
++            return VK_Y;          // (0x59) Y key
++        case KEY_Z:
++            return VK_Z;          // (0x5A) Z key
++        case KEY_LEFTMETA:
++            return VK_LWIN;       // (0x5B) Left Windows key (Microsoft Natural keyboard)
++        case KEY_RIGHTMETA:
++            return VK_RWIN;       // (0x5C) Right Windows key (Natural keyboard)
++// VK_APPS (0x5D) // Applications key (Natural keyboard)
++// VK_SLEEP (0x5F) // Computer Sleep key
++        case KEY_KP0:
++            return VK_NUMPAD0;    // (0x60) Numeric keypad 0 key
++        case KEY_KP1:
++            return VK_NUMPAD1;    // (0x61) Numeric keypad 1 key
++        case KEY_KP2:
++            return VK_NUMPAD2;    // (0x62) Numeric keypad 2 key
++        case KEY_KP3:
++            return VK_NUMPAD3;    // (0x63) Numeric keypad 3 key
++        case KEY_KP4:
++            return VK_NUMPAD4;    // (0x64) Numeric keypad 4 key
++        case KEY_KP5:
++            return VK_NUMPAD5;    // (0x65) Numeric keypad 5 key
++        case KEY_KP6:
++            return VK_NUMPAD6;    // (0x66) Numeric keypad 6 key
++        case KEY_KP7:
++            return VK_NUMPAD7;    // (0x67) Numeric keypad 7 key
++        case KEY_KP8:
++            return VK_NUMPAD8;    // (0x68) Numeric keypad 8 key
++        case KEY_KP9:
++            return VK_NUMPAD9;    // (0x69) Numeric keypad 9 key
++        case KEY_KPASTERISK:
++            return VK_MULTIPLY;   // (0x6A) Multiply key
++        case KEY_KPPLUS:
++            return VK_ADD;        // (0x6B) Add key
++// VK_SEPARATOR (0x6C)
++        case KEY_KPMINUS:
++            return VK_SUBTRACT;   // (0x6D) Subtract key
++        case KEY_KPDOT:
++            return VK_DECIMAL;    // (0x6E) Decimal key
++        case KEY_KPSLASH:
++            return VK_DIVIDE;     // (0x6F) Divide key
++        case KEY_F1:              // VK_F1 0x70
++        case KEY_F2:              // VK_F2 0x71
++        case KEY_F3:              // VK_F3 0x72
++        case KEY_F4:              // VK_F4 0x73
++        case KEY_F5:              // VK_F5 0x74
++        case KEY_F6:              // VK_F6 0x75
++        case KEY_F7:              // VK_F7 0x76
++        case KEY_F8:              // VK_F8 0x77
++        case KEY_F9:              // VK_F9 0x78
++        case KEY_F10:             // VK_F10 0x79
++        case KEY_F11:             // VK_F11 0x7A
++        case KEY_F12:             // VK_F12 0x7B
++        case KEY_F13:             // VK_F13 0x7C
++        case KEY_F14:             // VK_F14 0x7D
++        case KEY_F15:             // VK_F15 0x7E
++        case KEY_F16:             // VK_F16 0x7F
++        case KEY_F17:             // VK_F17 0x80
++        case KEY_F18:             // VK_F18 0x81
++        case KEY_F19:             // VK_F19 0x82
++        case KEY_F20:             // VK_F20 0x83
++        case KEY_F21:             // VK_F21 0x84
++        case KEY_F22:             // VK_F22 0x85
++        case KEY_F23:             // VK_F23 0x86
++        case KEY_F24:             // VK_F24 0x87
++            return VK_F1 + (event.keyCode - KEY_F1);
++        case KEY_NUMLOCK:
++            return VK_NUMLOCK;    // (0x90) NUM LOCK key
++        case KEY_SCROLLLOCK:
++            return VK_SCROLL;     // (0x91) SCROLL LOCK key
++        case KEY_LEFTSHIFT:
++            return VK_LSHIFT;     // (0xA0) Left SHIFT key
++        case KEY_RIGHTSHIFT:
++            return VK_RSHIFT;     // (0xA1) Right SHIFT key
++        case KEY_LEFTCTRL:
++            return VK_LCONTROL;   // (0xA2) Left CONTROL key
++        case KEY_RIGHTCTRL:
++            return VK_RCONTROL;   // (0xA3) Right CONTROL key
++        case KEY_LEFTALT:
++            return VK_LMENU;      // (0xA4) Left MENU key
++        case KEY_RIGHTALT:
++            return VK_RMENU;      // (0xA5) Right MENU key
++// VK_BROWSER_BACK (0xA6) // Windows 2000/XP: Browser Back key
++// VK_BROWSER_FORWARD (0xA7) // Windows 2000/XP: Browser Forward key
++// VK_BROWSER_REFRESH (0xA8) // Windows 2000/XP: Browser Refresh key
++// VK_BROWSER_STOP (0xA9) // Windows 2000/XP: Browser Stop key
++// VK_BROWSER_SEARCH (0xAA) // Windows 2000/XP: Browser Search key
++// VK_BROWSER_FAVORITES (0xAB) // Windows 2000/XP: Browser Favorites key
++// VK_BROWSER_HOME (0xAC) // Windows 2000/XP: Browser Start and Home key
++// VK_VOLUME_MUTE (0xAD) // Windows 2000/XP: Volume Mute key
++// VK_VOLUME_DOWN (0xAE) // Windows 2000/XP: Volume Down key
++// VK_VOLUME_UP (0xAF) // Windows 2000/XP: Volume Up key
++// VK_MEDIA_NEXT_TRACK (0xB0) // Windows 2000/XP: Next Track key
++// VK_MEDIA_PREV_TRACK (0xB1) // Windows 2000/XP: Previous Track key
++// VK_MEDIA_STOP (0xB2) // Windows 2000/XP: Stop Media key
++// VK_MEDIA_PLAY_PAUSE (0xB3) // Windows 2000/XP: Play/Pause Media key
++// VK_MEDIA_LAUNCH_MAIL (0xB4) // Windows 2000/XP: Start Mail key
++// VK_MEDIA_LAUNCH_MEDIA_SELECT (0xB5) // Windows 2000/XP: Select Media key
++// VK_MEDIA_LAUNCH_APP1 (0xB6) // VK_LAUNCH_APP1 (B6) Windows 2000/XP: Start Application 1 key
++// VK_MEDIA_LAUNCH_APP2 (0xB7) // VK_LAUNCH_APP2 (B7) Windows 2000/XP: Start Application 2 key
++        case KEY_SEMICOLON:
++            return VK_OEM_1;      // (0xBA) Used for miscellaneous characters; it can vary by keyboard. Windows 2000/XP: For the US standard keyboard, the ';:' key
++        case KEY_EQUAL:
++            return VK_OEM_PLUS;   // (0xBB) Windows 2000/XP: For any country/region, the '+' key
++        case KEY_COMMA:
++            return VK_OEM_COMMA;  // (0xBC) Windows 2000/XP: For any country/region, the ',' key
++        case KEY_MINUS:
++            return  VK_OEM_MINUS; // (0xBD) Windows 2000/XP: For any country/region, the '-' key
++        case KEY_DOT:
++            return VK_OEM_PERIOD; // (0xBE) Windows 2000/XP: For any country/region, the '.' key
++        case KEY_SLASH:
++            return VK_OEM_2;      // (0xBF) Used for miscellaneous characters; it can vary by keyboard. Windows 2000/XP: For the US standard keyboard, the '/?' key
++// VK_OEM_2 (0xBF)
++// VK_OEM_3 (C0) Used for miscellaneous characters; it can vary by keyboard. Windows 2000/XP: For the US standard keyboard, the '`~' key
++// VK_OEM_3 (0xC0)
++        case KEY_LEFTBRACE:
++            return VK_OEM_4;      // (0xDB) Used for miscellaneous characters; it can vary by keyboard. Windows 2000/XP: For the US standard keyboard, the '[{' key
++        case KEY_BACKSLASH:
++            return VK_OEM_5;      // (0xDC) Used for miscellaneous characters; it can vary by keyboard. Windows 2000/XP: For the US standard keyboard, the '\|' key
++        case KEY_RIGHTBRACE:
++            return VK_OEM_6;      // (0xDD) Used for miscellaneous characters; it can vary by keyboard. Windows 2000/XP: For the US standard keyboard, the ']}' key
++// VK_OEM_7 (0xDE) Used for miscellaneous characters; it can vary by keyboard. Windows 2000/XP: For the US standard keyboard, the 'single-quote/double-quote' key
++// VK_OEM_8 (0xDF) Used for miscellaneous characters; it can vary by keyboard.
++// VK_OEM_102 (0xE2) Windows 2000/XP: Either the angle bracket key or the backslash key on the RT 102-key keyboard
++// VK_PROCESSKEY (0xE5)  Windows 95/98/Me, Windows NT 4.0, Windows 2000/XP: IME PROCESS key
++// VK_PACKET (0xE7)  Windows 2000/XP: Used to pass Unicode characters as if they were keystrokes. The VK_PACKET key is the low word of a 32-bit Virtual Key value used for non-keyboard input methods. For more information, see Remark in KEYBDINPUT,SendInput, WM_KEYDOWN, and WM_KEYUP
++// VK_ATTN (0xF6) // Attn key
++// VK_CRSEL (0xF7) // CrSel key
++// VK_EXSEL (0xF8) // ExSel key
++// VK_EREOF (0xF9) // Erase EOF key
++// VK_PLAY (0xFA) // Play key
++// VK_ZOOM (0xFB) // Zoom key
++// VK_NONAME (0xFC) // Reserved for future use
++// VK_PA1 (0xFD) // VK_PA1 (FD) PA1 key
++// VK_OEM_CLEAR (0xFE) // Clear key
+         default:
+             return 0;
+     }
+@@ -511,13 +558,12 @@
+ static String singleCharacterStringForKeyEvent(const WPE::KeyboardEvent& event)
+ {
+     switch (event.keyCode) {
+-        case XKB_KEY_ISO_Enter:
+-        case XKB_KEY_KP_Enter:
+-        case XKB_KEY_Return:
++        case KEY_KPENTER:
++        case KEY_ENTER:
+             return "\r";
+-        case XKB_KEY_BackSpace:
++        case KEY_BACKSPACE:
+             return "\x8";
+-        case XKB_KEY_Tab:
++        case KEY_TAB:
+             return "\t";
+         default:
+             glong length;
+--- a/Source/WebKit2/UIProcess/API/wpe/WPEInputHandler.cpp
++++ b/Source/WebKit2/UIProcess/API/wpe/WPEInputHandler.cpp
+@@ -31,54 +31,72 @@
+ #include "NativeWebWheelEvent.h"
+ #include "WPEView.h"
+ 
++#include <linux/input.h>
++
+ namespace WPE {
+ 
+ InputHandler::InputHandler(View& view)
+     : m_view(view)
+ {
+-    struct xkb_context* context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
+-    struct xkb_rule_names names = { "evdev", "pc105", "us", "", "" };
+-
+-    m_xkbKeymap = xkb_keymap_new_from_names(context, &names, XKB_KEYMAP_COMPILE_NO_FLAGS);
+-    m_xkbState = xkb_state_new(m_xkbKeymap);
+-
+-    m_modifiers.ctrl = xkb_keymap_mod_get_index(m_xkbKeymap, XKB_MOD_NAME_CTRL);
+-    m_modifiers.shift = xkb_keymap_mod_get_index(m_xkbKeymap, XKB_MOD_NAME_SHIFT);
+-    m_modifiers.effective = 0;
++    m_modifiers.ctrl  = 0;
++    m_modifiers.shift = 0;
++    m_modifiers.alt   = 0;
++    m_modifiers.meta  = 0;
+ 
+     m_pointer.x = m_pointer.y = 0;
+-
+-    xkb_context_unref(context);
+ }
+ 
+ InputHandler::~InputHandler()
+ {
+-    xkb_keymap_unref(m_xkbKeymap);
+-    xkb_state_unref(m_xkbState);
+ }
+ 
++void InputHandler::updateModifiers(const KeyboardEvent::Raw& event)
++{
++    switch(event.key)
++    {
++        case KEY_LEFTSHIFT  :
++        case KEY_RIGHTSHIFT :
++            m_modifiers.shift = (!!event.state ? WPE::KeyboardEvent::Shift : 0);
++            break;
++        case KEY_LEFTCTRL   :
++        case KEY_RIGHTCTRL  :
++            m_modifiers.ctrl = (!!event.state ? WPE::KeyboardEvent::Control : 0);
++            break;
++        case KEY_LEFTALT    :
++        case KEY_RIGHTALT   :
++            m_modifiers.alt = (!!event.state ? WPE::KeyboardEvent::Alt : 0);
++            break;
++        case KEY_LEFTMETA   :
++        case KEY_RIGHTMETA :
++            m_modifiers.meta = (!!event.state ? WPE::KeyboardEvent::Meta : 0);
++            break;
++        default  :;
++    }
++}
++
++#ifdef __cplusplus
++extern "C"
++{///opening bracket for calling from C++
++#endif
++//TODO: deal with this in a better way
++extern uint32_t keycode2utf32[][2];
++#ifdef __cplusplus
++}///closing bracket for calling from C++
++#endif
++
+ void InputHandler::handleKeyboardKey(KeyboardEvent::Raw event)
+ {
+-    // Keycode system starts at 8. Go figure.
+-    int key = event.key + 8;
++    updateModifiers(event);
+ 
+-    uint8_t keyModifiers = 0;
+-    if (m_modifiers.effective & (1 << m_modifiers.ctrl))
+-        keyModifiers |= KeyboardEvent::Control;
+-    if (m_modifiers.effective & (1 << m_modifiers.shift))
+-        keyModifiers |= KeyboardEvent::Shift;
++//TODO: range check
+ 
+     m_view.page().handleKeyboardEvent(WebKit::NativeWebKeyboardEvent({
+         event.time,
+-        xkb_state_key_get_one_sym(m_xkbState, key),
+-        xkb_state_key_get_utf32(m_xkbState, key),
++        event.key,
++        keycode2utf32[event.key][!!m_modifiers.shift],
+         !!event.state,
+-        keyModifiers
++        m_modifiers.ctrl | m_modifiers.shift | m_modifiers.alt | m_modifiers.meta
+     }));
+-
+-    xkb_state_update_key(m_xkbState, key, event.state ? XKB_KEY_DOWN : XKB_KEY_UP);
+-    m_modifiers.effective = xkb_state_serialize_mods(m_xkbState,
+-        static_cast<xkb_state_component>(XKB_STATE_MODS_EFFECTIVE | XKB_STATE_LAYOUT_EFFECTIVE));
+ }
+ 
+ void InputHandler::handlePointerEvent(PointerEvent::Raw event)
+--- a/Source/WebKit2/UIProcess/API/wpe/WPEInputHandler.h
++++ b/Source/WebKit2/UIProcess/API/wpe/WPEInputHandler.h
+@@ -30,7 +30,6 @@
+ #include "WPEInputEvents.h"
+ #include <array>
+ #include <wtf/Vector.h>
+-#include <xkbcommon/xkbcommon.h>
+ 
+ namespace WPE {
+ 
+@@ -57,16 +56,14 @@
+ private:
+     InputHandler(View&);
+ 
+-    View& m_view;
+-
+-    struct xkb_keymap* m_xkbKeymap;
+-    struct xkb_state* m_xkbState;
++    void updateModifiers(const KeyboardEvent::Raw& event);
+ 
++    View& m_view;
+     struct Modifiers {
+-        xkb_mod_index_t ctrl;
+-        xkb_mod_index_t shift;
+-
+-        uint32_t effective;
++        uint32_t ctrl;
++        uint32_t shift;
++        uint32_t alt;
++        uint32_t meta;
+     } m_modifiers;
+ 
+     struct Pointer {
+--- a/Source/WebKit2/PlatformWPE.cmake
++++ b/Source/WebKit2/PlatformWPE.cmake
+@@ -66,6 +66,7 @@
+     UIProcess/API/C/wpe/WKInputHandler.cpp
+     UIProcess/API/C/wpe/WKView.cpp
+     UIProcess/API/wpe/PageClientImpl.cpp
++    UIProcess/API/wpe/WPELookupTables.c
+     UIProcess/API/wpe/WPEInputHandler.cpp
+     UIProcess/API/wpe/WPEView.cpp
+     UIProcess/DefaultUndoController.cpp
+--- /dev/null
++++ b/Source/WebKit2/UIProcess/API/wpe/WPELookupTables.c
+@@ -0,0 +1,63 @@
++#include <linux/input.h>
++#include <stdint.h>
++
++uint32_t keycode2utf32[KEY_MAX + 1][2] = {
++    //                             { No modifier                                , Shift }
++
++    [ 0 ... KEY_MAX ]            = { 0                                          , 0 },
++
++    [ KEY_ESC        ] /* 1   */ = { 0x001B                                     , 0 },
++    [ KEY_1          ] /* 2   */ = { 0x0031 /* U+0031 1 Digit One            */ , 0 },
++    [ KEY_2          ] /* 3   */ = { 0x0032 /* U+0032 2 Digit Two            */ , 0 },
++    [ KEY_3          ] /* 4   */ = { 0x0033 /* U+0033 3 Digit Three          */ , 0 },
++    [ KEY_4          ] /* 5   */ = { 0x0034 /* U+0034 4 Digit Four           */ , 0 },
++    [ KEY_5          ] /* 6   */ = { 0x0035 /* U+0035 5 Digit Five           */ , 0 },
++    [ KEY_6          ] /* 7   */ = { 0x0036 /* U+0036 6 Digit Six            */ , 0 },
++    [ KEY_7          ] /* 8   */ = { 0x0037 /* U+0037 7 Digit Seven          */ , 0 },
++    [ KEY_8          ] /* 9   */ = { 0x0038 /* U+0038 8 Digit Eight          */ , 0 },
++    [ KEY_9          ] /* 10  */ = { 0x0039 /* U+0039 9 Digit Nine           */ , 0 },
++    [ KEY_0          ] /* 11  */ = { 0x0030 /* U+0030 0 Digit Zero           */ , 0 },
++    [ KEY_MINUS      ] /* 12  */ = { 0x002D /* U+002D - Hyphen-minus         */ , 0 },
++    [ KEY_EQUAL      ] /* 13  */ = { 0x003D /* U+003D = Equal sign           */ , 0 },
++    [ KEY_BACKSPACE  ] /* 14  */ = { 0x0008                                     , 0 },
++    [ KEY_TAB        ] /* 15  */ = { 0x0009 /* U+0009 Horizontal tab HT      */ , 0 },
++    [ KEY_Q          ] /* 16  */ = { 0x0071 /* U+0071 q Latin Small Letter Q */ , 0x0051 /* U+0051 Q Latin Capital letter Q */ },
++    [ KEY_W          ] /* 17  */ = { 0x0077 /* U+0077 w Latin Small Letter W */ , 0x0057 /* U+0057 W Latin Capital letter W */ },
++    [ KEY_E          ] /* 18  */ = { 0x0065 /* U+0065 e Latin Small Letter E */ , 0x0045 /* U+0045 E Latin Capital letter E */ },
++    [ KEY_R          ] /* 19  */ = { 0x0072 /* U+0072 r Latin Small Letter R */ , 0x0052 /* U+0052 R Latin Capital letter R */ },
++    [ KEY_T          ] /* 20  */ = { 0x0074 /* U+0074 t Latin Small Letter T */ , 0x0054 /* U+0054 T Latin Capital letter T */ },
++    [ KEY_Y          ] /* 21  */ = { 0x0079 /* U+0079 y Latin Small Letter Y */ , 0x0059 /* U+0059 Y Latin Capital letter Y */ },
++    [ KEY_U          ] /* 22  */ = { 0x0075 /* U+0075 u Latin Small Letter U */ , 0x0055 /* U+0055 U Latin Capital letter U */ },
++    [ KEY_I          ] /* 23  */ = { 0x0069 /* U+0069 i Latin Small Letter I */ , 0x0049 /* U+0049 I Latin Capital letter I */ },
++    [ KEY_O          ] /* 24  */ = { 0x006F /* U+006F o Latin Small Letter O */ , 0x004F /* U+004F O Latin Capital letter O */ },
++    [ KEY_P          ] /* 25  */ = { 0x0070 /* U+0070 p Latin Small Letter P */ , 0x0050 /* U+0050 P Latin Capital letter P */ },
++    [ KEY_LEFTBRACE  ] /* 26  */ = { 0x007B /* U+007B Left Curly Bracket     */ , 0 },
++    [ KEY_RIGHTBRACE ] /* 27  */ = { 0x007D /* U+007D } Right Curly Bracket  */ , 0 },
++
++    [ KEY_A          ] /* 30  */ = { 0x0061 /* U+0061 a Latin Small Letter A */ , 0x0041 /* U+0041 A Latin Capital letter A */ },
++    [ KEY_S          ] /* 31  */ = { 0x0073 /* U+0073 s Latin Small Letter S */ , 0x0053 /* U+0053 S Latin Capital letter S */ },
++    [ KEY_D          ] /* 32  */ = { 0x0064 /* U+0064 d Latin Small Letter D */ , 0x0044 /* U+0044 D Latin Capital letter D */ },
++    [ KEY_F          ] /* 33  */ = { 0x0066 /* U+0066 f Latin Small Letter F */ , 0x0046 /* U+0046 F Latin Capital letter F */ },
++    [ KEY_G          ] /* 34  */ = { 0x0067 /* U+0067 g Latin Small Letter G */ , 0x0047 /* U+0047 G Latin Capital letter G */ },
++    [ KEY_H          ] /* 35  */ = { 0x0068 /* U+0068 h Latin Small Letter H */ , 0x0048 /* U+0048 H Latin Capital letter H */ },
++    [ KEY_J          ] /* 36  */ = { 0x006A /* U+006A j Latin Small Letter J */ , 0x004A /* U+004A J Latin Capital letter J */ },
++    [ KEY_K          ] /* 37  */ = { 0x006B /* U+006B k Latin Small Letter K */ , 0x004B /* U+004B K Latin Capital letter K */ },
++    [ KEY_L          ] /* 38  */ = { 0x006C /* U+006C l Latin Small Letter L */ , 0x004C /* U+004C L Latin Capital letter L */ },
++    [ KEY_SEMICOLON  ] /* 39  */ = { 0x003B /* U+003B ; Semicolon            */ , 0 },
++    [ KEY_APOSTROPHE ] /* 40  */ = { 0x0027 /* U+0027 ' Apostrophe           */ , 0 },
++    [ KEY_GRAVE      ] /* 41  */ = { 0x0060 /* U+0060 ` Grave accent         */ , 0 },
++
++    [ KEY_BACKSLASH  ] /* 43  */ = { 0x005C /* U+005C \ Backslash            */ , 0 },
++    [ KEY_Z          ] /* 44  */ = { 0x007A /* U+007A z Latin Small Letter Z */ , 0x005A /* U+005A Z Latin Capital letter Z */ },
++    [ KEY_X          ] /* 45  */ = { 0x0078 /* U+0078 x Latin Small Letter X */ , 0x0058 /* U+0058 X Latin Capital letter X */ },
++    [ KEY_C          ] /* 46  */ = { 0x0063 /* U+0063 c Latin Small Letter C */ , 0x0043 /* U+0043 C Latin Capital letter C */ },
++    [ KEY_V          ] /* 47  */ = { 0x0076 /* U+0076 v Latin Small Letter V */ , 0x0056 /* U+0056 V Latin Capital letter V */ },
++    [ KEY_B          ] /* 48  */ = { 0x0062 /* U+0062 b Latin Small Letter B */ , 0x0042 /* U+0042 B Latin Capital letter B */ },
++    [ KEY_N          ] /* 49  */ = { 0x006E /* U+006E n Latin Small Letter N */ , 0x004E /* U+004E N Latin Capital letter N */ },
++    [ KEY_M          ] /* 50  */ = { 0x006D /* U+006D m Latin Small Letter M */ , 0x004D /* U+004D M Latin Capital letter M */ },
++    [ KEY_COMMA      ] /* 51  */ = { 0x002C /* U+002C , 0, Comma             */ , 0 },
++    [ KEY_DOT        ] /* 52  */ = { 0x002E /* U+002E . Full stop            */ , 0 },
++    [ KEY_SLASH      ] /* 53  */ = { 0x002F /* U+002F / Slash                */ , 0 },
++
++    [ KEY_SPACE      ] /* 57  */ = { 0x0020 /* U+0020 Space SP               */ , 0 }
++};
