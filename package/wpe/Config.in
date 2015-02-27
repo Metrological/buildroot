@@ -20,7 +20,7 @@ config BR2_PACKAGE_WPE
 	select BR2_PACKAGE_XKEYBOARD_CONFIG
 	depends on BR2_PACKAGE_ATHOL || BR2_PACKAGE_WESTON
 	help
-      Here be dragons.
+	  Here be dragons.
 
 menu "Extra options"
 
@@ -38,11 +38,11 @@ comment "wpe-gstreamer requires gstreamer 1.x"
 	depends on !BR2_PACKAGE_GSTREAMER1
  
 config BR2_PACKAGE_WPE_USE_ENCRYPTED_MEDIA
-        bool "encrypted-media"
+	bool "encrypted-media"
 	depends on BR2_WPE_GSTREAMER
-        default n
-        help
-          Enable Encrypted Media Extensions.
+	default n
+	help
+	  Enable Encrypted Media Extensions.
 comment "encrypted-media requires wpe-gstreamer"
 	depends on !BR2_WPE_GSTREAMER
 
@@ -57,13 +57,18 @@ comment "dxdrm-eme requires encrypted-media and dxdrm"
 	depends on !BR2_PACKAGE_WPE_USE_ENCRYPTED_MEDIA || !BR2_PACKAGE_DXDRM
 
 config BR2_PACKAGE_WPE_USE_MEDIA_SOURCE
-        bool "media-source"
-        default n
+	bool "media-source"
+	default n
 	depends on BR2_WPE_GSTREAMER
-        help
-          Enable Media Source Extensions API.
+	help
+	  Enable Media Source Extensions API.
 comment "media-source requires wpe-gstreamer"
 	depends on !BR2_WPE_GSTREAMER
 
+config BR2_PACKAGE_WPE_ENABLE_JS_MEMORY_TRACKING
+	bool "js-memory-tracking"
+	default n
+	help
+	  Whether to compile in the javascript memory tracking option (which then needs to be activated with the JSC_showAllocationBacktraces environment variable).
 
 endmenu
