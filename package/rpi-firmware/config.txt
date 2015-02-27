@@ -10,6 +10,7 @@ gpu_freq=500
 sdram_freq=500
 core_freq=500
 over_voltage=6
+avoid_warnings=1
 force_turbo=0
 gpu_mem_256=128
 gpu_mem_512=256
