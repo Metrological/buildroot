@@ -23,9 +23,43 @@ HOST_ICU_CONF_OPT = \
 	--disable-icuio \
 	--disable-layout \
 	--disable-renaming
+ICU_CONF_ENV += CPPFLAGS="$(ICU_CPPFLAGS)"
 ICU_MAKE = $(MAKE1)
 ICU_SUBDIR = source
-HOST_ICU_SUBDIR = source
+
+# ICU_EXTRA_CPPFLAGS  = -DICU_DATA_DIR=\\\"\/source\/data\/in\\\"
+
+ifeq ($(BR2_ICU_ONLY_COLLATION), y)
+ICU_CPPFLAGS += -DUCONFIG_ONLY_COLLATION=1
+endif
+
+ifeq ($(BR2_ICU_NO_COLLATION), y)
+ICU_CPPFLAGS += -DUCONFIG_NO_COLLATION=1
+endif
+
+ifeq ($(BR2_ICU_NO_LEGACY_COLLATION), y)
+ICU_CPPLAGS += -DUCONFIG_NO_LEGACY_CONVERSION=1
+endif
+
+ifeq ($(BR2_ICU_NO_BREAK_ITERATION), y)
+CPPFLAGS += -DUCONFIG_NO_BREAK_ITERATION=1
+endif
+
+ifeq ($(BR2_ICU_NO_FORMATTING), y)
+CPPFLAGS += -DUCONFIG_NO_FORMATTING=1
+endif
+
+ifeq ($(BR2_ICU_NO_TRANSLITERATION), y)
+CPPFLAGS += -DUCONFIG_NO_TRANSLITERATION=1
+endif
+
+ifeq ($(BR2_ICU_NO_REGULAR_EXPRESSIONS), y)
+CPPFLAGS += -DUCONFIG_NO_REGULAR_EXPRESSIONS=1
+endif
+
+ifeq ($(BR2_ICU_NO_FILE_IO), y)
+CPPFLAGS += -DUCONFIG_NO_FILE_IO=1
+endif
 
 define ICU_MINIMIZE
 	cp package/icu/icudt$(ICU_VERSION_MAJOR)l.dat $(@D)/source/data/in/
@@ -34,6 +68,7 @@ endef
 ifeq ($(BR2_PACKAGE_ICU_MINIMIZED),y)
 ICU_POST_EXTRACT_HOOKS += ICU_MINIMIZE
 endif
+
 
 $(eval $(autotools-package))
 $(eval $(host-autotools-package))

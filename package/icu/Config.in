@@ -19,10 +19,37 @@ if BR2_PACKAGE_ICU
 config BR2_PACKAGE_ICU_MINIMIZED
 	bool "minimized"
 	depends on !BR2_ENABLE_DEBUG
-	help
-	  Uses a minimized icu data set.
+
+config BR2_ICU_ONLY_COLLATION
+	bool "Only collation"
+
+if !BR2_ICU_ONLY_COLLATION
+
+config BR2_ICU_NO_COLLATION
+	bool "No collation"
+
+config BR2_ICU_NO_LEGACY_COLLATION
+	bool "No legacy collation"
+
+config BR2_ICU_NO_BREAK_ITERATION
+	bool "No break iteration"
+
+config BR2_ICU_NO_FORMATTING
+	bool "No formatting"
+
+config BR2_ICU_NO_TRANSLITERATION
+	bool "No transliteration"
+
+config BR2_ICU_NO_REGULAR_EXPRESSIONS
+	bool "No regular expressions"
+
+config BR2_ICU_NO_FILE_IO
+	bool "No file IO"
 
 endif
+
+endif
+
 
 comment "icu needs a toolchain w/ C++, wchar, threads"
 	depends on !BR2_arc
