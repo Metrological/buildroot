@@ -11,7 +11,7 @@ WPE_INSTALL_STAGING = YES
 WPE_DEPENDENCIES = host-flex host-bison host-gperf host-ruby host-ninja \
 	host-pkgconf zlib pcre libgles libegl cairo freetype fontconfig \
 	harfbuzz icu libxml2 libxslt sqlite libsoup jpeg webp \
-	wayland libxkbcommon
+	wayland
 
 WPE_FLAGS = \
 		-DENABLE_ACCELERATED_2D_CANVAS=ON \
