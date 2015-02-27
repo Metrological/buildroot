@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-QT5WEBKIT_VERSION = 20e966159ceea7140e7f1a5b4a2a0e89454051da
+QT5WEBKIT_VERSION = f0edd687508cdb4223370824ea51687b3ad9d8e5
 ifeq ($(BR2_QT5WEBKIT_USE_WEBRTC),y)
 QT5WEBKIT_VERSION = de07f58fb904c81794af37238e2c0c2989a59898
 endif
@@ -161,7 +161,6 @@ ifeq ($(BR2_QT5WEBKIT_ENABLE_DUMP_NODE_STATISTICS),y)
 	QT5WEBKIT_CONFIG += \
 		WEBKIT_CONFIG+=dump_node_statistics
 endif
-
 
 define QT5WEBKIT_CONFIGURE_CMDS
 	(mkdir -p $(QT5WEBKIT_BUILDDIR); cd $(QT5WEBKIT_BUILDDIR); \
