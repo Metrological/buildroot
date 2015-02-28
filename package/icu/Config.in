@@ -19,32 +19,41 @@ if BR2_PACKAGE_ICU
 config BR2_PACKAGE_ICU_MINIMIZED
 	bool "minimized"
 	depends on !BR2_ENABLE_DEBUG
+	default y
 
 config BR2_ICU_ONLY_COLLATION
 	bool "Only collation"
+	default n
 
 if !BR2_ICU_ONLY_COLLATION
 
 config BR2_ICU_NO_COLLATION
 	bool "No collation"
+	default n
 
 config BR2_ICU_NO_LEGACY_COLLATION
 	bool "No legacy collation"
+	default y
 
 config BR2_ICU_NO_BREAK_ITERATION
 	bool "No break iteration"
+	default n
 
 config BR2_ICU_NO_FORMATTING
 	bool "No formatting"
+	default n
 
 config BR2_ICU_NO_TRANSLITERATION
 	bool "No transliteration"
+	default y
 
 config BR2_ICU_NO_REGULAR_EXPRESSIONS
 	bool "No regular expressions"
+	default y
 
 config BR2_ICU_NO_FILE_IO
 	bool "No file IO"
+	default y
 
 endif
 
