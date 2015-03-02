@@ -8,8 +8,7 @@ NRD_VERSION = ef99e03a64e3566e148f7289132b729dd3b9aef0
 NRD_SITE = git@github.com:Metrological/nrd.git
 NRD_SITE_METHOD = git
 NRD_LICENSE = PROPRIETARY
-NRD_DEPENDENCIES = host-flex host-bison host-gperf host-ruby host-pkgconf \
-	zlib pcre freetype icu jpeg libpng libmng expat openssl c-ares libcurl
+NRD_DEPENDENCIES = freetype icu jpeg libpng libmng webp expat openssl c-ares libcurl
 
 ifeq ($(BR2_PACKAGE_DDPSTUB),y)
 NRD_DEPENDENCIES += stubs
