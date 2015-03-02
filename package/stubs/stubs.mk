@@ -3,9 +3,10 @@
 # stubs
 #
 ################################################################################
-STUBS_VERSION = master
-STUBS_SITE_METHOD = git
-STUBS_SITE = git@github.com:Metrological/stubs.git
+
+STUBS_VERSION = f0bfcb7c08c4fbe5aa442e52ecbed081688a45a9
+STUBS_SITE = $(call github,Metrological,stubs,$(STUBS_VERSION))
+
 STUBS_INSTALL_STAGING = YES
 
 ifeq ($(BR2_ENABLE_DEBUG),Y)
