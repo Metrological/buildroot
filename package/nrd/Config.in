@@ -1,8 +1,6 @@
 config BR2_PACKAGE_NRD
 	bool "nrd"
 	depends on BR2_INET_IPV6
-        select BR2_PACKAGE_ALSA_LIB
-	select BR2_PACKAGE_WEBP
 	select BR2_PACKAGE_LIBMNG
 	select BR2_PACKAGE_LIBPNG
 	select BR2_PACKAGE_JPEG
@@ -10,20 +8,17 @@ config BR2_PACKAGE_NRD
 	select BR2_PACKAGE_EXPAT
 	select BR2_PACKAGE_OPENSSL
 	select BR2_PACKAGE_C_ARES
-	select BR2_PACKAGE_PORTAUDIO
-	select BR2_PACKAGE_FFMPEG
-	select BR2_PACKAGE_TREMOR
 	help
-      A Resource Development Kit for playing content from a thirdparty
+	  A Resource Development Kit for playing content from a thirdparty
 
 if BR2_PACKAGE_NRD
 
 config BR2_PACKAGE_NRD_MIDDLEWARE
-        bool "middleware"
+	bool "middleware"
 	depends on BR2_PACKAGE_DXDRM
-        default y
-        help
-          Build the middleware componentn for integration in a TEE (libnrd.a)
+	default y
+	help
+	  Build the middleware componentn for integration in a TEE (libnrd.a)
 
 config BR2_PACKAGE_NRD_APPLICATION
 	bool "application"
@@ -33,35 +28,41 @@ config BR2_PACKAGE_NRD_APPLICATION
 
 if BR2_PACKAGE_NRD_APPLICATION
 choice
-        prompt "What graphics access system layer to be used"
+	prompt "What graphics access system layer to be used"
 
 config BR2_NRD_GRAPHICS_DIRECTFB
-        bool "directfb"
+	bool "directfb"
+	select BR2_PACKAGE_ALSA_LIB
+	select BR2_PACKAGE_WEBP
+	select BR2_PACKAGE_TREMOR
+	select BR2_PACKAGE_FFMPEG
+	select BR2_PACKAGE_PORTAUDIO
 	depends on BR2_PACKAGE_DIRECTFB
-        help
-           Use the DirectFB access layer.
-
-config BR2_NRD_GRAPHICS_GLES2
-        bool "gles2"
-	depends on BR2_PACKAGE_HAS_OPENGL_ES
-        help
-           Use the GLESV2 access layer.
+	help
+	  Use the DirectFB access layer.
 
 config BR2_NRD_GRAPHICS_GLES2_EGL
-        bool "gles2-egl"
+	bool "gles2-egl"
 	depends on BR2_PACKAGE_HAS_OPENGL_EGL
-        help
-           Use the GLESV2-EGL  access layer.
+	help
+	  Use the GLESV2-EGL access layer.
  
+config BR2_NRD_GRAPHICS_GLES2
+	bool "gles2"
+	depends on BR2_PACKAGE_HAS_OPENGL_ES
+	help
+	  Use the GLESV2 access layer.
+
 config BR2_NRD_GRAPHICS_NULL
-        bool "null"
-        help
-           Use the NULL access layer.
+	bool "null"
+	help
+	  Use the NULL access layer.
  
 endchoice
 
 config BR2_NRD_DOLYDIGITALPLUS_STUBBED
 	bool "DDPlus stub"
+	default y
 	select BR2_PACKAGE_DDPSTUB
 	help
 	  There is no actual implementation for the DolbyDigital Plus 
@@ -72,8 +73,8 @@ config BR2_NRD_DEBUG_BUILD
 	bool "debug"
 	help
 	  Build the nrd framework in debug mode so all possible 
-    	  information that could help locating issues is being
- 	  exposed.
+	  information that could help locating issues is being
+	  exposed.
 
 config BR2_NRD_NICE_THREADS
 	bool "nice threads"
