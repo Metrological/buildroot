@@ -68,4 +68,16 @@ config BR2_NRD_DOLYDIGITALPLUS_STUBBED
 	  audio component. Please use the stub.
 endif
 
+config BR2_NRD_DEBUG_BUILD
+	bool "debug"
+	help
+	  Build the nrd framework in debug mode so all possible 
+    	  information that could help locating issues is being
+ 	  exposed.
+
+config BR2_NRD_NICE_THREADS
+	bool "nice threads"
+	help
+	  Build the nrd framework using nice threading model.
+
 endif

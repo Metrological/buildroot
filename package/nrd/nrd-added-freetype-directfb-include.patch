@@ -8,13 +8,21 @@
      set(CMAKE_REQUIRED_LIBRARIES "freetype;z;png")
      set(LIBFREETYPE_TEST "
          #include <ft2build.h>
-@@ -587,6 +588,10 @@
+@@ -563,5 +564,6 @@
+ # -----------------------------------------------------------------------------------------------------------
+ message("  - Graphics backend: ${GIBBON_GRAPHICS}")
+ gibbon_add_directory(NAME "${GIBBON_GRAPHICS}" PREFIX graphics)
++gibbon_add_libraries(bcm_host)
+ 
+ # Input backend
+@@ -587,6 +588,11 @@
  
  configure_file_if_different("config.h.in" "${CMAKE_CURRENT_BINARY_DIR}/include/gibbon/config.h")
  include_directories("${CMAKE_CURRENT_BINARY_DIR}/include")
 +include_directories("$ENV{STAGING_DIR}/usr/include/directfb")
 +include_directories("$ENV{STAGING_DIR}/usr/include/freetype2")
 +include_directories("$ENV{STAGING_DIR}/usr/include/interface/vcos/pthreads")
++include_directories("$ENV{STAGING_DIR}/usr/include/interface/vmcs_host/linux")
 +link_directories("$ENV{STAGING_DIR}/usr/lib")
  
  message("=============================================================")
