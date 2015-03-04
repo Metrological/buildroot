@@ -1,0 +1,98 @@
+From a4a5e663d6409fc19296c7329bdb0456fa7f54ec Mon Sep 17 00:00:00 2001
+From: Allan Sandfeld Jensen <allan.jensen@digia.com>
+Date: Mon, 5 Jan 2015 14:03:59 +0100
+Subject: [PATCH] Add support authenticated POST requests
+
+To resend a POST request on authentication challenge we need to be able
+to reset the FormData IODevice so it can give the same data again to
+QtNetwork.
+
+Task-number: QTBUG-43628
+Change-Id: Icc0a25f45dee80240501b18f1e3f61af022552d1
+Reviewed-by: Jocelyn Turcotte <jocelyn.turcotte@digia.com>
+---
+ .../platform/network/qt/QNetworkReplyHandler.cpp   | 25 ++++++++++++++++------
+ .../platform/network/qt/QNetworkReplyHandler.h     |  4 +++-
+ 2 files changed, 21 insertions(+), 8 deletions(-)
+
+diff --git a/Source/WebCore/platform/network/qt/QNetworkReplyHandler.cpp b/Source/WebCore/platform/network/qt/QNetworkReplyHandler.cpp
+index f884a9f..91c5e00 100644
+--- a/Source/WebCore/platform/network/qt/QNetworkReplyHandler.cpp
++++ b/Source/WebCore/platform/network/qt/QNetworkReplyHandler.cpp
+@@ -50,10 +50,11 @@ FormDataIODevice::FormDataIODevice(FormData* data)
+     , m_currentDelta(0)
+     , m_fileSize(0)
+     , m_dataSize(0)
++    , m_formData(data)
+ {
+     setOpenMode(FormDataIODevice::ReadOnly);
+ 
+-    prepareFormElements(data);
++    prepareFormElements();
+     prepareCurrentElement();
+     computeSize();
+ }
+@@ -63,19 +64,29 @@ FormDataIODevice::~FormDataIODevice()
+     delete m_currentFile;
+ }
+ 
+-void FormDataIODevice::prepareFormElements(FormData* formData)
++bool FormDataIODevice::reset()
+ {
+-    if (!formData)
+-        return;
++    if (m_currentFile)
++        m_currentFile->close();
+ 
+-    RefPtr<FormData> formDataRef(formData);
++    m_currentDelta = 0;
++    m_formElements = m_formData->elements();
++
++    prepareCurrentElement();
++    return true;
++}
++
++void FormDataIODevice::prepareFormElements()
++{
++    if (!m_formData)
++        return;
+ 
+ #if ENABLE(BLOB)
+-    formDataRef = formDataRef->resolveBlobReferences();
++    m_formData = m_formData->resolveBlobReferences();
+ #endif
+ 
+     // Take a deep copy of the FormDataElements
+-    m_formElements = formDataRef->elements();
++    m_formElements = m_formData->elements();
+ }
+ 
+ 
+diff --git a/Source/WebCore/platform/network/qt/QNetworkReplyHandler.h b/Source/WebCore/platform/network/qt/QNetworkReplyHandler.h
+index bf838fd..8b31d3a 100644
+--- a/Source/WebCore/platform/network/qt/QNetworkReplyHandler.h
++++ b/Source/WebCore/platform/network/qt/QNetworkReplyHandler.h
+@@ -179,13 +179,14 @@ class FormDataIODevice : public QIODevice {
+ 
+     bool isSequential() const;
+     qint64 getFormDataSize() const { return m_fileSize + m_dataSize; }
++    virtual bool reset();
+ 
+ protected:
+     qint64 readData(char*, qint64);
+     qint64 writeData(const char*, qint64);
+ 
+ private:
+-    void prepareFormElements(FormData*);
++    void prepareFormElements();
+     void moveToNextElement();
+     qint64 computeSize();
+     void openFileForCurrentElement();
+@@ -197,6 +198,7 @@ class FormDataIODevice : public QIODevice {
+     qint64 m_currentDelta;
+     qint64 m_fileSize;
+     qint64 m_dataSize;
++    RefPtr<FormData> m_formData;
+ };
+ 
+ }

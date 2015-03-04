@@ -1,0 +1,33 @@
+From e38a1d437eedc84d89e6daafea050fb3ed6a2273 Mon Sep 17 00:00:00 2001
+From: Allan Sandfeld Jensen <allan.jensen@theqtcompany.com>
+Date: Fri, 16 Jan 2015 15:35:50 +0100
+Subject: [PATCH] Avoid crash on root elements with display:none
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+We expect elements returned by hit-testing to have actual renderObjects,
+but that may not be the case if the root element is declared display:none,
+since the root element is always considered hit if nothing else is, and
+display: none elements have no renderObjects.
+
+Task-number: QTBUG-43882
+Change-Id: I526615d401bf09b30e2b6994dcdad3b2373cef5a
+Reviewed-by: Michael Brüning <michael.bruning@theqtcompany.com>
+---
+ Source/WebKit/qt/WebCoreSupport/QWebFrameAdapter.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Source/WebKit/qt/WebCoreSupport/QWebFrameAdapter.cpp b/Source/WebKit/qt/WebCoreSupport/QWebFrameAdapter.cpp
+index dafb0e2..f4d7f05 100644
+--- a/Source/WebKit/qt/WebCoreSupport/QWebFrameAdapter.cpp
++++ b/Source/WebKit/qt/WebCoreSupport/QWebFrameAdapter.cpp
+@@ -837,7 +837,7 @@ QWebHitTestResultPrivate::QWebHitTestResultPrivate(const WebCore::HitTestResult
+     innerNode->ref();
+     innerNonSharedNode = hitTest.innerNonSharedNode();
+     innerNonSharedNode->ref();
+-    boundingRect = innerNonSharedNode ? innerNonSharedNode->renderer()->absoluteBoundingBoxRect() : IntRect();
++    boundingRect = (innerNonSharedNode && innerNonSharedNode->renderer())? innerNonSharedNode->renderer()->absoluteBoundingBoxRect() : IntRect();
+     WebCore::Image *img = hitTest.image();
+     if (img) {
+         QPixmap* pix = img->nativeImageForCurrentFrame();
