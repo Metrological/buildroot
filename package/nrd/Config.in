@@ -21,19 +21,16 @@ choice
 
 config BR2_PACKAGE_NRD_APPLICATION
 	bool "application"
-	default y
 	help
 	  Build NRD as a stand-alone application. Could be run from the CLI.
 
 config BR2_PACKAGE_NRD_DYNAMICLIB
 	bool "dynamic"
-	default n
 	help
 	  Build NRD to be used as a dynamical loadable module to be used as part of another app.
 
 config BR2_PACKAGE_NRD_STATICLIB
 	bool "static"
-	default n
 	help
 	  Build NRD to be used as a static library to be used as part of another app.
 
@@ -72,27 +69,24 @@ config BR2_NRD_GRAPHICS_NULL
 endchoice
 
 choice
-        prompt "Which reference implementation should we use"
+	prompt "Which reference implementation should we use"
 
 config BR2_PACKAGE_NRD_REF_SKELETON
-        bool "skeleton"
-        default y
-        help
-          Build NRD using a stubbed skeleton from NRD.
+	bool "skeleton"
+	help
+	  Build NRD using a stubbed skeleton from NRD.
 
 config BR2_PACKAGE_NRD_REF_X86
-        bool "reference"
+	bool "reference"
 	depends on BR2_i386
-        default n
-        help
-          Build NRD using the x86 reference implementation
+	help
+	  Build NRD using the x86 reference implementation
 
-config BR2_PACKAGE_NRD_METRO
-        bool "Metrological"
+config BR2_PACKAGE_NRD_REF_ML
+	bool "metrological"
 	depends on BR2_i386 || BR2_arm || BR2_mips
-        default n
-        help
-          Build NRD using the Metrological reference implementation
+	help
+	  Build NRD using the Metrological reference implementation
 
 endchoice
 
