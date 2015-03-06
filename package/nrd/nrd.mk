@@ -31,21 +31,21 @@ ifeq ($(BR2_NRD_NICE_THREADS),y)
 NRD_CMAKE_FLAGS += -DGIBBON_NICE_THREADS=1
 endif
 
-ifeq ($(BR2_PACKAGE_NRD_REF_SKELETON), y)
+ifeq ($(BR2_PACKAGE_NRD_REF_SKELETON),y)
 NRD_CMAKE_FLAGS += -DDPI_IMPLEMENTATION=skeleton
-else ifeq ($(BR2_PACKAGE_NRD_REF_X86), y)
+else ifeq ($(BR2_PACKAGE_NRD_REF_X86),y)
 NRD_CMAKE_FLAGS += -DDPI_IMPLEMENTATION=reference
-else ifeq ($(BR2_PACKAGE_NRD_REF_ML), y)
+else ifeq ($(BR2_PACKAGE_NRD_REF_ML),y)
 NRD_CMAKE_FLAGS += -DDPI_IMPLEMENTATION=metrological
 endif
 
-ifeq ($(BR2_PACKAGE_NRD_APPLICATION), y)
+ifeq ($(BR2_PACKAGE_NRD_APPLICATION),y)
 NRD_CMAKE_FLAGS += -DGIBBON_MODE=executable
 define NRD_TARGET_SET_DEFINITION
 	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/netflix $(TARGET_DIR)/usr/bin
 	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/manufss $(TARGET_DIR)/usr/bin
 endef
-else ifeq ($(BR2_PACKAGE_NRD_DYNAMICLIB), y)
+else ifeq ($(BR2_PACKAGE_NRD_DYNAMICLIB),y)
 NRD_RELOCATION_OPTION = -fPIC
 NRD_INSTALL_STAGING = YES
 NRD_CMAKE_FLAGS += -DGIBBON_MODE=shared
@@ -61,7 +61,7 @@ define NRD_INSTALL_STAGING_CMDS
 	cp -R $(@D)/netflix/src/platform/gibbon/*.h $(STAGING_DIR)/usr/include/gibbon
 	cp -R $(@D)/netflix/src/platform/gibbon/bridge/*.h $(STAGING_DIR)/usr/include/gibbon
 endef
-else ifeq ($(BR2_PACKAGE_NRD_STATICLIB), y)
+else ifeq ($(BR2_PACKAGE_NRD_STATICLIB),y)
 NRD_INSTALL_STAGING = YES
 NRD_CMAKE_FLAGS += -DGIBBON_MODE=static
 define NRD_TARGET_SET_DEFINITION
