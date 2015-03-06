@@ -16,19 +16,29 @@ config BR2_PACKAGE_NRD
 
 if BR2_PACKAGE_NRD
 
-config BR2_PACKAGE_NRD_MIDDLEWARE
-	bool "middleware"
-	default y
-	help
-	  Build the middleware componentn for integration in a TEE (libnrd.a)
+choice 
+	prompt "How should the NRD app be build:"
 
 config BR2_PACKAGE_NRD_APPLICATION
 	bool "application"
 	default y
 	help
-	  Build the application that plays the content and interacts with the TEE.
+	  Build NRD as a stand-alone application. Could be run from the CLI.
 
-if BR2_PACKAGE_NRD_APPLICATION
+config BR2_PACKAGE_NRD_DYNAMICLIB
+	bool "dynamic"
+	default n
+	help
+	  Build NRD to be used as a dynamical loadable module to be used as part of another app.
+
+config BR2_PACKAGE_NRD_STATICLIB
+	bool "static"
+	default n
+	help
+	  Build NRD to be used as a static library to be used as part of another app.
+
+endchoice
+
 choice
 	prompt "What graphics access system layer to be used"
 
@@ -61,6 +71,31 @@ config BR2_NRD_GRAPHICS_NULL
  
 endchoice
 
+choice
+        prompt "Which reference implementation should we use"
+
+config BR2_PACKAGE_NRD_REF_SKELETON
+        bool "skeleton"
+        default y
+        help
+          Build NRD using a stubbed skeleton from NRD.
+
+config BR2_PACKAGE_NRD_REF_X86
+        bool "reference"
+	depends on BR2_i386
+        default n
+        help
+          Build NRD using the x86 reference implementation
+
+config BR2_PACKAGE_NRD_METRO
+        bool "Metrological"
+	depends on BR2_i386 || BR2_arm || BR2_mips
+        default n
+        help
+          Build NRD using the Metrological reference implementation
+
+endchoice
+
 config BR2_NRD_DOLYDIGITALPLUS_STUBBED
 	bool "DDPlus stub"
 	default y
@@ -68,7 +103,6 @@ config BR2_NRD_DOLYDIGITALPLUS_STUBBED
 	help
 	  There is no actual implementation for the DolbyDigital Plus 
 	  audio component. Please use the stub.
-endif
 
 config BR2_NRD_DEBUG_BUILD
 	bool "debug"
