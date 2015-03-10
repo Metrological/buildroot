@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-NRD_VERSION = ef99e03a64e3566e148f7289132b729dd3b9aef0
+NRD_VERSION = master
 NRD_SITE = git@github.com:Metrological/nrd.git
 NRD_SITE_METHOD = git
 NRD_LICENSE = PROPRIETARY
@@ -37,6 +37,16 @@ else ifeq ($(BR2_PACKAGE_NRD_REF_X86),y)
 NRD_CMAKE_FLAGS += -DDPI_IMPLEMENTATION=reference
 else ifeq ($(BR2_PACKAGE_NRD_REF_ML),y)
 NRD_CMAKE_FLAGS += -DDPI_IMPLEMENTATION=metrological
+endif
+
+ifeq ($(BR2_PACKAGE_NRD_PLAYREADY),y)
+NRD_CMAKE_FLAGS += -DDPI_REFERENCE_DRM=playready
+else ifeq ($(BR2_PACKAGE_NRD_PLAYREADY2),y)
+NRD_CMAKE_FLAGS += -DDPI_REFERENCE_DRM=playready2
+else if ($(BR2_PACKAGE_NRD_PLAYREADY25),y)
+NRD_CMAKE_FLAGS += -DDPI_REFERENCE_DRM=playready2.5
+else
+NRD_CMAKE_FLAGS += -DDPI_REFERENCE_DRM=none
 endif
 
 ifeq ($(BR2_PACKAGE_NRD_APPLICATION),y)
@@ -94,7 +104,7 @@ NRD_CONFIGURE_CMDS = \
 	$(TARGET_MAKE_ENV) BUILDROOT_TOOL_PREFIX="$(GNU_TARGET_NAME)-" cmake $(@D)/netflix \
 		-DCMAKE_TOOLCHAIN_FILE=$(HOST_DIR)/usr/share/buildroot/toolchainfile.cmake \
 		$(NRD_CMAKE_FLAGS) \
-		-DSMALL_FLAGS:STRING="-s -O3" -DSMALL_CFLAGS:STRING="" -DSMALL_CXXFLAGS:STRING="-fvisibility=hidden -fvisibility-inlines-hidden" -DNRDAPP_TOOLS="manufSSgenerator" -DDPI_REFERENCE_DRM="none"
+		-DSMALL_FLAGS:STRING="-s -O3" -DSMALL_CFLAGS:STRING="" -DSMALL_CXXFLAGS:STRING="-fvisibility=hidden -fvisibility-inlines-hidden" -DNRDAPP_TOOLS="manufSSgenerator"
 
 NRD_BUILD_CMDS = cd $(@D)/output ; $(TARGET_MAKE_ENV) make 
 

@@ -69,7 +69,7 @@ config BR2_NRD_GRAPHICS_NULL
 endchoice
 
 choice
-	prompt "Which reference implementation should we use"
+	prompt "Which reference implementation should we use:"
 
 config BR2_PACKAGE_NRD_REF_SKELETON
 	bool "skeleton"
@@ -89,6 +89,34 @@ config BR2_PACKAGE_NRD_REF_ML
 	  Build NRD using the Metrological reference implementation
 
 endchoice
+
+config BR2_NRD_DRM_ENABLED
+	bool "playready"
+	depends on BR2_PACKAGE_DXDRM
+
+if BR2_NRD_DRM_ENABLED
+
+choice 
+	prompt "Which playready version should we use:"
+
+config BR2_PACKAGE_NRD_PLAYREADY
+	bool "playready 1.5"
+	help
+	  Build NRD using the PlayReady version 1.5.
+
+config BR2_PACKAGE_NRD_PLAYREADY2
+	bool "playready 2"
+	help
+	  Build NRD using the PlayReady version 2.
+
+config BR2_PACKAGE_NRD_PLAYREADY25
+	bool "playready 2.5"
+	help
+	  Build NRD using the PlayReady version 2.5.
+
+endchoice
+
+endif
 
 config BR2_NRD_DOLYDIGITALPLUS_STUBBED
 	bool "DDPlus stub"
