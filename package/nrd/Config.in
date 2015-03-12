@@ -61,6 +61,12 @@ config BR2_NRD_GRAPHICS_GLES2
 	help
 	  Use the GLESV2 access layer.
 
+config BR2_NRD_GRAPHICS_PLUGIN_EGL
+	bool "plugin-egl"
+	depends on BR2_PACKAGE_HAS_OPENGL_ES
+	help
+	  Use the EGL access layer based on a plugin structure.
+
 config BR2_NRD_GRAPHICS_NULL
 	bool "null"
 	help

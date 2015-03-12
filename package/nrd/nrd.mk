@@ -16,6 +16,7 @@ endif
 
 NRD_INSTALL_STAGING = NO
 
+
 ifeq ($(BR2_NRD_GRAPHICS_DIRECTFB),y)
 NRD_CMAKE_FLAGS += -DGIBBON_GRAPHICS=directfb
 NRD_DEPENDENCIES += alsa-lib portaudio webp ffmpeg tremor directfb
@@ -23,6 +24,8 @@ else ifeq ($(BR2_NRD_GRAPHICS_GLES2),y)
 NRD_CMAKE_FLAGS += -DGIBBON_GRAPHICS=gles2
 else ifeq ($(BR2_NRD_GRAPHICS_GLES2_EGL),y)
 NRD_CMAKE_FLAGS += -DGIBBON_GRAPHICS=gles2-egl
+else ifeq ($(BR2_NRD_GRAPHICS_PLUGIN_EGL),y)
+NRD_CMAKE_FLAGS += -DGIBBON_GRAPHICS=plugin
 else 
 NRD_CMAKE_FLAGS += -DGIBBON_GRAPHICS=null
 endif
@@ -66,10 +69,13 @@ define NRD_INSTALL_STAGING_CMDS
 	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libnetflix.a $(STAGING_DIR)/usr/lib
 	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libnetflix.so $(STAGING_DIR)/usr/lib
 	mkdir -p $(STAGING_DIR)/usr/include/gibbon
+	mkdir -p $(STAGING_DIR)/usr/include/gibbon/external
 	cp -R $(@D)/output/nrdlib/include/nrd* $(STAGING_DIR)/usr/include/gibbon
 	cp -R $(@D)/output/src/platform/gibbon/include/gibbon/* $(STAGING_DIR)/usr/include/gibbon
 	cp -R $(@D)/netflix/src/platform/gibbon/*.h $(STAGING_DIR)/usr/include/gibbon
 	cp -R $(@D)/netflix/src/platform/gibbon/bridge/*.h $(STAGING_DIR)/usr/include/gibbon
+	cp -R $(@D)/partner/dpi/metrological/external/* $(STAGING_DIR)/usr/include/gibbon/external
+	cp -R $(@D)/partner/graphics/plugin/external/* $(STAGING_DIR)/usr/include/gibbon/external
 endef
 else ifeq ($(BR2_PACKAGE_NRD_STATICLIB),y)
 NRD_INSTALL_STAGING = YES
