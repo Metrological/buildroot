@@ -96,6 +96,21 @@ config BR2_PACKAGE_NRD_REF_ML
 
 endchoice
 
+choice
+	prompt "Which input method should we use:"
+
+config BR2_PACKAGE_NRD_INPUT_DEVINPUT
+	bool "devinput"
+	help
+	  Build NRD using the device devinput
+
+config BR2_PACKAGE_NRD_INPUT_PLUGIN
+	bool "plugin"
+	help
+	  Build NRD using the interface MetrologicalInput to insert keys via this method.
+
+endchoice
+
 config BR2_NRD_DRM_ENABLED
 	bool "playready"
 	depends on BR2_PACKAGE_DXDRM

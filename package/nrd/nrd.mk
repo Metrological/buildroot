@@ -52,6 +52,14 @@ else
 NRD_CMAKE_FLAGS += -DDPI_REFERENCE_DRM=none
 endif
 
+ifeq ($(BR2_PACKAGE_NRD_INPUT_DEVINPUT),y)
+NRD_CMAKE_FLAGS += -DGIBBON_INPUT=devinput
+else ifeq ($(BR2_PACKAGE_NRD_INPUT_PLUGIN),y)
+NRD_CMAKE_FLAGS += -DGIBBON_INPUT=plugin
+else
+NRD_CMAKE_FLAGS += -DGIBBON_INPUT=null
+endif
+
 ifeq ($(BR2_PACKAGE_NRD_APPLICATION),y)
 NRD_CMAKE_FLAGS += -DGIBBON_MODE=executable
 define NRD_TARGET_SET_DEFINITION
@@ -114,6 +122,7 @@ define NRD_INSTALL_STAGING_CMDS
 	cp -R $(@D)/netflix/src/platform/gibbon/bridge/*.h $(STAGING_DIR)/usr/include/gibbon/nrdapp
 	cp -R $(@D)/partner/dpi/metrological/external/* $(STAGING_DIR)/usr/include/gibbon/external
 	cp -R $(@D)/partner/graphics/plugin/external/* $(STAGING_DIR)/usr/include/gibbon/external
+	cp -R $(@D)/partner/input/plugin/external/* $(STAGING_DIR)/usr/include/gibbon/external
 	cp -R $(@D)/output/nrdlib/lib/*.a $(STAGING_DIR)/usr/lib
 	cp -R $(@D)/output/mdxlib/lib/*.a $(STAGING_DIR)/usr/lib
 	cp -R $(@D)/output/lib/*.a $(STAGING_DIR)/usr/lib
@@ -129,7 +138,6 @@ endif
 #NRD_CMAKE_FLAGS += -DGIBBON_PLATFORM=application-manager
 NRD_CMAKE_FLAGS += -DGIBBON_PLATFORM=posix
 NRD_CMAKE_FLAGS += -DBUILD_DPI_DIRECTORY=$(@D)/partner/dpi
-NRD_CMAKE_FLAGS += -DGIBBON_INPUT=devinput
 
 NRD_CONFIGURE_CMDS = \
 	mkdir $(@D)/output;	\

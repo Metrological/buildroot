@@ -1,0 +1,12 @@
+--- a/netflix/src/platform/gibbon/InputManager.h
++++ b/netflix/src/platform/gibbon/InputManager.h
+@@ -93,6 +93,9 @@
+ 
+ #elif defined(GIBBON_INPUT_NULL)
+     netflix::base::ConditionVariable mCondition;
++#elif defined(GIBBON_INPUT_PLUGIN)
++    std::list<unsigned int> mKeyCodes;
++    netflix::base::ConditionVariable mCondition;
+ #elif defined(GIBBON_INPUT_X11)
+     int mPipe[2];
+     shared_ptr<InputManagerX11Private> mPriv;
