@@ -118,4 +118,16 @@ config BR2_PACKAGE_TESTBROWSER
 config BR2_PACKAGE_DUMPRENDERTREE
 	bool "dumprendertree"
 
+config BR2_QT5WEBKIT_USE_WEBINSPECTOR
+	bool "webinspector"
+	default y
+	help
+	  Enable web inspector in build
+
+config BR2_QT5WEBKIT_USE_SVG
+	bool "SVG support"
+	default y
+	help
+	  Enable SVG support in browser
+
 endmenu

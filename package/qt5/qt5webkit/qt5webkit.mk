@@ -139,6 +139,22 @@ ifeq ($(BR2_QT5WEBKIT_USE_LOCATION),y)
 	QT5WEBKIT_DEPENDENCIES += qt5location
 endif
 
+ifeq ($(BR2_QT5WEBKIT_USE_WEBINSPECTOR),y)
+	QT5WEBKIT_CONFIG += \
+		WEBKIT_CONFIG+=inspector
+else
+	QT5WEBKIT_CONFIG += \
+		WEBKIT_CONFIG-=inspector
+endif
+
+ifeq ($(BR2_QT5WEBKIT_USE_SVG),y)
+	QT5WEBKIT_CONFIG += \
+		WEBKIT_CONFIG+=svg
+else
+	QT5WEBKIT_CONFIG += \
+		WEBKIT_CONFIG-=svg
+endif
+
 ifeq ($(BR2_QT5WEBKIT_USE_ORIENTATION),y)
 	QT5WEBKIT_CONFIG += \
 		WEBKIT_CONFIG+=device_orientation \
