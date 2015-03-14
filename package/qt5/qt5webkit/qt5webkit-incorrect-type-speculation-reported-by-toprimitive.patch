@@ -1,0 +1,45 @@
+From a7f2e6bf8c1bc569c56d713894f442c7fed63264 Mon Sep 17 00:00:00 2001
+From: Oliver Hunt <oliver@apple.com>
+Date: Wed, 11 Mar 2015 14:07:35 +0100
+Subject: [PATCH] Incorrect type speculation reported by ToPrimitive
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+https://bugs.webkit.org/show_bug.cgi?id=119458
+
+Reviewed by Mark Hahnenberg.
+
+Make sure that we report the correct type possibilities for the output
+from ToPrimitive
+
+* dfg/DFGAbstractInterpreterInlines.h:
+(JSC::DFG::::executeEffects):
+
+git-svn-id: http://svn.webkit.org/repository/webkit/trunk@153674 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+Change-Id: I85d91598088ead350c89c4a9cc28a2bd866a2d22
+Task-number: QTBUG-44912
+Reviewed-by: Julien Brianceau <jbriance@cisco.com>
+Reviewed-by: Michael Brüning <michael.bruning@theqtcompany.com>
+---
+ Source/JavaScriptCore/dfg/DFGAbstractState.cpp | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/Source/JavaScriptCore/dfg/DFGAbstractState.cpp b/Source/JavaScriptCore/dfg/DFGAbstractState.cpp
+index eff6536..594097d 100644
+--- a/Source/JavaScriptCore/dfg/DFGAbstractState.cpp
++++ b/Source/JavaScriptCore/dfg/DFGAbstractState.cpp
+@@ -1079,10 +1079,8 @@ bool AbstractState::executeEffects(unsigned indexInBlock, Node* node)
+         clobberWorld(node->codeOrigin, indexInBlock);
+         
+         SpeculatedType type = source.m_type;
+-        if (type & ~(SpecNumber | SpecString | SpecBoolean)) {
+-            type &= (SpecNumber | SpecString | SpecBoolean);
+-            type |= SpecString;
+-        }
++        if (type & ~(SpecNumber | SpecString | SpecBoolean))
++            type = (SpecTop & ~SpecCell) | SpecString;
+         destination.set(type);
+         break;
+     }
