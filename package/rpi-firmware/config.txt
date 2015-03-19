@@ -1,14 +1,8 @@
 disable_splash=1
 disable_overscan=1
 boot_delay=0
-[pi1]
 arm_freq=1000
-[pi2]
-arm_freq=1100
-[all]
 gpu_freq=500
-sdram_freq=500
-core_freq=500
 over_voltage=6
 avoid_warnings=1
 force_turbo=0
