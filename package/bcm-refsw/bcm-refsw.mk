@@ -149,6 +149,7 @@ define BCM_REFSW_INSTALL_TARGET_CMDS
 		$(INSTALL) -m 644 -D $(@D)$(BCM_OUTPUT)nexus/bin/bcmdriver.ko $(TARGET_DIR)/lib/modules/bcmdriver.ko; \
 	else \
 		$(INSTALL) -m 644 -D $(@D)$(BCM_OUTPUT)nexus/bin/nexus.ko $(TARGET_DIR)/lib/modules/nexus.ko; \
+		$(INSTALL) -D -m 755 package/bcm-refsw/S11nexus $(TARGET_DIR)/etc/init.d/S11nexus; \
 	fi
 	$(call BCM_REFSW_INSTALL_LIBS,$(TARGET_DIR))
 endef

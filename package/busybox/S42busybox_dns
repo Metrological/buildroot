@@ -1,0 +1,6 @@
+#!/bin/sh
+#
+# TODO: poor mans solution, discuss with Pierre on howto improve
+#
+echo nameserver 8.8.8.8 > /tmp/resolv.conf
+
