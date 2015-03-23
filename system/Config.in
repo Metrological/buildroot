@@ -7,8 +7,7 @@ config BR2_TARGET_GENERIC_HOSTNAME
 	  Select system hostname to be stored in /etc/hostname.
 
 	  Leave empty to not create /etc/hostname, or to keep the
-	  one from a custom skeleton.
-
+	
 config BR2_TARGET_GENERIC_TIMESERVER
 	string "Time Server"
 	default "ntp.xs4all.nl"
@@ -16,6 +15,14 @@ config BR2_TARGET_GENERIC_TIMESERVER
 	  Select a server that can be used to ask the time.
 
 	  Create an empty setting to prevent a time request from being issued.
+
+config BR2_TARGET_SPECIFIC_INTERFACES
+	string "Interfaces file location"
+	default ""
+	help
+	  Selects a custom interface file to be deployed on the target system.
+
+	  In case left empty, only the loopback devices is configured.
 
 config BR2_TARGET_GENERIC_ISSUE
 	string "System banner"

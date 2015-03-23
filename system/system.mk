@@ -7,6 +7,7 @@ TARGET_GENERIC_GETTY_PORT = $(call qstrip,$(BR2_TARGET_GENERIC_GETTY_PORT))
 TARGET_GENERIC_GETTY_BAUDRATE = $(call qstrip,$(BR2_TARGET_GENERIC_GETTY_BAUDRATE))
 TARGET_GENERIC_GETTY_TERM = $(call qstrip,$(BR2_TARGET_GENERIC_GETTY_TERM))
 TARGET_GENERIC_GETTY_OPTIONS = $(call qstrip,$(BR2_TARGET_GENERIC_GETTY_OPTIONS))
+TARGET_SPECIFIC_INTERFACES = $(call qstrip,$(BR2_TARGET_SPECIFIC_INTERFACES))
 
 target-generic-securetty:
 	grep -q '^$(TARGET_GENERIC_GETTY_PORT)$$' $(TARGET_DIR)/etc/securetty || \
@@ -54,6 +55,13 @@ target-generic-install-timeserver:
 	$(SED) 's/__NTP_SERVER__/$(TARGET_GENERIC_TIMESERVER)/g' $(TARGET_DIR)/etc/network/if-up.d/rdate
 target-generic-remove-timeserver:
 	$(RM) $(TARGET_DIR)/etc/network/if-up.d/rdate
+
+target-specific-install-interfaces:
+	cp -f $(TOPDIR)/$(TARGET_SPECIFIC_INTERFACES) $(TARGET_DIR)/etc/network/interfaces
+
+ifneq ($(BR2_TARGET_SPECIFIC_INTERFACES),)
+TARGETS += target-specific-install-interfaces
+endif
 
 ifeq ($(BR2_TARGET_GENERIC_GETTY),y)
 TARGETS += target-generic-securetty
