@@ -63,7 +63,8 @@ endif
 ifeq ($(BR2_PACKAGE_NRD_APPLICATION),y)
 NRD_CMAKE_FLAGS += -DGIBBON_MODE=executable
 define NRD_TARGET_SET_DEFINITION
-	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/*.so $(TARGET_DIR)/usr/lib/
+	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libJavaScriptCore.so $(TARGET_DIR)/usr/lib
+	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libWTF.so $(TARGET_DIR)/usr/lib
 	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/netflix $(TARGET_DIR)/usr/bin
 	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/manufss $(TARGET_DIR)/usr/bin
 endef
@@ -72,11 +73,13 @@ NRD_RELOCATION_OPTION = -fPIC
 NRD_INSTALL_STAGING = YES
 NRD_CMAKE_FLAGS += -DGIBBON_MODE=shared
 define NRD_TARGET_SET_DEFINITION
+	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libnetflix.so $(TARGET_DIR)/usr/lib
+	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libJavaScriptCore.so $(TARGET_DIR)/usr/lib
+	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libWTF.so $(TARGET_DIR)/usr/lib
 	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/manufss $(TARGET_DIR)/usr/bin
 endef
 define NRD_INSTALL_STAGING_CMDS
-	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/*.so $(STAGING_DIR)/usr/lib/
-	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libnetflix.a $(STAGING_DIR)/usr/lib
+	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libnetflix.so $(STAGING_DIR)/usr/lib
 	mkdir -p $(STAGING_DIR)/usr/include/gibbon
 	mkdir -p $(STAGING_DIR)/usr/include/gibbon/external
 	cp -R $(@D)/output/nrdlib/include/nrd* $(STAGING_DIR)/usr/include/gibbon
@@ -89,11 +92,12 @@ endef
 else ifeq ($(BR2_PACKAGE_NRD_STATICLIB),y)
 NRD_INSTALL_STAGING = YES
 NRD_CMAKE_FLAGS += -DGIBBON_MODE=static
+NRD_CMAKE_FLAGS += -DGIBBON_SCRIPT_JSC_DYNAMIC=0
 define NRD_TARGET_SET_DEFINITION
+	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libnetflix.a $(TARGET_DIR)/usr/lib
 	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/manufss $(TARGET_DIR)/usr/bin
 endef
 define NRD_INSTALL_STAGING_CMDS
-	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/*.so $(STAGING_DIR)/usr/lib/
 	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libnetflix.a $(STAGING_DIR)/usr/lib
 	mkdir -p $(STAGING_DIR)/usr/include/gibbon
 	mkdir -p $(STAGING_DIR)/usr/include/gibbon/nrd
@@ -129,9 +133,17 @@ define NRD_INSTALL_STAGING_CMDS
 endef
 endif
 
+
+define NRD_INSTALL_TARGET_CMDS
+	cp -R $(@D)/output/src/platform/gibbon/data $(TARGET_DIR)/var/lib/netflix
+	$(NRD_TARGET_SET_DEFINITION)
+endef
+
 ifeq ($(BR2_NRD_DEBUG_BUILD),y)
+NRD_CMAKE_FLAGS += -DGIBBON_SCRIPT_JSC_DEBUG=1
 NRD_CMAKE_FLAGS += -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS_DEBUG="$(NRD_RELOCATION_OPTION) -O0 -g -Wno-cast-align" -DCMAKE_CXX_FLAGS_DEBUG="$(NRD_RELOCATION_OPTION) -O0 -g -Wno-cast-align"
 else
+NRD_CMAKE_FLAGS += -DGIBBON_SCRIPT_JSC_DEBUG=0
 NRD_CMAKE_FLAGS += -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS_RELEASE="$(NRD_RELOCATION_OPTION) -O2 -DNDEBUG -Wno-cast-align" -DCMAKE_CXX_FLAGS_RELEASE="$(NRD_RELOCATION_OPTION) -O2 -DNDEBUG -Wno-cast-align"
 endif
 
@@ -148,12 +160,5 @@ NRD_CONFIGURE_CMDS = \
 		-DSMALL_FLAGS:STRING="-s -O3" -DSMALL_CFLAGS:STRING="" -DSMALL_CXXFLAGS:STRING="-fvisibility=hidden -fvisibility-inlines-hidden" -DNRDAPP_TOOLS="manufSSgenerator"
 
 NRD_BUILD_CMDS = cd $(@D)/output ; $(TARGET_MAKE_ENV) make 
-
-define NRD_INSTALL_TARGET_CMDS
-	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libJavaScriptCore.so $(TARGET_DIR)/usr/lib
-	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libWTF.so $(TARGET_DIR)/usr/lib
-	cp -R $(@D)/output/src/platform/gibbon/data $(TARGET_DIR)/var/lib/netflix
-	$(NRD_TARGET_SET_DEFINITION)
-endef
 
 $(eval $(cmake-package))
