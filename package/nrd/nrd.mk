@@ -99,6 +99,8 @@ define NRD_TARGET_SET_DEFINITION
 endef
 define NRD_INSTALL_STAGING_CMDS
 	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libnetflix.a $(STAGING_DIR)/usr/lib
+	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/JavaScriptCore/Source/WTF/wtf/libWTF.a $(STAGING_DIR)/usr/lib
+	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/JavaScriptCore/Source/JavaScriptCore/libJavaScriptCore.a $(STAGING_DIR)/usr/lib
 	mkdir -p $(STAGING_DIR)/usr/include/gibbon
 	mkdir -p $(STAGING_DIR)/usr/include/gibbon/nrd
 	mkdir -p $(STAGING_DIR)/usr/include/gibbon/nrdbase
