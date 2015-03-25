@@ -28,7 +28,8 @@ define NRDPLUGIN_BUILD_CMDS
 endef
 
 define NRDPLUGIN_INSTALL_STAGING_CMDS
-        $(INSTALL) -D -m 0755 $(@D)/qt5/libnrdplugin.so $(STAGING_DIR)/usr/lib
+        $(INSTALL) -D -m 0755 $(@D)/qt5/libnrdplugin.so.1 $(STAGING_DIR)/usr/lib
+	ln -s libnrdplugin.so.1 $(STAGING_DIR)/usr/lib/libnrdplugin.so
 	cp $(@D)/qt5/nrdplugin.h $(STAGING_DIR)/usr/include/nrd
 endef
 
@@ -38,7 +39,8 @@ define NRDPLUGIN_UNINSTALL_STAGING_CMDS
 endef
 
 define NRDPLUGIN_INSTALL_TARGET_CMDS
-        $(INSTALL) -D -m 0755 $(@D)/qt5/libnrdplugin.so $(TARGET_DIR)/usr/lib
+        $(INSTALL) -D -m 0755 $(@D)/qt5/libnrdplugin.so.1 $(TARGET_DIR)/usr/lib
+	ln -s libnrdplugin.so.1 $(TARGET_DIR)/usr/lib/libnrdplugin.so
 endef
 
 define NRDPLUGIN_UNINSTALL_TARGET_CMDS

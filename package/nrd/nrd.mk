@@ -9,6 +9,7 @@ NRD_SITE = git@github.com:Metrological/nrd.git
 NRD_SITE_METHOD = git
 NRD_LICENSE = PROPRIETARY
 NRD_DEPENDENCIES = freetype icu jpeg libpng libmng webp expat openssl c-ares libcurl
+NRD_RUNTIMEDATA_LOCATION = /var/lib/netflix
 
 ifeq ($(BR2_PACKAGE_DDPSTUB),y)
 NRD_DEPENDENCIES += stubs
@@ -159,7 +160,9 @@ endif
 
 
 define NRD_INSTALL_TARGET_CMDS
-	cp -R $(@D)/output/src/platform/gibbon/data $(TARGET_DIR)/var/lib/netflix
+	cp -R $(@D)/output/src/platform/gibbon/data $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)
+	$(SED) 's/<include>etc\//<include>\/var\/lib\/netflix\/etc\//g' $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/conf/gibbon.xml
+	$(SED) 's/<ui_cert>etc\//<ui_cert>\/var\/lib\/netflix\/etc\//g' $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/conf/gibbon.xml
 	$(NRD_TARGET_SET_DEFINITION)
 endef
 
