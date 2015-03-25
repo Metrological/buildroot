@@ -1,0 +1,11 @@
+config BR2_PACKAGE_NRDPLUGIN_QT
+	depends on BR2_PACKAGE_QT5BASE
+	select BR2_PACKAGE_NRD
+	select BR2_PACKAGE_NRD_STATICLIB
+	select BR2_NRD_GRAPHICS_PLUGIN_EGL
+	select BR2_PACKAGE_NRD_REF_ML
+	select BR2_PACKAGE_NRD_INPUT_PLUGIN
+	bool "nrdplugin"
+	help
+	  QT based plugin of the nrd framework. To be used, for example in WebKit environment
+

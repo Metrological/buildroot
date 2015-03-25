@@ -16,7 +16,6 @@ endif
 
 NRD_INSTALL_STAGING = NO
 
-
 ifeq ($(BR2_NRD_GRAPHICS_DIRECTFB),y)
 NRD_CMAKE_FLAGS += -DGIBBON_GRAPHICS=directfb
 NRD_DEPENDENCIES += alsa-lib portaudio webp ffmpeg tremor directfb
@@ -72,22 +71,43 @@ else ifeq ($(BR2_PACKAGE_NRD_DYNAMICLIB),y)
 NRD_RELOCATION_OPTION = -fPIC
 NRD_INSTALL_STAGING = YES
 NRD_CMAKE_FLAGS += -DGIBBON_MODE=shared
+NRD_CMAKE_FLAGS += -DGIBBON_SCRIPT_JSC_DYNAMIC=0
 define NRD_TARGET_SET_DEFINITION
 	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libnetflix.so $(TARGET_DIR)/usr/lib
-	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libJavaScriptCore.so $(TARGET_DIR)/usr/lib
-	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libWTF.so $(TARGET_DIR)/usr/lib
 	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/manufss $(TARGET_DIR)/usr/bin
 endef
 define NRD_INSTALL_STAGING_CMDS
 	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libnetflix.so $(STAGING_DIR)/usr/lib
-	mkdir -p $(STAGING_DIR)/usr/include/gibbon
-	mkdir -p $(STAGING_DIR)/usr/include/gibbon/external
-	cp -R $(@D)/output/nrdlib/include/nrd* $(STAGING_DIR)/usr/include/gibbon
-	cp -R $(@D)/output/src/platform/gibbon/include/gibbon/* $(STAGING_DIR)/usr/include/gibbon
-	cp -R $(@D)/netflix/src/platform/gibbon/*.h $(STAGING_DIR)/usr/include/gibbon
-	cp -R $(@D)/netflix/src/platform/gibbon/bridge/*.h $(STAGING_DIR)/usr/include/gibbon
-	cp -R $(@D)/partner/dpi/metrological/external/* $(STAGING_DIR)/usr/include/gibbon/external
-	cp -R $(@D)/partner/graphics/plugin/external/* $(STAGING_DIR)/usr/include/gibbon/external
+        mkdir -p $(STAGING_DIR)/usr/include/nrd
+        mkdir -p $(STAGING_DIR)/usr/include/nrd/nrd
+        mkdir -p $(STAGING_DIR)/usr/include/nrd/nrdbase
+        mkdir -p $(STAGING_DIR)/usr/include/nrd/nrdase
+        mkdir -p $(STAGING_DIR)/usr/include/nrd/nrdnet
+        mkdir -p $(STAGING_DIR)/usr/include/nrd/nrdapp
+        mkdir -p $(STAGING_DIR)/usr/include/nrd/external
+        cp -R $(@D)/output/include/nrdapp/config.h $(STAGING_DIR)/usr/include/nrd
+	ln -s ./nrd/ $(STAGING_DIR)/usr/include/gibbon
+	ln -s ../config.h $(STAGING_DIR)/usr/include/nrd/nrd/config.h
+	ln -s ../config.h $(STAGING_DIR)/usr/include/nrd/nrdbase/config.h
+	ln -s ../config.h $(STAGING_DIR)/usr/include/nrd/nrdapp/config.h
+	ln -s ../config.h $(STAGING_DIR)/usr/include/nrd/nrdnet/config.h
+        cp -R $(@D)/netflix/nrdlib/src/base/*.h $(STAGING_DIR)/usr/include/nrd/nrdbase
+        cp -R $(@D)/netflix/3rdparty/mongoose/*.h $(STAGING_DIR)/usr/include/nrd/nrdapp
+        cp -R $(@D)/netflix/src/platform/gibbon/*.h $(STAGING_DIR)/usr/include/nrd/nrdapp
+        cp -R $(@D)/netflix/src/nrdapp/Core/*.h $(STAGING_DIR)/usr/include/nrd/nrdapp
+        cp -R $(@D)/netflix/nrdlib/src/nrd/Core/*.h $(STAGING_DIR)/usr/include/nrd/nrd
+        cp -R $(@D)/netflix/nrdlib/src/nrd/NBP/*.h $(STAGING_DIR)/usr/include/nrd/nrd
+        cp -R $(@D)/netflix/nrdlib/src/nrd/Dpi/*.h $(STAGING_DIR)/usr/include/nrd/nrd
+        cp -R $(@D)/netflix/nrdlib/src/ase/common/*.h $(STAGING_DIR)/usr/include/nrd/nrdase
+        cp -R $(@D)/netflix/nrdlib/src/net/util/*.h $(STAGING_DIR)/usr/include/nrd/nrdnet
+        cp -R $(@D)/netflix/nrdlib/src/net/httplib/*.h $(STAGING_DIR)/usr/include/nrd/nrdnet
+        cp -R $(@D)/netflix/nrdlib/src/net/websocket/*.h $(STAGING_DIR)/usr/include/nrd/nrdnet
+        cp -R $(@D)/netflix/nrdlib/src/net/resourcemanager/*.h $(STAGING_DIR)/usr/include/nrd/nrdnet
+        cp -R $(@D)/netflix/nrdlib/src/net/certstatus/*.h $(STAGING_DIR)/usr/include/nrd/nrdnet
+        cp -R $(@D)/netflix/src/platform/gibbon/bridge/*.h $(STAGING_DIR)/usr/include/nrd/nrdapp
+        cp -R $(@D)/partner/dpi/metrological/external/* $(STAGING_DIR)/usr/include/nrd/external
+        cp -R $(@D)/partner/graphics/plugin/external/* $(STAGING_DIR)/usr/include/nrd/external
+        cp -R $(@D)/partner/input/plugin/external/* $(STAGING_DIR)/usr/include/nrd/external
 endef
 else ifeq ($(BR2_PACKAGE_NRD_STATICLIB),y)
 NRD_INSTALL_STAGING = YES
@@ -101,34 +121,36 @@ define NRD_INSTALL_STAGING_CMDS
 	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libnetflix.a $(STAGING_DIR)/usr/lib
 	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/JavaScriptCore/Source/WTF/wtf/libWTF.a $(STAGING_DIR)/usr/lib
 	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/JavaScriptCore/Source/JavaScriptCore/libJavaScriptCore.a $(STAGING_DIR)/usr/lib
-	mkdir -p $(STAGING_DIR)/usr/include/gibbon
-	mkdir -p $(STAGING_DIR)/usr/include/gibbon/nrd
-	mkdir -p $(STAGING_DIR)/usr/include/gibbon/nrdbase
-	mkdir -p $(STAGING_DIR)/usr/include/gibbon/nrdase
-	mkdir -p $(STAGING_DIR)/usr/include/gibbon/nrdnet
-	mkdir -p $(STAGING_DIR)/usr/include/gibbon/nrdapp
-	mkdir -p $(STAGING_DIR)/usr/include/gibbon/external
-	cp -R $(@D)/output/include/nrdapp/config.h $(STAGING_DIR)/usr/include/gibbon
-	cp -R $(@D)/output/include/nrdapp/config.h $(STAGING_DIR)/usr/include/gibbon/nrd
-	cp -R $(@D)/output/include/nrdapp/config.h $(STAGING_DIR)/usr/include/gibbon/nrdbase
-	cp -R $(@D)/output/include/nrdapp/config.h $(STAGING_DIR)/usr/include/gibbon/nrdapp
-	cp -R $(@D)/netflix/nrdlib/src/base/*.h $(STAGING_DIR)/usr/include/gibbon/nrdbase
-	cp -R $(@D)/netflix/3rdparty/mongoose/*.h $(STAGING_DIR)/usr/include/gibbon/nrdapp
-	cp -R $(@D)/netflix/src/platform/gibbon/*.h $(STAGING_DIR)/usr/include/gibbon/nrdapp
-	cp -R $(@D)/netflix/src/nrdapp/Core/*.h $(STAGING_DIR)/usr/include/gibbon/nrdapp
-	cp -R $(@D)/netflix/nrdlib/src/nrd/Core/*.h $(STAGING_DIR)/usr/include/gibbon/nrd
-	cp -R $(@D)/netflix/nrdlib/src/nrd/NBP/*.h $(STAGING_DIR)/usr/include/gibbon/nrd
-	cp -R $(@D)/netflix/nrdlib/src/nrd/Dpi//*.h $(STAGING_DIR)/usr/include/gibbon/nrd
-	cp -R $(@D)/netflix/nrdlib/src/ase/common/*.h $(STAGING_DIR)/usr/include/gibbon/nrdase
-	cp -R $(@D)/netflix/nrdlib/src/net/util/*.h $(STAGING_DIR)/usr/include/gibbon/nrdnet
-	cp -R $(@D)/netflix/nrdlib/src/net/httplib/*.h $(STAGING_DIR)/usr/include/gibbon/nrdnet
-	cp -R $(@D)/netflix/nrdlib/src/net/websocket/*.h $(STAGING_DIR)/usr/include/gibbon/nrdnet
-	cp -R $(@D)/netflix/nrdlib/src/net/resourcemanager/*.h $(STAGING_DIR)/usr/include/gibbon/nrdnet
-	cp -R $(@D)/netflix/nrdlib/src/net/certstatus/*.h $(STAGING_DIR)/usr/include/gibbon/nrdnet
-	cp -R $(@D)/netflix/src/platform/gibbon/bridge/*.h $(STAGING_DIR)/usr/include/gibbon/nrdapp
-	cp -R $(@D)/partner/dpi/metrological/external/* $(STAGING_DIR)/usr/include/gibbon/external
-	cp -R $(@D)/partner/graphics/plugin/external/* $(STAGING_DIR)/usr/include/gibbon/external
-	cp -R $(@D)/partner/input/plugin/external/* $(STAGING_DIR)/usr/include/gibbon/external
+	mkdir -p $(STAGING_DIR)/usr/include/nrd
+	mkdir -p $(STAGING_DIR)/usr/include/nrd/nrd
+	mkdir -p $(STAGING_DIR)/usr/include/nrd/nrdbase
+	mkdir -p $(STAGING_DIR)/usr/include/nrd/nrdase
+	mkdir -p $(STAGING_DIR)/usr/include/nrd/nrdnet
+	mkdir -p $(STAGING_DIR)/usr/include/nrd/nrdapp
+	mkdir -p $(STAGING_DIR)/usr/include/nrd/external
+	cp -R $(@D)/output/include/nrdapp/config.h $(STAGING_DIR)/usr/include/nrd
+	ln -s ./nrd $(STAGING_DIR)/usr/include/gibbon
+	ln -s ../config.h $(STAGING_DIR)/usr/include/nrd/nrd/config.h
+	ln -s ../config.h $(STAGING_DIR)/usr/include/nrd/nrdbase/config.h
+	ln -s ../config.h $(STAGING_DIR)/usr/include/nrd/nrdapp/config.h
+	ln -s ../config.h $(STAGING_DIR)/usr/include/nrd/nrdnet/config.h
+	cp -R $(@D)/netflix/nrdlib/src/base/*.h $(STAGING_DIR)/usr/include/nrd/nrdbase
+	cp -R $(@D)/netflix/3rdparty/mongoose/*.h $(STAGING_DIR)/usr/include/nrd/nrdapp
+	cp -R $(@D)/netflix/src/platform/gibbon/*.h $(STAGING_DIR)/usr/include/nrd/nrdapp
+	cp -R $(@D)/netflix/src/nrdapp/Core/*.h $(STAGING_DIR)/usr/include/nrd/nrdapp
+	cp -R $(@D)/netflix/nrdlib/src/nrd/Core/*.h $(STAGING_DIR)/usr/include/nrd/nrd
+	cp -R $(@D)/netflix/nrdlib/src/nrd/NBP/*.h $(STAGING_DIR)/usr/include/nrd/nrd
+	cp -R $(@D)/netflix/nrdlib/src/nrd/Dpi/*.h $(STAGING_DIR)/usr/include/nrd/nrd
+	cp -R $(@D)/netflix/nrdlib/src/ase/common/*.h $(STAGING_DIR)/usr/include/nrd/nrdase
+	cp -R $(@D)/netflix/nrdlib/src/net/util/*.h $(STAGING_DIR)/usr/include/nrd/nrdnet
+	cp -R $(@D)/netflix/nrdlib/src/net/httplib/*.h $(STAGING_DIR)/usr/include/nrd/nrdnet
+	cp -R $(@D)/netflix/nrdlib/src/net/websocket/*.h $(STAGING_DIR)/usr/include/nrd/nrdnet
+	cp -R $(@D)/netflix/nrdlib/src/net/resourcemanager/*.h $(STAGING_DIR)/usr/include/nrd/nrdnet
+	cp -R $(@D)/netflix/nrdlib/src/net/certstatus/*.h $(STAGING_DIR)/usr/include/nrd/nrdnet
+	cp -R $(@D)/netflix/src/platform/gibbon/bridge/*.h $(STAGING_DIR)/usr/include/nrd/nrdapp
+	cp -R $(@D)/partner/dpi/metrological/external/* $(STAGING_DIR)/usr/include/nrd/external
+	cp -R $(@D)/partner/graphics/plugin/external/* $(STAGING_DIR)/usr/include/nrd/external
+	cp -R $(@D)/partner/input/plugin/external/* $(STAGING_DIR)/usr/include/nrd/external
 	cp -R $(@D)/output/nrdlib/lib/*.a $(STAGING_DIR)/usr/lib
 	cp -R $(@D)/output/mdxlib/lib/*.a $(STAGING_DIR)/usr/lib
 	cp -R $(@D)/output/lib/*.a $(STAGING_DIR)/usr/lib
