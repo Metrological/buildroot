@@ -10,8 +10,7 @@ WPE_SITE = $(call github,Metrological,WebKitForWayland,$(WPE_VERSION))
 WPE_INSTALL_STAGING = YES
 WPE_DEPENDENCIES = host-flex host-bison host-gperf host-ruby host-ninja \
 	host-pkgconf zlib pcre libgles libegl cairo freetype fontconfig \
-	harfbuzz icu libxml2 libxslt sqlite libsoup jpeg webp \
-	wayland libxkbcommon
+	harfbuzz icu libxml2 libxslt sqlite libsoup jpeg webp wayland
 
 WPE_FLAGS = \
 		-DENABLE_ACCELERATED_2D_CANVAS=ON \
@@ -101,7 +100,8 @@ WPE_FLAGS = \
 		-DENABLE_WEB_TIMING=ON \
 		-DENABLE_XHR_TIMEOUT=ON \
 		-DENABLE_XSLT=ON \
-		-DUSE_SYSTEM_MALLOC=OFF
+		-DUSE_SYSTEM_MALLOC=OFF \
+		-DUSE_KEY_INPUT_HANDLING_LINUX_INPUT=ON
 
 ifeq ($(BR2_WPE_GSTREAMER),y)
 	WPE_DEPENDENCIES += \
