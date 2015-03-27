@@ -1,12 +1,23 @@
 --- a/netflix/src/platform/gibbon/InputManager.h
 +++ b/netflix/src/platform/gibbon/InputManager.h
-@@ -93,6 +93,9 @@
+@@ -93,6 +93,19 @@
  
  #elif defined(GIBBON_INPUT_NULL)
      netflix::base::ConditionVariable mCondition;
-+#elif defined(GIBBON_INPUT_PLUGIN)
-+    std::list<unsigned int> mKeyCodes;
++#elif defined(GIBBON_INPUT_METROLOGICAL)
++public: 
++    struct QueueInfo
++    {
++      InputEvent::Type type;
++      InputEvent::Modifier modifier;
++      unsigned int keyCode;
++      bool repeat;
++    };
++private:
++    std::list<QueueInfo> mInputQueue;
 +    netflix::base::ConditionVariable mCondition;
++protected:
  #elif defined(GIBBON_INPUT_X11)
      int mPipe[2];
      shared_ptr<InputManagerX11Private> mPriv;
+

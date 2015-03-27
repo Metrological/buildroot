@@ -24,8 +24,8 @@ else ifeq ($(BR2_NRD_GRAPHICS_GLES2),y)
 NRD_CMAKE_FLAGS += -DGIBBON_GRAPHICS=gles2
 else ifeq ($(BR2_NRD_GRAPHICS_GLES2_EGL),y)
 NRD_CMAKE_FLAGS += -DGIBBON_GRAPHICS=gles2-egl
-else ifeq ($(BR2_NRD_GRAPHICS_PLUGIN_EGL),y)
-NRD_CMAKE_FLAGS += -DGIBBON_GRAPHICS=plugin
+else ifeq ($(BR2_NRD_GRAPHICS_METROLOGICAL),y)
+NRD_CMAKE_FLAGS += -DGIBBON_GRAPHICS=metrological-egl
 else 
 NRD_CMAKE_FLAGS += -DGIBBON_GRAPHICS=null
 endif
@@ -34,11 +34,11 @@ ifeq ($(BR2_NRD_NICE_THREADS),y)
 NRD_CMAKE_FLAGS += -DGIBBON_NICE_THREADS=1
 endif
 
-ifeq ($(BR2_PACKAGE_NRD_REF_SKELETON),y)
+ifeq ($(BR2_PACKAGE_NRD_PLAYER_SKELETON),y)
 NRD_CMAKE_FLAGS += -DDPI_IMPLEMENTATION=skeleton
-else ifeq ($(BR2_PACKAGE_NRD_REF_X86),y)
+else ifeq ($(BR2_PACKAGE_NRD_PLAYER_X86),y)
 NRD_CMAKE_FLAGS += -DDPI_IMPLEMENTATION=reference
-else ifeq ($(BR2_PACKAGE_NRD_REF_ML),y)
+else ifeq ($(BR2_PACKAGE_NRD_PLAYER_METROLOGICAL),y)
 NRD_CMAKE_FLAGS += -DDPI_IMPLEMENTATION=metrological
 endif
 
@@ -54,8 +54,8 @@ endif
 
 ifeq ($(BR2_PACKAGE_NRD_INPUT_DEVINPUT),y)
 NRD_CMAKE_FLAGS += -DGIBBON_INPUT=devinput
-else ifeq ($(BR2_PACKAGE_NRD_INPUT_PLUGIN),y)
-NRD_CMAKE_FLAGS += -DGIBBON_INPUT=plugin
+else ifeq ($(BR2_PACKAGE_NRD_INPUT_METROLOGICAL),y)
+NRD_CMAKE_FLAGS += -DGIBBON_INPUT=metrological
 else
 NRD_CMAKE_FLAGS += -DGIBBON_INPUT=null
 endif
@@ -107,8 +107,8 @@ define NRD_INSTALL_STAGING_CMDS
         cp -R $(@D)/netflix/nrdlib/src/net/certstatus/*.h $(STAGING_DIR)/usr/include/nrd/nrdnet
         cp -R $(@D)/netflix/src/platform/gibbon/bridge/*.h $(STAGING_DIR)/usr/include/nrd/nrdapp
         cp -R $(@D)/partner/dpi/metrological/external/* $(STAGING_DIR)/usr/include/nrd/external
-        cp -R $(@D)/partner/graphics/plugin/external/* $(STAGING_DIR)/usr/include/nrd/external
-        cp -R $(@D)/partner/input/plugin/external/* $(STAGING_DIR)/usr/include/nrd/external
+        cp -R $(@D)/partner/graphics/metrological/external/* $(STAGING_DIR)/usr/include/nrd/external
+        cp -R $(@D)/partner/input/metrological/external/* $(STAGING_DIR)/usr/include/nrd/external
 endef
 else ifeq ($(BR2_PACKAGE_NRD_STATICLIB),y)
 NRD_INSTALL_STAGING = YES
@@ -150,14 +150,13 @@ define NRD_INSTALL_STAGING_CMDS
 	cp -R $(@D)/netflix/nrdlib/src/net/certstatus/*.h $(STAGING_DIR)/usr/include/nrd/nrdnet
 	cp -R $(@D)/netflix/src/platform/gibbon/bridge/*.h $(STAGING_DIR)/usr/include/nrd/nrdapp
 	cp -R $(@D)/partner/dpi/metrological/external/* $(STAGING_DIR)/usr/include/nrd/external
-	cp -R $(@D)/partner/graphics/plugin/external/* $(STAGING_DIR)/usr/include/nrd/external
-	cp -R $(@D)/partner/input/plugin/external/* $(STAGING_DIR)/usr/include/nrd/external
+	cp -R $(@D)/partner/graphics/metrological/external/* $(STAGING_DIR)/usr/include/nrd/external
+	cp -R $(@D)/partner/input/metrological/external/* $(STAGING_DIR)/usr/include/nrd/external
 	cp -R $(@D)/output/nrdlib/lib/*.a $(STAGING_DIR)/usr/lib
 	cp -R $(@D)/output/mdxlib/lib/*.a $(STAGING_DIR)/usr/lib
 	cp -R $(@D)/output/lib/*.a $(STAGING_DIR)/usr/lib
 endef
 endif
-
 
 define NRD_INSTALL_TARGET_CMDS
 	cp -R $(@D)/output/src/platform/gibbon/data $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)
@@ -174,7 +173,6 @@ NRD_CMAKE_FLAGS += -DGIBBON_SCRIPT_JSC_DEBUG=0
 NRD_CMAKE_FLAGS += -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS_RELEASE="$(NRD_RELOCATION_OPTION) -O2 -DNDEBUG -Wno-cast-align" -DCMAKE_CXX_FLAGS_RELEASE="$(NRD_RELOCATION_OPTION) -O2 -DNDEBUG -Wno-cast-align"
 endif
 
-#NRD_CMAKE_FLAGS += -DGIBBON_PLATFORM=application-manager
 NRD_CMAKE_FLAGS += -DGIBBON_PLATFORM=posix
 NRD_CMAKE_FLAGS += -DBUILD_DPI_DIRECTORY=$(@D)/partner/dpi
 

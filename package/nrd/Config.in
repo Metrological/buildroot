@@ -61,8 +61,8 @@ config BR2_NRD_GRAPHICS_GLES2
 	help
 	  Use the GLESV2 access layer.
 
-config BR2_NRD_GRAPHICS_PLUGIN_EGL
-	bool "plugin-egl"
+config BR2_NRD_GRAPHICS_METROLOGICAL
+	bool "metrological"
 	depends on BR2_PACKAGE_HAS_OPENGL_ES
 	help
 	  Use the EGL access layer based on a plugin structure.
@@ -75,24 +75,24 @@ config BR2_NRD_GRAPHICS_NULL
 endchoice
 
 choice
-	prompt "Which reference implementation should we use:"
+	prompt "Which media playback implementation should we use:"
 
-config BR2_PACKAGE_NRD_REF_SKELETON
+config BR2_PACKAGE_NRD_PLAYER_SKELETON
 	bool "skeleton"
 	help
-	  Build NRD using a stubbed skeleton from NRD.
+	  Build NRD using a stubbed media playback skeleton from NRD.
 
-config BR2_PACKAGE_NRD_REF_X86
+config BR2_PACKAGE_NRD_PLAYER_X86
 	bool "reference"
 	depends on BR2_i386
 	help
-	  Build NRD using the x86 reference implementation
+	  Build NRD using the x86 media playback implementation
 
-config BR2_PACKAGE_NRD_REF_ML
+config BR2_PACKAGE_NRD_PLAYER_METROLOGICAL
 	bool "metrological"
 	depends on BR2_i386 || BR2_arm || BR2_mips
 	help
-	  Build NRD using the Metrological reference implementation
+	  Build NRD using the Metrological media playback implementation
 
 endchoice
 
@@ -104,8 +104,8 @@ config BR2_PACKAGE_NRD_INPUT_DEVINPUT
 	help
 	  Build NRD using the device devinput
 
-config BR2_PACKAGE_NRD_INPUT_PLUGIN
-	bool "plugin"
+config BR2_PACKAGE_NRD_INPUT_METROLOGICAL
+	bool "metrological"
 	help
 	  Build NRD using the interface MetrologicalInput to insert keys via this method.
 
@@ -139,14 +139,6 @@ endchoice
 
 endif
 
-config BR2_NRD_DOLYDIGITALPLUS_STUBBED
-	bool "DDPlus stub"
-	default y
-	select BR2_PACKAGE_DDPSTUB
-	help
-	  There is no actual implementation for the DolbyDigital Plus 
-	  audio component. Please use the stub.
-
 config BR2_NRD_DEBUG_BUILD
 	bool "debug"
 	help
@@ -158,5 +150,13 @@ config BR2_NRD_NICE_THREADS
 	bool "nice threads"
 	help
 	  Build the nrd framework using nice threading model.
+
+config BR2_NRD_DOLYDIGITALPLUS_STUBBED
+	bool "DDPlus stub"
+	default y
+	select BR2_PACKAGE_DDPSTUB
+	help
+	  There is no actual implementation for the DolbyDigital Plus 
+	  audio component. Please use the stub.
 
 endif
