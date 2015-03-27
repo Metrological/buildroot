@@ -163,13 +163,13 @@ endef
 define WPE_INSTALL_STAGING_CMDS
 	(cd $(WPE_BUILDDIR) && \
 	cp bin/WPE{Network,Web}Process $(STAGING_DIR)/usr/bin/ && \
-	cp lib/libWPE* $(STAGING_DIR)/usr/lib/ )
+	cp -d lib/libWPE* $(STAGING_DIR)/usr/lib/ )
 endef
 
 define WPE_INSTALL_TARGET_CMDS
 	(cd $(WPE_BUILDDIR) && \
 	cp bin/WPE{Network,Web}Process $(TARGET_DIR)/usr/bin/ && \
-	cp lib/libWPE* $(TARGET_DIR)/usr/lib/ && \
+	cp -d lib/libWPE* $(TARGET_DIR)/usr/lib/ && \
 	$(STRIPCMD) $(TARGET_DIR)/usr/lib/libWPEWebKit.so.0.0.1 )
 endef
 
