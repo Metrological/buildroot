@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-WPE_VERSION = 6cd57a1b6789b78d71abaa3ac897a0d53cb3cb0f
+WPE_VERSION = f55c0575ca271b17d46a64a9090a097f122f08ca
 WPE_SITE = $(call github,Metrological,WebKitForWayland,$(WPE_VERSION))
 
 WPE_INSTALL_STAGING = YES
@@ -157,22 +157,20 @@ WPE_CONF_OPT = -DPORT=WPE -G Ninja \
 	$(WPE_FLAGS)
 
 define WPE_BUILD_CMDS
-	$(WPE_MAKE_ENV) $(HOST_DIR)/usr/bin/ninja -C $(WPE_BUILDDIR) libWebKit2.so WPE{Web,Network}Process WPE$(WPE_SHELL)Shell
+	$(WPE_MAKE_ENV) $(HOST_DIR)/usr/bin/ninja -C $(WPE_BUILDDIR) libWPEWebKit.so WPE{Web,Network}Process WPE$(WPE_SHELL)Shell
 endef
 
 define WPE_INSTALL_STAGING_CMDS
 	(cd $(WPE_BUILDDIR) && \
 	cp bin/WPE{Network,Web}Process $(STAGING_DIR)/usr/bin/ && \
-	cp -d lib/libWebKit* $(STAGING_DIR)/usr/lib/ && \
 	cp lib/libWPE* $(STAGING_DIR)/usr/lib/ )
 endef
 
 define WPE_INSTALL_TARGET_CMDS
 	(cd $(WPE_BUILDDIR) && \
 	cp bin/WPE{Network,Web}Process $(TARGET_DIR)/usr/bin/ && \
-	cp -d lib/libWebKit* $(TARGET_DIR)/usr/lib/ && \
 	cp lib/libWPE* $(TARGET_DIR)/usr/lib/ && \
-	$(STRIPCMD) $(TARGET_DIR)/usr/lib/libWebKit2.so.0.0.1 )
+	$(STRIPCMD) $(TARGET_DIR)/usr/lib/libWPEWebKit.so.0.0.1 )
 endef
 
 RSYNC_VCS_EXCLUSIONS += --exclude LayoutTests --exclude WebKitBuild
