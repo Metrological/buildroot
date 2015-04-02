@@ -1,0 +1,13 @@
+#!/bin/sh
+
+killall athol WPEWebProcess WPENetworkProcess
+rm -rf /root/.cache /root/.local /root/shm
+
+mkdir /root/shm
+chmod 0700 /root/shm
+
+export XDG_RUNTIME_DIR=/root/shm
+export ATHOL_SHELL=/usr/lib/libWPEAtholShell.so
+export WPE_SHELL_URL=http://widgets.metrological.com/metrological/nl/rpi
+
+athol
