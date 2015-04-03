@@ -30,6 +30,8 @@ BR2_TARGET_GENERIC_GETTY_TERM=""
 BR2_GCC_VERSION_4_8_X=y
 BR2_TARGET_OPTIMIZATION="-pipe -mhard-float -mfloat-abi=hard -mfpu=neon-vfpv4 -march=armv7-a -mtune=cortex-a7 -fsigned-char"
 
+BR2_PACKAGE_BUSYBOX_SMP=y
+
 BR2_PACKAGE_RPI_ARMMEM=y
 BR2_PACKAGE_RPI_FIRMWARE=y
 BR2_PACKAGE_RPI_USERLAND=y
