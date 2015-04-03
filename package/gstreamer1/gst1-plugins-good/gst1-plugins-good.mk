@@ -30,9 +30,7 @@ GST1_PLUGINS_GOOD_CONF_OPT = \
 	--disable-osx_video \
 	--disable-aalib \
 	--disable-aalibtest \
-	--disable-libcaca \
-	--disable-esd \
-	--disable-esdtest
+	--disable-libcaca
 
 
 # Options which require currently unpackaged libraries
@@ -330,14 +328,10 @@ endif
 ifeq ($(BR2_PACKAGE_XORG7),y)
 GST1_PLUGINS_GOOD_DEPENDENCIES += xlib_libX11 xlib_libXext xlib_libXv
 GST1_PLUGINS_GOOD_CONF_OPT += \
-	--enable-x \
-	--enable-xshm \
-	--enable-xvideo
+	--enable-x
 else
 GST1_PLUGINS_GOOD_CONF_OPT += \
-	--disable-x \
-	--disable-xshm \
-	--disable-xvideo
+	--disable-x
 endif
 
 ifeq ($(BR2_PACKAGE_GST1_PLUGINS_GOOD_PLUGIN_CAIRO),y)
