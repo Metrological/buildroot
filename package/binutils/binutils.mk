@@ -62,7 +62,7 @@ endif
 # "host" binutils should actually be "cross"
 # We just keep the convention of "host utility" for now
 HOST_BINUTILS_CONF_OPT = --disable-multilib --disable-werror \
-			--target=$(GNU_TARGET_NAME) \
+			--target=$(GNU_TARGET_NAME) --enable-gold \
 			--disable-shared --enable-static \
 			--with-sysroot=$(STAGING_DIR) \
 			$(BINUTILS_EXTRA_CONFIG_OPTIONS)
