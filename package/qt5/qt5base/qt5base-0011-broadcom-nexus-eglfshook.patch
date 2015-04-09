@@ -1,6 +1,6 @@
 --- a/mkspecs/devices/linux-mipsel-broadcom-97425-g++/qeglfshooks_bcm_dawn.cpp
 --- b/mkspecs/devices/linux-mipsel-broadcom-97425-g++/qeglfshooks_bcm_dawn.cpp
-@@ -0,0 +1,294 @@
+@@ -0,0 +1,391 @@
 +#include "qeglfshooks.h"
 +
 +#include <QtDebug>
@@ -22,15 +22,38 @@
 +extern "C"
 +{
 +#endif //__cplusplus
-+
-+static unsigned int gs_screen_wdt = 1280;
-+static unsigned int gs_screen_hgt = 720;
-+
++static unsigned int         gs_requested_screen_width  = static_cast<unsigned int>(~0);
++static unsigned int         gs_requested_screen_height = static_cast<unsigned int>(~0);
 +static NEXUS_DisplayHandle  gs_nexus_display = 0;
 +static NEXUS_SurfaceClient* gs_native_window = 0;
 +static NXPL_PlatformHandle  nxpl_handle = 0;
 +
 +#ifndef NEXUS_SURFACE_COMPOSITION
++
++static NEXUS_VideoFormat gs_requested_video_format  = static_cast<NEXUS_VideoFormat>(~0);
++
++typedef struct {
++  NEXUS_VideoFormat format;
++  const char* name;
++} formatTable;
++
++static formatTable gs_possible_formats[] = {
++
++  { NEXUS_VideoFormat_e1080i,     "1080i" },
++  { NEXUS_VideoFormat_e720p,      "720p" },
++  { NEXUS_VideoFormat_e480p,      "480p" },
++  { NEXUS_VideoFormat_eNtsc,      "480i" },
++  { NEXUS_VideoFormat_e720p50hz,  "720p50Hz" },
++  { NEXUS_VideoFormat_e1080p24hz, "1080p24Hz" },
++  { NEXUS_VideoFormat_e1080i50hz, "1080i50Hz" },
++  { NEXUS_VideoFormat_e1080p50hz, "1080p50Hz" },
++  { NEXUS_VideoFormat_e1080p60hz, "1080p60Hz" },
++  { NEXUS_VideoFormat_ePal,       "576i" },
++  { NEXUS_VideoFormat_e576p,      "576p" },
++
++  /* END of ARRAY */
++  { static_cast<NEXUS_VideoFormat>(~0), NULL }
++};
 +
 +#if NEXUS_NUM_HDMI_OUTPUTS && !NEXUS_DTV_PLATFORM
 +
@@ -52,7 +75,16 @@
 +
 +      qDebug("Switching to preferred format %d", status.preferredVideoFormat);
 +
-+      displaySettings.format = status.preferredVideoFormat;
++      /* See if the format is supprted */
++      if ( (gs_requested_video_format != static_cast<NEXUS_VideoFormat>(~0)) && (status.videoFormatSupported[gs_requested_video_format]) )
++      {
++      	displaySettings.format = gs_requested_video_format;
++      }
++      else
++      {
++        displaySettings.format = status.preferredVideoFormat;
++      }
++
 +      NEXUS_Display_SetSettings(display, &displaySettings);
 +   }
 +}
@@ -63,6 +95,41 @@
 +{
 +
 +#if NEXUS_NUM_HDMI_OUTPUTS && !NEXUS_DTV_PLATFORM
++
++#ifndef NEXUS_SURFACE_COMPOSITION 
++  unsigned int index = 0;
++  const char* environment = qgetenv ( "QT_VIDEO_FORMAT" );
++
++  if ( (environment != NULL) && (environment[0] != '\0') )
++  {
++    printf ("Defined QT_VIDEO_FORMAT: <%s>\n", environment);
++    // See if we can find it.
++    while ( (gs_possible_formats[index].name != NULL) && (strcmp(gs_possible_formats[index].name, environment) != 0) )
++    {
++      index++;
++    }
++    if (gs_possible_formats[index].name != NULL)
++    {
++      gs_requested_video_format = gs_possible_formats[index].format;
++    }
++  }
++
++  environment = qgetenv( "QT_QPA_EGLFS_PHYSICAL_WIDTH" );
++
++  if ( (environment != NULL) && (environment[0] != '\0') )
++  {
++    printf ("Defined QT_QPA_EGLFS_PHYSICAL_WIDTH: <%s>\n", environment);
++    gs_requested_screen_width = ::atoi(environment);
++  } 
++
++  environment = qgetenv( "QT_QPA_EGLFS_PHYSICAL_HEIGHT" );
++
++  if ( (environment != NULL) && (environment[0] != '\0') )
++  {
++    printf ("Defined QT_QPA_EGLFS_PHYSICAL_HEIGHT: <%s>\n", environment);
++    gs_requested_screen_height = ::atoi(environment);
++  } 
++#endif
 +
 +   NEXUS_HdmiOutputSettings      hdmiSettings;
 +   NEXUS_PlatformConfiguration   platform_config;
@@ -105,13 +172,17 @@
 +
 +   NEXUS_PlatformSettings platform_settings;
 +
++   printf ("Initialise Nexus Platform. GetDDefaultSettings().\n");
++
 +   /* Initialise the Nexus platform */
 +   NEXUS_Platform_GetDefaultSettings(&platform_settings);
 +   platform_settings.openFrontend = false;
 +
++   printf ("Initialise Nexus Platform. Init().\n");
 +   /* Initialise the Nexus platform */
 +   err = NEXUS_Platform_Init(&platform_settings);
 +
++   printf ("Initialisation done.\n");
 +   if (err)
 +   {
 +      qFatal("Err: NEXUS_Platform_Init() failed");
@@ -142,16 +213,40 @@
 +
 +          NEXUS_Display_SetGraphicsSettings(display, &graphics_settings);
 + 
++      	  printf ("Init HDMI.\n");
 +          InitHDMIOutput(display);
 +
 +          NEXUS_Display_GetSettings(display, &display_settings);
 +          NEXUS_VideoFormat_GetInfo(display_settings.format, &video_format_info);
 +
 +          gs_nexus_display = display;
-+          gs_screen_wdt = video_format_info.width;
-+          gs_screen_hgt = video_format_info.height;
 +
-+          qDebug("Screen width %d, Screen height %d", gs_screen_wdt, gs_screen_hgt);
++#ifndef NEXUS_SURFACE_COMPOSITION
++
++          if (gs_requested_screen_width == static_cast<unsigned int>(~0))
++          {
++            gs_requested_screen_width = video_format_info.width;
++            printf ("Screen width not defined, using display width: %d\n", gs_requested_screen_width);
++          }
++	  else if (gs_requested_screen_width == 0)
++	  {
++	    gs_requested_screen_width = 1280;
++            printf ("Screen width defined as 0, using hard coded width: %d\n", gs_requested_screen_width);
++	  }
++
++
++          if (gs_requested_screen_height == static_cast<unsigned int>(~0))
++          {
++            gs_requested_screen_height = video_format_info.height ;
++            printf ("Screen height not defined, using display size: %d\n", gs_requested_screen_height);
++          }
++	  else if (gs_requested_screen_height == 0)
++	  {
++	    gs_requested_screen_height = 720;
++            printf ("Screen height defined as 0, using hard coded height: %d\n", gs_requested_screen_width);
++	  }
++
++#endif
 +      }
 +   }
 +
@@ -171,14 +266,15 @@
 +   else
 +   {
 +      gs_nexus_display = 0;
-+      gs_screen_wdt = 1280;
-+      gs_screen_hgt = 720;
++      gs_requested_screen_width = 1280;
++      gs_requested_screen_height = 720;
 +   }
 +
 +#endif
 +
 +   if (succeeded == true)
 +   {
++       printf ("Register display.\n");
 +       NXPL_RegisterNexusDisplayPlatform ( &nxpl_handle, gs_nexus_display );
 +   } 
 +    
@@ -233,7 +329,7 @@
 +
 +QSize QEglFSBCMHooks::screenSize() const
 +{
-+   return QSize ( gs_screen_wdt, gs_screen_hgt );
++   return QSize ( gs_requested_screen_width, gs_requested_screen_height);
 +}
 +
 +EGLNativeWindowType QEglFSBCMHooks::createNativeWindow ( QPlatformWindow *window, const QSize &size, const QSurfaceFormat &format )
@@ -246,11 +342,12 @@
 +
 +   win_info.x        = 0; 
 +   win_info.y        = 0;
-+   win_info.width    = gs_screen_wdt;
-+   win_info.height   = gs_screen_hgt;
++   win_info.width    = gs_requested_screen_width;
++   win_info.height   = gs_requested_screen_height;
 +   win_info.stretch  = true;
 +   win_info.clientID = 0; //FIXME hardcoding
 +
++   printf ("Creating native window. Width (%d) x Height (%d)\n", gs_requested_screen_width, gs_requested_screen_height);
 +   gs_native_window = static_cast<NEXUS_SurfaceClient*> (NXPL_CreateNativeWindow ( &win_info ));
 +
 +   return ( EGLNativeWindowType ) gs_native_window;
