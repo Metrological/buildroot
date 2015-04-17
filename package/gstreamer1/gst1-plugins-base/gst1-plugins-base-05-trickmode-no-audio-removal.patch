@@ -1,0 +1,15 @@
+--- gst1-plugins-base-1.4.5.orig/gst-libs/gst/audio/gstaudiobasesink.c	2015-04-17 12:45:19.757605136 +0200
++++ gst1-plugins-base-1.4.5/gst-libs/gst/audio/gstaudiobasesink.c	2015-04-17 12:46:25.701820851 +0200
+@@ -1666,10 +1666,9 @@
+   time = GST_BUFFER_TIMESTAMP (buf);
+ 
+   /* Last ditch attempt to ensure that we only play silence if
+-   * we are in trickmode no-audio mode (or if a buffer is marked as a GAP)
++   * a buffer is marked as a GAP
+    * by dropping the buffer contents and rendering as a gap event instead */
+-  if (G_UNLIKELY ((bsink->segment.flags & GST_SEGMENT_FLAG_TRICKMODE_NO_AUDIO)
+-          || (buf && GST_BUFFER_FLAG_IS_SET (buf, GST_BUFFER_FLAG_GAP)))) {
++  if (buf && GST_BUFFER_FLAG_IS_SET (buf, GST_BUFFER_FLAG_GAP)) {
+     GstClockTime duration;
+     GstEvent *event;
+     GstBaseSinkClass *bclass;
