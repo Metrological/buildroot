@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-WPE_VERSION = 36e784c3c1ae4051bca34d70589636965082ef15
+WPE_VERSION = a2caf0503fa204a16549da47444305d0dbefc36f
 WPE_SITE = $(call github,Metrological,WebKitForWayland,$(WPE_VERSION))
 
 WPE_INSTALL_STAGING = YES
@@ -172,7 +172,7 @@ define WPE_INSTALL_TARGET_CMDS
 	cp -d lib/libWPE* $(TARGET_DIR)/usr/lib/ && \
 	$(STRIPCMD) $(TARGET_DIR)/usr/lib/libWPEWebKit.so.0.0.1 && \
 	popd > /dev/null && \
-	install -D -m 0555 package/wpe/wpe.sh $(TARGET_DIR)/usr/bin )
+	install -D -m 0755 package/wpe/wpe $(TARGET_DIR)/usr/bin )
 endef
 
 RSYNC_VCS_EXCLUSIONS += --exclude LayoutTests --exclude WebKitBuild
