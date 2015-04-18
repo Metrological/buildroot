@@ -28,9 +28,21 @@ or
 followed by
 
 	cd buildroot
-	make rpi_qt5webkit_defconfig # more defconfigs are supported
-	make menuconfig              # if you want to add packages
-	make                         # build (NOTICE: Don't use the **-j** switch, it's set to auto-detect)
+Select a browser distribution for **Qt5WebKit** (qtbrowser)
+
+	make rpi_wpe_defconfig
+
+or for **WebKit Wayland** (wpe)
+
+	make rpi_qt5webkit_defconfig
+
+If you want to add additional packages
+
+	make menuconfig
+
+Start the **build** (NOTICE: Don't use the **-j** switch, it's set to auto-detect)
+
+	make
 
 Deploying on a Raspberry PI
 ---------------------------
