@@ -1,7 +1,7 @@
 Buildroot
 =========
 
-This buildroot fork will produce a very light-weight and trimmed down toolchain, rootfs and kernel for the multiple targets, including the Raspberry Pi. Mainly focused on enabling all HTML5 features WebKit in multiple ports.
+This buildroot fork will produce a very light-weight and trimmed down toolchain, rootfs and kernel for the multiple targets, including the Raspberry Pi 2. Mainly focused on enabling all HTML5 features WebKit in multiple ports.
 
 Dependencies
 ------------
@@ -30,11 +30,11 @@ followed by
 	cd buildroot
 Select a browser distribution for **Qt5WebKit** (qtbrowser)
 
-	make rpi_wpe_defconfig
+	make rpi2_qt5webkit_defconfig
 
 or for **WebKit Wayland** (wpe)
 
-	make rpi_qt5webkit_defconfig
+	make rpi2_wpe_defconfig
 
 If you want to add additional packages
 
@@ -44,8 +44,8 @@ Start the **build** (NOTICE: Don't use the **-j** switch, it's set to auto-detec
 
 	make
 
-Deploying on a Raspberry PI
----------------------------
+Deploying on a Raspberry PI 2
+-----------------------------
 
 You will need to create two partitions on your sdcard and copy files to the appropriate partitons.
 
