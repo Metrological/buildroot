@@ -9,10 +9,10 @@
 +    struct QueueInfo
 +    {
 +      InputEvent::Type type;
-+      InputEvent::Modifier modifier;
-+      unsigned int keyCode;
-+      bool repeat;
++      KeyEvent::Key keyCode;
++      unsigned int keyValue;
 +    };
++
 +private:
 +    std::list<QueueInfo> mInputQueue;
 +    netflix::base::ConditionVariable mCondition;
