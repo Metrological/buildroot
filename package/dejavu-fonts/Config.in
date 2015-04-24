@@ -4,3 +4,11 @@ config BR2_PACKAGE_DEJAVU_FONTS
 	  DejaVu fonts
 
 	  http://dejavu-fonts.org/wiki/Main_Page
+
+if BR2_PACKAGE_DEJAVU_FONTS
+
+config BR2_PACKAGE_DEJAVU_FONTS_MINIMIZED
+	bool "minimized"
+	default n
+
+endif
