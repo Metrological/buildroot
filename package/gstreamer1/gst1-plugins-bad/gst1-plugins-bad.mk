@@ -49,7 +49,6 @@ GST1_PLUGINS_BAD_CONF_OPT += \
 	--disable-voamrwbenc \
 	--disable-voaacenc \
 	--disable-chromaprint \
-	--disable-dash \
 	--disable-dc1394 \
 	--disable-dts \
 	--disable-resindvd \
@@ -74,7 +73,6 @@ GST1_PLUGINS_BAD_CONF_OPT += \
 	--disable-timidity \
 	--disable-teletextdec \
 	--disable-wildmidi \
-	--disable-smoothstreaming \
 	--disable-soundtouch \
 	--disable-spc \
 	--disable-gme \
@@ -672,6 +670,13 @@ GST1_PLUGINS_BAD_CONF_OPT += --enable-sdl
 GST1_PLUGINS_BAD_DEPENDENCIES += sdl
 else
 GST1_PLUGINS_BAD_CONF_OPT += --disable-sdl
+endif
+
+ifeq ($(BR2_PACKAGE_GST1_PLUGINS_BAD_PLUGIN_SMOOTHSTREAMING),y)
+GST1_PLUGINS_BAD_CONF_OPT += --enable-smoothstreaming
+GST1_PLUGINS_BAD_DEPENDENCIES += libxml2
+else
+GST1_PLUGINS_BAD_CONF_OPT += --disable-smoothstreaming
 endif
 
 ifeq ($(BR2_PACKAGE_GST1_PLUGINS_BAD_PLUGIN_SNDFILE),y)
