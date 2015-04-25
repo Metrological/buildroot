@@ -36,6 +36,7 @@ GSTREAMER1_CONF_OPT = \
 	--disable-benchmarks \
 	--disable-check \
 	$(if $(BR2_PACKAGE_GSTREAMER1_TRACE),,--disable-trace) \
+	$(if $(BR2_PACKAGE_GSTREAMER1_ALLOC_TRACE),,--disable-alloc-trace) \
 	$(if $(BR2_PACKAGE_GSTREAMER1_PARSE),,--disable-parse) \
 	$(if $(BR2_PACKAGE_GSTREAMER1_GST_DEBUG),,--disable-gst-debug) \
 	$(if $(BR2_PACKAGE_GSTREAMER1_PLUGIN_REGISTRY),,--disable-registry) \

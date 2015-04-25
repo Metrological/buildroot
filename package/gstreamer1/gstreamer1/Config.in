@@ -26,6 +26,13 @@ config BR2_PACKAGE_GSTREAMER1_TRACE
 	  Enable the tracing subsystem within gstreamer.  This may increase CPU
 	  overhead by a small amount.
 
+config BR2_PACKAGE_GSTREAMER1_ALLOC_TRACE
+	bool "enable allocation tracing"
+	default y
+	help
+	  Enable the allocation tracing within gstreamer.  This may increase CPU
+	  overhead by a small amount.
+
 config BR2_PACKAGE_GSTREAMER1_GST_DEBUG
 	bool "enable gst-debug trace support"
 	default y
