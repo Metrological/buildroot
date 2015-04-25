@@ -1,5 +1,8 @@
 #!/bin/sh
+killall athol WPEWebProcess WPENetworkProcess &> /dev/null
+
 export XDG_RUNTIME_DIR=/root/shm/wayland
+rm -rf $XDG_RUNTIME_DIR
 mkdir -p $XDG_RUNTIME_DIR
 chmod 0700 $XDG_RUNTIME_DIR
 

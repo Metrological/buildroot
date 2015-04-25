@@ -172,7 +172,8 @@ define WPE_INSTALL_TARGET_CMDS
 	cp -d lib/libWPE* $(TARGET_DIR)/usr/lib/ && \
 	$(STRIPCMD) $(TARGET_DIR)/usr/lib/libWPEWebKit.so.0.0.1 && \
 	popd > /dev/null && \
-	install -D -m 0755 package/wpe/wpe $(TARGET_DIR)/usr/bin )
+	$(INSTALL) -D -m 0755 package/wpe/wpe $(TARGET_DIR)/usr/bin && \
+	$(INSTALL) -D -m 0755 package/wpe/S90wpe $(TARGET_DIR)/etc/init.d)
 endef
 
 RSYNC_VCS_EXCLUSIONS += --exclude LayoutTests --exclude WebKitBuild
