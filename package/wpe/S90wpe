@@ -7,7 +7,7 @@ start() {
 	if [ -e "$WPE_URL_FILE" ]; then
 		URL=`head -1 $WPE_URL_FILE`
 		if [ -n "$URL" ]; then
-			/usr/bin/wpe $URL &> /dev/null &
+			/usr/bin/wpe --loop $URL &> /dev/null &
 			echo "OK"
 		else
 			echo "NO URL"

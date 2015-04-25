@@ -20,4 +20,12 @@ export WPE_NETWORK_PROCESS=1
 #export WPE_LAYER_TREE_HOST_FPS=1
 
 # The PREFIX env var can be useful when debugging athol with gdbserver.
-WPE_SHELL_URL=$1 $PREFIX athol
+if [ "$1" = "--loop" ];
+then
+	while true;
+	do
+		WPE_SHELL_URL=$2 $PREFIX athol
+	done
+else
+	WPE_SHELL_URL=$1 $PREFIX athol
+fi
