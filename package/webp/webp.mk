@@ -27,4 +27,10 @@ endif
 WEBP_DEPENDENCIES += $(if $(BR2_PACKAGE_JPEG),jpeg)
 WEBP_DEPENDENCIES += $(if $(BR2_PACKAGE_TIFF),tiff)
 
+define WEBP_REMOVE_TOOLS
+	rm -f $(TARGET_DIR)/usr/bin/{d,c}webp
+endef
+
+WEBP_POST_INSTALL_TARGET_HOOKS += WEBP_REMOVE_TOOLS
+
 $(eval $(autotools-package))
