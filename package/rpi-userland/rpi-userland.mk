@@ -18,13 +18,20 @@ endif
 
 define RPI_USERLAND_POST_TARGET_CLEANUP
 	rm -f $(TARGET_DIR)/etc/init.d/vcfiled
+	rm -f $(TARGET_DIR)/usr/share/install/vcfiled
+	rmdir --ignore-fail-on-non-empty $(TARGET_DIR)/usr/share/install
 	rm -Rf $(TARGET_DIR)/usr/src
 endef
 
 RPI_USERLAND_POST_INSTALL_TARGET_HOOKS += RPI_USERLAND_POST_TARGET_CLEANUP
 
 define RPI_USERLAND_POST_TARGET_CLEANUP_TOOLS
+	rm -f $(TARGET_DIR)/usr/bin/tvservice
+	rm -f $(TARGET_DIR)/usr/bin/vc{smem,gencmd,hiq_test,mailbox}
+	rm -f $(TARGET_DIR)/usr/sbin/vcfiled
 	rm -f $(TARGET_DIR)/usr/bin/raspi*
+	rm -f $(TARGET_DIR)/usr/bin/containers_*
+	rm -f $(TARGET_DIR)/usr/bin/mmal_vc*
 endef
 
 ifneq ($(BR2_PACKAGE_RPI_USERLAND_INSTALL_TOOLS),y)
