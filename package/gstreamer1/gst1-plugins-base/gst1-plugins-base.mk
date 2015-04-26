@@ -211,4 +211,10 @@ else
 GST1_PLUGINS_BASE_CONF_OPT += --disable-vorbis
 endif
 
+define GST1_PLUGINS_BASE_REMOVE_TOOLS
+	rm -f $(TARGET_DIR)/usr/bin/gst-{device-monitor,play,discoverer}-1.0
+endef
+
+GST1_PLUGINS_BASE_POST_INSTALL_TARGET_HOOKS += GST1_PLUGINS_BASE_REMOVE_TOOLS
+
 $(eval $(autotools-package))
