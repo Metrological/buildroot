@@ -42,4 +42,10 @@ else
 	HARFBUZZ_CONF_OPT += --with-icu=no
 endif
 
+define HARFBUZZ_REMOVE_UTILS
+	rm -f $(TARGET_DIR)/usr/bin/hb-{ot-shape-closure,shape,view}
+endef
+
+HARFBUZZ_POST_INSTALL_TARGET_HOOKS += HARFBUZZ_REMOVE_UTILS
+
 $(eval $(autotools-package))
