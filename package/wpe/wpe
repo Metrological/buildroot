@@ -22,6 +22,7 @@ export WPE_NETWORK_PROCESS=1
 # The PREFIX env var can be useful when debugging athol with gdbserver.
 if [ "$1" = "--loop" ];
 then
+	export HOME=/root
 	while true;
 	do
 		WPE_SHELL_URL=$2 $PREFIX athol
