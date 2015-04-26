@@ -32,6 +32,10 @@ KMOD_DEPENDENCIES += xz
 KMOD_CONF_OPT += --with-xz
 endif
 
+define KMOD_REMOVE_BASH_COMPLETION
+	rm -f $(TARGET_DIR)/usr/share/bash-completion/completions/kmod
+endef
+
 ifeq ($(BR2_PACKAGE_KMOD_TOOLS),y)
 
 # add license info for kmod tools
@@ -45,11 +49,13 @@ define KMOD_INSTALL_TOOLS
 	for i in depmod insmod lsmod modinfo modprobe rmmod; do \
 		ln -sf ../usr/bin/kmod $(TARGET_DIR)/sbin/$$i; \
 	done
+	$(KMOD_REMOVE_BASH_COMPLETION)
 endef
 
 KMOD_POST_INSTALL_TARGET_HOOKS += KMOD_INSTALL_TOOLS
 else
 KMOD_CONF_OPT += --disable-tools
+KMOD_POST_INSTALL_TARGET_HOOKS += KMOD_REMOVE_BASH_COMPLETION
 endif
 
 # We only install depmod, since that's the only tool used for the
