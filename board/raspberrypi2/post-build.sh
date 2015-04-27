@@ -2,7 +2,6 @@
 
 rm -f $TARGET_DIR/usr/bin/{icuinfo,derb,genbrk,gencfu,gencnval,gendict,genrb,makeconv,pkgdata,uconv}
 rm -f $TARGET_DIR/usr/bin/fc-{cache,cat,list,match,pattern,query,scan,validate}
-rm -f $TARGET_DIR/usr/bin/udevadm
 rm -f $TARGET_DIR/usr/bin/xml{lint,catalog}
 rm -f $TARGET_DIR/usr/bin/xsltproc
 rm -f $TARGET_DIR/usr/bin/glib-compile-{schemas,resources}
