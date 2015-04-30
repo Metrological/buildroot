@@ -1,11 +1,21 @@
 config BR2_PACKAGE_NRDPLUGIN_QT
 	depends on BR2_PACKAGE_QT5BASE
-	select BR2_PACKAGE_NRD
-	select BR2_PACKAGE_NRD_STATICLIB
-	select BR2_NRD_GRAPHICS_PLUGIN_EGL
-	select BR2_PACKAGE_NRD_REF_ML
-	select BR2_PACKAGE_NRD_INPUT_PLUGIN
-	bool "nrdplugin"
+	select BR2_PACKAGE_CPPSDK
+	select BR2_PACKAGE_CPPSDK_GENERICS
+	select BR2_PACKAGE_NRDAPPLICATION
+	bool "nrd plugin"
 	help
 	  QT based plugin of the nrd framework. To be used, for example in WebKit environment
 
+config BR2_PACKAGE_NRDAPPLICATION
+	select BR2_PACKAGE_NRD
+	select BR2_PACKAGE_CPPSDK
+	select BR2_PACKAGE_CPPSDK_GENERICS
+	select BR2_PACKAGE_NRD_DYNAMICLIB
+	select BR2_PACKAGE_NRD_GRAPHICS_METROLOGICAL
+	select BR2_PACKAGE_NRD_PLAYER_METROLOGICAL
+	select BR2_PACKAGE_NRD_INPUT_METROLOGICAL
+	bool "nrd application"
+	help
+	  Application that turns the nrd SDK into a real executable application (could potentially be 
+	  controlled from the NRD Browser plugin.

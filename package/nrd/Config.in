@@ -39,7 +39,7 @@ endchoice
 choice
 	prompt "What graphics access system layer to be used"
 
-config BR2_NRD_GRAPHICS_DIRECTFB
+config BR2_PACKAGE_NRD_GRAPHICS_DIRECTFB
 	bool "directfb"
 	select BR2_PACKAGE_ALSA_LIB
 	select BR2_PACKAGE_TREMOR
@@ -49,25 +49,25 @@ config BR2_NRD_GRAPHICS_DIRECTFB
 	help
 	  Use the DirectFB access layer.
 
-config BR2_NRD_GRAPHICS_GLES2_EGL
+config BR2_PACKAGE_NRD_GRAPHICS_GLES2_EGL
 	bool "gles2-egl"
 	depends on BR2_PACKAGE_HAS_OPENGL_EGL
 	help
 	  Use the GLESV2-EGL access layer.
  
-config BR2_NRD_GRAPHICS_GLES2
+config BR2_PACKAGE_NRD_GRAPHICS_GLES2
 	bool "gles2"
 	depends on BR2_PACKAGE_HAS_OPENGL_ES
 	help
 	  Use the GLESV2 access layer.
 
-config BR2_NRD_GRAPHICS_METROLOGICAL
+config BR2_PACKAGE_NRD_GRAPHICS_METROLOGICAL
 	bool "metrological"
 	depends on BR2_PACKAGE_HAS_OPENGL_ES
 	help
 	  Use the EGL access layer based on a plugin structure.
 
-config BR2_NRD_GRAPHICS_NULL
+config BR2_PACKAGE_NRD_GRAPHICS_NULL
 	bool "null"
 	help
 	  Use the NULL access layer.
@@ -111,11 +111,11 @@ config BR2_PACKAGE_NRD_INPUT_METROLOGICAL
 
 endchoice
 
-config BR2_NRD_DRM_ENABLED
+config BR2_PACKAGE_NRD_DRM_ENABLED
 	bool "playready"
 	depends on BR2_PACKAGE_DXDRM
 
-if BR2_NRD_DRM_ENABLED
+if BR2_PACKAGE_NRD_DRM_ENABLED
 
 choice 
 	prompt "Which playready version should we use:"
@@ -139,19 +139,19 @@ endchoice
 
 endif
 
-config BR2_NRD_DEBUG_BUILD
+config BR2_PACKAGE_NRD_DEBUG_BUILD
 	bool "debug"
 	help
 	  Build the nrd framework in debug mode so all possible 
 	  information that could help locating issues is being
 	  exposed.
 
-config BR2_NRD_NICE_THREADS
+config BR2_PACKAGE_NRD_NICE_THREADS
 	bool "nice threads"
 	help
 	  Build the nrd framework using nice threading model.
 
-config BR2_NRD_DOLYDIGITALPLUS_STUBBED
+config BR2_PACKAGE_NRD_DOLYDIGITALPLUS_STUBBED
 	bool "DDPlus stub"
 	default y
 	select BR2_PACKAGE_DDPSTUB
