@@ -19,3 +19,14 @@ config BR2_PACKAGE_NRDAPPLICATION
 	help
 	  Application that turns the nrd SDK into a real executable application (could potentially be 
 	  controlled from the NRD Browser plugin.
+
+if BR2_PACKAGE_NRDAPPLICATION
+
+config BR2_PACKAGE_NRDAPPLICATION_DEBUG
+        bool "debug"
+        default n
+        help
+          Build the nrd application in debug mode. Always usefull to have a
+          partial enabled debug stack.
+
+endif

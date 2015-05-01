@@ -11,6 +11,13 @@ config BR2_PACKAGE_CPPSDK
 
 if BR2_PACKAGE_CPPSDK
 
+config BR2_PACKAGE_CPPSDK_DEBUG
+	bool "debug"
+	default n
+	help
+	  Build the cppsdk in debug mode. Always usefull to have a
+          partial enabled debug stack.
+
 config BR2_PACKAGE_CPPSDK_GENERICS
   bool "generics"
   help
