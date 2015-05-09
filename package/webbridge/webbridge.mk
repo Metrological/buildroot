@@ -46,6 +46,11 @@ ifeq ($(BR2_PACKAGE_PLUGIN_SPICONTROL),y)
 	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/SPIControl target ;
 endif
 
+ifeq ($(BR2_PACKAGE_PLUGIN_TEMPCONTROL),y)
+	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX=$(TARGET_CXX) -C $(@D)/Plugins/TempControl build ;
+	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/TempControl target ;
+endif
+
 ifeq ($(BR2_PACKAGE_PLUGIN_FILESERVER),y)
 	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX=$(TARGET_CXX) -C $(@D)/Plugins/FileServer build ;
 	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/FileServer target ;

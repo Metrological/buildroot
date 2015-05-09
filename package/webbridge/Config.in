@@ -46,6 +46,13 @@ config BR2_PACKAGE_PLUGIN_SPICONTROL
     simple commands can be send from javascript to control a MCP3002 (10 
     bits dual channel ADC).
 
+config BR2_PACKAGE_PLUGIN_TEMPCONTROL
+  bool "tempcontrol"
+  help
+    An implementation using the 1-Wire kernel module with the temp 1-Wire
+    kernel module (Exposing all informatin in the sysfs). Allows for 
+    retrieving 1-wire values via the webbridge into the javascript world.
+
 config BR2_PACKAGE_PLUGIN_FILESERVER
   bool "fileserver"
   help
