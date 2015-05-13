@@ -63,6 +63,15 @@ config BR2_PACKAGE_WPE_USE_MEDIA_SOURCE
 comment "media-source requires wpe-gstreamer"
 	depends on !BR2_WPE_GSTREAMER
 
+config BR2_PACKAGE_WPE_USE_MEDIA_STREAM
+	bool "media-stream"
+	default n
+	depends on BR2_WPE_GSTREAMER
+	help
+	  Enable MediaStream support. This is needed for WebRTC APIs.
+comment "media-stream requires wpe-gstreamer"
+	depends on !BR2_WPE_GSTREAMER
+
 config BR2_PACKAGE_WPE_USE_THREADED_COMPOSITOR
 	bool "threaded-compositor"
 	default y
