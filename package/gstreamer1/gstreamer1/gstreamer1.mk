@@ -4,6 +4,9 @@
 #
 ################################################################################
 
+ifeq ($(BR2_PACKAGE_GSTREAMER1_GIT),y)
+GSTREAMER1_VERSION = 4f79c5e8da516c137d4c9b0175ccb0a2ab147a6b
+endif
 GSTREAMER1_SOURCE = gstreamer-$(GSTREAMER1_VERSION).tar.gz
 GSTREAMER1_SITE = http://cgit.freedesktop.org/gstreamer/gstreamer/snapshot/
 GSTREAMER1_INSTALL_STAGING = YES

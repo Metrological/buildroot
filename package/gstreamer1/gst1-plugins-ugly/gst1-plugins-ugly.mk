@@ -5,7 +5,9 @@
 ################################################################################
 
 GST1_PLUGINS_UGLY_VERSION = $(GSTREAMER1_VERSION)
-
+ifeq ($(BR2_PACKAGE_GSTREAMER1_GIT),y)
+GST1_PLUGINS_UGLY_VERSION = 5dfd112521a026a323922c2f392095eae2c91ea2
+endif
 GST1_PLUGINS_UGLY_SOURCE = gst-plugins-ugly-$(GST1_PLUGINS_UGLY_VERSION).tar.gz
 GST1_PLUGINS_UGLY_SITE = http://cgit.freedesktop.org/gstreamer/gst-plugins-ugly/snapshot/
 GST1_PLUGINS_UGLY_LICENSE_FILES = COPYING

@@ -5,7 +5,9 @@
 ################################################################################
 
 GST1_PLUGINS_BASE_VERSION = $(GSTREAMER1_VERSION)
-
+ifeq ($(BR2_PACKAGE_GSTREAMER1_GIT),y)
+GST1_PLUGINS_BASE_VERSION = 4343c3bff80f6e2a97b2035860cc2381c7d131b5
+endif
 GST1_PLUGINS_BASE_SOURCE = gst-plugins-base-$(GST1_PLUGINS_BASE_VERSION).tar.gz
 GST1_PLUGINS_BASE_SITE = http://cgit.freedesktop.org/gstreamer/gst-plugins-base/snapshot/
 GST1_PLUGINS_BASE_INSTALL_STAGING = YES

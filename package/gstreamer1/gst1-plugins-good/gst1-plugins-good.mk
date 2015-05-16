@@ -5,7 +5,9 @@
 ################################################################################
 
 GST1_PLUGINS_GOOD_VERSION = $(GSTREAMER1_VERSION)
-
+ifeq ($(BR2_PACKAGE_GSTREAMER1_GIT),y)
+GST1_PLUGINS_GOOD_VERSION = fefeda5e6cac29b740448469b36015270dafe2ac
+endif
 GST1_PLUGINS_GOOD_SOURCE = gst-plugins-good-$(GST1_PLUGINS_GOOD_VERSION).tar.gz
 GST1_PLUGINS_GOOD_SITE = http://cgit.freedesktop.org/gstreamer/gst-plugins-good/snapshot/
 GST1_PLUGINS_GOOD_INSTALL_STAGING = YES
