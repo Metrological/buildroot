@@ -39,9 +39,11 @@ ifeq ($(BR2_PACKAGE_NRDPLUGIN_QT),y)
     rm -f $(TARGET_DIR)/usr/lib/libnrdplugin.so*
   endef
 endif
+
 ifeq ($(BR2_PACKAGE_NRDAPPLICATION),y)
-  NRDPLUGIN_APP_BUILD = $(TARGET_CONFIGURE_OPTS) $(MAKE) TYPE=$(NRDPLUGIN_BUILDTYPE) -C $(@D)/app build
-  NRDPLUGIN_APP_INSTALL_TARGET = $(MAKE) TYPE=$(NRDPLUGIN_BUILDTYPE) -C $(@D)/app target
+  
+  NRDPLUGIN_APP_BUILD = $(TARGET_CONFIGURE_OPTS) $(MAKE) TYPE=Debug -C $(@D)/app build
+  NRDPLUGIN_APP_INSTALL_TARGET = $(MAKE) TYPE=Debug -C $(@D)/app target
 endif
 
 define NRDPLUGIN_CONFIGURE_CMDS
