@@ -1,0 +1,181 @@
+From 1ebbd50a282f617e6cd72e39cd628aa26585e840 Mon Sep 17 00:00:00 2001
+From: Arun Raghavan <arun@centricular.com>
+Date: Tue, 6 Jan 2015 13:05:46 +0530
+Subject: [PATCH 3/7] inter: Queue up streamheaders for delayed clients in
+ interapp*
+
+This is taken essentially verbatim from multihandlesink -- when a client
+joins the stream, we explicitly send out the stream headers from caps
+(if present), so that decoders downstream are appropriately initialised
+even if they missed initial buffers.
+---
+ gst/inter/gstintersurface.c | 100 ++++++++++++++++++++++++++++++++++++++++++++
+ gst/inter/gstintersurface.h |   1 +
+ 2 files changed, 101 insertions(+)
+
+diff --git a/gst/inter/gstintersurface.c b/gst/inter/gstintersurface.c
+index f776e66..f08dd42 100644
+--- a/gst/inter/gstintersurface.c
++++ b/gst/inter/gstintersurface.c
+@@ -28,6 +28,16 @@
+ static GList *list;
+ static GMutex mutex;
+ 
++static void
++gst_deferred_client_free_headers (GstDeferredClient * client)
++{
++  GstBuffer *buf;
++
++  while ((buf = GST_BUFFER_CAST (g_queue_pop_head (&client->headers)))) {
++    gst_buffer_unref (buf);
++  }
++}
++
+ void
+ gst_deferred_client_init (GstDeferredClient * client)
+ {
+@@ -37,6 +47,8 @@ gst_deferred_client_init (GstDeferredClient * client)
+   g_cond_init (&client->buffer_cond);
+ 
+   client->buffer = NULL;
++
++  g_queue_init (&client->headers);
+ }
+ 
+ void
+@@ -50,6 +62,8 @@ gst_deferred_client_reset (GstDeferredClient * client)
+   if (client->buffer)
+     client->buffer = NULL;
+ 
++  gst_deferred_client_free_headers (client);
++
+   g_mutex_unlock (&client->mutex);
+ }
+ 
+@@ -64,11 +78,91 @@ gst_deferred_client_free (GstDeferredClient * client)
+   g_cond_clear (&client->buffer_cond);
+ }
+ 
++static void
++gst_deferred_client_get_stream_headers (GstDeferredClient * client,
++    GstCaps * old_caps, GstCaps * new_caps)
++{
++  gboolean send_streamheader = FALSE;
++  GstStructure *s;
++
++  if (!old_caps) {
++    GST_DEBUG ("no previous caps for this client, send streamheader");
++    send_streamheader = TRUE;
++  } else {
++    /* there were previous caps recorded, so compare */
++    if (!gst_caps_is_equal (old_caps, new_caps)) {
++      const GValue *sh1, *sh2;
++
++      /* caps are not equal, but could still have the same streamheader */
++      s = gst_caps_get_structure (new_caps, 0);
++      if (!gst_structure_has_field (s, "streamheader")) {
++        /* no new streamheader, so nothing new to send */
++        GST_DEBUG ("new caps do not have streamheader, not sending");
++      } else {
++        /* there is a new streamheader */
++        s = gst_caps_get_structure (old_caps, 0);
++        if (!gst_structure_has_field (s, "streamheader")) {
++          /* no previous streamheader, so send the new one */
++          GST_DEBUG ("previous caps did not have streamheader, sending");
++          send_streamheader = TRUE;
++        } else {
++          /* both old and new caps have streamheader set */
++          sh1 = gst_structure_get_value (s, "streamheader");
++          s = gst_caps_get_structure (new_caps, 0);
++          sh2 = gst_structure_get_value (s, "streamheader");
++          if (gst_value_compare (sh1, sh2) != GST_VALUE_EQUAL) {
++            GST_DEBUG ("new streamheader different from old, sending");
++            send_streamheader = TRUE;
++          }
++        }
++      }
++    }
++  }
++
++  if (G_UNLIKELY (send_streamheader)) {
++    const GValue *sh;
++    GArray *buffers;
++    int i;
++
++    /* Free any existing headers */
++    gst_deferred_client_free_headers (client);
++
++    GST_LOG ("sending streamheader from caps %" GST_PTR_FORMAT, new_caps);
++    s = gst_caps_get_structure (new_caps, 0);
++
++    if (!gst_structure_has_field (s, "streamheader")) {
++      GST_DEBUG ("no new streamheader, so nothing to send");
++    } else {
++      sh = gst_structure_get_value (s, "streamheader");
++      g_assert (G_VALUE_TYPE (sh) == GST_TYPE_ARRAY);
++
++      buffers = g_value_peek_pointer (sh);
++      GST_DEBUG ("%d streamheader buffers", buffers->len);
++
++      for (i = 0; i < buffers->len; ++i) {
++        GValue *bufval;
++        GstBuffer *buffer;
++
++        bufval = &g_array_index (buffers, GValue, i);
++        g_assert (G_VALUE_TYPE (bufval) == GST_TYPE_BUFFER);
++        buffer = g_value_peek_pointer (bufval);
++        GST_DEBUG ("queueing streamheader buffer of length %" G_GSIZE_FORMAT,
++            gst_buffer_get_size (buffer));
++
++        g_queue_push_tail (&client->headers, gst_buffer_ref (buffer));
++      }
++    }
++  }
++}
++
+ void
+ gst_deferred_client_set_caps (GstDeferredClient * client, GstCaps * caps)
+ {
+   g_mutex_lock (&client->mutex);
+ 
++  /* See if we have new stream headers in caps to pass to the client */
++  gst_deferred_client_get_stream_headers (client, client->caps, caps);
++
+   if (client->caps) {
+     /* Drop queued buffer if caps changed */
+     if (!gst_caps_is_equal (client->caps, caps) && client->buffer) {
+@@ -150,6 +244,11 @@ gst_deferred_client_get_buffer (GstDeferredClient * client)
+ 
+   g_mutex_lock (&client->mutex);
+ 
++  if (!g_queue_is_empty (&client->headers)) {
++    buf = g_queue_pop_head (&client->headers);
++    goto done;
++  }
++
+   if (!client->buffer) {
+     GST_LOG ("Waiting for a buffer");
+     g_cond_wait (&client->buffer_cond, &client->mutex);
+@@ -158,6 +257,7 @@ gst_deferred_client_get_buffer (GstDeferredClient * client)
+   buf = client->buffer;
+   client->buffer = NULL;
+ 
++done:
+   g_mutex_unlock (&client->mutex);
+ 
+   return buf;
+diff --git a/gst/inter/gstintersurface.h b/gst/inter/gstintersurface.h
+index 893a8f6..16175ae 100644
+--- a/gst/inter/gstintersurface.h
++++ b/gst/inter/gstintersurface.h
+@@ -36,6 +36,7 @@ struct _GstDeferredClient
+   gboolean caps_changed;
+ 
+   GstBuffer *buffer;
++  GQueue headers;
+ 
+   GCond caps_cond;
+   GCond buffer_cond;
+-- 
+2.1.4
+

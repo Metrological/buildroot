@@ -1,0 +1,380 @@
+From 39c793337bc623aff0edb333c079e49421c18561 Mon Sep 17 00:00:00 2001
+From: Arun Raghavan <arun@centricular.com>
+Date: Mon, 5 Jan 2015 19:21:07 +0530
+Subject: [PATCH 2/7] inter: Factor out caps/buffer handling in interapp*
+
+This is the first step in making buffer handling a bit more
+sophisticated (store keyframes, etc.) for when interappsrc is plugged in
+much later than interappsink.
+---
+ gst/inter/gstinterappsink.c |  31 +---------
+ gst/inter/gstinterappsrc.c  |  37 ++----------
+ gst/inter/gstinterappsrc.h  |   2 -
+ gst/inter/gstintersurface.c | 143 ++++++++++++++++++++++++++++++++++++++++++--
+ gst/inter/gstintersurface.h |  30 ++++++++--
+ 5 files changed, 172 insertions(+), 71 deletions(-)
+
+diff --git a/gst/inter/gstinterappsink.c b/gst/inter/gstinterappsink.c
+index c2d8983..455f4e1 100644
+--- a/gst/inter/gstinterappsink.c
++++ b/gst/inter/gstinterappsink.c
+@@ -182,14 +182,7 @@ gst_inter_app_sink_stop (GstBaseSink * sink)
+ 
+   GST_LOG_OBJECT (interappsink, "stop");
+ 
+-  g_mutex_lock (&interappsink->surface->mutex);
+-
+-  if (interappsink->surface->app_buffer)
+-    gst_buffer_unref (interappsink->surface->app_buffer);
+-
+-  interappsink->surface->app_buffer = NULL;
+-
+-  g_mutex_unlock (&interappsink->surface->mutex);
++  gst_deferred_client_reset (&interappsink->surface->app_client);
+ 
+   gst_inter_surface_unref (interappsink->surface);
+   interappsink->surface = NULL;
+@@ -204,15 +197,7 @@ gst_inter_app_sink_set_caps (GstBaseSink * sink, GstCaps * caps)
+ 
+   GST_LOG_OBJECT (interappsink, "set caps");
+ 
+-  g_mutex_lock (&interappsink->surface->mutex);
+-
+-  if (interappsink->surface->app_caps)
+-    gst_caps_unref (interappsink->surface->app_caps);
+-
+-  interappsink->surface->app_caps = gst_caps_ref (caps);
+-
+-  g_cond_signal (&interappsink->surface->app_caps_cond);
+-  g_mutex_unlock (&interappsink->surface->mutex);
++  gst_deferred_client_set_caps (&interappsink->surface->app_client, caps);
+ 
+   return TRUE;
+ }
+@@ -224,17 +209,7 @@ gst_inter_app_sink_render (GstBaseSink * sink, GstBuffer * buffer)
+ 
+   GST_LOG_OBJECT (interappsink, "render");
+ 
+-  g_mutex_lock (&interappsink->surface->mutex);
+-
+-  if (interappsink->surface->app_buffer) {
+-    GST_WARNING_OBJECT (interappsink, "Previous buffer was unconsumed");
+-    gst_buffer_unref (interappsink->surface->app_buffer);
+-  }
+-
+-  interappsink->surface->app_buffer = gst_buffer_ref (buffer);
+-
+-  g_cond_signal (&interappsink->surface->app_buffer_cond);
+-  g_mutex_unlock (&interappsink->surface->mutex);
++  gst_deferred_client_push_buffer (&interappsink->surface->app_client, buffer);
+ 
+   return GST_FLOW_OK;
+ }
+diff --git a/gst/inter/gstinterappsrc.c b/gst/inter/gstinterappsrc.c
+index 6b76fc9..0deec48 100644
+--- a/gst/inter/gstinterappsrc.c
++++ b/gst/inter/gstinterappsrc.c
+@@ -174,7 +174,6 @@ gst_inter_app_src_start (GstBaseSrc * src)
+   GST_DEBUG_OBJECT (interappsrc, "start");
+ 
+   interappsrc->surface = gst_inter_surface_get (interappsrc->channel);
+-  interappsrc->got_caps = FALSE;
+ 
+   return TRUE;
+ }
+@@ -199,47 +198,21 @@ gst_inter_app_src_create (GstBaseSrc * src, guint64 offset, guint size,
+   GstInterAppSrc *interappsrc = GST_INTER_APP_SRC (src);
+   GstBuffer *buffer = NULL;
+   GstCaps *caps = NULL;
++  gboolean changed;
+ 
+   GST_DEBUG_OBJECT (interappsrc, "create");
+ 
+-  g_mutex_lock (&interappsrc->surface->mutex);
++  caps = gst_deferred_client_get_caps (&interappsrc->surface->app_client,
++      &changed, TRUE);
+ 
+-  if (!interappsrc->got_caps && !interappsrc->surface->app_caps) {
+-    /* Can't do anything until we have caps */
+-    GST_LOG_OBJECT (interappsrc, "waiting for caps");
+-    g_cond_wait (&interappsrc->surface->app_caps_cond,
+-        &interappsrc->surface->mutex);
+-    GST_LOG_OBJECT (interappsrc, "end wait");
+-  }
+-
+-  if (interappsrc->surface->app_caps) {
+-    caps = interappsrc->surface->app_caps;
+-    interappsrc->surface->app_caps = NULL;
+-    interappsrc->got_caps = TRUE;
+-  }
+-
+-  if (!interappsrc->surface->app_buffer) {
+-    /* Wait for a buffer */
+-    GST_LOG_OBJECT (interappsrc, "waiting for buffer");
+-    g_cond_wait (&interappsrc->surface->app_buffer_cond,
+-        &interappsrc->surface->mutex);
+-    GST_LOG_OBJECT (interappsrc, "end wait");
+-  }
++  buffer = gst_deferred_client_get_buffer (&interappsrc->surface->app_client);
+ 
+-  buffer = interappsrc->surface->app_buffer;
+-  interappsrc->surface->app_buffer = NULL;
+-
+-  g_mutex_unlock (&interappsrc->surface->mutex);
+-
+-  if (caps) {
++  if (changed) {
+     GST_DEBUG_OBJECT (interappsrc, "Got caps: %" GST_PTR_FORMAT, caps);
+ 
+     if (!gst_base_src_set_caps (src, caps)) {
+       GST_ERROR_OBJECT (interappsrc, "Failed to set caps");
+-
+       gst_caps_unref (caps);
+-      gst_buffer_unref (buffer);
+-
+       return GST_FLOW_NOT_NEGOTIATED;
+     }
+ 
+diff --git a/gst/inter/gstinterappsrc.h b/gst/inter/gstinterappsrc.h
+index a699902..c2e02cc 100644
+--- a/gst/inter/gstinterappsrc.h
++++ b/gst/inter/gstinterappsrc.h
+@@ -39,8 +39,6 @@ struct _GstInterAppSrc
+ 
+   GstInterSurface *surface;
+   char *channel;
+-
+-  gboolean got_caps;
+ };
+ 
+ struct _GstInterAppSrcClass
+diff --git a/gst/inter/gstintersurface.c b/gst/inter/gstintersurface.c
+index 5d970e4..f776e66 100644
+--- a/gst/inter/gstintersurface.c
++++ b/gst/inter/gstintersurface.c
+@@ -28,6 +28,141 @@
+ static GList *list;
+ static GMutex mutex;
+ 
++void
++gst_deferred_client_init (GstDeferredClient * client)
++{
++  g_mutex_init (&client->mutex);
++
++  g_cond_init (&client->caps_cond);
++  g_cond_init (&client->buffer_cond);
++
++  client->buffer = NULL;
++}
++
++void
++gst_deferred_client_reset (GstDeferredClient * client)
++{
++  g_mutex_lock (&client->mutex);
++
++  if (client->caps)
++    gst_caps_unref (client->caps);
++
++  if (client->buffer)
++    client->buffer = NULL;
++
++  g_mutex_unlock (&client->mutex);
++}
++
++void
++gst_deferred_client_free (GstDeferredClient * client)
++{
++  gst_deferred_client_reset (client);
++
++  g_mutex_clear (&client->mutex);
++
++  g_cond_clear (&client->caps_cond);
++  g_cond_clear (&client->buffer_cond);
++}
++
++void
++gst_deferred_client_set_caps (GstDeferredClient * client, GstCaps * caps)
++{
++  g_mutex_lock (&client->mutex);
++
++  if (client->caps) {
++    /* Drop queued buffer if caps changed */
++    if (!gst_caps_is_equal (client->caps, caps) && client->buffer) {
++      gst_buffer_unref (client->buffer);
++      client->buffer = NULL;
++    }
++
++    gst_caps_unref (client->caps);
++  }
++
++  client->caps = gst_caps_ref (caps);
++  client->caps_changed = TRUE;
++
++  g_cond_signal (&client->caps_cond);
++
++  g_mutex_unlock (&client->mutex);
++}
++
++GstCaps *
++gst_deferred_client_get_caps (GstDeferredClient * client, gboolean * changed,
++    gboolean wait)
++{
++  GstCaps *ret;
++
++  g_mutex_lock (&client->mutex);
++
++  if (client->caps != NULL) {
++    /* We have some caps, good to go */
++    ret = gst_caps_ref (client->caps);
++
++    if (changed)
++      *changed = client->caps_changed;
++    client->caps_changed = FALSE;
++
++  } else if (wait) {
++    /* We don't have caps, and want to wait till we have some */
++    GST_LOG ("Waiting for caps");
++
++    g_cond_wait (&client->caps_cond, &client->mutex);
++    g_assert (client->caps);
++
++    ret = gst_caps_ref (client->caps);
++
++    if (changed)
++      *changed = TRUE;
++    /* changed caps are being returned already */
++    client->caps_changed = FALSE;
++
++  } else {
++    /* No caps, don't want to wait */
++    ret = NULL;
++  }
++
++  g_mutex_unlock (&client->mutex);
++
++  return ret;
++}
++
++void
++gst_deferred_client_push_buffer (GstDeferredClient * client, GstBuffer * buf)
++{
++  g_mutex_lock (&client->mutex);
++
++  if (client->buffer) {
++    GST_DEBUG ("Replacing unconsumed buffer");
++    gst_buffer_unref (client->buffer);
++  }
++
++  client->buffer = gst_buffer_ref (buf);
++  g_cond_signal (&client->buffer_cond);
++
++  g_mutex_unlock (&client->mutex);
++}
++
++GstBuffer *
++gst_deferred_client_get_buffer (GstDeferredClient * client)
++{
++  GstBuffer *buf;
++
++  g_mutex_lock (&client->mutex);
++
++  if (!client->buffer) {
++    GST_LOG ("Waiting for a buffer");
++    g_cond_wait (&client->buffer_cond, &client->mutex);
++  }
++
++  buf = client->buffer;
++  client->buffer = NULL;
++
++  g_mutex_unlock (&client->mutex);
++
++  return buf;
++}
++
+ GstInterSurface *
+ gst_inter_surface_get (const char *name)
+ {
+@@ -48,13 +183,13 @@ gst_inter_surface_get (const char *name)
+   surface->ref_count = 1;
+   surface->name = g_strdup (name);
+   g_mutex_init (&surface->mutex);
+-  g_cond_init (&surface->app_caps_cond);
+-  g_cond_init (&surface->app_buffer_cond);
+   surface->audio_adapter = gst_adapter_new ();
+   surface->audio_buffer_time = DEFAULT_AUDIO_BUFFER_TIME;
+   surface->audio_latency_time = DEFAULT_AUDIO_LATENCY_TIME;
+   surface->audio_period_time = DEFAULT_AUDIO_PERIOD_TIME;
+ 
++  gst_deferred_client_init (&surface->app_client);
++
+   list = g_list_append (list, surface);
+   g_mutex_unlock (&mutex);
+ 
+@@ -80,12 +215,10 @@ gst_inter_surface_unref (GstInterSurface * surface)
+     }
+ 
+     g_mutex_clear (&surface->mutex);
+-    g_cond_clear (&surface->app_caps_cond);
+-    g_cond_clear (&surface->app_buffer_cond);
+     gst_buffer_replace (&surface->video_buffer, NULL);
+     gst_buffer_replace (&surface->sub_buffer, NULL);
+-    gst_buffer_replace (&surface->app_buffer, NULL);
+     gst_object_unref (surface->audio_adapter);
++    gst_deferred_client_free (&surface->app_client);
+     g_free (surface->name);
+     g_free (surface);
+   }
+diff --git a/gst/inter/gstintersurface.h b/gst/inter/gstintersurface.h
+index 5e41c8f..893a8f6 100644
+--- a/gst/inter/gstintersurface.h
++++ b/gst/inter/gstintersurface.h
+@@ -26,6 +26,31 @@
+ 
+ G_BEGIN_DECLS
+ 
++typedef struct _GstDeferredClient GstDeferredClient;
++
++struct _GstDeferredClient
++{
++  GMutex mutex;
++
++  GstCaps *caps;
++  gboolean caps_changed;
++
++  GstBuffer *buffer;
++
++  GCond caps_cond;
++  GCond buffer_cond;
++};
++
++void gst_deferred_client_init (GstDeferredClient * client);
++void gst_deferred_client_reset (GstDeferredClient * client);
++void gst_deferred_client_free (GstDeferredClient * client);
++void gst_deferred_client_set_caps (GstDeferredClient * client, GstCaps * caps);
++GstCaps * gst_deferred_client_get_caps (GstDeferredClient * client,
++    gboolean * changed, gboolean wait);
++void gst_deferred_client_push_buffer (GstDeferredClient * client,
++    GstBuffer * buf);
++GstBuffer * gst_deferred_client_get_buffer (GstDeferredClient * client);
++
+ typedef struct _GstInterSurface GstInterSurface;
+ 
+ struct _GstInterSurface
+@@ -46,13 +71,10 @@ struct _GstInterSurface
+   guint64 audio_period_time;
+ 
+   /* app */
+-  GCond app_caps_cond;
+-  GCond app_buffer_cond;
+-  GstCaps *app_caps;
++  GstDeferredClient app_client;
+ 
+   GstBuffer *video_buffer;
+   GstBuffer *sub_buffer;
+-  GstBuffer *app_buffer;
+   GstAdapter *audio_adapter;
+ };
+ 
+-- 
+2.1.4
+

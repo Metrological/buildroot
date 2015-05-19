@@ -1,0 +1,225 @@
+From 6381d9a57fcfb803e83fc12e89dd2223374b27de Mon Sep 17 00:00:00 2001
+From: Arun Raghavan <arun@centricular.com>
+Date: Fri, 9 Jan 2015 12:23:39 +0530
+Subject: [PATCH 5/7] inter: Add more intelligent buffering of keyframes in
+ interapp*
+
+This allows clients that join late to be able to start quickly without
+having to wait for a keyframe.
+---
+ gst/inter/gstintersurface.c | 97 ++++++++++++++++++++++++++++++++++++---------
+ gst/inter/gstintersurface.h | 11 ++++-
+ 2 files changed, 88 insertions(+), 20 deletions(-)
+
+diff --git a/gst/inter/gstintersurface.c b/gst/inter/gstintersurface.c
+index f08dd42..be5b611 100644
+--- a/gst/inter/gstintersurface.c
++++ b/gst/inter/gstintersurface.c
+@@ -1,5 +1,6 @@
+ /* GStreamer
+  * Copyright (C) 2011 David A. Schleef <ds@schleef.org>
++ *               2015 Arun Raghavan <mail@arunraghavan.net>
+  *
+  * This library is free software; you can redistribute it and/or
+  * modify it under the terms of the GNU Library General Public
+@@ -28,12 +29,16 @@
+ static GList *list;
+ static GMutex mutex;
+ 
++#define DEFAULT_BUFFER_MODE GST_DEFERRED_CLIENT_BUFFER_MODE_LATEST_KEYFRAME
++#define DEFAULT_MAX_BUFFERS -1
++
++/* Call with client mutex held */
+ static void
+-gst_deferred_client_free_headers (GstDeferredClient * client)
++gst_deferred_client_free_queue (GQueue * queue)
+ {
+   GstBuffer *buf;
+ 
+-  while ((buf = GST_BUFFER_CAST (g_queue_pop_head (&client->headers)))) {
++  while ((buf = GST_BUFFER_CAST (g_queue_pop_head (queue)))) {
+     gst_buffer_unref (buf);
+   }
+ }
+@@ -46,8 +51,11 @@ gst_deferred_client_init (GstDeferredClient * client)
+   g_cond_init (&client->caps_cond);
+   g_cond_init (&client->buffer_cond);
+ 
+-  client->buffer = NULL;
++  client->buffer_mode = DEFAULT_BUFFER_MODE;
++  client->max_buffers = DEFAULT_MAX_BUFFERS;
++  client->started = FALSE;
+ 
++  g_queue_init (&client->buffers);
+   g_queue_init (&client->headers);
+ }
+ 
+@@ -59,10 +67,10 @@ gst_deferred_client_reset (GstDeferredClient * client)
+   if (client->caps)
+     gst_caps_unref (client->caps);
+ 
+-  if (client->buffer)
+-    client->buffer = NULL;
++  gst_deferred_client_free_queue (&client->headers);
++  gst_deferred_client_free_queue (&client->buffers);
+ 
+-  gst_deferred_client_free_headers (client);
++  client->started = FALSE;
+ 
+   g_mutex_unlock (&client->mutex);
+ }
+@@ -78,6 +86,7 @@ gst_deferred_client_free (GstDeferredClient * client)
+   g_cond_clear (&client->buffer_cond);
+ }
+ 
++/* Call with client mutex held */
+ static void
+ gst_deferred_client_get_stream_headers (GstDeferredClient * client,
+     GstCaps * old_caps, GstCaps * new_caps)
+@@ -125,7 +134,7 @@ gst_deferred_client_get_stream_headers (GstDeferredClient * client,
+     int i;
+ 
+     /* Free any existing headers */
+-    gst_deferred_client_free_headers (client);
++    gst_deferred_client_free_queue (&client->headers);
+ 
+     GST_LOG ("sending streamheader from caps %" GST_PTR_FORMAT, new_caps);
+     s = gst_caps_get_structure (new_caps, 0);
+@@ -165,10 +174,8 @@ gst_deferred_client_set_caps (GstDeferredClient * client, GstCaps * caps)
+ 
+   if (client->caps) {
+     /* Drop queued buffer if caps changed */
+-    if (!gst_caps_is_equal (client->caps, caps) && client->buffer) {
+-      gst_buffer_unref (client->buffer);
+-      client->buffer = NULL;
+-    }
++    if (!gst_caps_is_equal (client->caps, caps))
++      gst_deferred_client_free_queue (&client->buffers);
+ 
+     gst_caps_unref (client->caps);
+   }
+@@ -221,18 +228,69 @@ gst_deferred_client_get_caps (GstDeferredClient * client, gboolean * changed,
+   return ret;
+ }
+ 
++static gboolean
++is_sync_frame (GstBuffer * buffer)
++{
++  if (GST_BUFFER_FLAG_IS_SET (buffer, GST_BUFFER_FLAG_DELTA_UNIT))
++    return FALSE;
++  else
++    return TRUE;
++}
++
+ void
+ gst_deferred_client_push_buffer (GstDeferredClient * client, GstBuffer * buf)
+ {
++  GstBuffer *tmp;
++  gboolean new_buffer = FALSE;
++
+   g_mutex_lock (&client->mutex);
+ 
+-  if (client->buffer) {
+-    GST_DEBUG ("Replacing unconsumed buffer");
+-    gst_buffer_unref (client->buffer);
++  switch (client->buffer_mode) {
++    case GST_DEFERRED_CLIENT_BUFFER_MODE_LATEST_KEYFRAME:
++      if (!client->started) {
++        if (is_sync_frame (buf)) {
++          GST_DEBUG ("Got new keyframe, dropping previous GOP (if any)");
++          gst_deferred_client_free_queue (&client->buffers);
++        }
++
++        if (client->max_buffers == -1 ||
++            g_queue_get_length (&client->headers) < client->max_buffers) {
++          /* We have room in the queue */
++          if (is_sync_frame (buf) || !g_queue_is_empty (&client->buffers)) {
++            /* Either this is a sync frame, or we already have one queued */
++            g_queue_push_tail (&client->buffers, gst_buffer_ref (buf));
++            new_buffer = TRUE;
++          } else {
++            GST_DEBUG ("Ignoring non-keyframe until we see a keyframe");
++          }
++        } else {
++          GST_DEBUG ("Queue is full, emptying and waiting for a new keyframe");
++          gst_deferred_client_free_queue (&client->buffers);
++        }
++
++        break;
++      }
++      /* the else case is a fall through */
++
++    case GST_DEFERRED_CLIENT_BUFFER_MODE_LATEST:
++      /* Store one buffer at any given time */
++      if (!g_queue_is_empty (&client->buffers)) {
++        GST_DEBUG ("Replacing unconsumed buffer");
++        tmp = GST_BUFFER_CAST (g_queue_pop_head (&client->buffers));
++        gst_buffer_unref (tmp);
++      }
++
++      g_queue_push_tail (&client->buffers, gst_buffer_ref (buf));
++      new_buffer = TRUE;
++      break;
++
++
++    default:
++      g_assert_not_reached ();
+   }
+ 
+-  client->buffer = gst_buffer_ref (buf);
+-  g_cond_signal (&client->buffer_cond);
++  if (new_buffer)
++    g_cond_signal (&client->buffer_cond);
+ 
+   g_mutex_unlock (&client->mutex);
+ }
+@@ -249,13 +307,14 @@ gst_deferred_client_get_buffer (GstDeferredClient * client)
+     goto done;
+   }
+ 
+-  if (!client->buffer) {
++  if (g_queue_is_empty (&client->buffers)) {
+     GST_LOG ("Waiting for a buffer");
+     g_cond_wait (&client->buffer_cond, &client->mutex);
+   }
+ 
+-  buf = client->buffer;
+-  client->buffer = NULL;
++  buf = GST_BUFFER_CAST (g_queue_pop_head (&client->buffers));
++
++  client->started = TRUE;
+ 
+ done:
+   g_mutex_unlock (&client->mutex);
+diff --git a/gst/inter/gstintersurface.h b/gst/inter/gstintersurface.h
+index 16175ae..953b5b3 100644
+--- a/gst/inter/gstintersurface.h
++++ b/gst/inter/gstintersurface.h
+@@ -28,6 +28,11 @@ G_BEGIN_DECLS
+ 
+ typedef struct _GstDeferredClient GstDeferredClient;
+ 
++typedef enum {
++  GST_DEFERRED_CLIENT_BUFFER_MODE_LATEST,
++  GST_DEFERRED_CLIENT_BUFFER_MODE_LATEST_KEYFRAME,
++} GstDeferredClientBufferMode;
++
+ struct _GstDeferredClient
+ {
+   GMutex mutex;
+@@ -35,7 +40,11 @@ struct _GstDeferredClient
+   GstCaps *caps;
+   gboolean caps_changed;
+ 
+-  GstBuffer *buffer;
++  GstDeferredClientBufferMode buffer_mode;
++  gint max_buffers;
++  gboolean started; /* TRUE if the client has started consuming buffers */
++
++  GQueue buffers;
+   GQueue headers;
+ 
+   GCond caps_cond;
+-- 
+2.1.4
+

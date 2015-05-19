@@ -1,0 +1,807 @@
+From 3413522ea23a03cdf93b0aa84c1b0280c3738637 Mon Sep 17 00:00:00 2001
+From: Arun Raghavan <arun@centricular.com>
+Date: Sun, 21 Dec 2014 20:13:04 +0530
+Subject: [PATCH 1/7] inter: Add interappsrc/sink elements
+
+This adds elements to allow using arbitrary data with the inter*
+mechanism. It is assumed that the sink may consume data more slowly than
+the source produces it (and if this happens, some buffers might be
+lost).
+---
+ gst/inter/Makefile.am       |   4 +
+ gst/inter/gstinter.c        |   6 ++
+ gst/inter/gstinterappsink.c | 240 +++++++++++++++++++++++++++++++++++++++++
+ gst/inter/gstinterappsink.h |  52 +++++++++
+ gst/inter/gstinterappsrc.c  | 255 ++++++++++++++++++++++++++++++++++++++++++++
+ gst/inter/gstinterappsrc.h  |  54 ++++++++++
+ gst/inter/gstintersurface.c |   5 +
+ gst/inter/gstintersurface.h |   6 ++
+ gst/inter/gstintertest.c    |  33 +++++-
+ 9 files changed, 651 insertions(+), 4 deletions(-)
+ create mode 100644 gst/inter/gstinterappsink.c
+ create mode 100644 gst/inter/gstinterappsink.h
+ create mode 100644 gst/inter/gstinterappsrc.c
+ create mode 100644 gst/inter/gstinterappsrc.h
+
+diff --git a/gst/inter/Makefile.am b/gst/inter/Makefile.am
+index 773facf..c63630e 100644
+--- a/gst/inter/Makefile.am
++++ b/gst/inter/Makefile.am
+@@ -9,6 +9,8 @@ libgstinter_la_SOURCES = \
+ 	gstintersubsrc.c \
+ 	gstintervideosink.c \
+ 	gstintervideosrc.c \
++	gstinterappsink.c \
++	gstinterappsrc.c \
+ 	gstinter.c \
+ 	gstintersurface.c
+ 
+@@ -19,6 +21,8 @@ noinst_HEADERS = \
+ 	gstintersubsrc.h \
+ 	gstintervideosink.h \
+ 	gstintervideosrc.h \
++	gstinterappsink.h \
++	gstinterappsrc.h \
+ 	gstintersurface.h
+ 
+ libgstinter_la_CFLAGS = \
+diff --git a/gst/inter/gstinter.c b/gst/inter/gstinter.c
+index e1f88b2..2d58a0a 100644
+--- a/gst/inter/gstinter.c
++++ b/gst/inter/gstinter.c
+@@ -27,6 +27,8 @@
+ #include "gstintersubsink.h"
+ #include "gstintervideosrc.h"
+ #include "gstintervideosink.h"
++#include "gstinterappsrc.h"
++#include "gstinterappsink.h"
+ #include "gstintersurface.h"
+ 
+ static gboolean
+@@ -44,6 +46,10 @@ plugin_init (GstPlugin * plugin)
+       GST_TYPE_INTER_VIDEO_SRC);
+   gst_element_register (plugin, "intervideosink", GST_RANK_NONE,
+       GST_TYPE_INTER_VIDEO_SINK);
++  gst_element_register (plugin, "interappsrc", GST_RANK_NONE,
++      GST_TYPE_INTER_APP_SRC);
++  gst_element_register (plugin, "interappsink", GST_RANK_NONE,
++      GST_TYPE_INTER_APP_SINK);
+ 
+   return TRUE;
+ }
+diff --git a/gst/inter/gstinterappsink.c b/gst/inter/gstinterappsink.c
+new file mode 100644
+index 0000000..c2d8983
+--- /dev/null
++++ b/gst/inter/gstinterappsink.c
+@@ -0,0 +1,240 @@
++/* GStreamer
++ * Copyright (C) 2011 David Schleef <ds@entropywave.com>
++ * Copyright (C) 2014 Arun Raghavan <mail@@arunraghavan.net>
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Library General Public
++ * License as published by the Free Software Foundation; either
++ * version 2 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Library General Public License for more details.
++ *
++ * You should have received a copy of the GNU Library General Public
++ * License along with this library; if not, write to the
++ * Free Software Foundation, Inc., 51 Franklin Street, Suite 500,
++ * Boston, MA 02110-1335, USA.
++ */
++/**
++ * SECTION:element-gstinterappsink
++ *
++ * The interappsink element is a sink element used in connection with a
++ * interappsrc element in a different pipeline.
++ *
++ * <refsect2>
++ * <title>Example launch line</title>
++ * |[
++ * gst-launch -v ... ! interappsink
++ * ]|
++ * 
++ * The interappsink element cannot be used effectively with gst-launch,
++ * as it requires a second pipeline in the application to send audio.
++ * See the gstintertest.c example in the gst-plugins-bad source code for
++ * more details.
++ * </refsect2>
++ */
++
++#ifdef HAVE_CONFIG_H
++#include "config.h"
++#endif
++
++#include <gst/gst.h>
++#include <gst/base/gstbasesink.h>
++#include "gstinterappsink.h"
++
++GST_DEBUG_CATEGORY_STATIC (gst_inter_app_sink_debug_category);
++#define GST_CAT_DEFAULT gst_inter_app_sink_debug_category
++
++/* prototypes */
++static void gst_inter_app_sink_set_property (GObject * object,
++    guint property_id, const GValue * value, GParamSpec * pspec);
++static void gst_inter_app_sink_get_property (GObject * object,
++    guint property_id, GValue * value, GParamSpec * pspec);
++static void gst_inter_app_sink_finalize (GObject * object);
++
++static gboolean gst_inter_app_sink_start (GstBaseSink * sink);
++static gboolean gst_inter_app_sink_stop (GstBaseSink * sink);
++static gboolean
++gst_inter_app_sink_set_caps (GstBaseSink * sink, GstCaps * caps);
++static GstFlowReturn
++gst_inter_app_sink_render (GstBaseSink * sink, GstBuffer * buffer);
++
++enum
++{
++  PROP_0,
++  PROP_CHANNEL
++};
++
++/* pad templates */
++static GstStaticPadTemplate gst_inter_app_sink_sink_template =
++GST_STATIC_PAD_TEMPLATE ("sink",
++    GST_PAD_SINK,
++    GST_PAD_ALWAYS,
++    GST_STATIC_CAPS ("ANY")
++    );
++
++
++/* class initialization */
++#define parent_class gst_inter_app_sink_parent_class
++G_DEFINE_TYPE (GstInterAppSink, gst_inter_app_sink, GST_TYPE_BASE_SINK);
++
++static void
++gst_inter_app_sink_class_init (GstInterAppSinkClass * klass)
++{
++  GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
++  GstBaseSinkClass *base_sink_class = GST_BASE_SINK_CLASS (klass);
++  GstElementClass *element_class = GST_ELEMENT_CLASS (klass);
++
++  GST_DEBUG_CATEGORY_INIT (gst_inter_app_sink_debug_category, "interappsink", 0,
++      "debug category for interappsink element");
++
++  gst_element_class_add_pad_template (element_class,
++      gst_static_pad_template_get (&gst_inter_app_sink_sink_template));
++
++  gst_element_class_set_static_metadata (element_class,
++      "Internal communication sink",
++      "Sink",
++      "Virtual sink for internal process communication",
++      "Arun Raghavan <mail@arunraghavan.net>");
++
++  gobject_class->set_property = gst_inter_app_sink_set_property;
++  gobject_class->get_property = gst_inter_app_sink_get_property;
++  gobject_class->finalize = gst_inter_app_sink_finalize;
++  base_sink_class->start = GST_DEBUG_FUNCPTR (gst_inter_app_sink_start);
++  base_sink_class->stop = GST_DEBUG_FUNCPTR (gst_inter_app_sink_stop);
++  base_sink_class->set_caps = GST_DEBUG_FUNCPTR (gst_inter_app_sink_set_caps);
++  base_sink_class->render = GST_DEBUG_FUNCPTR (gst_inter_app_sink_render);
++
++  g_object_class_install_property (gobject_class, PROP_CHANNEL,
++      g_param_spec_string ("channel", "Channel",
++          "Channel name to match inter src and sink elements",
++          "default", G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
++}
++
++static void
++gst_inter_app_sink_init (GstInterAppSink * interappsink)
++{
++  interappsink->channel = g_strdup ("default");
++}
++
++void
++gst_inter_app_sink_set_property (GObject * object, guint property_id,
++    const GValue * value, GParamSpec * pspec)
++{
++  GstInterAppSink *interappsink = GST_INTER_APP_SINK (object);
++
++  switch (property_id) {
++    case PROP_CHANNEL:
++      g_free (interappsink->channel);
++      interappsink->channel = g_value_dup_string (value);
++      break;
++    default:
++      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
++      break;
++  }
++}
++
++void
++gst_inter_app_sink_get_property (GObject * object, guint property_id,
++    GValue * value, GParamSpec * pspec)
++{
++  GstInterAppSink *interappsink = GST_INTER_APP_SINK (object);
++
++  switch (property_id) {
++    case PROP_CHANNEL:
++      g_value_set_string (value, interappsink->channel);
++      break;
++    default:
++      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
++      break;
++  }
++}
++
++static void
++gst_inter_app_sink_finalize (GObject * object)
++{
++  GstInterAppSink *interappsink = GST_INTER_APP_SINK (object);
++
++  g_free (interappsink->channel);
++  interappsink->channel = NULL;
++
++  G_OBJECT_CLASS (parent_class)->finalize (object);
++}
++
++static gboolean
++gst_inter_app_sink_start (GstBaseSink * sink)
++{
++  GstInterAppSink *interappsink = GST_INTER_APP_SINK (sink);
++
++  GST_LOG_OBJECT (interappsink, "start");
++
++  interappsink->surface = gst_inter_surface_get (interappsink->channel);
++
++  return TRUE;
++}
++
++static gboolean
++gst_inter_app_sink_stop (GstBaseSink * sink)
++{
++  GstInterAppSink *interappsink = GST_INTER_APP_SINK (sink);
++
++  GST_LOG_OBJECT (interappsink, "stop");
++
++  g_mutex_lock (&interappsink->surface->mutex);
++
++  if (interappsink->surface->app_buffer)
++    gst_buffer_unref (interappsink->surface->app_buffer);
++
++  interappsink->surface->app_buffer = NULL;
++
++  g_mutex_unlock (&interappsink->surface->mutex);
++
++  gst_inter_surface_unref (interappsink->surface);
++  interappsink->surface = NULL;
++
++  return TRUE;
++}
++
++static gboolean
++gst_inter_app_sink_set_caps (GstBaseSink * sink, GstCaps * caps)
++{
++  GstInterAppSink *interappsink = GST_INTER_APP_SINK (sink);
++
++  GST_LOG_OBJECT (interappsink, "set caps");
++
++  g_mutex_lock (&interappsink->surface->mutex);
++
++  if (interappsink->surface->app_caps)
++    gst_caps_unref (interappsink->surface->app_caps);
++
++  interappsink->surface->app_caps = gst_caps_ref (caps);
++
++  g_cond_signal (&interappsink->surface->app_caps_cond);
++  g_mutex_unlock (&interappsink->surface->mutex);
++
++  return TRUE;
++}
++
++static GstFlowReturn
++gst_inter_app_sink_render (GstBaseSink * sink, GstBuffer * buffer)
++{
++  GstInterAppSink *interappsink = GST_INTER_APP_SINK (sink);
++
++  GST_LOG_OBJECT (interappsink, "render");
++
++  g_mutex_lock (&interappsink->surface->mutex);
++
++  if (interappsink->surface->app_buffer) {
++    GST_WARNING_OBJECT (interappsink, "Previous buffer was unconsumed");
++    gst_buffer_unref (interappsink->surface->app_buffer);
++  }
++
++  interappsink->surface->app_buffer = gst_buffer_ref (buffer);
++
++  g_cond_signal (&interappsink->surface->app_buffer_cond);
++  g_mutex_unlock (&interappsink->surface->mutex);
++
++  return GST_FLOW_OK;
++}
+diff --git a/gst/inter/gstinterappsink.h b/gst/inter/gstinterappsink.h
+new file mode 100644
+index 0000000..d41839f
+--- /dev/null
++++ b/gst/inter/gstinterappsink.h
+@@ -0,0 +1,52 @@
++/* GStreamer
++ * Copyright (C) 2011 David Schleef <ds@entropywave.com>
++ * Copyright (C) 2014 Arun Raghavan <mail@@arunraghavan.net>
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Library General Public
++ * License as published by the Free Software Foundation; either
++ * version 2 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Library General Public License for more details.
++ *
++ * You should have received a copy of the GNU Library General Public
++ * License along with this library; if not, write to the
++ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
++ * Boston, MA 02110-1301, USA.
++ */
++
++#ifndef _GST_INTER_APP_SINK_H_
++#define _GST_INTER_APP_SINK_H_
++
++#include <gst/base/gstbasesink.h>
++#include "gstintersurface.h"
++
++G_BEGIN_DECLS
++#define GST_TYPE_INTER_APP_SINK   (gst_inter_app_sink_get_type())
++#define GST_INTER_APP_SINK(obj)   (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_INTER_APP_SINK,GstInterAppSink))
++#define GST_INTER_APP_SINK_CLASS(klass)   (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_INTER_APP_SINK,GstInterAppSinkClass))
++#define GST_IS_INTER_APP_SINK(obj)   (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_INTER_APP_SINK))
++#define GST_IS_INTER_APP_SINK_CLASS(obj)   (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_INTER_APP_SINK))
++typedef struct _GstInterAppSink GstInterAppSink;
++typedef struct _GstInterAppSinkClass GstInterAppSinkClass;
++
++struct _GstInterAppSink
++{
++  GstBaseSink parent;
++
++  GstInterSurface *surface;
++  char *channel;
++};
++
++struct _GstInterAppSinkClass
++{
++  GstBaseSinkClass parent_class;
++};
++
++GType gst_inter_app_sink_get_type (void);
++
++G_END_DECLS
++#endif
+diff --git a/gst/inter/gstinterappsrc.c b/gst/inter/gstinterappsrc.c
+new file mode 100644
+index 0000000..6b76fc9
+--- /dev/null
++++ b/gst/inter/gstinterappsrc.c
+@@ -0,0 +1,255 @@
++/* GStreamer
++ * Copyright (C) 2011 David Schleef <ds@entropywave.com>
++ * Copyright (C) 2014 Arun Raghavan <mail@@arunraghavan.net>
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Library General Public
++ * License as published by the Free Software Foundation; either
++ * version 2 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Library General Public License for more details.
++ *
++ * You should have received a copy of the GNU Library General Public
++ * License along with this library; if not, write to the
++ * Free Software Foundation, Inc., 51 Franklin Street, Suite 500,
++ * Boston, MA 02110-1335, USA.
++ */
++/**
++ * SECTION:element-gstinterappsrc
++ *
++ * The interappsrc element is a source element used in connection with a
++ * interappsink element in a different pipeline, allowing communication of
++ * data between the two pipelines.
++ *
++ * <refsect2>
++ * <title>Example launch line</title>
++ * |[
++ * gst-launch -v interappsrc ! kateenc ! oggmux ! filesink location=out.ogv
++ * ]|
++ * 
++ * The interappsrc element cannot be used effectively with gst-launch,
++ * as it requires a second pipeline in the application to send data.
++ * See the gstintertest.c example in the gst-plugins-bad source code for
++ * more details.
++ * </refsect2>
++ */
++
++#ifdef HAVE_CONFIG_H
++#include "config.h"
++#endif
++
++#include <gst/gst.h>
++#include <gst/base/gstbasesrc.h>
++#include "gstinterappsrc.h"
++
++GST_DEBUG_CATEGORY_STATIC (gst_inter_app_src_debug_category);
++#define GST_CAT_DEFAULT gst_inter_app_src_debug_category
++
++/* prototypes */
++static void gst_inter_app_src_set_property (GObject * object,
++    guint property_id, const GValue * value, GParamSpec * pspec);
++static void gst_inter_app_src_get_property (GObject * object,
++    guint property_id, GValue * value, GParamSpec * pspec);
++static void gst_inter_app_src_finalize (GObject * object);
++
++static gboolean gst_inter_app_src_start (GstBaseSrc * src);
++static gboolean gst_inter_app_src_stop (GstBaseSrc * src);
++static GstFlowReturn
++gst_inter_app_src_create (GstBaseSrc * src, guint64 offset, guint size,
++    GstBuffer ** buf);
++
++#define DEFAULT_TIMEOUT 2000000000      /* 2000 ms */
++
++enum
++{
++  PROP_0,
++  PROP_CHANNEL
++};
++
++/* pad templates */
++static GstStaticPadTemplate gst_inter_app_src_src_template =
++GST_STATIC_PAD_TEMPLATE ("src",
++    GST_PAD_SRC,
++    GST_PAD_ALWAYS,
++    GST_STATIC_CAPS ("ANY")
++    );
++
++/* class initialization */
++#define parent_class gst_inter_app_src_parent_class
++G_DEFINE_TYPE (GstInterAppSrc, gst_inter_app_src, GST_TYPE_BASE_SRC);
++
++static void
++gst_inter_app_src_class_init (GstInterAppSrcClass * klass)
++{
++  GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
++  GstElementClass *element_class = GST_ELEMENT_CLASS (klass);
++  GstBaseSrcClass *base_src_class = GST_BASE_SRC_CLASS (klass);
++
++  GST_DEBUG_CATEGORY_INIT (gst_inter_app_src_debug_category, "interappsrc", 0,
++      "debug category for interappsrc element");
++
++  gst_element_class_add_pad_template (element_class,
++      gst_static_pad_template_get (&gst_inter_app_src_src_template));
++
++  gst_element_class_set_static_metadata (element_class,
++      "Internal communication source",
++      "Source",
++      "Virtual source for internal process communication",
++      "Arun Raghavan <mail@arunraghavan.net>");
++
++  gobject_class->set_property = gst_inter_app_src_set_property;
++  gobject_class->get_property = gst_inter_app_src_get_property;
++  gobject_class->finalize = gst_inter_app_src_finalize;
++  base_src_class->start = GST_DEBUG_FUNCPTR (gst_inter_app_src_start);
++  base_src_class->stop = GST_DEBUG_FUNCPTR (gst_inter_app_src_stop);
++  base_src_class->create = GST_DEBUG_FUNCPTR (gst_inter_app_src_create);
++
++  g_object_class_install_property (gobject_class, PROP_CHANNEL,
++      g_param_spec_string ("channel", "Channel",
++          "Channel name to match inter src and sink elements",
++          "default", G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
++}
++
++static void
++gst_inter_app_src_init (GstInterAppSrc * interappsrc)
++{
++  gst_base_src_set_format (GST_BASE_SRC (interappsrc), GST_FORMAT_TIME);
++  gst_base_src_set_live (GST_BASE_SRC (interappsrc), TRUE);
++
++  interappsrc->channel = g_strdup ("default");
++}
++
++void
++gst_inter_app_src_set_property (GObject * object, guint property_id,
++    const GValue * value, GParamSpec * pspec)
++{
++  GstInterAppSrc *interappsrc = GST_INTER_APP_SRC (object);
++
++  switch (property_id) {
++    case PROP_CHANNEL:
++      g_free (interappsrc->channel);
++      interappsrc->channel = g_value_dup_string (value);
++      break;
++    default:
++      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
++      break;
++  }
++}
++
++void
++gst_inter_app_src_get_property (GObject * object, guint property_id,
++    GValue * value, GParamSpec * pspec)
++{
++  GstInterAppSrc *interappsrc = GST_INTER_APP_SRC (object);
++
++  switch (property_id) {
++    case PROP_CHANNEL:
++      g_value_set_string (value, interappsrc->channel);
++      break;
++    default:
++      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, property_id, pspec);
++      break;
++  }
++}
++
++static void
++gst_inter_app_src_finalize (GObject * object)
++{
++  GstInterAppSrc *interappsrc = GST_INTER_APP_SRC (object);
++
++  g_free (interappsrc->channel);
++  interappsrc->channel = NULL;
++
++  G_OBJECT_CLASS (parent_class)->finalize (object);
++}
++
++static gboolean
++gst_inter_app_src_start (GstBaseSrc * src)
++{
++  GstInterAppSrc *interappsrc = GST_INTER_APP_SRC (src);
++
++  GST_DEBUG_OBJECT (interappsrc, "start");
++
++  interappsrc->surface = gst_inter_surface_get (interappsrc->channel);
++  interappsrc->got_caps = FALSE;
++
++  return TRUE;
++}
++
++static gboolean
++gst_inter_app_src_stop (GstBaseSrc * src)
++{
++  GstInterAppSrc *interappsrc = GST_INTER_APP_SRC (src);
++
++  GST_DEBUG_OBJECT (interappsrc, "stop");
++
++  gst_inter_surface_unref (interappsrc->surface);
++  interappsrc->surface = NULL;
++
++  return TRUE;
++}
++
++static GstFlowReturn
++gst_inter_app_src_create (GstBaseSrc * src, guint64 offset, guint size,
++    GstBuffer ** buf)
++{
++  GstInterAppSrc *interappsrc = GST_INTER_APP_SRC (src);
++  GstBuffer *buffer = NULL;
++  GstCaps *caps = NULL;
++
++  GST_DEBUG_OBJECT (interappsrc, "create");
++
++  g_mutex_lock (&interappsrc->surface->mutex);
++
++  if (!interappsrc->got_caps && !interappsrc->surface->app_caps) {
++    /* Can't do anything until we have caps */
++    GST_LOG_OBJECT (interappsrc, "waiting for caps");
++    g_cond_wait (&interappsrc->surface->app_caps_cond,
++        &interappsrc->surface->mutex);
++    GST_LOG_OBJECT (interappsrc, "end wait");
++  }
++
++  if (interappsrc->surface->app_caps) {
++    caps = interappsrc->surface->app_caps;
++    interappsrc->surface->app_caps = NULL;
++    interappsrc->got_caps = TRUE;
++  }
++
++  if (!interappsrc->surface->app_buffer) {
++    /* Wait for a buffer */
++    GST_LOG_OBJECT (interappsrc, "waiting for buffer");
++    g_cond_wait (&interappsrc->surface->app_buffer_cond,
++        &interappsrc->surface->mutex);
++    GST_LOG_OBJECT (interappsrc, "end wait");
++  }
++
++  buffer = interappsrc->surface->app_buffer;
++  interappsrc->surface->app_buffer = NULL;
++
++  g_mutex_unlock (&interappsrc->surface->mutex);
++
++  if (caps) {
++    GST_DEBUG_OBJECT (interappsrc, "Got caps: %" GST_PTR_FORMAT, caps);
++
++    if (!gst_base_src_set_caps (src, caps)) {
++      GST_ERROR_OBJECT (interappsrc, "Failed to set caps");
++
++      gst_caps_unref (caps);
++      gst_buffer_unref (buffer);
++
++      return GST_FLOW_NOT_NEGOTIATED;
++    }
++
++    gst_caps_unref (caps);
++  }
++
++  GST_LOG_OBJECT (interappsrc, "Pushing %u bytes",
++      (unsigned int) gst_buffer_get_size (buffer));
++
++  *buf = buffer;
++
++  return GST_FLOW_OK;
++}
+diff --git a/gst/inter/gstinterappsrc.h b/gst/inter/gstinterappsrc.h
+new file mode 100644
+index 0000000..a699902
+--- /dev/null
++++ b/gst/inter/gstinterappsrc.h
+@@ -0,0 +1,54 @@
++/* GStreamer
++ * Copyright (C) 2011 David Schleef <ds@entropywave.com>
++ * Copyright (C) 2014 Arun Raghavan <mail@@arunraghavan.net>
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Library General Public
++ * License as published by the Free Software Foundation; either
++ * version 2 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Library General Public License for more details.
++ *
++ * You should have received a copy of the GNU Library General Public
++ * License along with this library; if not, write to the
++ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
++ * Boston, MA 02110-1301, USA.
++ */
++
++#ifndef _GST_INTER_APP_SRC_H_
++#define _GST_INTER_APP_SRC_H_
++
++#include <gst/base/gstbasesrc.h>
++#include "gstintersurface.h"
++
++G_BEGIN_DECLS
++#define GST_TYPE_INTER_APP_SRC   (gst_inter_app_src_get_type())
++#define GST_INTER_APP_SRC(obj)   (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_INTER_APP_SRC,GstInterAppSrc))
++#define GST_INTER_APP_SRC_CLASS(klass)   (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_INTER_APP_SRC,GstInterAppSrcClass))
++#define GST_IS_INTER_APP_SRC(obj)   (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_INTER_APP_SRC))
++#define GST_IS_INTER_APP_SRC_CLASS(obj)   (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_INTER_APP_SRC))
++typedef struct _GstInterAppSrc GstInterAppSrc;
++typedef struct _GstInterAppSrcClass GstInterAppSrcClass;
++
++struct _GstInterAppSrc
++{
++  GstBaseSrc parent;
++
++  GstInterSurface *surface;
++  char *channel;
++
++  gboolean got_caps;
++};
++
++struct _GstInterAppSrcClass
++{
++  GstBaseSrcClass parent_class;
++};
++
++GType gst_inter_app_src_get_type (void);
++
++G_END_DECLS
++#endif
+diff --git a/gst/inter/gstintersurface.c b/gst/inter/gstintersurface.c
+index 70dc0a7..5d970e4 100644
+--- a/gst/inter/gstintersurface.c
++++ b/gst/inter/gstintersurface.c
+@@ -48,6 +48,8 @@ gst_inter_surface_get (const char *name)
+   surface->ref_count = 1;
+   surface->name = g_strdup (name);
+   g_mutex_init (&surface->mutex);
++  g_cond_init (&surface->app_caps_cond);
++  g_cond_init (&surface->app_buffer_cond);
+   surface->audio_adapter = gst_adapter_new ();
+   surface->audio_buffer_time = DEFAULT_AUDIO_BUFFER_TIME;
+   surface->audio_latency_time = DEFAULT_AUDIO_LATENCY_TIME;
+@@ -78,8 +80,11 @@ gst_inter_surface_unref (GstInterSurface * surface)
+     }
+ 
+     g_mutex_clear (&surface->mutex);
++    g_cond_clear (&surface->app_caps_cond);
++    g_cond_clear (&surface->app_buffer_cond);
+     gst_buffer_replace (&surface->video_buffer, NULL);
+     gst_buffer_replace (&surface->sub_buffer, NULL);
++    gst_buffer_replace (&surface->app_buffer, NULL);
+     gst_object_unref (surface->audio_adapter);
+     g_free (surface->name);
+     g_free (surface);
+diff --git a/gst/inter/gstintersurface.h b/gst/inter/gstintersurface.h
+index 13842f0..5e41c8f 100644
+--- a/gst/inter/gstintersurface.h
++++ b/gst/inter/gstintersurface.h
+@@ -45,8 +45,14 @@ struct _GstInterSurface
+   guint64 audio_latency_time;
+   guint64 audio_period_time;
+ 
++  /* app */
++  GCond app_caps_cond;
++  GCond app_buffer_cond;
++  GstCaps *app_caps;
++
+   GstBuffer *video_buffer;
+   GstBuffer *sub_buffer;
++  GstBuffer *app_buffer;
+   GstAdapter *audio_adapter;
+ };
+ 
+diff --git a/gst/inter/gstintertest.c b/gst/inter/gstintertest.c
+index cff4f0d..87180b8 100644
+--- a/gst/inter/gstintertest.c
++++ b/gst/inter/gstintertest.c
+@@ -63,9 +63,12 @@ static gboolean onesecond_timer (gpointer priv);
+ 
+ 
+ gboolean verbose;
++gboolean compressed;
+ 
+ static GOptionEntry entries[] = {
+   {"verbose", 'v', 0, G_OPTION_ARG_NONE, &verbose, "Be verbose", NULL},
++  {"compressed", 'c', 0, G_OPTION_ARG_NONE, &compressed, "Use compressed data",
++      NULL},
+ 
+   {NULL}
+ 
+@@ -185,10 +188,21 @@ gst_inter_test_create_pipeline_vts (GstInterTest * intertest)
+   g_string_append (pipe_desc,
+       "video/x-raw,format=(string)I420,width=320,height=240 ! ");
+   g_string_append (pipe_desc, "timeoverlay ! ");
+-  g_string_append (pipe_desc, "intervideosink name=sink sync=true ");
++  if (!compressed) {
++    g_string_append (pipe_desc, "intervideosink name=sink sync=true ");
++  } else {
++    g_string_append (pipe_desc, "vp8enc deadline=15000 ! ");
++    g_string_append (pipe_desc,
++        "interappsink channel=video name=sink sync=true ");
++  }
+   g_string_append (pipe_desc,
+       "audiotestsrc samplesperbuffer=1600 num-buffers=100 ! audioconvert ! ");
+-  g_string_append (pipe_desc, "interaudiosink sync=true ");
++  if (!compressed) {
++    g_string_append (pipe_desc, "interaudiosink sync=true ");
++  } else {
++    g_string_append (pipe_desc, "opusenc bandwidth=fullband ! ");
++    g_string_append (pipe_desc, "interappsink channel=audio sync=true ");
++  }
+ 
+   if (verbose)
+     g_print ("pipeline: %s\n", pipe_desc->str);
+@@ -222,9 +236,20 @@ gst_inter_test_create_pipeline_server (GstInterTest * intertest)
+ 
+   pipe_desc = g_string_new ("");
+ 
+-  g_string_append (pipe_desc, "intervideosrc ! queue ! ");
++  if (!compressed)
++    g_string_append (pipe_desc, "intervideosrc ! queue ! ");
++  else {
++    g_string_append (pipe_desc,
++        "interappsrc channel=video ! queue ! vp8dec ! videoconvert ! ");
++  }
+   g_string_append (pipe_desc, "xvimagesink name=sink ");
+-  g_string_append (pipe_desc, "interaudiosrc ! queue ! ");
++
++  if (!compressed)
++    g_string_append (pipe_desc, "interaudiosrc ! queue ! ");
++  else {
++    g_string_append (pipe_desc,
++        "interappsrc channel=audio ! queue ! opusdec ! audioconvert ! ");
++  }
+   g_string_append (pipe_desc, "alsasink ");
+ 
+   if (verbose)
+-- 
+2.1.4
+

@@ -1,0 +1,36 @@
+From ee85908be1d9750313f7173f7f6d6c93b30dcb22 Mon Sep 17 00:00:00 2001
+From: Arun Raghavan <arun@centricular.com>
+Date: Wed, 7 Jan 2015 12:37:48 +0530
+Subject: [PATCH 4/7] inter: Use vorbis instead of opus for testing
+
+vorbisdec seems a bit more susceptible to missing headers, so allows for
+testing the header push code a bit better.
+---
+ gst/inter/gstintertest.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/gst/inter/gstintertest.c b/gst/inter/gstintertest.c
+index 87180b8..52b4eb3 100644
+--- a/gst/inter/gstintertest.c
++++ b/gst/inter/gstintertest.c
+@@ -200,7 +200,7 @@ gst_inter_test_create_pipeline_vts (GstInterTest * intertest)
+   if (!compressed) {
+     g_string_append (pipe_desc, "interaudiosink sync=true ");
+   } else {
+-    g_string_append (pipe_desc, "opusenc bandwidth=fullband ! ");
++    g_string_append (pipe_desc, "vorbisenc ! ");
+     g_string_append (pipe_desc, "interappsink channel=audio sync=true ");
+   }
+ 
+@@ -248,7 +248,7 @@ gst_inter_test_create_pipeline_server (GstInterTest * intertest)
+     g_string_append (pipe_desc, "interaudiosrc ! queue ! ");
+   else {
+     g_string_append (pipe_desc,
+-        "interappsrc channel=audio ! queue ! opusdec ! audioconvert ! ");
++        "interappsrc channel=audio ! queue ! vorbisdec ! audioconvert ! ");
+   }
+   g_string_append (pipe_desc, "alsasink ");
+ 
+-- 
+2.1.4
+
