@@ -67,6 +67,7 @@ config BR2_PACKAGE_WPE_USE_MEDIA_STREAM
 	bool "media-stream"
 	default n
 	depends on BR2_WPE_GSTREAMER
+	select BR2_PACKAGE_OPENWEBRTC
 	help
 	  Enable MediaStream support. This is needed for WebRTC APIs.
 comment "media-stream requires wpe-gstreamer"
