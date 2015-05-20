@@ -7,33 +7,17 @@
 LIBUSRSCTP_VERSION = cc07d5dc919cd98887198eb3ff21d983f229472b
 LIBUSRSCTP_SITE = $(call github,ossy-szeged,sctp-refimpl,$(LIBUSRSCTP_VERSION))
 LIBUSRSCTP_INSTALL_STAGING = YES
+LIBUSRSCTP_AUTORECONF = YES
 LIBUSRSCTP_LICENSE = New BSD License
-LIBUSRSCTP_LICENSE_FILES = COPYRIGHT
 
-LIBUSRSCTP_CONFIGURE_CMDS = \
-	(cd $(@D); \
-	./bootstrap; \
-	$(TARGET_CONFIGURE_OPTS) \
-	$(TARGET_CONFIGURE_ARGS) \
-	./configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
-		--prefix=/usr \
-		--exec-prefix=/usr \
-		--sysconfdir=/etc \
-		--program-prefix="" \
-		--disable-gtk-doc \
-		--disable-doc \
-		--disable-docs \
-		--disable-documentation \
-		--with-xmlto=no \
-		--with-fop=no \
-		$(DISABLE_NLS) \
-		$(DISABLE_LARGEFILE) \
-		$(DISABLE_IPV6) \
-		$(SHARED_STATIC_LIBS_OPTS) \
-		$(QUIET) \
-	)
+define LIBUSRSCTP_CREATE_M4_DIR
+	mkdir -p $(@D)/m4
+	touch $(@D)/README
+	touch $(@D)/NEWS
+	touch $(@D)/AUTHORS
+	touch $(@D)/ChangeLog
+endef
+
+LIBUSRSCTP_POST_PATCH_HOOKS += LIBUSRSCTP_CREATE_M4_DIR
 
 $(eval $(autotools-package))
