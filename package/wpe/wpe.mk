@@ -130,6 +130,7 @@ WPE_FLAGS += \
 endif
 
 ifeq ($(BR2_PACKAGE_WPE_USE_DXDRM_EME),y)
+WPE_DEPENDENCIES += dxdrm
 WPE_FLAGS += -DENABLE_DXDRM=ON
 endif
 
