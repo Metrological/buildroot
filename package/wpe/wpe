@@ -15,6 +15,9 @@ export GST_GL_WINDOW=dummy
 # Network Process
 export WPE_NETWORK_PROCESS=1
 
+# WebInspector
+#export WEBKIT_INSPECTOR_SERVER=0.0.0.0:9998
+
 # FPS
 #export WPE_THREADED_COMPOSITOR_FPS=1
 #export WPE_LAYER_TREE_HOST_FPS=1
