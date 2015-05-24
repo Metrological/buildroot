@@ -17,10 +17,7 @@ TODO: wl_dispmanx_server_buffer should probably be defined in a
 private header that can be included from EGL and vc_* instead of in
 vc_vchi_dispmanx.h
 ---
- .gitignore                                         |   2 +
  CMakeLists.txt                                     |  11 +
- README.md                                          |   4 +
- buildme                                            |  14 +-
  interface/khronos/CMakeLists.txt                   |  52 ++++-
  interface/khronos/common/khrn_client.c             |  15 ++
  interface/khronos/common/khrn_client.h             |  10 +
@@ -56,16 +53,6 @@ vc_vchi_dispmanx.h
  create mode 100644 interface/wayland/dispmanx.xml
  create mode 100644 makefiles/cmake/Wayland.cmake
 
-diff --git a/.gitignore b/.gitignore
-index 8df9393e28f62d44521b02edbb8b518964fa0fe4..d0d1387a38668c363cf3225b7663807c6f0964dc 100644
---- a/.gitignore
-+++ b/.gitignore
-@@ -10,3 +10,5 @@
- *.lai
- *.la
- *.a
-+
-+*~
 diff --git a/CMakeLists.txt b/CMakeLists.txt
 index 63459003e88b4877b176358389e9748d370e25c9..96c28a0060404d614f8b922cbecaf0fee6298a17 100644
 --- a/CMakeLists.txt
@@ -88,55 +75,6 @@ index 63459003e88b4877b176358389e9748d370e25c9..96c28a0060404d614f8b922cbecaf0fe
  enable_language(ASM)
  
  # Global include paths
-diff --git a/README.md b/README.md
-index 358d2b4bc00d9c6aa190f7febfcd9540a3d060fa..4da444818533523939f86c7cb28448a6433eef81 100644
---- a/README.md
-+++ b/README.md
-@@ -4,3 +4,7 @@ EGL, mmal, GLESv2, vcos, openmaxil, vchiq_arm, bcm_host, WFC, OpenVG.
- 
- Use buildme to build. It requires cmake to be installed and an arm cross compiler. It is set up to use this one:
- https://github.com/raspberrypi/tools/tree/master/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian
-+
-+To build support for the Wayland winsys in EGL, execute the buildme script like this:
-+
-+$ BUILD_WAYLAND=1 ./buildme.
-diff --git a/buildme b/buildme
-index 2beb36a2de146199a2c2476b98ea2463aaedf1ee..7d091f75feb6e3f2ad2d7f41f007c6e4ae79b5ff 100755
---- a/buildme
-+++ b/buildme
-@@ -1,10 +1,14 @@
- #/bin/sh
- 
-+if [ -n "$BUILD_WAYLAND" ]; then
-+	WAYLAND_VARS="-DBUILD_WAYLAND=TRUE"
-+fi
-+
- if [ "armv6l" = `arch` ]; then
- 	# Native compile on the Raspberry Pi
- 	mkdir -p build/raspberry/release
- 	pushd build/raspberry/release
--	cmake -DCMAKE_BUILD_TYPE=Release ../../..
-+	cmake -DCMAKE_BUILD_TYPE=Release $WAYLAND_VARS ../../..
- 	make
- 	if [ "$1" != "" ]; then
- 	 sudo make install DESTDIR=$1
-@@ -13,9 +17,15 @@ if [ "armv6l" = `arch` ]; then
- 	fi
- else
- 	# Cross compile on a more capable machine
-+
-+	if [ -n "$BUILD_WAYLAND" ]; then
-+		# Use wayland-scanner from the build platform
-+		WAYLAND_VARS+=" -DWAYLAND_SCANNER_EXECUTABLE:FILEPATH=/usr/bin/wayland-scanner"
-+	fi
-+
- 	mkdir -p build/arm-linux/release/
- 	pushd build/arm-linux/release/
--	cmake -DCMAKE_TOOLCHAIN_FILE=../../../makefiles/cmake/toolchains/arm-linux-gnueabihf.cmake -DCMAKE_BUILD_TYPE=Release ../../..
-+	cmake -DCMAKE_TOOLCHAIN_FILE=../../../makefiles/cmake/toolchains/arm-linux-gnueabihf.cmake -DCMAKE_BUILD_TYPE=Release $WAYLAND_VARS ../../..
- 	make -j 6
- 
- 	if [ "$1" != "" ]; then
 diff --git a/interface/khronos/CMakeLists.txt b/interface/khronos/CMakeLists.txt
 index c4372918beed51d6a3bd4a3715148f59a52b285d..6778e105a21e9af7049e9f5ef2440406d5b2b6b5 100644
 --- a/interface/khronos/CMakeLists.txt
