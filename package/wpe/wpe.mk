@@ -121,7 +121,8 @@ ifeq ($(BR2_ENABLE_DEBUG),y)
 BUILDTYPE = Debug
 WPE_FLAGS += \
 	-DCMAKE_C_FLAGS_DEBUG="-O0 -g -Wno-cast-align" \
-	-DCMAKE_CXX_FLAGS_DEBUG="-O0 -g -Wno-cast-align"
+	-DCMAKE_CXX_FLAGS_DEBUG="-O0 -g -Wno-cast-align" \
+	-DDEBUG_FISSION=TRUE
 else
 BUILDTYPE = Release
 WPE_FLAGS += \
