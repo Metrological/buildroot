@@ -167,8 +167,13 @@ WPE_CONF_OPT = -DPORT=WPE -G $(WPE_NINJA_GENERATOR) \
 	-DCMAKE_BUILD_TYPE=$(BUILDTYPE) \
 	$(WPE_FLAGS)
 
+WPE_NINJA_EXTRA_OPTIONS=
+ifeq ($(VERBOSE),1)
+	WPE_NINJA_EXTRA_OPTIONS += -v
+endif
+
 define WPE_BUILD_CMDS
-	$(WPE_MAKE_ENV) $(HOST_DIR)/usr/bin/ninja -C $(WPE_BUILDDIR) libWPEWebKit.so libWPEWebInspectorResources.so WPE{Web,Network}Process WPE$(WPE_SHELL)Shell
+	$(WPE_MAKE_ENV) $(HOST_DIR)/usr/bin/ninja -C $(WPE_BUILDDIR) $(WPE_NINJA_EXTRA_OPTIONS) libWPEWebKit.so libWPEWebInspectorResources.so WPE{Web,Network}Process WPE$(WPE_SHELL)Shell
 endef
 
 define WPE_INSTALL_STAGING_CMDS
