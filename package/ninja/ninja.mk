@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-NINJA_VERSION = c406d1c8adfedc1982e2c08ab95d581f65eb65de
+NINJA_VERSION = f0f36ad1c72f6100a8957f035769fda50b69919f
 NINJA_SITE = $(call github,martine,ninja,$(NINJA_VERSION))
 
 define HOST_NINJA_CONFIGURE_CMDS
