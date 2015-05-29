@@ -1,0 +1,23 @@
+diff -Naur lttng-tools-2.6.0-orig/src/common/runas.c lttng-tools-2.6.0/src/common/runas.c
+--- lttng-tools-2.6.0-orig/src/common/runas.c	2015-06-02 11:07:29.332166489 +0200
++++ lttng-tools-2.6.0/src/common/runas.c	2015-06-02 11:08:17.610002109 +0200
+@@ -285,18 +285,7 @@
+ static
+ int run_as(int (*cmd)(void *data), void *data, uid_t uid, gid_t gid)
+ {
+-	if (use_clone()) {
+-		int ret;
+-
+-		DBG("Using run_as_clone");
+-		pthread_mutex_lock(&lttng_libc_state_lock);
+-		ret = run_as_clone(cmd, data, uid, gid);
+-		pthread_mutex_unlock(&lttng_libc_state_lock);
+-		return ret;
+-	} else {
+-		DBG("Using run_as_noclone");
+-		return run_as_noclone(cmd, data, uid, gid);
+-	}
++	return run_as_noclone(cmd, data, uid, gid);
+ }
+ 
+ LTTNG_HIDDEN
