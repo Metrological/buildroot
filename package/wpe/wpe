@@ -22,6 +22,9 @@ export WPE_NETWORK_PROCESS=1
 #export WPE_THREADED_COMPOSITOR_FPS=1
 #export WPE_LAYER_TREE_HOST_FPS=1
 
+# Pointer support
+#export ATHOL_POINTER_EVENTS=1
+
 # The PREFIX env var can be useful when debugging athol with gdbserver.
 if [ "$1" = "--loop" ];
 then
