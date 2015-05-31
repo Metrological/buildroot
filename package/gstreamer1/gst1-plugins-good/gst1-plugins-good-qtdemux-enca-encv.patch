@@ -183,13 +183,15 @@ diff --git a/gst/isomp4/qtdemux_types.c b/gst/isomp4/qtdemux_types.c
 index a47d5ae..5dee5a5 100644
 --- a/gst/isomp4/qtdemux_types.c
 +++ b/gst/isomp4/qtdemux_types.c
-@@ -182,7 +182,11 @@ static const QtNodeType qt_node_types[] = {
+@@ -182,9 +182,13 @@
    {FOURCC_chap, "Chapter Reference"},
    {FOURCC_btrt, "Bitrate information", 0},
    {FOURCC_frma, "Audio codec format", 0},
 +  {FOURCC_encv, "Encrypted video", 0, },
 +  {FOURCC_enca, "Encrypted audio", 0, },
 +  {FOURCC_sinf, "Protection Scheme Information Box", QT_FLAG_CONTAINER,},
+   {FOURCC_name, "name", 0},
+   {FOURCC_mean, "mean", 0},
    {0, "unknown", 0,},
 +  {FOURCC_pssh, "Protection System Specific Header", 0, },
  };
