@@ -1,0 +1,48 @@
+From f48b4f410a8b70bf4be980be6d779f3352a5a8ae Mon Sep 17 00:00:00 2001
+From: Philippe Normand <philn@igalia.com>
+Date: Tue, 19 May 2015 18:58:11 +0200
+Subject: [PATCH] protection: implement meta transform function
+
+Copy the GstMeta contents over to the new buffer.
+
+https://bugzilla.gnome.org/show_bug.cgi?id=749590
+---
+ gst/gstprotection.c | 15 +++++++++++++--
+ 1 file changed, 13 insertions(+), 2 deletions(-)
+
+diff --git a/gst/gstprotection.c b/gst/gstprotection.c
+index 36f36ad..e8c929f 100644
+--- a/gst/gstprotection.c
++++ b/gst/gstprotection.c
+@@ -84,6 +84,18 @@ gst_protection_meta_free (GstMeta * meta, GstBuffer * buffer)
+     gst_structure_free (protection_meta->info);
+ }
+ 
++static gboolean
++gst_protection_meta_transform (GstBuffer * transbuf, GstMeta * meta,
++    GstBuffer * buffer, GQuark type, gpointer data)
++{
++  GstProtectionMeta *protection_meta = (GstProtectionMeta *) meta;
++
++  /* we always copy no matter what transform */
++  gst_buffer_add_protection_meta (transbuf, protection_meta->info);
++
++  return TRUE;
++}
++
+ const GstMetaInfo *
+ gst_protection_meta_get_info (void)
+ {
+@@ -93,8 +105,7 @@ gst_protection_meta_get_info (void)
+     const GstMetaInfo *meta =
+         gst_meta_register (GST_PROTECTION_META_API_TYPE, "GstProtectionMeta",
+         sizeof (GstProtectionMeta), gst_protection_meta_init,
+-        gst_protection_meta_free,
+-        (GstMetaTransformFunction) NULL);
++        gst_protection_meta_free, gst_protection_meta_transform);
+ 
+     g_once_init_leave (&protection_meta_info, meta);
+   }
+-- 
+2.1.4
+
