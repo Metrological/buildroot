@@ -9,7 +9,7 @@ CPPSDK_SITE_METHOD = git
 CPPSDK_SITE = git@github.com:Metrological/cppsdk.git
 CPPSDK_INSTALL_STAGING = YES
 
-ifeq ($(BR2_ENABLE_DEBUG),Y)
+ifeq ($(BR2_ENABLE_DEBUG),y)
   CPPSDK_BUILDTYPE=Debug
 else ifeq ($(BR2_PACKAGE_CPPSDK_DEBUG),y)
   CPPSDK_BUILDTYPE=Debug
