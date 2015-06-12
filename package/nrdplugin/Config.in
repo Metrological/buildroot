@@ -5,7 +5,7 @@ config BR2_PACKAGE_NRDPLUGIN
 	  plugin package for the nrd framework
 
 comment "nrd plugin requires nrd"
-!depends on !BR2_PACKAGE_NRD
+depends on !BR2_PACKAGE_NRD
 
 if BR2_PACKAGE_NRDPLUGIN
 
