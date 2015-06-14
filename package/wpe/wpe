@@ -26,13 +26,10 @@ export WPE_NETWORK_PROCESS=1
 #export ATHOL_POINTER_EVENTS=1
 
 WPE_CONF_FILE="/boot/wpe.conf"
+WPE_CONFIG=""
 if [ -e "$WPE_CONF_FILE" ];
 then
-	grep -v '^#' $WPE_CONF_FILE | while read line;
-	do
-		[ -z "$line" ] && continue;
-		export "$line";
-	done
+	WPE_CONFIG=$(grep -v '^#' $WPE_CONF_FILE | tr -d "\r" | tr "\n" " " | tr -s " ")
 fi
 
 # The PREFIX env var can be useful when debugging athol with gdbserver.
@@ -41,8 +38,8 @@ then
 	export HOME=/root
 	while true;
 	do
-		WPE_SHELL_URL=$2 $PREFIX athol
+		eval "WPE_SHELL_URL=$2 $WPE_CONFIG $PREFIX athol"
 	done
 else
-	WPE_SHELL_URL=$1 $PREFIX athol
+	eval "WPE_SHELL_URL=$1 $WPE_CONFIG $PREFIX athol"
 fi
