@@ -25,6 +25,16 @@ export WPE_NETWORK_PROCESS=1
 # Pointer support
 #export ATHOL_POINTER_EVENTS=1
 
+WPE_CONF_FILE="/boot/wpe.conf"
+if [ -e "$WPE_CONF_FILE" ];
+then
+	grep -v '^#' $WPE_CONF_FILE | while read line;
+	do
+		[ -z "$line" ] && continue;
+		export "$line";
+	done
+fi
+
 # The PREFIX env var can be useful when debugging athol with gdbserver.
 if [ "$1" = "--loop" ];
 then
