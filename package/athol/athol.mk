@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-ATHOL_VERSION = 0df4a13e712533ef333c3f4eddfe334f375b65e2
+ATHOL_VERSION = 7dbbc0e6e0654b8350609959971b32793b25253e
 ATHOL_SITE = $(call github,Metrological,athol,$(ATHOL_VERSION))
 
 ATHOL_INSTALL_STAGING = YES
