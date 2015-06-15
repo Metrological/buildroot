@@ -12,6 +12,9 @@ export ATHOL_SHELL=/usr/lib/libWPEAtholShell.so
 # when it creates its initial 16x16px surface.
 export GST_GL_WINDOW=dummy
 
+# Use cairo noaa compositor
+export CAIRO_GL_COMPOSITOR=noaa
+
 # Network Process
 export WPE_NETWORK_PROCESS=1
 
