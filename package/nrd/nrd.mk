@@ -123,13 +123,9 @@ NRD_INSTALL_STAGING = YES
 NRD_CMAKE_FLAGS += -DGIBBON_MODE=static
 NRD_CMAKE_FLAGS += -DGIBBON_SCRIPT_JSC_DYNAMIC=0
 define NRD_TARGET_SET_DEFINITION
-	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libnetflix.a $(TARGET_DIR)/usr/lib
 	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/manufss $(TARGET_DIR)/usr/bin
 endef
 define NRD_INSTALL_STAGING_CMDS
-	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libnetflix.a $(STAGING_DIR)/usr/lib
-	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/JavaScriptCore/Source/WTF/wtf/libWTF.a $(STAGING_DIR)/usr/lib
-	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/JavaScriptCore/Source/JavaScriptCore/libJavaScriptCore.a $(STAGING_DIR)/usr/lib
 	mkdir -p $(STAGING_DIR)/usr/include/nrd
 	mkdir -p $(STAGING_DIR)/usr/include/nrd/nrd
 	mkdir -p $(STAGING_DIR)/usr/include/nrd/nrdbase
@@ -160,9 +156,9 @@ define NRD_INSTALL_STAGING_CMDS
 	cp -R $(@D)/partner/dpi/metrological/external/* $(STAGING_DIR)/usr/include/nrd/external
 	cp -R $(@D)/partner/graphics/metrological/external/* $(STAGING_DIR)/usr/include/nrd/external
 	cp -R $(@D)/partner/input/metrological/external/* $(STAGING_DIR)/usr/include/nrd/external
-	cp -R $(@D)/output/nrdlib/lib/*.a $(STAGING_DIR)/usr/lib
-	cp -R $(@D)/output/mdxlib/lib/*.a $(STAGING_DIR)/usr/lib
-	cp -R $(@D)/output/lib/*.a $(STAGING_DIR)/usr/lib
+	cp -R $(TOPDIR)/package/nrd/files/netflix-biglib.mri $(@D)
+	cd $(@D) && $(TARGET_CROSS)ar -M < $(@D)/netflix-biglib.mri
+	cp -R $(@D)/libnetflix-biglib.a $(STAGING_DIR)/usr/lib
 endef
 endif
 
@@ -187,7 +183,7 @@ NRD_CMAKE_FLAGS += -DBUILD_DPI_DIRECTORY=$(@D)/partner/dpi
 NRD_CONFIGURE_CMDS = \
 	mkdir $(@D)/output;	\
 	cd $(@D)/output; \
-	$(TARGET_MAKE_ENV) BUILDROOT_TOOL_PREFIX="$(GNU_TARGET_NAME)-" cmake $(@D)/netflix \
+	$(TARGET_MAKE_ENV) BUILDROOT_TOOL_PREFIX="$(GNU_TARGET_NAME)-" cmake -DCMAKE_SYSROOT=$(STAGING_DIR) $(@D)/netflix \
 		-DCMAKE_TOOLCHAIN_FILE=$(HOST_DIR)/usr/share/buildroot/toolchainfile.cmake \
 		$(NRD_CMAKE_FLAGS) \
 		-DSMALL_FLAGS:STRING="-s -O3" -DSMALL_CFLAGS:STRING="" -DSMALL_CXXFLAGS:STRING="-fvisibility=hidden -fvisibility-inlines-hidden" -DNRDAPP_TOOLS="manufSSgenerator"
