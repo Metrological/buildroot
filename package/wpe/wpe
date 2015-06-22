@@ -12,6 +12,9 @@ export ATHOL_SHELL=/usr/lib/libWPEAtholShell.so
 # when it creates its initial 16x16px surface.
 export GST_GL_WINDOW=dummy
 
+# Use cairo noaa compositor
+export CAIRO_GL_COMPOSITOR=noaa
+
 # Network Process
 export WPE_NETWORK_PROCESS=1
 
@@ -25,14 +28,21 @@ export WPE_NETWORK_PROCESS=1
 # Pointer support
 #export ATHOL_POINTER_EVENTS=1
 
+WPE_CONF_FILE="/boot/wpe.conf"
+WPE_CONFIG=""
+if [ -e "$WPE_CONF_FILE" ];
+then
+	WPE_CONFIG=$(grep -v '^#' $WPE_CONF_FILE | tr -d "\r" | tr "\n" " " | tr -s " ")
+fi
+
 # The PREFIX env var can be useful when debugging athol with gdbserver.
 if [ "$1" = "--loop" ];
 then
 	export HOME=/root
 	while true;
 	do
-		WPE_SHELL_URL=$2 $PREFIX athol
+		eval "WPE_SHELL_URL=$2 $WPE_CONFIG $PREFIX athol"
 	done
 else
-	WPE_SHELL_URL=$1 $PREFIX athol
+	eval "WPE_SHELL_URL=$1 $WPE_CONFIG $PREFIX athol"
 fi

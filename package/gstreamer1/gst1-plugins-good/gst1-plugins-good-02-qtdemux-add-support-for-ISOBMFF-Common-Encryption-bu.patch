@@ -80,9 +80,9 @@ index 2b771ae..e82aefd 100644
  {
    guint32 type;
 @@ -383,6 +387,24 @@ struct _QtDemuxStream
-   guint32 def_sample_flags;
- 
-   gboolean disabled;
+   /* stereoscopic video streams */
+   GstVideoMultiviewMode multiview_mode;
+   GstVideoMultiviewFlags multiview_flags;
 +
 +  gboolean protected;
 +  guint32 protection_scheme_type;
@@ -102,7 +102,7 @@ index 2b771ae..e82aefd 100644
 +     array of GstStructures. */
 +  GstCaps *crypto_info;
  };
- 
+
  enum QtDemuxState
 @@ -499,6 +521,9 @@ static void qtdemux_do_allocation (GstQTDemux * qtdemux,
  static gboolean qtdemux_pull_mfro_mfra (GstQTDemux * qtdemux);
@@ -131,9 +131,9 @@ index 2b771ae..e82aefd 100644
 +  stream->protection_scheme_version = 0;
 +  stream->protection_scheme_info = NULL;
 +  stream->protection_scheme_event_queue = NULL;
+   stream->multiview_mode = GST_VIDEO_MULTIVIEW_MODE_NONE;
+   stream->multiview_flags = GST_VIDEO_MULTIVIEW_FLAGS_NONE;
    return stream;
- }
- 
 @@ -1878,6 +1909,11 @@ gst_qtdemux_reset (GstQTDemux * qtdemux, gboolean hard)
      qtdemux->chapters_track_id = 0;
      qtdemux->have_group_id = FALSE;
@@ -1025,9 +1025,9 @@ index 651a85f..e44c32e 100644
 +  {FOURCC_schi, "scheme information", QT_FLAG_CONTAINER},
 +  {FOURCC_pssh, "protection system specific header", 0},
 +  {FOURCC_tenc, "track encryption", 0},
-   {0, "unknown", 0,},
- };
- 
+   {FOURCC_svmi, "Stereoscopic Video Media Information", 0,
+       qtdemux_dump_svmi},
+   {FOURCC_scdi, "Stereoscopic Camera and Display Information", 0,
 -- 
 2.1.4
 

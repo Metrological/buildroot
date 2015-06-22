@@ -36,6 +36,19 @@ define DOSFSTOOLS_INSTALL_TARGET_CMDS
 	test -z "$(DOSFSTOOLS_INSTALL_BIN_FILES_y)" || \
 	$(INSTALL) -m 755 $(addprefix $(@D)/,$(DOSFSTOOLS_INSTALL_BIN_FILES_y)) \
 		$(TARGET_DIR)/sbin/
+	if [[ "$(BR2_PACKAGE_DOSFSTOOLS_FATLABEL)" = y ]]; then \
+		ln -fs fatlabel $(TARGET_DIR)/sbin/dosfslabel; \
+	fi
+	if [[ "$(BR2_PACKAGE_DOSFSTOOLS_FSCK_FAT)" = y ]]; then \
+		ln -fs fsck.fat $(TARGET_DIR)/sbin/dosfsck; \
+		ln -fs fsck.fat $(TARGET_DIR)/sbin/fsck.msdos; \
+		ln -fs fsck.fat $(TARGET_DIR)/sbin/fsck.vfat; \
+	fi
+	if [[ "$(BR2_PACKAGE_DOSFSTOOLS_MKFS_FAT)" = y ]]; then \
+		ln -fs mkfs.fat $(TARGET_DIR)/sbin/mkdosfs; \
+		ln -fs mkfs.fat $(TARGET_DIR)/sbin/mkfs.msdos; \
+		ln -fs mkfs.fat $(TARGET_DIR)/sbin/mkfs.vfat; \
+	fi
 endef
 
 define HOST_DOSFSTOOLS_BUILD_CMDS
