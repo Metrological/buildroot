@@ -1,0 +1,6 @@
+config BR2_PACKAGE_GRAPHITE2
+	bool "graphite2"
+	default "n"
+	help
+	  Graphite2 is a rework of the original Graphite engine 
+
