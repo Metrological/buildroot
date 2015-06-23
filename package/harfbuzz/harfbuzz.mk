@@ -12,7 +12,13 @@ HARFBUZZ_LICENSE_FILES = COPYING src/hb-ucdn/COPYING
 HARFBUZZ_INSTALL_STAGING = YES
 HARFBUZZ_LIBTOOL_PATCH = NO
 
-HARFBUZZ_CONF_OPT = --without-coretext --without-uniscribe --without-graphite2
+HARFBUZZ_CONF_OPT = --without-coretext --without-uniscribe
+
+ifeq ($(BR2_PACKAGE_GRAPHITE2),y)
+HARFBUZZ_CONF_OPT += --with-graphite2
+else
+HARFBUZZ_CONF_OPT += --without-graphite2
+endif
 
 ifeq ($(BR2_PACKAGE_CAIRO),y)
 	HARFBUZZ_DEPENDENCIES += cairo
