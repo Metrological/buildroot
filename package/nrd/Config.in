@@ -11,30 +11,62 @@ config BR2_PACKAGE_NRD
 	select BR2_PACKAGE_OPENSSL
 	select BR2_PACKAGE_C_ARES
 	select BR2_PACKAGE_LIBCURL
+	select BR2_PACKAGE_HARFBUZZ
 	help
 	  A Resource Development Kit for playing content from a thirdparty
 
 if BR2_PACKAGE_NRD
 
 choice 
-	prompt "How should the NRD app be build:"
+	prompt "The NRD main is build as:"
 
-config BR2_PACKAGE_NRD_APPLICATION
-	bool "application"
+config BR2_PACKAGE_NRD_APPLICATION_EXECUTABLE
+	bool "executable"
 	help
-	  Build NRD as a stand-alone application. Could be run from the CLI.
+	  Build the nrd main as a stand-alone application.
 
-config BR2_PACKAGE_NRD_DYNAMICLIB
-	bool "dynamic"
-	help
-	  Build NRD to be used as a dynamical loadable module to be used as part of another app.
+if BR2_PACKAGE_NRD_APPLICATION_EXECUTABLE
 
-config BR2_PACKAGE_NRD_STATICLIB
-	bool "static"
+choice
+	prompt "JSC links to the NRD main as:"
+
+config BR2_PACKAGE_NRD_JSC_DYNAMIC
+	bool "dynamic library"
 	help
-	  Build NRD to be used as a static library to be used as part of another app.
+	  Build the JSC core as a dynamic library.
+comment "This might produce libraries that conflict with other WebKit (JSC) libraries"
+depends on BR2_PACKAGE_NRD_JSC_DYNAMIC
+
+config BR2_PACKAGE_NRD_JSC_STATIC
+	bool "static library"
+	help
+	  Build the JSC core as a static library.
+endchoice
+
+config BR2_PACKAGE_NRD_JSC_LIBRARY_TYPE
+	string
+	default 0 if !BR2_PACKAGE_NRD_JSC_STATIC && !BR2_PACKAGE_NRD_JSC_DYNAMIC
+	default 0 if BR2_PACKAGE_NRD_JSC_STATIC
+	default 1 if BR2_PACKAGE_NRD_JSC_DYNAMIC
+endif
+
+config BR2_PACKAGE_NRD_APPLICATION_SHARED
+	bool "shared library"
+
+comment "This might produce libraries that conflict with other WebKit (JSC) libraries"
+depends on BR2_PACKAGE_NRD_APPLICATION_SHARED
+
+config BR2_PACKAGE_NRD_APPLICATION_STATIC
+	bool "static library"
 
 endchoice
+
+config BR2_PACKAGE_NRD_MODE
+	string
+	default "executable" if BR2_PACKAGE_NRD_APPLICATION_EXECUTABLE
+	default "shared" if BR2_PACKAGE_NRD_APPLICATION_SHARED
+	default "static" if BR2_PACKAGE_NRD_APPLICATION_STATIC
+
 
 choice
 	prompt "What graphics access system layer to be used"
@@ -67,12 +99,22 @@ config BR2_PACKAGE_NRD_GRAPHICS_METROLOGICAL
 	help
 	  Use the EGL access layer based on a plugin structure.
 
+
 config BR2_PACKAGE_NRD_GRAPHICS_NULL
 	bool "null"
 	help
 	  Use the NULL access layer.
  
 endchoice
+
+config BR2_PACKAGE_NRD_GRAPHICS
+	string
+	default "directfb" if BR2_PACKAGE_NRD_GRAPHICS_DIRECTFB
+	default "gles2" if BR2_PACKAGE_NRD_GRAPHICS_GLES2
+	default "gles2-egl" if BR2_PACKAGE_NRD_GRAPHICS_GLES2_EGL
+	default "metrological-egl" if BR2_PACKAGE_NRD_GRAPHICS_METROLOGICAL
+	default "null" if BR2_PACKAGE_NRD_GRAPHICS_NULL
+
 
 choice
 	prompt "Which media playback implementation should we use:"
@@ -94,7 +136,20 @@ config BR2_PACKAGE_NRD_PLAYER_METROLOGICAL
 	help
 	  Build NRD using the Metrological media playback implementation
 
+config BR2_PACKAGE_NRD_PLAYER_RASPBERRY
+	bool "raspberrypi"
+	help
+	  Build NRD with raspberry support
+
 endchoice
+
+config BR2_PACKAGE_NRD_PLAYER
+	string
+	default "skeleton" if BR2_PACKAGE_NRD_PLAYER_SKELETON
+	default "reference" if BR2_PACKAGE_NRD_PLAYER_X86
+	default "metrological" if BR2_PACKAGE_NRD_PLAYER_METROLOGICAL
+	default "raspberrypi" if BR2_PACKAGE_NRD_PLAYER_RASPBERRY
+
 
 choice
 	prompt "Which input method should we use:"
@@ -110,6 +165,14 @@ config BR2_PACKAGE_NRD_INPUT_METROLOGICAL
 	  Build NRD using the interface MetrologicalInput to insert keys via this method.
 
 endchoice
+
+config BR2_PACKAGE_NRD_INPUT
+	string
+	default "devinput" if BR2_PACKAGE_NRD_INPUT_DEVINPUT
+	default "metrological" if BR2_PACKAGE_NRD_INPUT_METROLOGICAL
+	default "null" if !BR2_PACKAGE_NRD_INPUT_DEVINPUT || !BR2_PACKAGE_NRD_INPUT_METROLOGICAL
+
+
 
 config BR2_PACKAGE_NRD_DRM_ENABLED
 	bool "playready"
@@ -139,12 +202,13 @@ endchoice
 
 endif
 
-config BR2_PACKAGE_NRD_DEBUG_BUILD
-	bool "debug"
-	help
-	  Build the nrd framework in debug mode so all possible 
-	  information that could help locating issues is being
-	  exposed.
+config BR2_PACKAGE_NRD_DRM
+	string
+	default "playready" if BR2_PACKAGE_NRD_PLAYREADY
+	default "playready2" if BR2_PACKAGE_NRD_PLAYREADY2
+	default "playready2.5" if BR2_PACKAGE_NRD_PLAYREADY25
+	default "none" if !BR2_PACKAGE_NRD_PLAYREADY && !BR2_PACKAGE_NRD_PLAYREADY2 && !BR2_PACKAGE_NRD_PLAYREADY25
+
 
 config BR2_PACKAGE_NRD_NICE_THREADS
 	bool "nice threads"

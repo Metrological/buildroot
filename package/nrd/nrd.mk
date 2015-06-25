@@ -8,185 +8,201 @@ NRD_VERSION = master
 NRD_SITE = git@github.com:Metrological/nrd.git
 NRD_SITE_METHOD = git
 NRD_LICENSE = PROPRIETARY
-NRD_DEPENDENCIES = freetype icu jpeg libpng libmng webp expat openssl c-ares libcurl
+NRD_DEPENDENCIES = freetype icu jpeg libpng libmng webp expat openssl c-ares libcurl harfbuzz
+
+NRD_INSTALL_STAGING = YES
+
 NRD_RUNTIMEDATA_LOCATION = /var/lib/netflix
 
 ifeq ($(BR2_PACKAGE_DDPSTUB),y)
 NRD_DEPENDENCIES += stubs
 endif
 
-NRD_INSTALL_STAGING = NO
+# also add verbosity to a debug build
+ifeq ($(BR2_ENABLE_DEBUG),y)
+NRD_EXTRA_CFLAGS   += -v
+NRD_EXTRA_CXXFLAGS += -v
+NRD_CMAKE_FLAGS += -DGIBBON_SCRIPT_JSC_DEBUG=1
+NRD_CMAKE_FLAGS += -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS_DEBUG="$(TARGET_CFLAGS) $(NRD_EXTRA_CFLAGS)" -DCMAKE_CXX_FLAGS_DEBUG="$(TARGET_CXXFLAGS) $(NRD_EXTRA_CXXFLAGS)"
+else
+NRD_CMAKE_FLAGS += -DGIBBON_SCRIPT_JSC_DEBUG=0
+NRD_CMAKE_FLAGS += -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS_RELEASE="$(TARGET_CFLAGS) $(NRD_EXTRA_CFLAGS)" -DCMAKE_CXX_FLAGS_RELEASE="$(TARGET_CXXFLAGS) $(NRD_EXTRA_CXXFLAGS)"
+endif
+
+NRD_CMAKE_FLAGS += -DGIBBON_PLATFORM=posix
+
+NRD_EXTRA_CFLAGS   += -I$(STAGING_DIR)/usr/include/harfbuzz/ -I$(STAGING_DIR)/usr/include/freetype2/
+NRD_EXTRA_CXXFLAGS += -I$(STAGING_DIR)/usr/include/harfbuzz/ -I$(STAGING_DIR)/usr/include/freetype2/
+
+# harfbuzz should be build with graphite support
+ifeq ($(findstring y,$(BR2_PACKAGE_NRD)), y)
+ifneq ($(findstring y,$(BR2_PACKAGE_GRAPHITE2)),y)
+$(error graphite2 not selected. Harfbuzz should be build with graphite2 support.)
+endif
+endif
+
+NRD_CMAKE_FLAGS += -DGIBBON_GRAPHICS=$(BR2_PACKAGE_NRD_GRAPHICS)
 
 ifeq ($(findstring y,$(BR2_PACKAGE_NRD_GRAPHICS_GLES2)$(BR2_PACKAGE_NRD_GRAPHICS_METROLOGICAL)),y)
-NRD_DEPENDENCIES += $(call qstrip,$(BR2_PACKAGE_PROVIDES_OPENGL_ES))
+NRD_DEPENDENCIES   += $(call qstrip,$(BR2_PACKAGE_PROVIDES_OPENGL_ES))
+NRD_EXTRA_CFLAGS   += $(shell $(PKG_CONFIG_HOST_BINARY) --cflags glesv2)
+NRD_EXTRA_CXXFLAGS += $(shell $(PKG_CONFIG_HOST_BINARY) --cflags  glesv2)
+NRD_EXTRA_LDFLAGS  += $(shell $(PKG_CONFIG_HOST_BINARY) --libs glesv2)
 endif
 
 ifeq ($(BR2_PACKAGE_NRD_GRAPHICS_GLES2_EGL),y)
-NRD_DEPENDENCIES += $(call qstrip,$(BR2_PACKAGE_PROVIDES_OPENGL_EGL))
+NRD_DEPENDENCIES   += $(call qstrip,$(BR2_PACKAGE_PROVIDES_OPENGL_EGL))
+NRD_EXTRA_CFLAGS   += $(shell $(PKG_CONFIG_HOST_BINARY) --cflags egl)
+NRD_EXTRA_CXXFLAGS += $(shell $(PKG_CONFIG_HOST_BINARY) --cflags  egl)
+NRD_EXTRA_LDFLAGS  += $(shell $(PKG_CONFIG_HOST_BINARY) --libs egl)
 endif
 
 ifeq ($(BR2_PACKAGE_NRD_GRAPHICS_DIRECTFB),y)
-NRD_CMAKE_FLAGS += -DGIBBON_GRAPHICS=directfb
 NRD_DEPENDENCIES += alsa-lib portaudio webp ffmpeg tremor directfb
-else ifeq ($(BR2_PACKAGE_NRD_GRAPHICS_GLES2),y)
-NRD_CMAKE_FLAGS += -DGIBBON_GRAPHICS=gles2
-else ifeq ($(BR2_PACKAGE_NRD_GRAPHICS_GLES2_EGL),y)
-NRD_CMAKE_FLAGS += -DGIBBON_GRAPHICS=gles2-egl
-else ifeq ($(BR2_PACKAGE_NRD_GRAPHICS_METROLOGICAL),y)
-NRD_CMAKE_FLAGS += -DGIBBON_GRAPHICS=metrological-egl
-else 
-NRD_CMAKE_FLAGS += -DGIBBON_GRAPHICS=null
 endif
 
 ifeq ($(BR2_PACKAGE_NRD_NICE_THREADS),y)
 NRD_CMAKE_FLAGS += -DGIBBON_NICE_THREADS=1
 endif
 
-ifeq ($(BR2_PACKAGE_NRD_PLAYER_SKELETON),y)
-NRD_CMAKE_FLAGS += -DDPI_IMPLEMENTATION=skeleton
-else ifeq ($(BR2_PACKAGE_NRD_PLAYER_X86),y)
-NRD_CMAKE_FLAGS += -DDPI_IMPLEMENTATION=reference
-else ifeq ($(BR2_PACKAGE_NRD_PLAYER_METROLOGICAL),y)
-NRD_CMAKE_FLAGS += -DDPI_IMPLEMENTATION=metrological
+#
+NRD_CMAKE_FLAGS += -DDPI_IMPLEMENTATION=$(BR2_PACKAGE_NRD_PLAYER)
+
+NRD_CMAKE_FLAGS += -DDPI_REFERENCE_DRM=$(BR2_PACKAGE_NRD_DRM)
+
+NRD_CMAKE_FLAGS += -DGIBBON_INPUT=$(BR2_PACKAGE_NRD_INPUT)
+
+# jsc build mode
+NRD_CMAKE_FLAGS += -DGIBBON_SCRIPT_JSC_DYNAMIC=$(BR2_PACKAGE_NRD_JSC_LIBRARY_TYPE)
+
+# nrd main build mode
+NRD_CMAKE_FLAGS += -DGIBBON_MODE=$(BR2_PACKAGE_NRD_MODE)
+
+ifeq ($(BR2_PACKAGE_NRD_APPLICATION_EXECUTABLE),y)
+#NRD_POST_INSTALL_STAGING_HOOKS += NRD_CREATE_AND_COPY_EXECUTABLE_STAGING_HOOK 
+NRD_POST_INSTALL_TARGET_HOOKS += NRD_CREATE_AND_COPY_EXECUTABLE_TARGET_HOOK 
 endif
 
-ifeq ($(BR2_PACKAGE_NRD_PLAYREADY),y)
-NRD_CMAKE_FLAGS += -DDPI_REFERENCE_DRM=playready
-else ifeq ($(BR2_PACKAGE_NRD_PLAYREADY2),y)
-NRD_CMAKE_FLAGS += -DDPI_REFERENCE_DRM=playready2
-else ifeq ($(BR2_PACKAGE_NRD_PLAYREADY25),y)
-NRD_CMAKE_FLAGS += -DDPI_REFERENCE_DRM=playready2.5
-else
-NRD_CMAKE_FLAGS += -DDPI_REFERENCE_DRM=none
+ifeq ($(BR2_PACKAGE_NRD_JSC_DYNAMIC),y)
+NRD_POST_INSTALL_STAGING_HOOKS += NRD_CREATE_AND_COPY_DYNAMIC_LIB_STAGING_HOOK 
+NRD_POST_INSTALL_TARGET_HOOKS += NRD_CREATE_AND_COPY_DYNAMIC_LIB_TARGET_HOOK 
 endif
 
-ifeq ($(BR2_PACKAGE_NRD_INPUT_DEVINPUT),y)
-NRD_CMAKE_FLAGS += -DGIBBON_INPUT=devinput
-else ifeq ($(BR2_PACKAGE_NRD_INPUT_METROLOGICAL),y)
-NRD_CMAKE_FLAGS += -DGIBBON_INPUT=metrological
-else
-NRD_CMAKE_FLAGS += -DGIBBON_INPUT=null
+ifeq ($(BR2_PACKAGE_NRD_JSC_STATIC),y)
+NRD_POST_INSTALL_STAGING_HOOKS += NRD_CREATE_AND_COPY_STATIC_LIB_STAGING_HOOK 
+#NRD_POST_INSTALL_TARGET_HOOKS += NRD_CREATE_AND_COPY_STATIC_LIB_TARGET_HOOK 
 endif
 
-ifeq ($(BR2_PACKAGE_NRD_APPLICATION),y)
-NRD_CMAKE_FLAGS += -DGIBBON_MODE=executable
-define NRD_TARGET_SET_DEFINITION
-	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libJavaScriptCore.so $(TARGET_DIR)/usr/lib
-	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libWTF.so $(TARGET_DIR)/usr/lib
-	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/netflix $(TARGET_DIR)/usr/bin
-	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/manufss $(TARGET_DIR)/usr/bin
-endef
-else ifeq ($(BR2_PACKAGE_NRD_DYNAMICLIB),y)
-NRD_RELOCATION_OPTION = -fPIC
-NRD_INSTALL_STAGING = YES
-NRD_CMAKE_FLAGS += -DGIBBON_MODE=shared
-NRD_CMAKE_FLAGS += -DGIBBON_SCRIPT_JSC_DYNAMIC=0
-define NRD_TARGET_SET_DEFINITION
-	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libnetflix.so $(TARGET_DIR)/usr/lib
-	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/manufss $(TARGET_DIR)/usr/bin
-endef
+NRD_HEADERS     = $(shell find $(@D)/output -name *.h | xargs dirname | sort -u)
+NRD_REVMATCH    = $(shell echo $(@D)/output | rev)
+NRD_REVSUBST    = $(shell echo $(STAGING_DIR)/usr/include/netflix/ | rev)
+NRD_STATIC_LIBS	= $(shell find $(@D)/output -name *.a)
+NRD_DYN_LIBS	= $(shell find $(@D)/output -name *.so*)
+
 define NRD_INSTALL_STAGING_CMDS
-	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libnetflix.so $(STAGING_DIR)/usr/lib
-        mkdir -p $(STAGING_DIR)/usr/include/nrd
-        mkdir -p $(STAGING_DIR)/usr/include/nrd/nrd
-        mkdir -p $(STAGING_DIR)/usr/include/nrd/nrdbase
-        mkdir -p $(STAGING_DIR)/usr/include/nrd/nrdase
-        mkdir -p $(STAGING_DIR)/usr/include/nrd/nrdnet
-        mkdir -p $(STAGING_DIR)/usr/include/nrd/nrdapp
-        mkdir -p $(STAGING_DIR)/usr/include/nrd/external
-        cp -R $(@D)/output/include/nrdapp/config.h $(STAGING_DIR)/usr/include/nrd
-	ln -s ./nrd/ $(STAGING_DIR)/usr/include/gibbon
-	ln -s ../config.h $(STAGING_DIR)/usr/include/nrd/nrd/config.h
-	ln -s ../config.h $(STAGING_DIR)/usr/include/nrd/nrdbase/config.h
-	ln -s ../config.h $(STAGING_DIR)/usr/include/nrd/nrdapp/config.h
-	ln -s ../config.h $(STAGING_DIR)/usr/include/nrd/nrdnet/config.h
-        cp -R $(@D)/netflix/nrdlib/src/base/*.h $(STAGING_DIR)/usr/include/nrd/nrdbase
-        cp -R $(@D)/netflix/3rdparty/mongoose/*.h $(STAGING_DIR)/usr/include/nrd/nrdapp
-        cp -R $(@D)/netflix/src/platform/gibbon/*.h $(STAGING_DIR)/usr/include/nrd/nrdapp
-        cp -R $(@D)/netflix/src/nrdapp/Core/*.h $(STAGING_DIR)/usr/include/nrd/nrdapp
-        cp -R $(@D)/netflix/nrdlib/src/nrd/Core/*.h $(STAGING_DIR)/usr/include/nrd/nrd
-        cp -R $(@D)/netflix/nrdlib/src/nrd/NBP/*.h $(STAGING_DIR)/usr/include/nrd/nrd
-        cp -R $(@D)/netflix/nrdlib/src/nrd/Dpi/*.h $(STAGING_DIR)/usr/include/nrd/nrd
-        cp -R $(@D)/netflix/nrdlib/src/ase/common/*.h $(STAGING_DIR)/usr/include/nrd/nrdase
-        cp -R $(@D)/netflix/nrdlib/src/net/util/*.h $(STAGING_DIR)/usr/include/nrd/nrdnet
-        cp -R $(@D)/netflix/nrdlib/src/net/httplib/*.h $(STAGING_DIR)/usr/include/nrd/nrdnet
-        cp -R $(@D)/netflix/nrdlib/src/net/websocket/*.h $(STAGING_DIR)/usr/include/nrd/nrdnet
-        cp -R $(@D)/netflix/nrdlib/src/net/resourcemanager/*.h $(STAGING_DIR)/usr/include/nrd/nrdnet
-        cp -R $(@D)/netflix/nrdlib/src/net/certstatus/*.h $(STAGING_DIR)/usr/include/nrd/nrdnet
-        cp -R $(@D)/netflix/src/platform/gibbon/bridge/*.h $(STAGING_DIR)/usr/include/nrd/nrdapp
-        cp -R $(@D)/partner/dpi/metrological/external/* $(STAGING_DIR)/usr/include/nrd/external
-        cp -R $(@D)/partner/graphics/metrological/external/* $(STAGING_DIR)/usr/include/nrd/external
-        cp -R $(@D)/partner/input/metrological/external/* $(STAGING_DIR)/usr/include/nrd/external
+#	$(foreach nrd_path, $(NRD_HEADERS), \
+		echo $(nrd_path)/\*\.h $(nrd_path) | rev | awk -v h="$(NRD_REVMATCH)" -v s="$(NRD_REVSUBST)" 'sub(h,s) {printf("%s\n", $$0);}' | rev | awk '{printf("mkdir -p %s && cp -r %s %s\n", $$2, $$1, $$2);}'
+	)
 endef
-else ifeq ($(BR2_PACKAGE_NRD_STATICLIB),y)
-NRD_INSTALL_STAGING = YES
-NRD_CMAKE_FLAGS += -DGIBBON_MODE=static
-NRD_CMAKE_FLAGS += -DGIBBON_SCRIPT_JSC_DYNAMIC=0
-define NRD_TARGET_SET_DEFINITION
-	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/manufss $(TARGET_DIR)/usr/bin
+
+define NRD_CREATE_AND_COPY_EXECUTABLE_STAGING_HOOK
+echo NRD_CREATE_AND_COPY_EXECUTABLE_STAGING_HOOK
 endef
-define NRD_INSTALL_STAGING_CMDS
-	mkdir -p $(STAGING_DIR)/usr/include/nrd
-	mkdir -p $(STAGING_DIR)/usr/include/nrd/nrd
-	mkdir -p $(STAGING_DIR)/usr/include/nrd/nrdbase
-	mkdir -p $(STAGING_DIR)/usr/include/nrd/nrdase
-	mkdir -p $(STAGING_DIR)/usr/include/nrd/nrdnet
-	mkdir -p $(STAGING_DIR)/usr/include/nrd/nrdapp
-	mkdir -p $(STAGING_DIR)/usr/include/nrd/external
-	cp -R $(@D)/output/include/nrdapp/config.h $(STAGING_DIR)/usr/include/nrd
-	ln -s ./nrd $(STAGING_DIR)/usr/include/gibbon
-	ln -s ../config.h $(STAGING_DIR)/usr/include/nrd/nrd/config.h
-	ln -s ../config.h $(STAGING_DIR)/usr/include/nrd/nrdbase/config.h
-	ln -s ../config.h $(STAGING_DIR)/usr/include/nrd/nrdapp/config.h
-	ln -s ../config.h $(STAGING_DIR)/usr/include/nrd/nrdnet/config.h
-	cp -R $(@D)/netflix/nrdlib/src/base/*.h $(STAGING_DIR)/usr/include/nrd/nrdbase
-	cp -R $(@D)/netflix/3rdparty/mongoose/*.h $(STAGING_DIR)/usr/include/nrd/nrdapp
-	cp -R $(@D)/netflix/src/platform/gibbon/*.h $(STAGING_DIR)/usr/include/nrd/nrdapp
-	cp -R $(@D)/netflix/src/nrdapp/Core/*.h $(STAGING_DIR)/usr/include/nrd/nrdapp
-	cp -R $(@D)/netflix/nrdlib/src/nrd/Core/*.h $(STAGING_DIR)/usr/include/nrd/nrd
-	cp -R $(@D)/netflix/nrdlib/src/nrd/NBP/*.h $(STAGING_DIR)/usr/include/nrd/nrd
-	cp -R $(@D)/netflix/nrdlib/src/nrd/Dpi/*.h $(STAGING_DIR)/usr/include/nrd/nrd
-	cp -R $(@D)/netflix/nrdlib/src/ase/common/*.h $(STAGING_DIR)/usr/include/nrd/nrdase
-	cp -R $(@D)/netflix/nrdlib/src/net/util/*.h $(STAGING_DIR)/usr/include/nrd/nrdnet
-	cp -R $(@D)/netflix/nrdlib/src/net/httplib/*.h $(STAGING_DIR)/usr/include/nrd/nrdnet
-	cp -R $(@D)/netflix/nrdlib/src/net/websocket/*.h $(STAGING_DIR)/usr/include/nrd/nrdnet
-	cp -R $(@D)/netflix/nrdlib/src/net/resourcemanager/*.h $(STAGING_DIR)/usr/include/nrd/nrdnet
-	cp -R $(@D)/netflix/nrdlib/src/net/certstatus/*.h $(STAGING_DIR)/usr/include/nrd/nrdnet
-	cp -R $(@D)/netflix/src/platform/gibbon/bridge/*.h $(STAGING_DIR)/usr/include/nrd/nrdapp
-	cp -R $(@D)/partner/dpi/metrological/external/* $(STAGING_DIR)/usr/include/nrd/external
-	cp -R $(@D)/partner/graphics/metrological/external/* $(STAGING_DIR)/usr/include/nrd/external
-	cp -R $(@D)/partner/input/metrological/external/* $(STAGING_DIR)/usr/include/nrd/external
-	cp -R $(TOPDIR)/package/nrd/files/netflix-biglib.mri $(@D)
+
+define NRD_CREATE_AND_COPY_DYNAMIC_LIB_STAGING_HOOK
+echo NRD_CREATE_AND_COPY_DYNAMIC_LIB_STAGING_HOOK
+echo $(NRD_DYN_LIBS)
+#	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libJavaScriptCore.so $(STAGING_DIR)/usr/lib/
+endef
+
+define NRD_CREATE_AND_COPY_STATIC_LIB_STAGING_HOOK
+echo NRD_CREATE_AND_COPY_STATIC_LIB_STAGING_HOOK
+echo $(NRD_STATIC_LIBS)
+
+	echo "CREATE libnetflix-biglib.a" >> $(@D)/netflix-biglib.mri
+	$(foreach nrd_lib, $(NRD_STATIC_LIBS), \
+		echo "ADDLIB $(nrd_lib)" >> $(@D)/netflix-biglib.mri
+	)
+	echo "SAVE" >> $(@D)/netflix-biglib.mri
+	echo "END" >> $(@D)/netflix-biglib.mri
+
 	cd $(@D) && $(TARGET_CROSS)ar -M < $(@D)/netflix-biglib.mri
-	cp -R $(@D)/libnetflix-biglib.a $(STAGING_DIR)/usr/lib
+	$(INSTALL) -m 755 $(@D)/libnetflix-biglib.a $(STAGING_DIR)/usr/lib
 endef
-endif
+
+NRD_RUNTIMEDATA_LOCATION=/var/lib/netflix
 
 define NRD_INSTALL_TARGET_CMDS
-	cp -R $(@D)/output/src/platform/gibbon/data $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)
-	$(SED) 's/<include>etc\//<include>\/var\/lib\/netflix\/etc\//g' $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/conf/gibbon.xml
-	$(SED) 's/<ui_cert>etc\//<ui_cert>\/var\/lib\/netflix\/etc\//g' $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/conf/gibbon.xml
-	$(NRD_TARGET_SET_DEFINITION)
+	mkdir -p $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/conf/
+	# fix paths
+#	$(INSTALL) $(@D)/output/src/platform/gibbon/data/etc/conf/common.xml $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/conf/
+	cat $(@D)/output/src/platform/gibbon/data/etc/conf/common | awk -v h="etc" -v s="$(NRD_RUNTIMEDATA_LOCATION)/etc" '{sub(h,s)}1' > $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/conf/gibbon.xml
+	# fix paths
+#	$(INSTALL) $(@D)/output/src/platform/gibbon/data/etc/conf/gibbon.xml
+	cat $(@D)/output/src/platform/gibbon/data/etc/conf/gibbon.xml | awk -v h="etc" -v s="$(NRD_RUNTIMEDATA_LOCATION)/etc" '{sub(h,s)}1' > $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/conf/gibbon.xml
+	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/etc/conf/graphics.xml $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/conf/
+#	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/etc/conf/input.xml $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/conf/
+	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/etc/conf/oem.xml $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/conf/
+	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/etc/conf/platform.xml $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/conf/
+
+	mkdir -p $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/certs/
+	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/etc/certs/ui_ca.pem $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/certs/
+
+	mkdir -p $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/keys/
+	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/etc/keys/appboot.key $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/keys/
+
+	mkdir -p $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/fonts/
+	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/fonts/* $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/fonts/
+	$(INSTALL) -m 444 $(@D)/netflix/src/platform/gibbon/resources/gibbon/fonts/LastResort.ttf $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/fonts/
+
+	# minimum set of resources to have some dynamic content
+	mkdir -p $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/js/
+	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/resources/js/PartnerBridge.js $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/js/
+	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/resources/js/NetflixBridge.js $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/js/
+	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/resources/js/error.js $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/js/
+	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/resources/js/boot.js $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/js/
+	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/resources/js/splash.js $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/js/
+
+	mkdir -p $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/img/
+	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/resources/img/Netflix_Logo_Splash.png $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/img/
+	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/resources/img/Netflix_Background_Splash.png $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/img/
+	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/resources/img/Netflix_Shadow_Splash.png $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/img/
+	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/resources/img/Spinner_Splash.mng $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/img/
+
+	# fixes
+	mkdir -p $(TARGET_DIR)/root/data/gibbon
+	cd $(TARGET_DIR) && ln -s $(NRD_RUNTIMEDATA_LOCATION)/fonts/ root/data/fonts
 endef
 
-ifeq ($(BR2_PACKAGE_NRD_DEBUG_BUILD),y)
-NRD_CMAKE_FLAGS += -DGIBBON_SCRIPT_JSC_DEBUG=1
-NRD_CMAKE_FLAGS += -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS_DEBUG="$(NRD_RELOCATION_OPTION) $(TARGET_CFLAGS)" -DCMAKE_CXX_FLAGS_DEBUG="$(NRD_RELOCATION_OPTION) $(TARGET_CXXFLAGS)"
-else
-NRD_CMAKE_FLAGS += -DGIBBON_SCRIPT_JSC_DEBUG=0
-NRD_CMAKE_FLAGS += -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS_RELEASE="$(NRD_RELOCATION_OPTION) $(TARGET_CFLAGS)" -DCMAKE_CXX_FLAGS_RELEASE="$(NRD_RELOCATION_OPTION) $(TARGET_CXXFLAGS)"
-endif
+define NRD_CREATE_AND_COPY_EXECUTABLE_TARGET_HOOK
+	$(INSTALL) -m 555 $(@D)/output/src/platform/gibbon/netflix $(TARGET_DIR)/usr/bin/
+endef
 
-NRD_CMAKE_FLAGS += -DGIBBON_PLATFORM=posix
-NRD_CMAKE_FLAGS += -DBUILD_DPI_DIRECTORY=$(@D)/partner/dpi
+define NRD_CREATE_AND_COPY_DYNAMIC_LIB_TARGET_HOOK
+echo NRD_CREATE_AND_COPY_DYNAMIC_LIB_TARGET_HOOK
+endef
+
+define NRD_CREATE_AND_COPY_STATIC_LIB_TARGET_HOOK
+echo NRD_CREATE_AND_COPY_STATIC_LIB_TARGET_HOOK
+endef
+
+#TODO: define uninstall
 
 NRD_CONFIGURE_CMDS = \
-	mkdir $(@D)/output;	\
+	mkdir $(@D)/output; \
 	cd $(@D)/output; \
-	$(TARGET_MAKE_ENV) BUILDROOT_TOOL_PREFIX="$(GNU_TARGET_NAME)-" cmake -DCMAKE_SYSROOT=$(STAGING_DIR) $(@D)/netflix \
-		-DCMAKE_TOOLCHAIN_FILE=$(HOST_DIR)/usr/share/buildroot/toolchainfile.cmake \
-		$(NRD_CMAKE_FLAGS) \
-		-DSMALL_FLAGS:STRING="-s -O3" -DSMALL_CFLAGS:STRING="" -DSMALL_CXXFLAGS:STRING="-fvisibility=hidden -fvisibility-inlines-hidden" -DNRDAPP_TOOLS="manufSSgenerator"
+	$(TARGET_MAKE_ENV) \
+	BUILDROOT_TOOL_PREFIX="$(GNU_TARGET_NAME)-" \
+	OBJCOPY="$(TARGET_CROSS)objcopy" \
+	STRIP="$(TARGET_CROSS)strip" \
+	cmake \
+	-DCMAKE_SYSROOT=$(STAGING_DIR) \
+	-DCMAKE_CXX_COMPILER="$(TARGET_CXX_NOCCACHE)" \
+	-DCMAKE_C_COMPILER="$(TARGET_CC_NOCCACHE)" \
+	-DCMAKE_OBJCOPY="$(TARGET_CROSS)objcopy" \
+	-DCMAKE_STRIP="$(TARGET_CROSS)strip" \
+	$(@D)/netflix \
+	$(NRD_CMAKE_FLAGS)
 
 NRD_BUILD_CMDS = cd $(@D)/output ; $(TARGET_MAKE_ENV) make 
 
