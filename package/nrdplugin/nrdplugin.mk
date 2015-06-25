@@ -25,7 +25,8 @@ ifeq ($(BR2_PACKAGE_NRDPLUGIN_QT),y)
     rm -f $(STAGING_DIR)/usr/lib/libnrdplugin.so*
     $(INSTALL) -D -m 0755 $(@D)/qt5/libnrdplugin.so.1 $(STAGING_DIR)/usr/lib
     ln -s libnrdplugin.so.1 $(STAGING_DIR)/usr/lib/libnrdplugin.so
-    cp $(@D)/qt5/nrdplugin.h $(STAGING_DIR)/usr/include/nrd
+    mkdir -p $(STAGING_DIR)/usr/include/nrd/
+    cp $(@D)/qt5/nrdplugin.h $(STAGING_DIR)/usr/include/nrd/
   endef
   define NRDPLUGIN_PLUGIN_UNINSTALL_STAGING
     rm -f $(STAGING_DIR)/usr/lib/libnrdplugin.so*
@@ -42,7 +43,6 @@ ifeq ($(BR2_PACKAGE_NRDPLUGIN_QT),y)
 endif
 
 ifeq ($(BR2_PACKAGE_NRDAPPLICATION),y)
-  
   NRDPLUGIN_APP_BUILD = $(TARGET_CONFIGURE_OPTS) $(MAKE) TYPE=Debug -C $(@D)/app build
   NRDPLUGIN_APP_INSTALL_TARGET = $(MAKE) TYPE=Debug -C $(@D)/app target
 endif
