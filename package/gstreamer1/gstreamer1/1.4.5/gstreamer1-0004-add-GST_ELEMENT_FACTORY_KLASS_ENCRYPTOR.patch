@@ -1,0 +1,53 @@
+From d3400ce35849dec50952518ac771823af2c07e84 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Tim-Philipp=20M=C3=BCller?= <tim@centricular.com>
+Date: Tue, 14 Apr 2015 17:47:08 +0100
+Subject: elementfactory: add ENCRYPTOR class defines
+
+to go with DECRYPTOR.
+
+diff --git a/gst/gstelementfactory.c b/gst/gstelementfactory.c
+index e25b071..486b9fe 100644
+--- a/gst/gstelementfactory.c
++++ b/gst/gstelementfactory.c
+@@ -732,6 +732,9 @@ gst_element_factory_list_is_type (GstElementFactory * factory,
+   if (!res && (type & GST_ELEMENT_FACTORY_TYPE_DECRYPTOR))
+     res = (strstr (klass, "Decryptor") != NULL);
+ 
++  if (!res && (type & GST_ELEMENT_FACTORY_TYPE_ENCRYPTOR))
++    res = (strstr (klass, "Encryptor") != NULL);
++
+   /* Filter by media type now, we only test if it
+    * matched any of the types above or only checking the media
+    * type was requested. */
+diff --git a/gst/gstelementfactory.h b/gst/gstelementfactory.h
+index 3245d70..117d00e 100644
+--- a/gst/gstelementfactory.h
++++ b/gst/gstelementfactory.h
+@@ -88,7 +88,8 @@ gboolean                gst_element_register                    (GstPlugin *plug
+  * @GST_ELEMENT_FACTORY_TYPE_PARSER: Parser elements
+  * @GST_ELEMENT_FACTORY_TYPE_PAYLOADER: Payloader elements
+  * @GST_ELEMENT_FACTORY_TYPE_DEPAYLOADER: Depayloader elements
+- * @GST_ELEMENT_FACTORY_TYPE_DECRYPTOR: Elements handling decryption
++ * @GST_ELEMENT_FACTORY_TYPE_DECRYPTOR: Elements handling decryption (Since: 1.6)
++ * @GST_ELEMENT_FACTORY_TYPE_ENCRYPTOR: Elements handling encryption (Since: 1.6)
+  * @GST_ELEMENT_FACTORY_TYPE_MAX_ELEMENTS: Private, do not use
+  * @GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO: Elements handling video media types
+  * @GST_ELEMENT_FACTORY_TYPE_MEDIA_AUDIO: Elements handling audio media types
+@@ -117,6 +118,7 @@ typedef guint64 GstElementFactoryListType;
+ #define  GST_ELEMENT_FACTORY_TYPE_DEPAYLOADER    (G_GUINT64_CONSTANT (1) << 8)
+ #define  GST_ELEMENT_FACTORY_TYPE_FORMATTER      (G_GUINT64_CONSTANT (1) << 9)
+ #define  GST_ELEMENT_FACTORY_TYPE_DECRYPTOR      (G_GUINT64_CONSTANT (1) << 10)
++#define  GST_ELEMENT_FACTORY_TYPE_ENCRYPTOR      (G_GUINT64_CONSTANT (1) << 11)
+ 
+ #define  GST_ELEMENT_FACTORY_TYPE_MAX_ELEMENTS   (G_GUINT64_CONSTANT (1) << 48)
+ 
+@@ -203,6 +205,7 @@ typedef guint64 GstElementFactoryListType;
+ #define GST_ELEMENT_FACTORY_KLASS_DEPAYLOADER           "Depayloader"
+ #define GST_ELEMENT_FACTORY_KLASS_FORMATTER             "Formatter"
+ #define GST_ELEMENT_FACTORY_KLASS_DECRYPTOR             "Decryptor"
++#define GST_ELEMENT_FACTORY_KLASS_ENCRYPTOR             "Encryptor"
+ 
+ #define GST_ELEMENT_FACTORY_KLASS_MEDIA_VIDEO           "Video"
+ #define GST_ELEMENT_FACTORY_KLASS_MEDIA_AUDIO           "Audio"
+-- 
+cgit v0.10.2

@@ -1,0 +1,72 @@
+From b8f5a7ba45215a7b37e424150ae987b8a13c3d8d Mon Sep 17 00:00:00 2001
+From: Alex Ashley <bugzilla@ashley-family.net>
+Date: Mon, 16 Mar 2015 13:11:59 +0000
+Subject: elementfactory: add DECRYPTOR class defines
+
+An element that performs decryption does not naturally fit within any
+of the existing element factory class types. It is useful to be able
+to easily get a list of all elements that support decryption so that
+a union can be computed between the protection systems that have a
+supported decryptor and the allowed protection systems for a particular
+stream.
+
+This commit adds a new GST_ELEMENT_FACTORY_TYPE_DECRYPTOR and its
+associated string identifier "Decryptor". It also adds
+GST_ELEMENT_FACTORY_TYPE_DECRYPTOR to GST_ELEMENT_FACTORY_TYPE_DECODABLE
+so that uridecodebin can auto-plug a decryption element.
+
+https://bugzilla.gnome.org/show_bug.cgi?id=705991
+
+diff --git a/gst/gstelementfactory.c b/gst/gstelementfactory.c
+index b1f737b..e25b071 100644
+--- a/gst/gstelementfactory.c
++++ b/gst/gstelementfactory.c
+@@ -729,6 +729,9 @@ gst_element_factory_list_is_type (GstElementFactory * factory,
+   if (!res && (type & GST_ELEMENT_FACTORY_TYPE_FORMATTER))
+     res = (strstr (klass, "Formatter") != NULL);
+ 
++  if (!res && (type & GST_ELEMENT_FACTORY_TYPE_DECRYPTOR))
++    res = (strstr (klass, "Decryptor") != NULL);
++
+   /* Filter by media type now, we only test if it
+    * matched any of the types above or only checking the media
+    * type was requested. */
+diff --git a/gst/gstelementfactory.h b/gst/gstelementfactory.h
+index 4641457..3245d70 100644
+--- a/gst/gstelementfactory.h
++++ b/gst/gstelementfactory.h
+@@ -88,6 +88,7 @@ gboolean                gst_element_register                    (GstPlugin *plug
+  * @GST_ELEMENT_FACTORY_TYPE_PARSER: Parser elements
+  * @GST_ELEMENT_FACTORY_TYPE_PAYLOADER: Payloader elements
+  * @GST_ELEMENT_FACTORY_TYPE_DEPAYLOADER: Depayloader elements
++ * @GST_ELEMENT_FACTORY_TYPE_DECRYPTOR: Elements handling decryption
+  * @GST_ELEMENT_FACTORY_TYPE_MAX_ELEMENTS: Private, do not use
+  * @GST_ELEMENT_FACTORY_TYPE_MEDIA_VIDEO: Elements handling video media types
+  * @GST_ELEMENT_FACTORY_TYPE_MEDIA_AUDIO: Elements handling audio media types
+@@ -115,6 +116,7 @@ typedef guint64 GstElementFactoryListType;
+ #define  GST_ELEMENT_FACTORY_TYPE_PAYLOADER      (G_GUINT64_CONSTANT (1) << 7)
+ #define  GST_ELEMENT_FACTORY_TYPE_DEPAYLOADER    (G_GUINT64_CONSTANT (1) << 8)
+ #define  GST_ELEMENT_FACTORY_TYPE_FORMATTER      (G_GUINT64_CONSTANT (1) << 9)
++#define  GST_ELEMENT_FACTORY_TYPE_DECRYPTOR      (G_GUINT64_CONSTANT (1) << 10)
+ 
+ #define  GST_ELEMENT_FACTORY_TYPE_MAX_ELEMENTS   (G_GUINT64_CONSTANT (1) << 48)
+ 
+@@ -187,7 +189,7 @@ typedef guint64 GstElementFactoryListType;
+  * Type: GstElementFactoryListType
+  */
+ #define GST_ELEMENT_FACTORY_TYPE_DECODABLE \
+-  (GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_DEMUXER | GST_ELEMENT_FACTORY_TYPE_DEPAYLOADER | GST_ELEMENT_FACTORY_TYPE_PARSER)
++  (GST_ELEMENT_FACTORY_TYPE_DECODER | GST_ELEMENT_FACTORY_TYPE_DEMUXER | GST_ELEMENT_FACTORY_TYPE_DEPAYLOADER | GST_ELEMENT_FACTORY_TYPE_PARSER | GST_ELEMENT_FACTORY_TYPE_DECRYPTOR)
+ 
+ /* Element klass defines */
+ #define GST_ELEMENT_FACTORY_KLASS_DECODER               "Decoder"
+@@ -200,6 +202,7 @@ typedef guint64 GstElementFactoryListType;
+ #define GST_ELEMENT_FACTORY_KLASS_PAYLOADER             "Payloader"
+ #define GST_ELEMENT_FACTORY_KLASS_DEPAYLOADER           "Depayloader"
+ #define GST_ELEMENT_FACTORY_KLASS_FORMATTER             "Formatter"
++#define GST_ELEMENT_FACTORY_KLASS_DECRYPTOR             "Decryptor"
+ 
+ #define GST_ELEMENT_FACTORY_KLASS_MEDIA_VIDEO           "Video"
+ #define GST_ELEMENT_FACTORY_KLASS_MEDIA_AUDIO           "Audio"
+-- 
+cgit v0.10.2

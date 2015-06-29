@@ -1,0 +1,775 @@
+From abdafb0d641448e4693bd98740f7c26f1860fa15 Mon Sep 17 00:00:00 2001
+From: Alex Ashley <bugzilla@ashley-family.net>
+Date: Wed, 15 Apr 2015 15:33:31 +0100
+Subject: protection: add GstProtectionMeta to support protected content
+
+In order to support some types of protected streams (such as those
+protected using DASH Common Encryption) some per-buffer information
+needs to be passed between elements.
+
+This commit adds a GstMeta type called GstProtectionMeta that allows
+protection specific information to be added to a GstBuffer. An example
+of its usage is qtdemux providing information to each output sample
+that enables a downstream element to decrypt it.
+
+This commit adds a utility function to select a supported protection
+system from the installed Decryption elements found in the registry.
+The gst_protection_select_system function that takes an array of
+identifiers and searches the registry for a element of klass Decryptor that
+supports one or more of the supplied identifiers. If multiple elements
+are found, the one with the highest rank is selected.
+
+This commit adds a unit test for the gst_protection_select_system
+function that adds a fake Decryptor element to the registry and then
+checks that it can correctly be selected by the utility function.
+
+This commit adds a unit test for GstProtectionMeta that creates
+GstProtectionMeta and adds & removes it from a buffer and performs some
+simple reference count checks.
+
+API: gst_buffer_add_protection_meta()
+API: gst_buffer_get_protection_meta()
+API: gst_protection_select_system()
+API: gst_protection_meta_api_get_type()
+API: gst_protection_meta_get_info()
+
+https://bugzilla.gnome.org/show_bug.cgi?id=705991
+
+diff --git a/docs/gst/gstreamer-docs.sgml b/docs/gst/gstreamer-docs.sgml
+index 7e66574..7650c2c 100644
+--- a/docs/gst/gstreamer-docs.sgml
++++ b/docs/gst/gstreamer-docs.sgml
+@@ -95,6 +95,7 @@ Windows.  It is released under the GNU Library General Public License
+     <xi:include href="xml/gstpluginfeature.xml" />
+     <xi:include href="xml/gstpoll.xml" />
+     <xi:include href="xml/gstpreset.xml" />
++    <xi:include href="xml/gstprotection.xml" />
+     <xi:include href="xml/gstquery.xml" />
+     <xi:include href="xml/gstregistry.xml" />
+     <xi:include href="xml/gstsegment.xml" />
+diff --git a/docs/gst/gstreamer-sections.txt b/docs/gst/gstreamer-sections.txt
+index a47471d..be4f437 100644
+--- a/docs/gst/gstreamer-sections.txt
++++ b/docs/gst/gstreamer-sections.txt
+@@ -2306,6 +2306,19 @@ gst_preset_get_type
+ </SECTION>
+ 
+ <SECTION>
++<FILE>gstprotection</FILE>
++<INCLUDE>gst/gstprotection.h</INCLUDE>
++GstProtectionMeta
++gst_buffer_add_protection_meta
++gst_buffer_get_protection_meta
++gst_protection_select_system
++<SUBSECTION Standard>
++GST_PROTECTION_META_API_TYPE
++GST_PROTECTION_META_INFO
++gst_protection_meta_get_info
++</SECTION>
++
++<SECTION>
+ <FILE>gstquery</FILE>
+ <TITLE>GstQuery</TITLE>
+ GstQuery
+diff --git a/gst/Makefile.am b/gst/Makefile.am
+index c175602..853c0f5 100644
+--- a/gst/Makefile.am
++++ b/gst/Makefile.am
+@@ -99,6 +99,7 @@ libgstreamer_@GST_API_VERSION@_la_SOURCES = \
+ 	gstpluginloader.c	\
+ 	gstpoll.c		\
+ 	gstpreset.c             \
++	gstprotection.c         \
+ 	gstquark.c		\
+ 	gstquery.c		\
+ 	gstregistry.c		\
+@@ -204,6 +205,7 @@ gst_headers =			\
+ 	gstpluginfeature.h	\
+ 	gstpoll.h		\
+ 	gstpreset.h             \
++	gstprotection.h         \
+ 	gstquery.h		\
+ 	gstsample.h		\
+ 	gstsegment.h		\
+diff --git a/gst/gst_private.h b/gst/gst_private.h
+index 4f4194a..044fead 100644
+--- a/gst/gst_private.h
++++ b/gst/gst_private.h
+@@ -254,6 +254,9 @@
+ #define GST_CAT_POLL _priv_GST_CAT_POLL
+ extern GstDebugCategory *_priv_GST_CAT_POLL;
+ 
++#define GST_CAT_PROTECTION _priv_GST_CAT_PROTECTION
++extern GstDebugCategory *_priv_GST_CAT_PROTECTION;
++
+ #else
+
+ #define GST_CAT_GST_INIT         NULL
+@@ -293,6 +296,7 @@ 
+ #define GST_CAT_META             NULL
+ #define GST_CAT_LOCKING          NULL
+ #define GST_CAT_CONTEXT          NULL
++#define GST_CAT_PROTECTION       NULL
+ 
+ #endif
+ 
+diff --git a/gst/gstinfo.c b/gst/gstinfo.c
+index 7309132..f210233 100644
+--- a/gst/gstinfo.c
++++ b/gst/gstinfo.c
+@@ -176,6 +176,7 @@ GstDebugCategory *_priv_GST_CAT_POLL = NULL;
+ GstDebugCategory *GST_CAT_META = NULL;
+ GstDebugCategory *GST_CAT_LOCKING = NULL;
+ GstDebugCategory *GST_CAT_CONTEXT = NULL;
++GstDebugCategory *_priv_GST_CAT_PROTECTION = NULL;
+ 
+ 
+ #endif /* !defined(GST_DISABLE_GST_DEBUG) || !defined(GST_REMOVE_DISABLED) */
+@@ -390,6 +391,8 @@ _priv_gst_debug_init (void)
+   GST_CAT_META = _gst_debug_category_new ("GST_META", 0, "meta");
+   GST_CAT_LOCKING = _gst_debug_category_new ("GST_LOCKING", 0, "locking");
+   GST_CAT_CONTEXT = _gst_debug_category_new ("GST_CONTEXT", 0, NULL);
++  _priv_GST_CAT_PROTECTION =
++      _gst_debug_category_new ("GST_PROTECTION", 0, "protection");
+ 
+   /* print out the valgrind message if we're in valgrind */
+   _priv_gst_in_valgrind ();
+diff --git a/gst/gstprotection.c b/gst/gstprotection.c
+new file mode 100644
+index 0000000..36f36ad
+--- /dev/null
++++ b/gst/gstprotection.c
+@@ -0,0 +1,209 @@
++/* GStreamer
++ * Copyright (C) <2013> YouView TV Ltd.
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Library General Public
++ * License as published by the Free Software Foundation; either
++ * version 2 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Library General Public License for more details.
++ *
++ * You should have received a copy of the GNU Library General Public
++ * License along with this library; if not, write to the
++ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
++ * Boston, MA 02110-1301, USA.
++ */
++
++/**
++ * SECTION:gstprotection
++ * @short_description: Functions and classes to support encrypted streams.
++ *
++ * The GstProtectionMeta class enables the information needed to decrypt a
++ * #GstBuffer to be attached to that buffer.
++ *
++ * Typically, a demuxer element would attach GstProtectionMeta objects
++ * to the buffers that it pushes downstream. The demuxer would parse the
++ * protection information for a video/audio frame from its input data and use
++ * this information to populate the #GstStructure @info field,
++ * which is then encapsulated in a GstProtectionMeta object and attached to
++ * the corresponding output buffer using the gst_buffer_add_protection_meta()
++ * function. The information in this attached GstProtectionMeta would be
++ * used by a downstream decrypter element to recover the original unencrypted
++ * frame.
++ *
++ * Since: 1.6
++ */
++
++#include "gst_private.h"
++#include "glib-compat-private.h"
++
++#include "gstprotection.h"
++
++#define GST_CAT_DEFAULT GST_CAT_PROTECTION
++
++static gboolean gst_protection_meta_init (GstMeta * meta, gpointer params,
++    GstBuffer * buffer);
++
++static void gst_protection_meta_free (GstMeta * meta, GstBuffer * buffer);
++
++static const gchar *gst_protection_factory_check (GstElementFactory * fact,
++    const gchar ** system_identifiers);
++
++GType
++gst_protection_meta_api_get_type (void)
++{
++  static volatile GType type;
++  static const gchar *tags[] = { NULL };
++
++  if (g_once_init_enter (&type)) {
++    GType _type = gst_meta_api_type_register ("GstProtectionMetaAPI", tags);
++    g_once_init_leave (&type, _type);
++  }
++  return type;
++}
++
++static gboolean
++gst_protection_meta_init (GstMeta * meta, gpointer params, GstBuffer * buffer)
++{
++  GstProtectionMeta *protection_meta = (GstProtectionMeta *) meta;
++
++  protection_meta->info = NULL;
++
++  return TRUE;
++}
++
++static void
++gst_protection_meta_free (GstMeta * meta, GstBuffer * buffer)
++{
++  GstProtectionMeta *protection_meta = (GstProtectionMeta *) meta;
++
++  if (protection_meta->info)
++    gst_structure_free (protection_meta->info);
++}
++
++const GstMetaInfo *
++gst_protection_meta_get_info (void)
++{
++  static const GstMetaInfo *protection_meta_info = NULL;
++
++  if (g_once_init_enter (&protection_meta_info)) {
++    const GstMetaInfo *meta =
++        gst_meta_register (GST_PROTECTION_META_API_TYPE, "GstProtectionMeta",
++        sizeof (GstProtectionMeta), gst_protection_meta_init,
++        gst_protection_meta_free,
++        (GstMetaTransformFunction) NULL);
++
++    g_once_init_leave (&protection_meta_info, meta);
++  }
++  return protection_meta_info;
++}
++
++/**
++ * gst_buffer_add_protection_meta:
++ * @buffer: #GstBuffer holding an encrypted sample, to which protection
++ *     metadata should be added.
++ * @info: (transfer full): a #GstStructure holding cryptographic
++ *     information relating to the sample contained in @buffer. This
++ *     function takes ownership of @info.
++ *
++ * Attaches protection metadata to a #GstBuffer.
++ *
++ * Returns: a pointer to the added #GstProtectionMeta if successful; %NULL if
++ * unsuccessful.
++ *
++ * Since: 1.6
++ */
++GstProtectionMeta *
++gst_buffer_add_protection_meta (GstBuffer * buffer, GstStructure * info)
++{
++  GstProtectionMeta *meta;
++
++  g_return_val_if_fail (GST_IS_BUFFER (buffer), NULL);
++  g_return_val_if_fail (info != NULL, NULL);
++
++  meta =
++      (GstProtectionMeta *) gst_buffer_add_meta (buffer,
++      GST_PROTECTION_META_INFO, NULL);
++
++  meta->info = info;
++
++  return meta;
++}
++
++/**
++ * gst_protection_select_system:
++ * @system_identifiers: (transfer none): A null terminated array of strings
++ * that contains the UUID values of each protection system that is to be
++ * checked.
++ *
++ * Iterates the supplied list of UUIDs and checks the GstRegistry for
++ * an element that supports one of the supplied UUIDs. If more than one
++ * element matches, the system ID of the highest ranked element is selected.
++ *
++ * Returns: (transfer none): One of the strings from @system_identifiers that
++ * indicates the highest ranked element that implements the protection system
++ * indicated by that system ID, or %NULL if no element has been found.
++ *
++ * Since: 1.6
++ */
++const gchar *
++gst_protection_select_system (const gchar ** system_identifiers)
++{
++  GList *decryptors, *walk;
++  const gchar *retval = NULL;
++
++  decryptors =
++      gst_element_factory_list_get_elements (GST_ELEMENT_FACTORY_TYPE_DECRYPTOR,
++      GST_RANK_MARGINAL);
++
++  for (walk = decryptors; !retval && walk; walk = g_list_next (walk)) {
++    GstElementFactory *fact = (GstElementFactory *) walk->data;
++
++    retval = gst_protection_factory_check (fact, system_identifiers);
++  }
++
++  gst_plugin_feature_list_free (decryptors);
++
++  return retval;
++}
++
++static const gchar *
++gst_protection_factory_check (GstElementFactory * fact,
++    const gchar ** system_identifiers)
++{
++  const GList *template, *walk;
++  const gchar *retval = NULL;
++
++  template = gst_element_factory_get_static_pad_templates (fact);
++  for (walk = template; walk && !retval; walk = g_list_next (walk)) {
++    GstStaticPadTemplate *templ = walk->data;
++    GstCaps *caps = gst_static_pad_template_get_caps (templ);
++    guint leng = gst_caps_get_size (caps);
++
++    for (guint i = 0; !retval && i < leng; ++i) {
++      GstStructure *st;
++
++      st = gst_caps_get_structure (caps, i);
++      if (gst_structure_has_field_typed (st, PROTECTION_SYSTEM_ID_CAPS_FIELD,
++              G_TYPE_STRING)) {
++        const gchar *sys_id =
++            gst_structure_get_string (st, PROTECTION_SYSTEM_ID_CAPS_FIELD);
++        GST_DEBUG ("Found decryptor that supports protection system %s",
++            sys_id);
++        for (guint j = 0; !retval && system_identifiers[j]; ++j) {
++          GST_TRACE ("  compare with %s", system_identifiers[j]);
++          if (g_ascii_strcasecmp (system_identifiers[j], sys_id) == 0) {
++            GST_DEBUG ("  Selecting %s", system_identifiers[j]);
++            retval = system_identifiers[j];
++          }
++        }
++      }
++    }
++    gst_caps_unref (caps);
++  }
++
++  return retval;
++}
+diff --git a/gst/gstprotection.h b/gst/gstprotection.h
+new file mode 100644
+index 0000000..9a4b86a
+--- /dev/null
++++ b/gst/gstprotection.h
+@@ -0,0 +1,64 @@
++/* GStreamer
++ * Copyright (C) <2015> YouView TV Ltd.
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Library General Public
++ * License as published by the Free Software Foundation; either
++ * version 2 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Library General Public License for more details.
++ *
++ * You should have received a copy of the GNU Library General Public
++ * License along with this library; if not, write to the
++ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
++ * Boston, MA 02110-1301, USA.
++ */
++
++#ifndef __GST_PROTECTION_H__
++#define __GST_PROTECTION_H__
++
++#include <gst/gst.h>
++
++G_BEGIN_DECLS
++
++/* @PROTECTION_SYSTEM_ID_CAPS_FIELD: The field name in a GstCaps that is
++ * used to signal the UUID of the protection system
++ */
++#define PROTECTION_SYSTEM_ID_CAPS_FIELD "protection-system"
++
++typedef struct _GstProtectionMeta GstProtectionMeta;
++/**
++ * GstProtectionMeta:
++ * @meta: the parent #GstMeta.
++ * @info: the cryptographic information needed to decrypt the sample.
++ *
++ * Metadata type that holds information about a sample from a protection-protected
++ * track, including the information needed to decrypt it (if it is encrypted).
++ */
++struct _GstProtectionMeta
++{
++  GstMeta meta;
++
++  GstStructure *info;
++};
++
++GType gst_protection_meta_api_get_type (void);
++#define GST_PROTECTION_META_API_TYPE (gst_protection_meta_api_get_type())
++
++#define gst_buffer_get_protection_meta(b) \
++    ((GstProtectionMeta*)gst_buffer_get_meta ((b), GST_PROTECTION_META_API_TYPE))
++
++#define GST_PROTECTION_META_INFO (gst_protection_meta_get_info())
++
++const GstMetaInfo *gst_protection_meta_get_info (void);
++
++GstProtectionMeta *gst_buffer_add_protection_meta (GstBuffer * buffer,
++    GstStructure * info);
++
++const gchar *gst_protection_select_system (const gchar ** system_identifiers);
++
++G_END_DECLS
++#endif /* __GST_PROTECTION_META_H__ */
+diff --git a/tests/check/Makefile.am b/tests/check/Makefile.am
+index 8eeba3f..442a432 100644
+--- a/tests/check/Makefile.am
++++ b/tests/check/Makefile.am
+@@ -75,6 +75,7 @@ REGISTRY_CHECKS =				\
+ 	gst/gstghostpad				\
+ 	gst/gstplugin				\
+ 	gst/gstpreset				\
++	gst/gstprotection			\
+ 	gst/gstquery				\
+ 	gst/gstregistry				\
+ 	gst/gsturi  				\
+@@ -132,6 +133,7 @@
+ 	gst/gstparamspecs			\
+ 	gst/gstpipeline				\
+ 	gst/gstpoll     			\
++	gst/gstprotection     		\
+	gst/gstsegment				\
+	gst/gstsystemclock			\
+	gst/gstclock				\
+diff --git a/tests/check/gst/gstprotection.c b/tests/check/gst/gstprotection.c
+new file mode 100644
+index 0000000..74c869d
+--- /dev/null
++++ b/tests/check/gst/gstprotection.c
+@@ -0,0 +1,304 @@
++/* GStreamer
++ *
++ * Unit tests for protection library.
++ *
++ * Copyright (C) <2015> YouView TV Ltd.
++ *
++ * This library is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Library General Public
++ * License as published by the Free Software Foundation; either
++ * version 2 of the License, or (at your option) any later version.
++ *
++ * This library is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Library General Public License for more details.
++ *
++ * You should have received a copy of the GNU Library General Public
++ * License along with this library; if not, write to the
++ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
++ * Boston, MA 02110-1301, USA.
++ */
++
++#include <gst/check/gstcheck.h>
++#include <gst/gstprotection.h>
++
++#ifndef GST_PACKAGE_NAME
++#define GST_PACKAGE_NAME "gstreamer"
++#endif
++
++#ifndef GST_PACKAGE_ORIGIN
++#define GST_PACKAGE_ORIGIN "https://developer.gnome.org/gstreamer/"
++#endif
++
++static GType gst_protection_test_get_type (void);
++
++#define GST_TYPE_PROTECTION_TEST            (gst_protection_test_get_type ())
++#define GST_PROTECTION_TEST(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GST_TYPE_PROTECTION_TEST, GstProtectionTest))
++#define GST_PROTECTION_TEST_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GST_TYPE_PROTECTION_TEST, GstProtectionTestClass))
++#define GST_IS_PROTECTION_TEST(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GST_TYPE_PROTECTION_TEST))
++#define GST_IS_PROTECTION_TEST_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GST_TYPE_PROTECTION_TEST))
++#define GST_PROTECTION_TEST_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GST_TYPE_PROTECTION_TEST, GstProtectionTestClass))
++#define GST_PROTECTION_TEST_NAME            "protection-test"
++
++#define CLEARKEY_SYSTEM_ID "78f32170-d883-11e0-9572-0800200c9a66"
++
++typedef struct _GstProtectionTest
++{
++  GstElement parent;
++
++  gint test;
++} GstProtectionTest;
++
++typedef struct _GstProtectionTestClass
++{
++  GstElementClass parent_class;
++} GstProtectionTestClass;
++
++typedef struct _PluginInitContext
++{
++  const gchar *name;
++  guint rank;
++  GType type;
++} PluginInitContext;
++
++static GstStaticPadTemplate gst_decrypt_sink_template =
++GST_STATIC_PAD_TEMPLATE ("sink",
++    GST_PAD_SINK,
++    GST_PAD_ALWAYS,
++    GST_STATIC_CAPS
++    ("application/x-cenc, original-media-type=(string)video/x-h264, "
++        PROTECTION_SYSTEM_ID_CAPS_FIELD "=(string)" CLEARKEY_SYSTEM_ID)
++    );
++
++static void
++gst_protection_test_class_init (GObjectClass * klass)
++{
++}
++
++static void
++gst_protection_test_base_init (GstProtectionTestClass * klass)
++{
++  GstElementClass *element_class = GST_ELEMENT_CLASS (klass);
++
++  gst_element_class_add_pad_template (element_class,
++      gst_static_pad_template_get (&gst_decrypt_sink_template));
++
++  gst_element_class_set_metadata (element_class,
++      "Decryptor element for unit tests",
++      GST_ELEMENT_FACTORY_KLASS_DECRYPTOR,
++      "Use in unit tests", "Alex Ashley <alex.ashley@youview.com>");
++}
++
++static GType
++gst_protection_test_get_type (void)
++{
++  static volatile gsize protection_test_type = 0;
++
++  if (g_once_init_enter (&protection_test_type)) {
++    GType type;
++    const GTypeInfo info = {
++      sizeof (GstProtectionTestClass),
++      (GBaseInitFunc) gst_protection_test_base_init,    /* base_init */
++      NULL,                     /* base_finalize */
++      (GClassInitFunc) gst_protection_test_class_init,  /* class_init */
++      NULL,                     /* class_finalize */
++      NULL,                     /* class_data */
++      sizeof (GstProtectionTest),
++      0,                        /* n_preallocs */
++      NULL,                     /* instance_init */
++      NULL                      /* value_table */
++    };
++    type =
++        g_type_register_static (GST_TYPE_ELEMENT, "GstProtectionTest", &info,
++        0);
++    g_once_init_leave (&protection_test_type, type);
++  }
++  return protection_test_type;
++}
++
++static gboolean
++protection_plugin_init_func (GstPlugin * plugin, gpointer user_data)
++{
++  PluginInitContext *context = (PluginInitContext *) user_data;
++  gboolean ret;
++
++  ret =
++      gst_element_register (plugin, context->name, context->rank,
++      context->type);
++  return ret;
++}
++
++static gboolean
++protection_create_plugin (GstRegistry * registry, const gchar * name,
++    GType type)
++{
++  gboolean ret;
++  PluginInitContext context;
++
++  context.name = name;
++  context.rank = GST_RANK_MARGINAL;
++  context.type = type;
++  ret = gst_plugin_register_static_full (GST_VERSION_MAJOR,     /* version */
++      GST_VERSION_MINOR,        /* version */
++      name,                     /* name */
++      "Protection unit test",   /* description */
++      protection_plugin_init_func,      /* init function */
++      "0.0.0",                  /* version string */
++      GST_LICENSE_UNKNOWN,      /* license */
++      __FILE__,                 /* source */
++      GST_PACKAGE_NAME,         /* package */
++      GST_PACKAGE_ORIGIN,       /* origin */
++      &context                  /* user_data */
++      );
++  return ret;
++}
++
++static void
++test_setup (void)
++{
++  GstRegistry *registry;
++
++  registry = gst_registry_get ();
++  protection_create_plugin (registry, GST_PROTECTION_TEST_NAME,
++      GST_TYPE_PROTECTION_TEST);
++}
++
++static void
++test_teardown (void)
++{
++}
++
++
++GST_START_TEST (test_decryptor_element_class)
++{
++  GstElement *elem;
++  const gchar *selected_id;
++  const gchar *sys_ids[] = {
++    CLEARKEY_SYSTEM_ID,
++    "69f908af-4816-46ea-910c-cd5dcccb0a3a",
++    "5e629af5-38da-4063-8977-97ffbd9902d4",
++    NULL
++  };
++
++#ifdef DEBUG_PLUGINS
++  GList *list, *walk;
++
++  list = gst_registry_get_plugin_list (gst_registry_get ());
++  for (walk = list; walk; walk = g_list_next (walk)) {
++    GstPlugin *plugin = (GstPlugin *) walk->data;
++    g_print ("Element %s\n", gst_plugin_get_name (plugin));
++  }
++#endif
++
++  elem = gst_element_factory_make (GST_PROTECTION_TEST_NAME, NULL);
++  fail_unless (GST_IS_ELEMENT (elem));
++
++  selected_id = gst_protection_select_system (sys_ids);
++  fail_if (selected_id == NULL);
++
++  selected_id = gst_protection_select_system (&sys_ids[1]);
++  fail_unless (selected_id == NULL);
++
++  selected_id = gst_protection_select_system (&sys_ids[3]);
++  fail_unless (selected_id == NULL);
++}
++
++GST_END_TEST;
++
++GST_START_TEST (test_protection_metadata)
++{
++  GstBuffer *buf = NULL;
++  GstBuffer *iv, *kid;
++  GstBuffer *fetched_iv = NULL, *fetched_key_id = NULL;
++  GstStructure *meta_info;
++  GstProtectionMeta *meta = NULL;
++  const GstMetaInfo *info = NULL;
++  const GValue *value;
++
++  /* Check correct type info is returned */
++  info = gst_protection_meta_get_info ();
++  fail_unless (info != NULL);
++  fail_unless (info->api == GST_PROTECTION_META_API_TYPE);
++
++  iv = gst_buffer_new_allocate (NULL, 16, NULL);
++  gst_buffer_memset (iv, 0, 'i', 16);
++  ASSERT_MINI_OBJECT_REFCOUNT (iv, "iv", 1);
++  kid = gst_buffer_new_allocate (NULL, 16, NULL);
++  gst_buffer_memset (kid, 0, 'k', 16);
++  ASSERT_MINI_OBJECT_REFCOUNT (kid, "kid", 1);
++  meta_info = gst_structure_new ("application/x-cenc",
++      "encrypted", G_TYPE_BOOLEAN, TRUE,
++      "iv", GST_TYPE_BUFFER, iv,
++      "iv_size", G_TYPE_UINT, 16, "kid", GST_TYPE_BUFFER, kid, NULL);
++  ASSERT_MINI_OBJECT_REFCOUNT (kid, "kid", 2);
++  ASSERT_MINI_OBJECT_REFCOUNT (iv, "iv", 2);
++
++  buf = gst_buffer_new_allocate (NULL, 1024, NULL);
++  /* Test attaching protection metadata to buffer */
++  meta = gst_buffer_add_protection_meta (buf, meta_info);
++  fail_unless (meta != NULL);
++  /* gst_buffer_new_allocate takes ownership of info GstStructure */
++  ASSERT_MINI_OBJECT_REFCOUNT (buf, "Buffer", 1);
++
++  /* Test detaching protection metadata from buffer, and check that
++   * contained data is correct */
++  meta = NULL;
++  meta = gst_buffer_get_protection_meta (buf);
++  fail_unless (meta != NULL);
++  ASSERT_MINI_OBJECT_REFCOUNT (buf, "Buffer", 1);
++  value = gst_structure_get_value (meta->info, "iv");
++  fail_unless (value != NULL);
++  fetched_iv = gst_value_get_buffer (value);
++  fail_unless (fetched_iv != NULL);
++  fail_unless (gst_buffer_get_size (fetched_iv) == 16);
++  value = gst_structure_get_value (meta->info, "kid");
++  fail_unless (value != NULL);
++  fetched_key_id = gst_value_get_buffer (value);
++  fail_unless (fetched_key_id != NULL);
++  fail_unless (gst_buffer_get_size (fetched_key_id) == 16);
++
++  gst_buffer_remove_meta (buf, (GstMeta *) meta);
++
++  /* Check that refcounts are decremented after metadata is freed */
++  ASSERT_MINI_OBJECT_REFCOUNT (buf, "Buffer", 1);
++  ASSERT_MINI_OBJECT_REFCOUNT (iv, "IV", 1);
++  ASSERT_MINI_OBJECT_REFCOUNT (kid, "KID", 1);
++
++  gst_buffer_unref (buf);
++  gst_buffer_unref (iv);
++  gst_buffer_unref (kid);
++}
++
++GST_END_TEST;
++
++static Suite *
++protection_suite (void)
++{
++  Suite *s = suite_create ("protection library");
++  TCase *tc_chain = tcase_create ("general");
++
++  suite_add_tcase (s, tc_chain);
++  tcase_add_test (tc_chain, test_decryptor_element_class);
++  tcase_add_test (tc_chain, test_protection_metadata);
++  tcase_add_unchecked_fixture (tc_chain, test_setup, test_teardown);
++
++  return s;
++}
++
++int
++main (int argc, char **argv)
++{
++  int nf;
++
++  Suite *s = protection_suite ();
++  SRunner *sr = srunner_create (s);
++
++  gst_check_init (&argc, &argv);
++
++  srunner_run_all (sr, CK_NORMAL);
++  nf = srunner_ntests_failed (sr);
++  srunner_free (sr);
++
++  return nf;
++}
+diff --git a/win32/common/libgstreamer.def b/win32/common/libgstreamer.def
+index f567fda..63486b6 100644
+--- a/win32/common/libgstreamer.def
++++ b/win32/common/libgstreamer.def
+@@ -112,6 +112,7 @@ EXPORTS
+ 	gst_bin_sync_children_states
+ 	gst_bitmask_get_type
+ 	gst_buffer_add_meta
++	gst_buffer_add_protection_meta
+ 	gst_buffer_append
+ 	gst_buffer_append_memory
+ 	gst_buffer_append_region
+@@ -990,6 +991,9 @@ EXPORTS
+ 	gst_preset_set_app_dir
+ 	gst_preset_set_meta
+ 	gst_progress_type_get_type
++	gst_protection_meta_api_get_type
++	gst_protection_meta_get_info
++	gst_protection_select_system
+ 	gst_proxy_pad_chain_default
+ 	gst_proxy_pad_chain_list_default
+ 	gst_proxy_pad_get_internal
+-- 
+cgit v0.10.2
