@@ -4,11 +4,13 @@
 #
 ################################################################################
 
-SQLITE_VERSION = 3080100
+SQLITE_VERSION = 3081002
 SQLITE_SOURCE = sqlite-autoconf-$(SQLITE_VERSION).tar.gz
-SQLITE_SITE = http://www.sqlite.org/2013
+SQLITE_SITE = http://www.sqlite.org/2015
 SQLITE_LICENSE = Public domain
 SQLITE_INSTALL_STAGING = YES
+
+SQLITE_AUTORECONF = YES
 
 ifneq ($(BR2_LARGEFILE),y)
 # the sqlite configure script fails to define SQLITE_DISABLE_LFS when

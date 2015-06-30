@@ -38,13 +38,13 @@ BINUTILS_SOURCE ?= binutils-$(BINUTILS_VERSION).tar.bz2
 BINUTILS_EXTRA_CONFIG_OPTIONS = $(call qstrip,$(BR2_BINUTILS_EXTRA_CONFIG_OPTIONS))
 BINUTILS_INSTALL_STAGING = YES
 BINUTILS_DEPENDENCIES = $(if $(BR2_NEEDS_GETTEXT_IF_LOCALE),gettext)
-HOST_BINUTILS_DEPENDENCIES =
+HOST_BINUTILS_DEPENDENCIES = host-flex host-bison
 BINUTILS_LICENSE = GPLv3+, libiberty LGPLv2.1+
 BINUTILS_LICENSE_FILES = COPYING3 COPYING.LIB
 
 ifeq ($(BINUTILS_FROM_GIT),y)
 BINUTILS_DEPENDENCIES += host-texinfo host-flex host-bison
-HOST_BINUTILS_DEPENDENCIES += host-texinfo host-flex host-bison
+HOST_BINUTILS_DEPENDENCIES += host-texinfo
 endif
 
 # We need to specify host & target to avoid breaking ARM EABI
@@ -62,7 +62,7 @@ endif
 # "host" binutils should actually be "cross"
 # We just keep the convention of "host utility" for now
 HOST_BINUTILS_CONF_OPT = --disable-multilib --disable-werror \
-			--target=$(GNU_TARGET_NAME) \
+			--target=$(GNU_TARGET_NAME) --enable-gold \
 			--disable-shared --enable-static \
 			--with-sysroot=$(STAGING_DIR) \
 			$(BINUTILS_EXTRA_CONFIG_OPTIONS)

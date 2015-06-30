@@ -1,0 +1,20 @@
+CREATE libnetflix-biglib.a
+ADDLIB output/nrdlib/lib/libnrdnet.a
+ADDLIB output/nrdlib/lib/libnrdase_heuristics.a
+ADDLIB output/nrdlib/lib/libnrdnet_http.a
+ADDLIB output/nrdlib/lib/libnrd.a
+ADDLIB output/nrdlib/lib/libnrdase.a
+ADDLIB output/nrdlib/lib/libnrddemux.a
+ADDLIB output/nrdlib/lib/libnrdbase.a
+ADDLIB output/src/platform/gibbon/JavaScriptCore/Source/JavaScriptCore/libJavaScriptCore.a
+ADDLIB output/src/platform/gibbon/JavaScriptCore/Source/WTF/wtf/libWTF.a
+ADDLIB output/src/platform/gibbon/libnetflix.a
+ADDLIB output/mdxlib/lib/libmdxlib.a
+ADDLIB output/mdxlib/lib/libmdxlib_threadutil.a
+ADDLIB output/mdxlib/lib/libmdxlib_upnp.a
+ADDLIB output/mdxlib/lib/libmdxlib_ixml.a
+ADDLIB output/lib/libnrdapp.a
+ADDLIB output/lib/libnrddpi.a
+ADDLIB output/lib/libnrdtee.a
+SAVE
+END

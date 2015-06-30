@@ -1,0 +1,13 @@
+diff -rupN a/gst/isomp4/qtdemux.c b/gst/isomp4/qtdemux.c
+--- a/gst/isomp4/qtdemux.c	2015-06-03 13:52:27.085818526 +0000
++++ b/gst/isomp4/qtdemux.c	2015-06-03 13:06:10.209744164 +0000
+@@ -2827,6 +2827,9 @@ qtdemux_parse_moof (GstQTDemux * qtdemux
+       GST_DEBUG_OBJECT (qtdemux, "decode time %" G_GUINT64_FORMAT
+           " (%" GST_TIME_FORMAT ")", decode_time,
+           GST_TIME_ARGS (decode_time_ts));
++
++      if (qtdemux->fragment_start != -1)
++          qtdemux->fragment_start = decode_time_ts;
+     }
+ 
+     if (G_UNLIKELY (!stream)) {

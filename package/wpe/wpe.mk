@@ -95,7 +95,7 @@ WPE_FLAGS = \
 	-DUSE_SYSTEM_MALLOC=OFF \
 	-DUSE_KEY_INPUT_HANDLING_LINUX_INPUT=ON
 
-ifeq ($(BR2_WPE_GSTREAMER),y)
+ifeq ($(BR2_PACKAGE_WPE_USE_GSTREAMER),y)
 	WPE_DEPENDENCIES += \
 		gstreamer1 gst1-plugins-base gst1-plugins-good gst1-plugins-bad
 	WPE_FLAGS += \
@@ -121,7 +121,8 @@ ifeq ($(BR2_ENABLE_DEBUG),y)
 BUILDTYPE = Debug
 WPE_FLAGS += \
 	-DCMAKE_C_FLAGS_DEBUG="-O0 -g -Wno-cast-align" \
-	-DCMAKE_CXX_FLAGS_DEBUG="-O0 -g -Wno-cast-align"
+	-DCMAKE_CXX_FLAGS_DEBUG="-O0 -g -Wno-cast-align" \
+	-DDEBUG_FISSION=TRUE
 else
 BUILDTYPE = Release
 WPE_FLAGS += \
@@ -171,9 +172,21 @@ WPE_CONF_OPT = -DPORT=WPE -G $(WPE_NINJA_GENERATOR) \
 	-DCMAKE_BUILD_TYPE=$(BUILDTYPE) \
 	$(WPE_FLAGS)
 
+WPE_NINJA_EXTRA_OPTIONS=
+ifeq ($(VERBOSE),1)
+	WPE_NINJA_EXTRA_OPTIONS += -v
+endif
+
 define WPE_BUILD_CMDS
-	$(WPE_MAKE_ENV) $(HOST_DIR)/usr/bin/ninja -C $(WPE_BUILDDIR) libWPEWebKit.so WPE{Web,Network}Process WPE$(WPE_SHELL)Shell
+	$(WPE_MAKE_ENV) $(HOST_DIR)/usr/bin/ninja -C $(WPE_BUILDDIR) $(WPE_NINJA_EXTRA_OPTIONS) libWPEWebKit.so libWPEWebInspectorResources.so WPE{Web,Network}Process WPE$(WPE_SHELL)Shell
 endef
+
+ifeq ($(BR2_PACKAGE_WPE_INSTALL_ROOTCA),y)
+define WPE_INSTALL_ROOTCA
+	mkdir -p $(TARGET_DIR)/etc/ssl/certs/
+	$(WGET) -O $(TARGET_DIR)/etc/ssl/certs/ca-certificates.crt http://curl.haxx.se/ca/cacert.pem
+endef
+endif
 
 define WPE_INSTALL_STAGING_CMDS
 	(cd $(WPE_BUILDDIR) && \
@@ -187,6 +200,7 @@ define WPE_INSTALL_TARGET_CMDS
 	cp -d lib/libWPE* $(TARGET_DIR)/usr/lib/ && \
 	$(STRIPCMD) $(TARGET_DIR)/usr/lib/libWPEWebKit.so.0.0.1 && \
 	popd > /dev/null)
+	$(WPE_INSTALL_ROOTCA)
 	$(WPE_INSTALL_AUTOSTART)
 endef
 

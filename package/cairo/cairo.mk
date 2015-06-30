@@ -4,13 +4,13 @@
 #
 ################################################################################
 
-CAIRO_VERSION = dd8e6a461d53add34008ea9f33e7f1dba5d2c5cb
-CAIRO_SITE = $(call github,WebKitForWayland,cairo,$(CAIRO_VERSION))
-#CAIRO_VERSION = 1.14.2
-#CAIRO_SOURCE = cairo-$(CAIRO_VERSION).tar.xz
+#CAIRO_VERSION = dd8e6a461d53add34008ea9f33e7f1dba5d2c5cb
+#CAIRO_SITE = $(call github,WebKitForWayland,cairo,$(CAIRO_VERSION))
+CAIRO_VERSION = 1.14.2
+CAIRO_SOURCE = cairo-$(CAIRO_VERSION).tar.xz
 CAIRO_LICENSE = LGPLv2.1+
 CAIRO_LICENSE_FILES = COPYING
-#CAIRO_SITE = http://cairographics.org/releases
+CAIRO_SITE = http://cairographics.org/releases
 CAIRO_INSTALL_STAGING = YES
 CAIRO_AUTORECONF = YES
 

@@ -51,6 +51,12 @@ ifeq ($(BR2_x86_i386),y)
 	OPENSSL_TARGET_ARCH = generic32 386
 endif
 
+ifeq ($(BR2_ENABLE_DEBUG),y)
+	OPENSSL_DEBUG_PREFIX = debug-
+else
+	OPENSSL_DEBUG_PREFIX =
+endif
+
 define HOST_OPENSSL_CONFIGURE_CMDS
 	(cd $(@D); \
 		$(HOST_CONFIGURE_OPTS) \
@@ -68,7 +74,7 @@ define OPENSSL_CONFIGURE_CMDS
 		$(TARGET_CONFIGURE_ARGS) \
 		$(TARGET_CONFIGURE_OPTS) \
 		./Configure \
-			linux-$(OPENSSL_TARGET_ARCH) \
+			$(OPENSSL_DEBUG_PREFIX)linux-$(OPENSSL_TARGET_ARCH) \
 			--prefix=/usr \
 			--openssldir=/etc/ssl \
 			--libdir=/lib \

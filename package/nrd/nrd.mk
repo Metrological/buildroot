@@ -17,6 +17,14 @@ endif
 
 NRD_INSTALL_STAGING = NO
 
+ifeq ($(findstring y,$(BR2_PACKAGE_NRD_GRAPHICS_GLES2)$(BR2_PACKAGE_NRD_GRAPHICS_METROLOGICAL)),y)
+NRD_DEPENDENCIES += $(call qstrip,$(BR2_PACKAGE_PROVIDES_OPENGL_ES))
+endif
+
+ifeq ($(BR2_PACKAGE_NRD_GRAPHICS_GLES2_EGL),y)
+NRD_DEPENDENCIES += $(call qstrip,$(BR2_PACKAGE_PROVIDES_OPENGL_EGL))
+endif
+
 ifeq ($(BR2_PACKAGE_NRD_GRAPHICS_DIRECTFB),y)
 NRD_CMAKE_FLAGS += -DGIBBON_GRAPHICS=directfb
 NRD_DEPENDENCIES += alsa-lib portaudio webp ffmpeg tremor directfb
@@ -115,13 +123,9 @@ NRD_INSTALL_STAGING = YES
 NRD_CMAKE_FLAGS += -DGIBBON_MODE=static
 NRD_CMAKE_FLAGS += -DGIBBON_SCRIPT_JSC_DYNAMIC=0
 define NRD_TARGET_SET_DEFINITION
-	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libnetflix.a $(TARGET_DIR)/usr/lib
 	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/manufss $(TARGET_DIR)/usr/bin
 endef
 define NRD_INSTALL_STAGING_CMDS
-	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/libnetflix.a $(STAGING_DIR)/usr/lib
-	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/JavaScriptCore/Source/WTF/wtf/libWTF.a $(STAGING_DIR)/usr/lib
-	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/JavaScriptCore/Source/JavaScriptCore/libJavaScriptCore.a $(STAGING_DIR)/usr/lib
 	mkdir -p $(STAGING_DIR)/usr/include/nrd
 	mkdir -p $(STAGING_DIR)/usr/include/nrd/nrd
 	mkdir -p $(STAGING_DIR)/usr/include/nrd/nrdbase
@@ -152,9 +156,9 @@ define NRD_INSTALL_STAGING_CMDS
 	cp -R $(@D)/partner/dpi/metrological/external/* $(STAGING_DIR)/usr/include/nrd/external
 	cp -R $(@D)/partner/graphics/metrological/external/* $(STAGING_DIR)/usr/include/nrd/external
 	cp -R $(@D)/partner/input/metrological/external/* $(STAGING_DIR)/usr/include/nrd/external
-	cp -R $(@D)/output/nrdlib/lib/*.a $(STAGING_DIR)/usr/lib
-	cp -R $(@D)/output/mdxlib/lib/*.a $(STAGING_DIR)/usr/lib
-	cp -R $(@D)/output/lib/*.a $(STAGING_DIR)/usr/lib
+	cp -R $(TOPDIR)/package/nrd/files/netflix-biglib.mri $(@D)
+	cd $(@D) && $(TARGET_CROSS)ar -M < $(@D)/netflix-biglib.mri
+	cp -R $(@D)/libnetflix-biglib.a $(STAGING_DIR)/usr/lib
 endef
 endif
 
@@ -167,10 +171,10 @@ endef
 
 ifeq ($(BR2_PACKAGE_NRD_DEBUG_BUILD),y)
 NRD_CMAKE_FLAGS += -DGIBBON_SCRIPT_JSC_DEBUG=1
-NRD_CMAKE_FLAGS += -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS_DEBUG="$(NRD_RELOCATION_OPTION) -O0 -g -Wno-cast-align" -DCMAKE_CXX_FLAGS_DEBUG="$(NRD_RELOCATION_OPTION) -O0 -g -Wno-cast-align"
+NRD_CMAKE_FLAGS += -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS_DEBUG="$(NRD_RELOCATION_OPTION) $(TARGET_CFLAGS)" -DCMAKE_CXX_FLAGS_DEBUG="$(NRD_RELOCATION_OPTION) $(TARGET_CXXFLAGS)"
 else
 NRD_CMAKE_FLAGS += -DGIBBON_SCRIPT_JSC_DEBUG=0
-NRD_CMAKE_FLAGS += -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS_RELEASE="$(NRD_RELOCATION_OPTION) -O2 -DNDEBUG -Wno-cast-align" -DCMAKE_CXX_FLAGS_RELEASE="$(NRD_RELOCATION_OPTION) -O2 -DNDEBUG -Wno-cast-align"
+NRD_CMAKE_FLAGS += -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS_RELEASE="$(NRD_RELOCATION_OPTION) $(TARGET_CFLAGS)" -DCMAKE_CXX_FLAGS_RELEASE="$(NRD_RELOCATION_OPTION) $(TARGET_CXXFLAGS)"
 endif
 
 NRD_CMAKE_FLAGS += -DGIBBON_PLATFORM=posix
@@ -179,7 +183,7 @@ NRD_CMAKE_FLAGS += -DBUILD_DPI_DIRECTORY=$(@D)/partner/dpi
 NRD_CONFIGURE_CMDS = \
 	mkdir $(@D)/output;	\
 	cd $(@D)/output; \
-	$(TARGET_MAKE_ENV) BUILDROOT_TOOL_PREFIX="$(GNU_TARGET_NAME)-" cmake $(@D)/netflix \
+	$(TARGET_MAKE_ENV) BUILDROOT_TOOL_PREFIX="$(GNU_TARGET_NAME)-" cmake -DCMAKE_SYSROOT=$(STAGING_DIR) $(@D)/netflix \
 		-DCMAKE_TOOLCHAIN_FILE=$(HOST_DIR)/usr/share/buildroot/toolchainfile.cmake \
 		$(NRD_CMAKE_FLAGS) \
 		-DSMALL_FLAGS:STRING="-s -O3" -DSMALL_CFLAGS:STRING="" -DSMALL_CXXFLAGS:STRING="-fvisibility=hidden -fvisibility-inlines-hidden" -DNRDAPP_TOOLS="manufSSgenerator"

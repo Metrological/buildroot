@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-LIBSOUP_VERSION_MAJOR = 2.48
+LIBSOUP_VERSION_MAJOR = 2.50
 LIBSOUP_VERSION_MINOR = 0
 LIBSOUP_VERSION = $(LIBSOUP_VERSION_MAJOR).$(LIBSOUP_VERSION_MINOR)
 LIBSOUP_SOURCE = libsoup-$(LIBSOUP_VERSION).tar.xz

@@ -79,6 +79,12 @@ config BR2_BCM_REFSW_VERSION_V14
         bool "V14"
         help
 	   Use official release from Broadcom labeled V20141217
+	   
+config BR2_BCM_REFSW_VERSION_V15
+        bool "V15"
+        help
+	   Use official release from Broadcom labeled V20150326
+
 
 config BR2_BCM_REFSW_CUSTOM
         bool "Custom"

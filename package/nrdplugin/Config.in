@@ -1,14 +1,24 @@
+config BR2_PACKAGE_NRDPLUGIN
+	bool "nrd plugin"
+	depends on BR2_PACKAGE_NRD
+	help
+	  plugin package for the nrd framework
+
+comment "nrd plugin requires nrd"
+depends on !BR2_PACKAGE_NRD
+
+if BR2_PACKAGE_NRDPLUGIN
+
 config BR2_PACKAGE_NRDPLUGIN_QT
-	depends on BR2_PACKAGE_QT5BASE
+	depends on BR2_PACKAGE_QT5WEBKIT
 	select BR2_PACKAGE_CPPSDK
 	select BR2_PACKAGE_CPPSDK_GENERICS
 	select BR2_PACKAGE_NRDAPPLICATION
-	bool "nrd plugin"
+	bool "nrd qt plugin"
 	help
 	  QT based plugin of the nrd framework. To be used, for example in WebKit environment
 
 config BR2_PACKAGE_NRDAPPLICATION
-	select BR2_PACKAGE_NRD
 	select BR2_PACKAGE_CPPSDK
 	select BR2_PACKAGE_CPPSDK_GENERICS
 	select BR2_PACKAGE_NRD_DYNAMICLIB
@@ -28,5 +38,7 @@ config BR2_PACKAGE_NRDAPPLICATION_DEBUG
         help
           Build the nrd application in debug mode. Always usefull to have a
           partial enabled debug stack.
+
+endif
 
 endif

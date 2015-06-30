@@ -15,6 +15,10 @@ else ifeq ($(BR2_BCM_REFSW_VERSION_V14), y)
 	BCM_REFSW_SITE = file://../bcm-refsw
 	BCM_REFSW_VERSION = 20141217
 	BCM_REFSW_SOURCE = refsw_release_unified_$(BCM_REFSW_VERSION).src.tar.xz
+else ifeq ($(BR2_BCM_REFSW_VERSION_V15), y)
+	BCM_REFSW_SITE = file://../bcm-refsw
+	BCM_REFSW_VERSION = 20150326
+	BCM_REFSW_SOURCE = refsw_release_unified_$(BCM_REFSW_VERSION).src.tar.xz
 else
 	BCM_REFSW_SITE = file:///
 	BCM_REFSW_VERSION = CUSTOM
@@ -91,6 +95,7 @@ BCM_MAKEFLAGS += PKG_CONFIG_PATH="$(STAGING_DIR)/usr/lib/pkgconfig:$(STAGING_DIR
 BCM_MAKEFLAGS += HOST_DIR="${HOST_DIR}"
 BCM_MAKEFLAGS += APPLIBS_TOP=${BCM_APPS_DIR}
 
+
 define BCM_REFSW_EXTRACT_CMDS
 	xz -d -c $(DL_DIR)/$(BCM_REFSW_SOURCE) \
 		| $(TAR) --strip-components=0 -C $(@D) -xf -
@@ -98,11 +103,18 @@ endef
 
 define BCM_REFSW_BUILD_CMDS
 	$(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/nexus/build all
-	$(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/middleware/v3d -f V3DDriver.mk
-	$(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/middleware/platform/nexus -f platform_nexus.mk
+	
+    if [ $(BR2_BCM_REFSW_VERSION_V15) = y ] ; then \
+       $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/middleware/v3d/driver -f V3DDriver.mk; \
+       $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/middleware/v3d/platform/nexus -f platform_nexus.mk; \
+	else \
+       $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/middleware/v3d -f V3DDriver.mk; \
+       $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/middleware/platform/nexus -f platform_nexus.mk; \
+	fi
+	
 	$(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/applications/khronos/v3d/nexus/cube
 endef
-
+   
 define BCM_REFSW_INSTALL_LIBS
 	if [ -f $(@D)$(BCM_OUTPUT)nexus/bin/libnexus_client.so ] ; then \
 		$(INSTALL) -D $(@D)$(BCM_OUTPUT)nexus/bin/libnexus_client.so $1/usr/lib/libnxclient.so; \
@@ -134,12 +146,23 @@ define BCM_REFSW_INSTALL_STAGING_CMDS
 	$(INSTALL) -m 644 package/bcm-refsw/glesv2.pc $(STAGING_DIR)/usr/lib/pkgconfig/
 	$(INSTALL) -m 644 package/bcm-refsw/vg.pc $(STAGING_DIR)/usr/lib/pkgconfig/
 	$(INSTALL) -m 644 $(@D)$(BCM_OUTPUT)nexus/bin/include/*.h $(STAGING_DIR)/usr/include/refsw/
-	$(INSTALL) -m 644 $(@D)/rockford/middleware/platform/nexus/*.h $(STAGING_DIR)/usr/include/refsw/
-	$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/interface/khronos/include/GLES/*.h $(STAGING_DIR)/usr/include/GLES/
-	$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/interface/khronos/include/GLES2/*.h $(STAGING_DIR)/usr/include/GLES2/
-	$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/interface/khronos/include/EGL/*.h $(STAGING_DIR)/usr/include/EGL/
-	$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/interface/khronos/include/VG/*.h $(STAGING_DIR)/usr/include/VG/
-	$(INSTALL) -m 644 -D $(@D)/rockford/middleware/v3d/interface/khronos/include/KHR/khrplatform.h $(STAGING_DIR)/usr/include/KHR/khrplatform.h
+	
+	if [ $(BR2_BCM_REFSW_VERSION_V15) = y ] ; then \
+		$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/platform/nexus/*.h $(STAGING_DIR)/usr/include/refsw/; \
+		$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/driver/interface/khronos/include/GLES/*.h $(STAGING_DIR)/usr/include/GLES/; \
+		$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/driver/interface/khronos/include/GLES2/*.h $(STAGING_DIR)/usr/include/GLES2/; \
+		$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/driver/interface/khronos/include/EGL/*.h $(STAGING_DIR)/usr/include/EGL/; \
+		$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/driver/interface/khronos/include/VG/*.h $(STAGING_DIR)/usr/include/VG/; \
+		$(INSTALL) -m 644 -D $(@D)/rockford/middleware/v3d/driver/interface/khronos/include/KHR/khrplatform.h $(STAGING_DIR)/usr/include/KHR/khrplatform.h; \
+	else \
+		$(INSTALL) -m 644 $(@D)/rockford/middleware/platform/nexus/*.h $(STAGING_DIR)/usr/include/refsw/; \
+		$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/interface/khronos/include/GLES/*.h $(STAGING_DIR)/usr/include/GLES/; \
+		$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/interface/khronos/include/GLES2/*.h $(STAGING_DIR)/usr/include/GLES2/; \
+		$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/interface/khronos/include/EGL/*.h $(STAGING_DIR)/usr/include/EGL/; \
+		$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/interface/khronos/include/VG/*.h $(STAGING_DIR)/usr/include/VG/; \
+		$(INSTALL) -m 644 -D $(@D)/rockford/middleware/v3d/interface/khronos/include/KHR/khrplatform.h $(STAGING_DIR)/usr/include/KHR/khrplatform.h; \
+	fi 
+	
 	$(call BCM_REFSW_INSTALL_LIBS,$(STAGING_DIR))
 endef
 
