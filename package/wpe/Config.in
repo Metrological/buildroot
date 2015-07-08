@@ -43,6 +43,7 @@ comment "wpe-gstreamer requires gstreamer 1.x"
  
 config BR2_PACKAGE_WPE_USE_ENCRYPTED_MEDIA
 	bool "encrypted-media"
+	select BR2_PACKAGE_OPENSSL
 	depends on BR2_PACKAGE_WPE_USE_GSTREAMER
 	depends on BR2_PACKAGE_GSTREAMER1_GIT
 	default n
