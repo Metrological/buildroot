@@ -71,10 +71,11 @@ comment "media-source requires wpe-gstreamer"
 	depends on !BR2_PACKAGE_WPE_USE_GSTREAMER
 
 config BR2_PACKAGE_WPE_USE_MEDIA_STREAM
-	bool "media-stream"
+	bool "webrtc"
 	default n
 	depends on BR2_PACKAGE_WPE_USE_GSTREAMER
 	select BR2_PACKAGE_OPENWEBRTC
+	select BR2_PACKAGE_GST1_PLUGINS_OPENWEBRTC
 	help
 	  Enable MediaStream support. This is needed for WebRTC APIs.
 comment "media-stream requires wpe-gstreamer"

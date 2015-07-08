@@ -16,7 +16,7 @@ OPENWEBRTC_DEPENDENCIES = gstreamer1 gst1-plugins-openwebrtc libnice pulseaudio
 OPENWEBRTC_CONF_OPT += \
 	--enable-bridge=no \
 	--enable-introspection=no \
-	--enable-tests=no \
+	--enable-tests=yes \
 	--enable-owr-gst=yes \
 	--disable-gtk-doc
 
