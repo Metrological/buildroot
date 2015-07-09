@@ -8,11 +8,16 @@ NRD_VERSION = master
 NRD_SITE = git@github.com:Metrological/nrd.git
 NRD_SITE_METHOD = git
 NRD_LICENSE = PROPRIETARY
-NRD_DEPENDENCIES = freetype icu jpeg libpng libmng webp expat openssl c-ares libcurl harfbuzz
+NRD_DEPENDENCIES = freetype icu jpeg libpng libmng webp expat openssl c-ares libcurl harfbuzz nrdwrapper
 
 NRD_INSTALL_STAGING = YES
 
 NRD_RUNTIMEDATA_LOCATION = /var/lib/netflix
+
+ifeq ($(BR2_PACKAGE_CPPSDK),y)
+endif
+
+NRD_EXTRA_CXXFLAGS += -D_BROWSER_PLUGIN_
 
 ifeq ($(BR2_PACKAGE_DDPSTUB),y)
 NRD_DEPENDENCIES += stubs
@@ -29,7 +34,11 @@ NRD_CMAKE_FLAGS += -DGIBBON_SCRIPT_JSC_DEBUG=0
 NRD_CMAKE_FLAGS += -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS_RELEASE="$(TARGET_CFLAGS) $(NRD_EXTRA_CFLAGS)" -DCMAKE_CXX_FLAGS_RELEASE="$(TARGET_CXXFLAGS) $(NRD_EXTRA_CXXFLAGS)"
 endif
 
+ifeq ($(BR2_PACKAGE_RPI_USERLAND),y)
+NRD_CMAKE_FLAGS += -DGIBBON_PLATFORM=rpi
+else
 NRD_CMAKE_FLAGS += -DGIBBON_PLATFORM=posix
+endif
 
 NRD_EXTRA_CFLAGS   += -I$(STAGING_DIR)/usr/include/harfbuzz/ -I$(STAGING_DIR)/usr/include/freetype2/
 NRD_EXTRA_CXXFLAGS += -I$(STAGING_DIR)/usr/include/harfbuzz/ -I$(STAGING_DIR)/usr/include/freetype2/
@@ -100,6 +109,7 @@ NRD_STATIC_LIBS	= $(shell find $(@D)/output -name *.a)
 NRD_DYN_LIBS	= $(shell find $(@D)/output -name *.so*)
 
 define NRD_INSTALL_STAGING_CMDS
+	echo NRD_HEADERS $(NRD_HEADERS)
 #	$(foreach nrd_path, $(NRD_HEADERS), \
 		echo $(nrd_path)/\*\.h $(nrd_path) | rev | awk -v h="$(NRD_REVMATCH)" -v s="$(NRD_REVSUBST)" 'sub(h,s) {printf("%s\n", $$0);}' | rev | awk '{printf("mkdir -p %s && cp -r %s %s\n", $$2, $$1, $$2);}'
 	)
@@ -140,34 +150,34 @@ define NRD_INSTALL_TARGET_CMDS
 	# fix paths
 #	$(INSTALL) $(@D)/output/src/platform/gibbon/data/etc/conf/gibbon.xml
 	cat $(@D)/output/src/platform/gibbon/data/etc/conf/gibbon.xml | awk -v h="etc" -v s="$(NRD_RUNTIMEDATA_LOCATION)/etc" '{sub(h,s)}1' > $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/conf/gibbon.xml
-	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/etc/conf/graphics.xml $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/conf/
-#	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/etc/conf/input.xml $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/conf/
-	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/etc/conf/oem.xml $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/conf/
-	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/etc/conf/platform.xml $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/conf/
+	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/data/etc/conf/graphics.xml $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/conf/
+#	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/data/etc/conf/input.xml $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/conf/
+	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/data/etc/conf/oem.xml $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/conf/
+	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/data/etc/conf/platform.xml $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/conf/
 
 	mkdir -p $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/certs/
-	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/etc/certs/ui_ca.pem $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/certs/
+	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/data/etc/certs/ui_ca.pem $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/certs/
 
 	mkdir -p $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/keys/
-	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/etc/keys/appboot.key $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/keys/
+	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/data/etc/keys/appboot.key $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/etc/keys/
 
 	mkdir -p $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/fonts/
-	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/fonts/* $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/fonts/
-	$(INSTALL) -m 444 $(@D)/netflix/src/platform/gibbon/resources/gibbon/fonts/LastResort.ttf $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/fonts/
+	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/data/fonts/* $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/fonts/
+	$(INSTALL) -m 755 $(@D)/netflix/src/platform/gibbon/resources/gibbon/fonts/LastResort.ttf $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/fonts/
 
 	# minimum set of resources to have some dynamic content
 	mkdir -p $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/js/
-	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/resources/js/PartnerBridge.js $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/js/
-	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/resources/js/NetflixBridge.js $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/js/
-	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/resources/js/error.js $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/js/
-	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/resources/js/boot.js $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/js/
-	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/resources/js/splash.js $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/js/
+	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/data/resources/js/PartnerBridge.js $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/js/
+	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/data/resources/js/NetflixBridge.js $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/js/
+	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/data/resources/js/error.js $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/js/
+	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/data/resources/js/boot.js $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/js/
+	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/data/resources/js/splash.js $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/js/
 
 	mkdir -p $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/img/
-	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/resources/img/Netflix_Logo_Splash.png $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/img/
-	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/resources/img/Netflix_Background_Splash.png $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/img/
-	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/resources/img/Netflix_Shadow_Splash.png $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/img/
-	$(INSTALL) -m 444 $(@D)/output/src/platform/gibbon/data/resources/img/Spinner_Splash.mng $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/img/
+	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/data/resources/img/Netflix_Logo_Splash.png $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/img/
+	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/data/resources/img/Netflix_Background_Splash.png $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/img/
+	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/data/resources/img/Netflix_Shadow_Splash.png $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/img/
+	$(INSTALL) -m 755 $(@D)/output/src/platform/gibbon/data/resources/img/Spinner_Splash.mng $(TARGET_DIR)$(NRD_RUNTIMEDATA_LOCATION)/resources/img/
 
 	# fixes
 	mkdir -p $(TARGET_DIR)/root/data/gibbon
