@@ -1,0 +1,3 @@
+config BR2_PACKAGE_NRDWRAPPER
+	bool "nrdwrapper"
+	depends on BR2_PACKAGE_CPPSDK
