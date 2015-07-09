@@ -53,5 +53,12 @@ config BR2_PACKAGE_CPPSDK_WEBSOCKET
     Functionality to handle web communiciation and web socket
     communication.
 
+config BR2_PACKAGE_CPPSDK_IPCTEST
+  bool "ipctest"
+  select BR2_PACKAGE_CPPSDK_GENERICS
+  select BR2_PACKAGE_CPPSDK_WEBSOCKETO
+  help
+    RPC IPC test server + client
+
 endif
 
