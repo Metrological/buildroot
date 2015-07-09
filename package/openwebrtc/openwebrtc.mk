@@ -16,8 +16,13 @@ OPENWEBRTC_DEPENDENCIES = gstreamer1 gst1-plugins-openwebrtc libnice pulseaudio
 OPENWEBRTC_CONF_OPT += \
 	--enable-bridge=no \
 	--enable-introspection=no \
-	--enable-tests=yes \
 	--enable-owr-gst=yes \
 	--disable-gtk-doc
+
+ifeq ($(BR2_PACKAGE_OPENWEBRTC_ENABLE_TESTS),y)
+OPENWEBRTC_CONF_OPT += --enable-tests=yes
+else
+OPENWEBRTC_CONF_OPT += --enable-tests=no
+endif
 
 $(eval $(autotools-package))

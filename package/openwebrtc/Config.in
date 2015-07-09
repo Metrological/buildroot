@@ -28,3 +28,10 @@ config BR2_PACKAGE_OPENWEBRTC
 	  to evolve.
 
 	  http://www.openwebrtc.io/
+	  
+config BR2_PACKAGE_OPENWEBRTC_ENABLE_TESTS
+	bool "openwebrtc-tests"
+	default n
+	depends on BR2_PACKAGE_OPENWEBRTC
+	help
+	  Enable OpenWebRTC tests.
