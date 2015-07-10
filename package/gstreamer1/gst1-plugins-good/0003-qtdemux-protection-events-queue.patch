@@ -1,0 +1,94 @@
+From b9188489049d1aa691a5e11e3f25d65132edf7a2 Mon Sep 17 00:00:00 2001
+From: Philippe Normand <philn@igalia.com>
+Date: Thu, 9 Jul 2015 10:57:04 +0200
+Subject: [PATCH 3/4] qtdemux: protection events queue
+
+---
+ gst/isomp4/qtdemux.c | 36 ++++++++++++++++++++++++++++++++++--
+ gst/isomp4/qtdemux.h |  2 ++
+ 2 files changed, 36 insertions(+), 2 deletions(-)
+
+diff --git a/gst/isomp4/qtdemux.c b/gst/isomp4/qtdemux.c
+index 2da90ff..7a5089c 100644
+--- a/gst/isomp4/qtdemux.c
++++ b/gst/isomp4/qtdemux.c
+@@ -629,6 +629,12 @@ gst_qtdemux_dispose (GObject * object)
+     qtdemux->info_sizes = NULL;
+   }
+ 
++  if (qtdemux->pending_protection_events) {
++    g_list_free_full (qtdemux->pending_protection_events,
++        (GDestroyNotify) gst_event_unref);
++    qtdemux->pending_protection_events = NULL;
++  }
++
+   G_OBJECT_CLASS (parent_class)->dispose (object);
+ }
+ 
+@@ -2145,8 +2151,14 @@ gst_qtdemux_handle_sink_event (GstPad * sinkpad, GstObject * parent,
+       gst_event_parse_protection (event, &system_id, NULL, NULL);
+       GST_DEBUG_OBJECT (demux, "Received protection event for system ID %s",
+           system_id);
+-      gst_qtdemux_append_protection_system_id (demux, system_id);
+-      gst_event_unref (event);
++      if (demux->mss_mode && demux->n_streams == 1) {
++        GST_DEBUG_OBJECT (demux, "caching protection event");
++        demux->pending_protection_events =
++            g_list_append (demux->pending_protection_events, event);
++      } else {
++          gst_qtdemux_append_protection_system_id (demux, system_id);
++          gst_event_unref (event);
++      }
+       res = TRUE;
+       goto drop;
+     }
+@@ -6996,6 +7008,17 @@ gst_qtdemux_configure_stream (GstQTDemux * qtdemux, QtDemuxStream * stream)
+   return TRUE;
+ }
+ 
++static void
++gst_qtdemux_send_event (gpointer data, gpointer userdata)
++{
++  GstEvent *event = (GstEvent *) data;
++  GstPad *pad = (GstPad *) userdata;
++
++  if (!gst_pad_push_event (pad, event)) {
++    GST_ERROR_OBJECT (pad, "Failed to send pending event");
++  }
++}
++
+ static gboolean
+ gst_qtdemux_add_stream (GstQTDemux * qtdemux,
+     QtDemuxStream * stream, GstTagList * list)
+@@ -7056,6 +7079,15 @@ gst_qtdemux_add_stream (GstQTDemux * qtdemux,
+     list = NULL;
+     /* global tags go on each pad anyway */
+     stream->send_global_tags = TRUE;
++
++    if (G_UNLIKELY (qtdemux->pending_protection_events)) {
++      GST_DEBUG_OBJECT (stream->pad, "Sending pending %u events",
++          g_list_length (qtdemux->pending_protection_events));
++      g_list_foreach (qtdemux->pending_protection_events,
++          gst_qtdemux_send_event, stream->pad);
++    }
++
++
+   }
+ done:
+   if (list)
+diff --git a/gst/isomp4/qtdemux.h b/gst/isomp4/qtdemux.h
+index 6440cb2..2b17d42 100644
+--- a/gst/isomp4/qtdemux.h
++++ b/gst/isomp4/qtdemux.h
+@@ -153,6 +153,8 @@ struct _GstQTDemux {
+   guint8 default_info_size ;
+   GArray *info_sizes;
+   guint32 sample_count;
++
++  GList *pending_protection_events;
+ };
+ 
+ struct _GstQTDemuxClass {
+-- 
+2.1.4
+

@@ -1,0 +1,230 @@
+From 7bc28d7c26ef9ff9b4835b5d2b8f43f32582e2f3 Mon Sep 17 00:00:00 2001
+From: Alex Ashley <bugzilla@ashley-family.net>
+Date: Fri, 6 Feb 2015 13:22:14 +0000
+Subject: [PATCH 1/3] dashdemux: add support for generating Protection events
+ from ContentProtection elements
+
+If a ContentProtection element is present in an AdaptationSet element,
+send Protection events on the source pad, so that qtdemux can use this
+information to correctly generate its source caps for DASH CENC
+encrypted streams.
+
+This allows qtdemux to support CENC encrypted DASH streams where the
+content protection specific information is carried in the MPD file
+rather than in pssh boxes in the initialisation segments.
+
+This commit adds a new function to the adaptivedemux base class to allow
+a GstEvent to be queued for a stream. The queue of events are sent the
+next time a buffer is pushed for that stream.
+
+https://bugzilla.gnome.org/show_bug.cgi?id=705991
+---
+ ext/dash/gstdashdemux.c                       | 34 +++++++++++++++++++++++++++
+ ext/dash/gstmpdparser.c                       | 26 +++++++++++++++++++-
+ gst-libs/gst/adaptivedemux/gstadaptivedemux.c | 30 +++++++++++++++++++++++
+ gst-libs/gst/adaptivedemux/gstadaptivedemux.h |  4 ++++
+ 4 files changed, 93 insertions(+), 1 deletion(-)
+
+diff --git a/ext/dash/gstdashdemux.c b/ext/dash/gstdashdemux.c
+index 9b91e06..97c85a9 100644
+--- a/ext/dash/gstdashdemux.c
++++ b/ext/dash/gstdashdemux.c
+@@ -148,6 +148,7 @@
+ #include <inttypes.h>
+ #include <gst/base/gsttypefindhelper.h>
+ #include <gst/tag/tag.h>
++#include <gst/gstprotection.h>
+ #include "gst/gst-i18n-plugin.h"
+ #include "gstdashdemux.h"
+ #include "gstdash_debug.h"
+@@ -241,6 +242,9 @@ static GstPad *gst_dash_demux_create_pad (GstDashDemux * demux,
+ #define SIDX_ENTRY(s,i) (&(SIDX(s)->entries[(i)]))
+ #define SIDX_CURRENT_ENTRY(s) SIDX_ENTRY(s, SIDX(s)->entry_index)
+ 
++static void gst_dash_demux_send_content_protection_event (gpointer cp_data,
++    gpointer stream);
++
+ #define gst_dash_demux_parent_class parent_class
+ G_DEFINE_TYPE_WITH_CODE (GstDashDemux, gst_dash_demux, GST_TYPE_ADAPTIVE_DEMUX,
+     GST_DEBUG_CATEGORY_INIT (gst_dash_demux_debug, "dashdemux", 0,
+@@ -525,12 +529,42 @@ gst_dash_demux_setup_all_streams (GstDashDemux * demux)
+           (stream), tags);
+     stream->index = i;
+     stream->pending_seek_ts = GST_CLOCK_TIME_NONE;
++    if (active_stream->cur_adapt_set
++        && active_stream->cur_adapt_set->
++        RepresentationBase->ContentProtection) {
++      GST_DEBUG_OBJECT (demux, "Adding ContentProtection events to source pad");
++      g_list_foreach (active_stream->cur_adapt_set->
++          RepresentationBase->ContentProtection,
++          gst_dash_demux_send_content_protection_event, stream);
++    }
++
+     gst_isoff_sidx_parser_init (&stream->sidx_parser);
+   }
+ 
+   return TRUE;
+ }
+ 
++static void
++gst_dash_demux_send_content_protection_event (gpointer data, gpointer userdata)
++{
++  GstDescriptorType *cp = (GstDescriptorType *) data;
++  GstDashDemuxStream *stream = (GstDashDemuxStream *) userdata;
++  GstEvent *event;
++  GstBuffer *pssi;
++  glong pssi_len;
++
++  GST_TRACE_OBJECT (stream, "check schemeIdUri %s", cp->schemeIdUri);
++  if (cp->schemeIdUri && g_str_has_prefix (cp->schemeIdUri, "urn:uuid:")) {
++    pssi_len = g_utf8_strlen (cp->value, -1);
++    pssi = gst_buffer_new_wrapped (g_memdup (cp->value, pssi_len), pssi_len);
++    GST_LOG_OBJECT (stream, "Queuing Protection event on source pad");
++    event = gst_event_new_protection (cp->schemeIdUri + 9, pssi, "dash/mpd");
++    gst_adaptive_demux_stream_add_event ((GstAdaptiveDemuxStream *) stream,
++        event);
++    gst_buffer_unref (pssi);
++  }
++}
++
+ static GstClockTime
+ gst_dash_demux_get_duration (GstAdaptiveDemux * ademux)
+ {
+diff --git a/ext/dash/gstmpdparser.c b/ext/dash/gstmpdparser.c
+index c46240f..3d505be 100644
+--- a/ext/dash/gstmpdparser.c
++++ b/ext/dash/gstmpdparser.c
+@@ -69,6 +69,8 @@ static gboolean gst_mpdparser_get_xml_node_content (xmlNode * a_node,
+     gchar ** content);
+ static gchar *gst_mpdparser_get_xml_node_namespace (xmlNode * a_node,
+     const gchar * prefix);
++static gboolean gst_mpdparser_get_xml_node_as_string (xmlNode * a_node,
++    gchar ** content);
+ 
+ /* XML node parsing */
+ static void gst_mpdparser_parse_baseURL_node (GList ** list, xmlNode * a_node);
+@@ -950,6 +952,24 @@ gst_mpdparser_get_xml_node_content (xmlNode * a_node, gchar ** content)
+   return exists;
+ }
+ 
++static gboolean
++gst_mpdparser_get_xml_node_as_string (xmlNode * a_node, gchar ** content)
++{
++  gboolean exists = FALSE;
++  xmlBufferPtr buffer = xmlBufferCreate ();
++  int size;
++
++  size = xmlNodeDump (buffer, a_node->doc, a_node, 0,   /* indent */
++      0 /* format */ );
++  if (size > 0) {
++    *content = (gchar *) xmlBufferDetach (buffer);
++    exists = TRUE;
++    GST_LOG (" - %s: %s", a_node->name, *content);
++  }
++  xmlBufferFree (buffer);
++  return exists;
++}
++
+ static gchar *
+ gst_mpdparser_get_xml_node_namespace (xmlNode * a_node, const gchar * prefix)
+ {
+@@ -1016,7 +1036,11 @@ gst_mpdparser_parse_descriptor_type_node (GList ** list, xmlNode * a_node)
+   GST_LOG ("attributes of %s node:", a_node->name);
+   gst_mpdparser_get_xml_prop_string (a_node, "schemeIdUri",
+       &new_descriptor->schemeIdUri);
+-  gst_mpdparser_get_xml_prop_string (a_node, "value", &new_descriptor->value);
++  if (!gst_mpdparser_get_xml_prop_string (a_node, "value",
++          &new_descriptor->value)) {
++    /* if no value attribute, use XML string representation of the node */
++    gst_mpdparser_get_xml_node_as_string (a_node, &new_descriptor->value);
++  }
+ }
+ 
+ static void
+diff --git a/gst-libs/gst/adaptivedemux/gstadaptivedemux.c b/gst-libs/gst/adaptivedemux/gstadaptivedemux.c
+index 7df1c63..7ad589e 100644
+--- a/gst-libs/gst/adaptivedemux/gstadaptivedemux.c
++++ b/gst-libs/gst/adaptivedemux/gstadaptivedemux.c
+@@ -657,6 +657,17 @@ gst_adaptive_demux_set_stream_struct_size (GstAdaptiveDemux * demux,
+   demux->stream_struct_size = struct_size;
+ }
+ 
++static void
++gst_adaptive_demux_send_event (gpointer data, gpointer userdata)
++{
++  GstEvent *event = (GstEvent *) data;
++  GstPad *pad = (GstPad *) userdata;
++
++  if (!gst_pad_push_event (pad, event)) {
++    GST_ERROR_OBJECT (pad, "Failed to send pending event");
++  }
++}
++
+ static gboolean
+ gst_adaptive_demux_expose_stream (GstAdaptiveDemux * demux,
+     GstAdaptiveDemuxStream * stream)
+@@ -877,6 +888,11 @@ gst_adaptive_demux_stream_free (GstAdaptiveDemuxStream * stream)
+     stream->pending_segment = NULL;
+   }
+ 
++  if (stream->pending_events) {
++    g_list_free_full (stream->pending_events, (GDestroyNotify) gst_event_unref);
++    stream->pending_events = NULL;
++  }
++
+   if (stream->src_srcpad) {
+     gst_object_unref (stream->src_srcpad);
+     stream->src_srcpad = NULL;
+@@ -1296,6 +1312,13 @@ gst_adaptive_demux_stream_set_tags (GstAdaptiveDemuxStream * stream,
+   stream->pending_tags = tags;
+ }
+ 
++void
++gst_adaptive_demux_stream_add_event (GstAdaptiveDemuxStream * stream,
++    GstEvent * event)
++{
++  stream->pending_events = g_list_append (stream->pending_events, event);
++}
++
+ static guint64
+ _update_average_bitrate (GstAdaptiveDemux * demux,
+     GstAdaptiveDemuxStream * stream, guint64 new_bitrate)
+@@ -1447,6 +1470,13 @@ gst_adaptive_demux_stream_push_buffer (GstAdaptiveDemuxStream * stream,
+     gst_pad_push_event (stream->pad, gst_event_new_tag (stream->pending_tags));
+     stream->pending_tags = NULL;
+   }
++  if (G_UNLIKELY (stream->pending_events)) {
++    g_list_foreach (stream->pending_events, gst_adaptive_demux_send_event,
++        stream->pad);
++    g_list_free (stream->pending_events);
++    stream->pending_events = NULL;
++  }
++
+ 
+   ret = gst_pad_push (stream->pad, buffer);
+   GST_LOG_OBJECT (stream->pad, "Push result: %d %s", ret,
+diff --git a/gst-libs/gst/adaptivedemux/gstadaptivedemux.h b/gst-libs/gst/adaptivedemux/gstadaptivedemux.h
+index 9303a84..f370265 100644
+--- a/gst-libs/gst/adaptivedemux/gstadaptivedemux.h
++++ b/gst-libs/gst/adaptivedemux/gstadaptivedemux.h
+@@ -118,6 +118,7 @@ struct _GstAdaptiveDemuxStream
+   GstEvent *pending_segment;
+   GstTagList *pending_tags;
+   gboolean need_header;
++  GList *pending_events;
+ 
+   GstFlowReturn last_ret;
+   GError *last_error;
+@@ -427,6 +428,9 @@ GstFlowReturn gst_adaptive_demux_stream_push_buffer (GstAdaptiveDemuxStream * st
+ GstFlowReturn
+ gst_adaptive_demux_stream_advance_fragment (GstAdaptiveDemux * demux,
+     GstAdaptiveDemuxStream * stream, GstClockTime duration);
++void gst_adaptive_demux_stream_add_event (GstAdaptiveDemuxStream * stream,
++    GstEvent * event);
++
+ GstFlowReturn
+ gst_adaptive_demux_stream_advance_fragment_unlocked (GstAdaptiveDemux * demux,
+     GstAdaptiveDemuxStream * stream, GstClockTime duration);
+-- 
+2.1.4
+
