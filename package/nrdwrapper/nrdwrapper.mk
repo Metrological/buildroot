@@ -41,6 +41,8 @@ endef
 define NRDWRAPPER_INSTALL_STAGING_CMDS
 	mkdir -p $(STAGING_DIR)/usr/lib/
 	$(INSTALL) -m 755 $(@D)/libnrdwrapper.{a,so} $(STAGING_DIR)/usr/lib/
+	mkdir -p $(STAGING_DIR)/usr/include/nrdwrapper/
+	$(INSTALL) -m 755 $(@D)/*.h $(STAGING_DIR)/usr/include/nrdwrapper/
 endef
 
 define NRDWRAPPER_INSTALL_TARGET_CMDS
