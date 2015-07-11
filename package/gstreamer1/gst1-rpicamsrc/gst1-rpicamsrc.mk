@@ -4,8 +4,8 @@
 #
 ################################################################################
 
-GST1_RPICAMSRC_VERSION = a1f55887f4ebf3e38898382381b3fc52119e85ec
-GST1_RPICAMSRC_SITE = $(call github,thaytan,gst-rpicamsrc,$(GST1_RPICAMSRC_VERSION))
+GST1_RPICAMSRC_VERSION = master
+GST1_RPICAMSRC_SITE = $(call github,bramoosterhuis,gst-rpicamsrc,$(GST1_RPICAMSRC_VERSION))
 
 GST1_RPICAMSRC_LICENSE = LGPLv2.1
 GST1_RPICAMSRC_LICENSE_FILES = COPYING
