@@ -6,7 +6,7 @@
 
 GST1_PLUGINS_BAD_VERSION = $(GSTREAMER1_VERSION)
 ifeq ($(BR2_PACKAGE_GSTREAMER1_GIT),y)
-GST1_PLUGINS_BAD_VERSION = 769fffa3d93d89c692a3be6591bac9b610d3acaa
+GST1_PLUGINS_BAD_VERSION = 1a59af2e7ebcc6bd2aff28d2baea3fc83ec0fd0f
 endif
 GST1_PLUGINS_BAD_SOURCE = gst-plugins-bad-$(GST1_PLUGINS_BAD_VERSION).tar.gz
 GST1_PLUGINS_BAD_SITE = http://cgit.freedesktop.org/gstreamer/gst-plugins-bad/snapshot/
