@@ -1,0 +1,33 @@
+diff -Naur a/src/gstrpicamsrc.c b/src/gstrpicamsrc.c
+--- a/src/gstrpicamsrc.c	2015-05-12 12:54:08.000000000 +0200
++++ b/src/gstrpicamsrc.c	2015-07-13 11:12:28.000000000 +0200
+@@ -281,7 +281,7 @@
+           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+   g_object_class_install_property (gobject_class, PROP_PREVIEW,
+       g_param_spec_boolean ("preview", "Preview Window",
+-          "Display preview window overlay", TRUE,
++          "Display preview window overlay", FALSE,
+           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
+   g_object_class_install_property (gobject_class, PROP_FULLSCREEN,
+       g_param_spec_boolean ("fullscreen", "Fullscreen Preview",
+diff -Naur a/src/RaspiPreview.c b/src/RaspiPreview.c
+--- a/src/RaspiPreview.c	2015-05-12 12:54:08.000000000 +0200
++++ b/src/RaspiPreview.c	2015-07-13 11:49:48.000000000 +0200
+@@ -55,7 +55,7 @@
+ 
+ static COMMAND_LIST cmdline_commands[] =
+ {
+-   { CommandPreview,       "-preview",    "p",  "Preview window settings <'x,y,w,h'>", 1 },
++   { CommandPreview,       "-preview",    "p",  "Preview window settings <'x,y,w,h'>", 0 },
+    { CommandFullScreen,    "-fullscreen", "f",  "Fullscreen preview mode", 0 },
+    { CommandOpacity,       "-opacity",    "op", "Preview window opacity (0-255)", 1},
+    { CommandDisablePreview,"-nopreview",  "n",  "Do not display a preview window", 0},
+@@ -205,7 +205,7 @@
+  */
+ void raspipreview_set_defaults(RASPIPREVIEW_PARAMETERS *config)
+ {
+-   config->wantPreview = 1;
++   config->wantPreview = 0;
+    config->wantFullScreenPreview = 1;
+    config->opacity = 255;
+    config->previewWindow.x = 0;
