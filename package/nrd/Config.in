@@ -164,6 +164,11 @@ config BR2_PACKAGE_NRD_INPUT_METROLOGICAL
 	help
 	  Build NRD using the interface MetrologicalInput to insert keys via this method.
 
+config BR2_PACKAGE_NRD_INPUT_AUTO
+	bool "auto"
+	help
+	  Build NRD using the 'auto' input device. The input method is defined in the platform definitions.
+
 endchoice
 
 config BR2_PACKAGE_NRD_INPUT
