@@ -1,4 +1,4 @@
-From 6790b5ec46afc03320aee746cbe35cc7a234a637 Mon Sep 17 00:00:00 2001
+From 54e44ca91014db02237165381982d8cce0a581a7 Mon Sep 17 00:00:00 2001
 From: Alex Ashley <bugzilla@ashley-family.net>
 Date: Fri, 6 Feb 2015 11:03:54 +0000
 Subject: [PATCH 1/4] qtdemux: add support for ISOBMFF Common Encryption

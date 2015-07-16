@@ -1,4 +1,4 @@
-From b9188489049d1aa691a5e11e3f25d65132edf7a2 Mon Sep 17 00:00:00 2001
+From e811d3079469e82407fd98ba148c17a3686cad99 Mon Sep 17 00:00:00 2001
 From: Philippe Normand <philn@igalia.com>
 Date: Thu, 9 Jul 2015 10:57:04 +0200
 Subject: [PATCH 3/4] qtdemux: protection events queue

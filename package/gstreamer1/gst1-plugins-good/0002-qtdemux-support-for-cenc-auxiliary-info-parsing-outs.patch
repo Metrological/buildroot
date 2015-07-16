@@ -1,4 +1,4 @@
-From c0fc7c2540a060ca7adf9b02aa946bff9f869b08 Mon Sep 17 00:00:00 2001
+From f2a001fd4325aa5a2bda462f5d9da923b8145735 Mon Sep 17 00:00:00 2001
 From: Philippe Normand <philn@igalia.com>
 Date: Wed, 3 Jun 2015 15:25:28 +0200
 Subject: [PATCH 2/4] qtdemux: support for cenc auxiliary info parsing outside
