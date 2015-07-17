@@ -1,5 +1,8 @@
 menu "System configuration"
 
+config BR2_TARGET_GENERIC_CABUNDLE
+	bool "Install CA bundle"
+
 config BR2_TARGET_GENERIC_HOSTNAME
 	string "System hostname"
 	default "buildroot"

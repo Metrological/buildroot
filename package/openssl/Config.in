@@ -1,6 +1,7 @@
 config BR2_PACKAGE_OPENSSL
 	bool "openssl"
 	select BR2_PACKAGE_ZLIB
+	select BR2_TARGET_GENERIC_CABUNDLE
 	help
 	  A collaborative effort to develop a robust, commercial-grade, fully
 	  featured, and Open Source toolkit implementing the Secure Sockets

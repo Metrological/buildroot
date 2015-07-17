@@ -12,6 +12,14 @@ target-generic-securetty:
 	grep -q '^$(TARGET_GENERIC_GETTY_PORT)$$' $(TARGET_DIR)/etc/securetty || \
 		echo '$(TARGET_GENERIC_GETTY_PORT)' >> $(TARGET_DIR)/etc/securetty
 
+target-generic-cabundle:
+	mkdir -p $(TARGET_DIR)/etc/ssl/certs/
+	$(WGET) -O $(TARGET_DIR)/etc/ssl/certs/ca-certificates.crt http://curl.haxx.se/ca/cacert.pem
+
+ifeq ($(BR2_TARGET_GENERIC_CABUNDLE),y)
+TARGETS += target-generic-cabundle
+endif
+
 target-generic-hostname:
 	mkdir -p $(TARGET_DIR)/etc
 	echo "$(TARGET_GENERIC_HOSTNAME)" > $(TARGET_DIR)/etc/hostname

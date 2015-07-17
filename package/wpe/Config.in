@@ -22,12 +22,6 @@ config BR2_PACKAGE_WPE
 
 menu "Extra options"
 
-config BR2_PACKAGE_WPE_INSTALL_ROOTCA
-	bool "wpe-rootca"
-	default y
-	help
-	  Install Root CA's on filesystem
-
 config BR2_PACKAGE_WPE_USE_GSTREAMER
 	bool "wpe-gstreamer"
 	default y

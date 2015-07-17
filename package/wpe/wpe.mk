@@ -180,13 +180,6 @@ define WPE_BUILD_CMDS
 	$(WPE_MAKE_ENV) $(HOST_DIR)/usr/bin/ninja -C $(WPE_BUILDDIR) $(WPE_NINJA_EXTRA_OPTIONS) libWPEWebKit.so libWPEWebInspectorResources.so WPE{Web,Network}Process WPE$(WPE_SHELL)Shell
 endef
 
-ifeq ($(BR2_PACKAGE_WPE_INSTALL_ROOTCA),y)
-define WPE_INSTALL_ROOTCA
-	mkdir -p $(TARGET_DIR)/etc/ssl/certs/
-	$(WGET) -O $(TARGET_DIR)/etc/ssl/certs/ca-certificates.crt http://curl.haxx.se/ca/cacert.pem
-endef
-endif
-
 define WPE_INSTALL_STAGING_CMDS
 	(cd $(WPE_BUILDDIR) && \
 	cp bin/WPE{Network,Web}Process $(STAGING_DIR)/usr/bin/ && \
@@ -199,7 +192,6 @@ define WPE_INSTALL_TARGET_CMDS
 	cp -d lib/libWPE* $(TARGET_DIR)/usr/lib/ && \
 	$(STRIPCMD) $(TARGET_DIR)/usr/lib/libWPEWebKit.so.0.0.1 && \
 	popd > /dev/null)
-	$(WPE_INSTALL_ROOTCA)
 	$(WPE_INSTALL_AUTOSTART)
 endef
 

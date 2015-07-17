@@ -53,7 +53,7 @@ LIBCURL_CONF_OPT += --without-ssl --without-gnutls \
 	--without-polarssl --without-nss
 endif
 
-ifeq ($(BR2_PACKAGE_WPE_INSTALL_ROOTCA),y)
+ifeq ($(BR2_TARGET_GENERIC_CABUNDLE),y)
 	LIBCURL_CONF_OPT += --with-ca-bundle=/etc/ssl/certs/ca-certificates.crt
 endif
 

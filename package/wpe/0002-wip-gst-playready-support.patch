@@ -268,7 +268,7 @@ index 0000000..c7ce9b1
 +
 +        nextMessage = Uint8Array::create(reinterpret_cast<const unsigned char *>(challenge), challengeLength);
 +
-+        //g_free(challenge);
++        g_free(challenge);
 +        m_waitAck = true;
 +    } else {
 +        // Notify the player instance that a key was added
