@@ -193,11 +193,11 @@ index 0000000..c7ce9b1
 +        return nullptr;
 +    }
 +
-+    guint32 challengeLength = MAX_CHALLENGE_LEN;
-+    gpointer challenge = g_malloc0(challengeLength);
++    unsigned long challengeLength = MAX_CHALLENGE_LEN;
++    gpointer challenge = g_malloc0(MAX_CHALLENGE_LEN);
 +
 +    // Get challenge
-+    status = DxDrmStream_GetLicenseChallenge(m_DxDrmStream, challenge, (unsigned int *) &challengeLength);
++    status = DxDrmStream_GetLicenseChallenge(m_DxDrmStream, challenge, &challengeLength);
 +    if (status != DX_SUCCESS) {
 +        GST_WARNING("failed to generate challenge request (%d)", status);
 +        g_free(challenge);
@@ -214,7 +214,7 @@ index 0000000..c7ce9b1
 +
 +    RefPtr<Uint8Array> result = Uint8Array::create(reinterpret_cast<const unsigned char *>(challenge), challengeLength);
 +
-+    //g_free(challenge);
++    g_free(challenge);
 +
 +    // This is the first stage of license aquisition.
 +    m_waitAck = false;
@@ -232,7 +232,7 @@ index 0000000..c7ce9b1
 +    GST_MEMDUMP("response received :", key->data(), key->byteLength());
 +
 +    bool ret = false;
-+    bool isAckRequired = false;
++    unsigned long isAckRequired = 0;
 +    HDxResponseResult responseResult = nullptr;
 +    EDxDrmStatus status;
 +
@@ -253,11 +253,11 @@ index 0000000..c7ce9b1
 +        goto error;
 +    }
 +
-+    if (!m_waitAck && isAckRequired) {
-+        guint32 challengeLength = MAX_CHALLENGE_LEN;
-+        gpointer challenge = g_malloc0(challengeLength);
++    if (!m_waitAck && (isAckRequired != 0)) {
++        unsigned long challengeLength = MAX_CHALLENGE_LEN;
++        gpointer challenge = g_malloc0(MAX_CHALLENGE_LEN);
 +
-+        status = DxDrmClient_GetLicenseAcq_GenerateAck(&responseResult, challenge, (unsigned int *) &challengeLength);
++        status = DxDrmClient_GetLicenseAcq_GenerateAck(&responseResult, challenge, &challengeLength);
 +        if (status != DX_SUCCESS) {
 +            GST_WARNING("failed generating license ack challenge (%d) response result %p", status, responseResult);
 +            g_free(challenge);
@@ -268,7 +268,7 @@ index 0000000..c7ce9b1
 +
 +        nextMessage = Uint8Array::create(reinterpret_cast<const unsigned char *>(challenge), challengeLength);
 +
-+        //g_free(challenge);
++        g_free(challenge);
 +        m_waitAck = true;
 +    } else {
 +        // Notify the player instance that a key was added
@@ -851,7 +851,7 @@ index 0000000..55019e3
 +    const GValue* value;
 +    guint sampleIndex = 0;
 +    int errorCode;
-+    unsigned int activeFlags;
++    unsigned long activeFlags;
 +    unsigned trackID = 0;
 +    GstPad* pad;
 +    GstCaps* caps;
