@@ -1,47 +1,18 @@
-From a93cd25cd4b0b5997342cdc79c176a3d924a6073 Mon Sep 17 00:00:00 2001
-From: Philippe Normand <philn@igalia.com>
-Date: Wed, 10 Jun 2015 13:12:58 +0200
-Subject: [PATCH] [GStreamer][wip] PlayReady support
-
-Requires EME_V2 enabled.
----
- Source/WebCore/PlatformWPE.cmake                   |   7 +
- .../graphics/gstreamer/CDMPRSessionGStreamer.cpp   | 272 +++++++++++++++
- .../graphics/gstreamer/CDMPRSessionGStreamer.h     |  69 ++++
- .../gstreamer/MediaPlayerPrivateGStreamer.cpp      |  90 ++++-
- .../gstreamer/MediaPlayerPrivateGStreamer.h        |  12 +
- .../WebKitCommonEncryptionDecryptorGStreamer.cpp   |  39 ++-
- .../WebKitPlayReadyDecryptorGStreamer.cpp          | 380 +++++++++++++++++++++
- .../gstreamer/WebKitPlayReadyDecryptorGStreamer.h  |  45 +++
- .../gstreamer/WebKitWebSourceGStreamer.cpp         |   4 +-
- 9 files changed, 901 insertions(+), 17 deletions(-)
- create mode 100644 Source/WebCore/platform/graphics/gstreamer/CDMPRSessionGStreamer.cpp
- create mode 100644 Source/WebCore/platform/graphics/gstreamer/CDMPRSessionGStreamer.h
- create mode 100644 Source/WebCore/platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.cpp
- create mode 100644 Source/WebCore/platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.h
-
-diff --git a/Source/WebCore/PlatformWPE.cmake b/Source/WebCore/PlatformWPE.cmake
-index f772a92..39a93cf 100644
---- a/Source/WebCore/PlatformWPE.cmake
-+++ b/Source/WebCore/PlatformWPE.cmake
-@@ -335,4 +335,11 @@ if (ENABLE_ENCRYPTED_MEDIA OR ENABLE_ENCRYPTED_MEDIA_V2)
-         platform/graphics/gstreamer/WebKitCommonEncryptionDecryptorGStreamer.cpp
-         platform/graphics/gstreamer/WebKitMediaAesCtr.c
-     )
-+
-+    if (ENABLE_ENCRYPTED_MEDIA_V2 AND ENABLE_DXDRM)
-+        list(APPEND WebCore_SOURCES
-+            platform/graphics/gstreamer/CDMPRSessionGStreamer.cpp
-+            platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.cpp
-+        )
-+    endif ()
- endif ()
-diff --git a/Source/WebCore/platform/graphics/gstreamer/CDMPRSessionGStreamer.cpp b/Source/WebCore/platform/graphics/gstreamer/CDMPRSessionGStreamer.cpp
-new file mode 100644
-index 0000000..c7ce9b1
---- /dev/null
-+++ b/Source/WebCore/platform/graphics/gstreamer/CDMPRSessionGStreamer.cpp
-@@ -0,0 +1,272 @@
+diff -urN a/Source/WebCore/platform/graphics/CDMSession.h b/Source/WebCore/platform/graphics/CDMSession.h
+--- a/Source/WebCore/platform/graphics/CDMSession.h	2015-07-18 12:52:08.000000000 +0200
++++ b/Source/WebCore/platform/graphics/CDMSession.h	2015-07-20 20:24:07.576260534 +0200
+@@ -59,6 +59,7 @@
+     CDMSessionTypeClearKey,
+     CDMSessionTypeAVFoundationObjC,
+     CDMSessionTypeMediaSourceAVFObjC,
++    CDMSessionTypeMediaSourcePlayReady
+ };
+ 
+ class CDMSession {
+diff -urN a/Source/WebCore/platform/graphics/gstreamer/CDMPRSessionGStreamer.cpp b/Source/WebCore/platform/graphics/gstreamer/CDMPRSessionGStreamer.cpp
+--- a/Source/WebCore/platform/graphics/gstreamer/CDMPRSessionGStreamer.cpp	1970-01-01 01:00:00.000000000 +0100
++++ b/Source/WebCore/platform/graphics/gstreamer/CDMPRSessionGStreamer.cpp	2015-07-20 20:23:57.928260561 +0200
+@@ -0,0 +1,346 @@
 +/*
 + * Copyright (C) 2014-2015 FLUENDO S.A. All rights reserved.
 + * Copyright (C) 2014-2015 METROLOGICAL All rights reserved.
@@ -78,6 +49,8 @@ index 0000000..c7ce9b1
 +#include "MediaKeyError.h"
 +#include "MediaPlayerPrivateGStreamer.h"
 +#include "UUID.h"
++
++#include <dxdrm/DxDrmClient.h>
 +#include <dxdrm/DxDrmDebugApi.h>
 +
 +#include <gst/base/gstbytereader.h>
@@ -88,67 +61,9 @@ index 0000000..c7ce9b1
 +GST_DEBUG_CATEGORY_EXTERN(webkit_media_playready_decrypt_debug_category);
 +#define GST_CAT_DEFAULT webkit_media_playready_decrypt_debug_category
 +
-+#define MAX_CHALLENGE_LEN 100000
++#define MAX_CHALLENGE_LEN 64000
 +
 +namespace WebCore {
-+
-+static void printError(EDxDrmStatus status)
-+{
-+    g_printerr("DxDRM Error:\n");
-+    switch (status) {
-+    case DX_ERROR_CONTENT_NOT_RECOGNIZED:
-+        g_printerr("The specified file is not protected by one of the supported DRM schemes.\n");
-+        break;
-+    case DX_ERROR_NOT_INITIALIZED:
-+        g_printerr("The DRM Client has not been initialized.\n");
-+        break;
-+    case DX_ERROR_BAD_ARGUMENTS:
-+        g_printerr("Bad arguments.\n");
-+        break;
-+    default:
-+        g_printerr("unknown error: %d\n", status);
-+        break;
-+    }
-+}
-+
-+CDMPRSessionGStreamer::CDMPRSessionGStreamer(MediaPlayerPrivateGStreamer* parent)
-+    : m_player(parent)
-+    , m_client(nullptr)
-+    , m_sessionId(createCanonicalUUIDString())
-+    , m_DxDrmStream(nullptr)
-+{
-+    DxStatus loaded = DxLoadConfigFile("/etc/dxdrm/dxdrm.config");
-+    if (loaded != DX_SUCCESS)
-+        GST_WARNING("DX: ERROR - Discretix configuration file not found");
-+
-+    EDxDrmStatus status = DxDrmClient_Init();
-+    if (status != DX_SUCCESS) {
-+        GST_WARNING("failed to initialize the DxDrmClient (error: %d)", status);
-+        printError(status);
-+//        errorCode = MediaKeyError::MEDIA_KEYERR_CLIENT;
-+//        return nullptr;
-+    }
-+
-+    // Set Secure Clock
-+/*    status = DxDrmStream_AdjustClock(m_DxDrmStream, DX_AUTO_NO_UI);
-+    if (status != DX_SUCCESS) {
-+        GST_WARNING("failed setting secure clock (%d)", status);
-+        errorCode = MediaKeyError::MEDIA_KEYERR_CLIENT;
-+        systemCode = status;
-+        return nullptr;
-+    }
-+*/
-+}
-+
-+CDMPRSessionGStreamer::~CDMPRSessionGStreamer()
-+{
-+    if (m_DxDrmStream) {
-+        DxDrmStream_Close(&m_DxDrmStream);
-+        m_DxDrmStream = nullptr;
-+    }
-+
-+    DxDrmClient_Terminate();
-+}
 +
 +static const guint8* extractWrmHeader(Uint8Array* initData, guint16* recordLength)
 +{
@@ -176,150 +91,278 @@ index 0000000..c7ce9b1
 +    return nullptr;
 +}
 +
-+PassRefPtr<Uint8Array> CDMPRSessionGStreamer::generateKeyRequest(const String& mimeType, Uint8Array* initData, String& destinationURL, unsigned short& errorCode, unsigned long& systemCode)
++class DRMInitialisation
++{
++    private:
++        DRMInitialisation(const DRMInitialisation&);
++        DRMInitialisation& operator= (const DRMInitialisation&);
++
++    public:
++        DRMInitialisation ()
++        {
++            DxStatus status = DxLoadConfigFile("/etc/dxdrm/dxdrm.config");
++            if (status != DX_SUCCESS)
++            {
++                GST_WARNING("DX: ERROR - Discretix configuration file not found");
++                _status = DX_ERROR_BAD_ARGUMENTS;
++            }
++            else
++            {
++                _status = DxDrmClient_Init();
++                if (_status != DX_SUCCESS) 
++                {
++                    GST_WARNING("failed to initialize the DxDrmClient (error: %d)", _status);
++                }
++
++                // Set Secure Clock
++                /*   _status = DxDrmStream_AdjustClock(m_DxDrmStream, DX_AUTO_NO_UI);
++                if (_status != DX_SUCCESS) 
++                {
++                    GST_WARNING("failed setting secure clock (%d)", _status);
++                }
++                */
++            }
++        }
++	~DRMInitialisation()
++        {
++            DxDrmClient_Terminate();
++        }
++
++    public:
++        inline bool IsInitialised() const
++        {
++            return (_status == DX_SUCCESS);
++        }
++        void printError(const EDxDrmStatus status)
++        {
++            g_printerr("DxDRM Error:\n");
++
++            switch (status) {
++            case DX_ERROR_CONTENT_NOT_RECOGNIZED:
++                 g_printerr("The specified file is not protected by one of the supported DRM schemes.\n");
++                 break;
++            case DX_ERROR_NOT_INITIALIZED:
++                 g_printerr("The DRM Client has not been initialized.\n");
++                 break;
++            case DX_ERROR_BAD_ARGUMENTS:
++                 g_printerr("Bad arguments.\n");
++                 break;
++            default:
++                 g_printerr("unknown error: %d\n", status);
++                 break;
++        }
++}
++
++
++    private:
++        EDxDrmStatus _status;
++};
++
++static DRMInitialisation g_DRMInitialisation;
++
++CDMPRSessionGStreamer::CDMPRSessionGStreamer(MediaPlayerPrivateGStreamer* parent)
++    : m_player(parent)
++    , m_client(nullptr)
++    , m_sessionId()
++    , m_DxDrmStream(nullptr)
++    , m_key()
++    , m_state(PHASE_INITIAL)
++{
++    if (g_DRMInitialisation.IsInitialised() == true) {
++        m_sessionId = createCanonicalUUIDString();
++    }
++}
++
++CDMPRSessionGStreamer::~CDMPRSessionGStreamer()
++{
++    if (m_DxDrmStream != nullptr) {
++        DxDrmStream_Close(&m_DxDrmStream);
++        m_DxDrmStream = nullptr;
++    }
++}
++
++/* virtual */ CDMSessionType CDMPRSessionGStreamer::type() 
++{ 
++    return CDMSessionTypeMediaSourcePlayReady; 
++}
++
++/* virtual */ void CDMPRSessionGStreamer::setClient(CDMSessionClient* client) 
++{ 
++    ASSERT ( (m_client == nullptr) ^ (client == nullptr) );
++
++    m_client = client; 
++}
++
++/* virtual */ const String& CDMPRSessionGStreamer::sessionId() const 
++{ 
++    return m_sessionId; 
++}
++
++//
++// Expected synchronisation from caller. This method is not thread safe!!!!
++//
++/* virtual */ PassRefPtr<Uint8Array> CDMPRSessionGStreamer::generateKeyRequest(const String& mimeType, Uint8Array* initData, String& destinationURL, unsigned short& errorCode, unsigned long& systemCode) 
 +{
 +    UNUSED_PARAM(mimeType);
-+    UNUSED_PARAM(errorCode);
-+    UNUSED_PARAM(systemCode);
++
++    RefPtr<Uint8Array> result;
 +
 +    // Instantiate Discretix DRM client from the parsed WRMHEADER.
 +    guint16 recordLength;
 +    const guint8* data = extractWrmHeader(initData, &recordLength);
 +    EDxDrmStatus status = DxDrmClient_OpenDrmStreamFromData(&m_DxDrmStream, data, recordLength);
++
 +    if (status != DX_SUCCESS) {
 +        GST_WARNING("failed creating DxDrmClient from initData (error: %d)", status);
-+        printError(status);
++        g_DRMInitialisation.printError(status);
 +        errorCode = MediaKeyError::MEDIA_KEYERR_CLIENT;
-+        return nullptr;
-+    }
++    } else {
++        unsigned long challengeLength = MAX_CHALLENGE_LEN;
++        unsigned char* challenge = static_cast<unsigned char*> (g_malloc0(challengeLength));
 +
-+    unsigned long challengeLength = MAX_CHALLENGE_LEN;
-+    gpointer challenge = g_malloc0(MAX_CHALLENGE_LEN);
++        // Get challenge
++        status = DxDrmStream_GetLicenseChallenge(m_DxDrmStream, challenge, &challengeLength);
++        if (status != DX_SUCCESS) {
++            GST_WARNING("failed to generate challenge request (%d)", status);
++            errorCode = MediaKeyError::MEDIA_KEYERR_CLIENT;
++        } else {
++            // Get License URL
++            destinationURL = static_cast<const char *>(DxDrmStream_GetTextAttribute(m_DxDrmStream, DX_ATTR_SILENT_URL, DX_ACTIVE_CONTENT));
++            GST_DEBUG("destination URL : %s", destinationURL.utf8().data());
 +
-+    // Get challenge
-+    status = DxDrmStream_GetLicenseChallenge(m_DxDrmStream, challenge, &challengeLength);
-+    if (status != DX_SUCCESS) {
-+        GST_WARNING("failed to generate challenge request (%d)", status);
++            GST_MEMDUMP("generated license request :", challenge, challengeLength);
++
++            result = Uint8Array::create(challenge, challengeLength);
++            errorCode = 0;
++        }
++
 +        g_free(challenge);
-+        errorCode = MediaKeyError::MEDIA_KEYERR_CLIENT;
-+        systemCode = status;
-+        return nullptr;
 +    }
 +
-+    // Get License URL
-+    destinationURL = (const char *) DxDrmStream_GetTextAttribute(m_DxDrmStream, DX_ATTR_SILENT_URL, DX_ACTIVE_CONTENT);
-+
-+    GST_DEBUG("destination URL : %s", destinationURL.utf8().data());
-+    GST_MEMDUMP("generated license request :", (const guint8 *) challenge, challengeLength);
-+
-+    RefPtr<Uint8Array> result = Uint8Array::create(reinterpret_cast<const unsigned char *>(challenge), challengeLength);
-+
-+    g_free(challenge);
-+
-+    // This is the first stage of license aquisition.
-+    m_waitAck = false;
++    systemCode = status;
 +
 +    return result;
 +}
 +
-+void CDMPRSessionGStreamer::releaseKeys()
-+{
-+    m_player->signalDRM();
-+}
-+
-+bool CDMPRSessionGStreamer::update(Uint8Array* key, RefPtr<Uint8Array>& nextMessage, unsigned short& errorCode, unsigned long& systemCode)
++//
++// Expected synchronisation from caller. This method is not thread safe!!!!
++//
++/* virtual */ bool CDMPRSessionGStreamer::update(Uint8Array* key, RefPtr<Uint8Array>& nextMessage, unsigned short& errorCode, unsigned long& systemCode)
 +{
 +    GST_MEMDUMP("response received :", key->data(), key->byteLength());
 +
-+    bool ret = false;
-+    unsigned long isAckRequired = 0;
++    unsigned long isAckRequired;
 +    HDxResponseResult responseResult = nullptr;
-+    EDxDrmStatus status;
++    EDxDrmStatus status = DX_ERROR_CONTENT_NOT_RECOGNIZED;
 +
-+    m_key = key;
-+
-+    if (!m_waitAck) {
++    if (m_state == PHASE_INITIAL)
++    {
 +        // Server replied to our license request
 +        status = DxDrmStream_ProcessLicenseResponse(m_DxDrmStream, key->data(), key->byteLength(), &responseResult, &isAckRequired);
-+    } else {
++
++        if (status  == DX_SUCCESS) {
++            // Create a deep copy of the key.
++            m_key = key->buffer();
++            m_state = (isAckRequired != 0 ? PHASE_ACKNOWLEDGE : PHASE_PROVISIONED);
++        }
++
++    } else if (m_state == PHASE_ACKNOWLEDGE) {
++
 +        // Server replied to our license response acknowledge
 +        status = DxDrmClient_ProcessServerResponse(key->data(), key->byteLength(), DX_RESPONSE_LICENSE_ACK, &responseResult, &isAckRequired);
-+        if (isAckRequired)
-+            GST_WARNING("ack required when processing ack of ack !");
++
++        if (status  == DX_SUCCESS) {
++            // Create a deep copy of the key.
++            m_key   = key->buffer();
++            m_state = (isAckRequired != 0 ? PHASE_ACKNOWLEDGE : PHASE_PROVISIONED);
++
++            if (m_state == PHASE_ACKNOWLEDGE) {
++                GST_WARNING("Acknowledging an Ack. Strange situation.");
++            }
++        }
++
++    } else {
++
++        GST_WARNING("Unexpected call. We are already provisioned");
 +    }
 +
 +    if (status != DX_SUCCESS) {
 +        GST_WARNING("failed processing license response (%d)", status);
-+        goto error;
-+    }
++        errorCode = MediaKeyError::MEDIA_KEYERR_CLIENT;
++    } else if (m_state == PHASE_PROVISIONED) {
 +
-+    if (!m_waitAck && (isAckRequired != 0)) {
++        status = DxDrmStream_SetIntent(m_DxDrmStream, DX_INTENT_AUTO_PLAY, DX_AUTO_NO_UI);
++        if (status != DX_SUCCESS) {
++            GST_WARNING("DX: ERROR - opening stream failed because there are no rights (license) to play the content");
++        } else {
++            GST_INFO("DX: playback rights found");
++
++            /* Taken from the "Decryptor, not used there... 
++            status =  DxDrmStream_GetFlags(m_DxDrmStream, DX_FLAG_CAN_PLAY | DX_FLAG_HAS_FUTURE_RIGHTS,
++                                          &activeFlags, DX_ALL_PERMISSIONS, 0); */
++
++            /* starting consumption of the file - notifying the drm that the file is being used */
++            status = DxDrmFile_HandleConsumptionEvent(m_DxDrmStream, DX_EVENT_START);
++            if (status != DX_SUCCESS) {
++                GST_WARNING("DX: Content consumption failed");
++            } else {
++                GST_INFO("DX: Stream was opened and is ready for playback");
++                m_player->signalDRM();
++            }
++        }
++
++    } else if (m_state == PHASE_ACKNOWLEDGE) {
 +        unsigned long challengeLength = MAX_CHALLENGE_LEN;
-+        gpointer challenge = g_malloc0(MAX_CHALLENGE_LEN);
++        unsigned char* challenge = static_cast<unsigned char*>(g_malloc0(challengeLength));
 +
 +        status = DxDrmClient_GetLicenseAcq_GenerateAck(&responseResult, challenge, &challengeLength);
 +        if (status != DX_SUCCESS) {
 +            GST_WARNING("failed generating license ack challenge (%d) response result %p", status, responseResult);
-+            g_free(challenge);
-+            goto error;
 +        }
 +
-+        GST_MEMDUMP("generated license ack request :", (const guint8 *) challenge, challengeLength);
++        GST_MEMDUMP("generated license ack request :", challenge, challengeLength);
 +
-+        nextMessage = Uint8Array::create(reinterpret_cast<const unsigned char *>(challenge), challengeLength);
++        nextMessage = Uint8Array::create(challenge, challengeLength);
 +
 +        g_free(challenge);
-+        m_waitAck = true;
-+    } else {
-+        // Notify the player instance that a key was added
-+        m_player->signalDRM();
-+        ret = true;
 +    }
 +
-+    return ret;
-+
-+error:
-+    errorCode = MediaKeyError::MEDIA_KEYERR_CLIENT;
 +    systemCode = status;
-+    // Notify Player that license acquisition failed
-+    m_player->signalDRM();
-+    return ret;
++
++    return (status == DX_SUCCESS);
 +}
 +
-+bool CDMPRSessionGStreamer::prepareForPlayback()
++/* virtual */ void CDMPRSessionGStreamer::releaseKeys()
 +{
-+    EDxDrmStatus result;
++    m_player->signalDRM();
++}
 +
-+    result = DxDrmStream_SetIntent(m_DxDrmStream, DX_INTENT_AUTO_PLAY, DX_AUTO_NO_UI);
-+    if (result != DX_SUCCESS) {
-+        GST_WARNING("DX: ERROR - opening stream failed because there are no rights (license) to play the content");
-+        DxDrmStream_Close(&(m_DxDrmStream));
-+        return false;
-+    }
++/* virtual */ RefPtr<ArrayBuffer> CDMPRSessionGStreamer::cachedKeyForKeyID(const String& sessionId) const
++{
++    return (sessionId == m_sessionId ? m_key : nullptr);
++}
 +
-+    GST_INFO("DX: playback rights found");
++int CDMPRSessionGStreamer::decrypt (GstMapInfo& map, GstMapInfo& boxMap, const unsigned int sampleIndex, const unsigned int trackId)
++{
++    EDxDrmStatus status = DxDrmStream_ProcessPiffPacket(
++        m_DxDrmStream, 
++        static_cast<void*>(map.data),
++        static_cast<unsigned int>(map.size),
++        static_cast<const void*>(boxMap.data),
++        static_cast<unsigned int>(boxMap.size),
++        static_cast<unsigned int>(sampleIndex),
++        trackId);
 +
-+    /*starting consumption of the file - notifying the drm that the file is being used*/
-+    result = DxDrmFile_HandleConsumptionEvent(m_DxDrmStream, DX_EVENT_START);
-+    if (result != DX_SUCCESS) {
-+        GST_WARNING("DX: Content consumption failed");
-+        DxDrmStream_Close(&(m_DxDrmStream));
-+        return false;
-+    }
-+
-+    GST_INFO("DX: Stream was opened and is ready for playback");
-+    return true;
++    return (status == DX_DRM_SUCCESS ? 0 : status);
 +}
 +
 +}
 +
 +#endif
-diff --git a/Source/WebCore/platform/graphics/gstreamer/CDMPRSessionGStreamer.h b/Source/WebCore/platform/graphics/gstreamer/CDMPRSessionGStreamer.h
-new file mode 100644
-index 0000000..d42b80e
---- /dev/null
-+++ b/Source/WebCore/platform/graphics/gstreamer/CDMPRSessionGStreamer.h
-@@ -0,0 +1,69 @@
+diff -urN a/Source/WebCore/platform/graphics/gstreamer/CDMPRSessionGStreamer.h b/Source/WebCore/platform/graphics/gstreamer/CDMPRSessionGStreamer.h
+--- a/Source/WebCore/platform/graphics/gstreamer/CDMPRSessionGStreamer.h	1970-01-01 01:00:00.000000000 +0100
++++ b/Source/WebCore/platform/graphics/gstreamer/CDMPRSessionGStreamer.h	2015-07-20 20:23:57.928260561 +0200
+@@ -0,0 +1,80 @@
 +/*
 + * Copyright (C) 2014-2015 FLUENDO S.A. All rights reserved.
 + * Copyright (C) 2014-2015 METROLOGICAL All rights reserved.
@@ -353,35 +396,46 @@ index 0000000..d42b80e
 +#if ENABLE(ENCRYPTED_MEDIA_V2) && USE(GSTREAMER) && USE(DXDRM)
 +
 +#include "CDMSession.h"
++#include <gst/gst.h>
 +#include <wtf/RetainPtr.h>
-+
-+#include <dxdrm/DxDrmClient.h>
 +
 +namespace WebCore {
 +
 +class MediaPlayerPrivateGStreamer;
 +
 +class CDMPRSessionGStreamer : public CDMSession {
++private:
++    CDMPRSessionGStreamer();
++    CDMPRSessionGStreamer(const CDMPRSessionGStreamer&);
++
++private:
++    enum SessionState {
++        PHASE_INITIAL,
++        PHASE_ACKNOWLEDGE,
++        PHASE_PROVISIONED
++    };
++        
 +public:
 +    CDMPRSessionGStreamer(MediaPlayerPrivateGStreamer* parent);
 +    virtual ~CDMPRSessionGStreamer() override;
 +
-+    virtual void setClient(CDMSessionClient* client) override { m_client = client; }
-+    virtual const String& sessionId() const override { return m_sessionId; }
++    virtual CDMSessionType type() override;
++    virtual void setClient(CDMSessionClient* client) override;
++    virtual const String& sessionId() const override;
 +    virtual PassRefPtr<Uint8Array> generateKeyRequest(const String& mimeType, Uint8Array* initData, String& destinationURL, unsigned short& errorCode, unsigned long& systemCode) override;
 +    virtual void releaseKeys() override;
 +    virtual bool update(Uint8Array*, RefPtr<Uint8Array>& nextMessage, unsigned short& errorCode, unsigned long& systemCode) override;
++    virtual RefPtr<ArrayBuffer> cachedKeyForKeyID(const String&) const;
 +
-+    bool prepareForPlayback();
-+    void* drmStream() const { return reinterpret_cast<void*>(m_DxDrmStream); }
++    int decrypt(GstMapInfo& map, GstMapInfo& boxMap, const unsigned int sampleIndex, const unsigned int trackId);
 +
 +private:
 +    MediaPlayerPrivateGStreamer* m_player;
 +    CDMSessionClient* m_client;
 +    String m_sessionId;
-+    bool m_waitAck;
-+    HDxDrmStream m_DxDrmStream;
-+    Uint8Array* m_key;
++    void* m_DxDrmStream;
++    RefPtr<ArrayBuffer> m_key;
++    SessionState m_state;
 +};
 +
 +}
@@ -389,10 +443,9 @@ index 0000000..d42b80e
 +#endif
 +
 +#endif // CDMPRSessionGStreamer_h
-diff --git a/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp b/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp
-index b13064b..3ed46f0 100644
---- a/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp
-+++ b/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp
+diff -urN a/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp b/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp
+--- a/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp	2015-07-18 12:52:08.000000000 +0200
++++ b/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp	2015-07-20 20:23:57.928260561 +0200
 @@ -74,6 +74,11 @@
  #include "AudioSourceProviderGStreamer.h"
  #endif
@@ -405,7 +458,7 @@ index b13064b..3ed46f0 100644
  #if USE(GSTREAMER_GL)
  #include "GLContext.h"
  
-@@ -212,8 +217,13 @@ void MediaPlayerPrivateGStreamer::setAudioStreamProperties(GObject* object)
+@@ -212,8 +217,13 @@
  void MediaPlayerPrivateGStreamer::registerMediaEngine(MediaEngineRegistrar registrar)
  {
      if (isAvailable())
@@ -419,7 +472,7 @@ index b13064b..3ed46f0 100644
  }
  
  bool initializeGStreamerAndRegisterWebKitElements()
-@@ -233,6 +243,12 @@ bool initializeGStreamerAndRegisterWebKitElements()
+@@ -233,6 +243,12 @@
          gst_element_register(0, "webkitcencdec", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_MEDIA_CENC_DECRYPT);
  #endif
  
@@ -432,7 +485,16 @@ index b13064b..3ed46f0 100644
  #if ENABLE(MEDIA_SOURCE)
      GRefPtr<GstElementFactory> WebKitMediaSrcFactory = gst_element_factory_find("webkitmediasrc");
      if (!WebKitMediaSrcFactory)
-@@ -704,9 +720,9 @@ bool MediaPlayerPrivateGStreamer::doSeek(gint64 position, float rate, GstSeekFla
+@@ -428,7 +444,7 @@
+ #endif
+ 
+ #if ENABLE(MEDIA_STREAM)
+-void MediaPlayerPrivateGStreamer::load(MediaStreamPrivate&)
++void MediaPlayerPrivateGStreamer::load(MediaStreamPrivate*)
+ {
+     notImplemented();
+ }
+@@ -704,9 +720,9 @@
      if (!rate)
          rate = 1.0;
  
@@ -443,7 +505,25 @@ index b13064b..3ed46f0 100644
      if (isMediaSource())
          webkit_media_src_set_seek_time(WEBKIT_MEDIA_SRC(m_source.get()), time);
  #endif
-@@ -2314,8 +2330,80 @@ void MediaPlayerPrivateGStreamer::needKey(const String& keySystem, const String&
+@@ -2283,7 +2299,7 @@
+ }
+ 
+ #if ENABLE(ENCRYPTED_MEDIA)
+-MediaPlayer::MediaKeyException MediaPlayerPrivateGStreamer::addKey(const String& keySystem, const unsigned char* keyData, unsigned keyLength, const unsigned char* initData, unsigned initDataLength, const String& sessionID)
++MediaPlayer::MediaKeyException MediaPlayerPrivateGStreamer::addKey(const String& keySystem, const unsigned char* keyData, unsigned keyLength, const unsigned char* /* initData */, unsigned /* initDataLength */ , const String& sessionID)
+ {
+     LOG_MEDIA_MESSAGE("addKey system: %s, length: %u, session: %s", keySystem.utf8().data(), keyLength, sessionID.utf8().data());
+     GstBuffer* buffer = gst_buffer_new_wrapped(g_memdup(keyData, keyLength), keyLength);
+@@ -2301,7 +2317,7 @@
+     return MediaPlayer::NoError;
+ }
+ 
+-MediaPlayer::MediaKeyException MediaPlayerPrivateGStreamer::cancelKeyRequest(const String& keySystem, const String& sessionID)
++MediaPlayer::MediaKeyException MediaPlayerPrivateGStreamer::cancelKeyRequest(const String& /* keySystem */ , const String& /* sessionID */)
+ {
+     LOG_MEDIA_MESSAGE("cancelKeyRequest");
+     return MediaPlayer::KeySystemNotSupported;
+@@ -2314,8 +2330,75 @@
          m_drmKeySemaphore.signal();
      }
  }
@@ -509,13 +589,8 @@ index b13064b..3ed46f0 100644
 +void MediaPlayerPrivateGStreamer::keyAdded()
 +{
 +#if USE(DXDRM)
-+    if (!m_cdmSession)
-+        return;
-+
-+    CDMPRSessionGStreamer* cdm = reinterpret_cast<CDMPRSessionGStreamer*>(m_cdmSession);
-+    if (cdm && cdm->prepareForPlayback())
-+        gst_element_send_event(m_pipeline.get(), gst_event_new_custom(GST_EVENT_CUSTOM_DOWNSTREAM_OOB,
-+            gst_structure_new("drm-cipher", "stream", G_TYPE_POINTER, cdm->drmStream(), nullptr)));
++    gst_element_send_event(m_pipeline.get(), gst_event_new_custom(GST_EVENT_CUSTOM_DOWNSTREAM_OOB,
++       gst_structure_new("drm-cipher", "stream", G_TYPE_POINTER, static_cast<CDMPRSessionGStreamer*>(m_cdmSession), nullptr)));
 +#endif
 +}
 +#endif
@@ -524,11 +599,19 @@ index b13064b..3ed46f0 100644
  MediaPlayer::SupportsType MediaPlayerPrivateGStreamer::supportsType(const MediaEngineSupportParameters& parameters)
  {
  #if ENABLE(MEDIA_SOURCE)
-diff --git a/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.h b/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.h
-index c653c08..36b454c 100644
---- a/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.h
-+++ b/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.h
-@@ -163,6 +163,12 @@ public:
+diff -urN a/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.h b/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.h
+--- a/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.h	2015-07-18 12:52:08.000000000 +0200
++++ b/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.h	2015-07-20 20:23:57.928260561 +0200
+@@ -82,7 +82,7 @@
+     void load(const String& url, MediaSourcePrivateClient*) override;
+ #endif
+ #if ENABLE(MEDIA_STREAM)
+-    void load(MediaStreamPrivate&) override;
++    void load(MediaStreamPrivate*) override;
+ #endif
+     void commitLoad();
+     void cancelLoad() override;
+@@ -163,6 +163,12 @@
      void notifyAppendComplete();
  #endif
  
@@ -541,7 +624,7 @@ index c653c08..36b454c 100644
  private:
      static void getSupportedTypes(HashSet<String>&);
      static MediaPlayer::SupportsType supportsType(const MediaEngineSupportParameters&);
-@@ -172,6 +178,12 @@ private:
+@@ -172,6 +178,12 @@
  
      GstElement* createAudioSink() override;
  
@@ -554,11 +637,10 @@ index c653c08..36b454c 100644
      float playbackPosition() const;
  
      void cacheDuration();
-diff --git a/Source/WebCore/platform/graphics/gstreamer/WebKitCommonEncryptionDecryptorGStreamer.cpp b/Source/WebCore/platform/graphics/gstreamer/WebKitCommonEncryptionDecryptorGStreamer.cpp
-index 0cba28b..6a206a1 100644
---- a/Source/WebCore/platform/graphics/gstreamer/WebKitCommonEncryptionDecryptorGStreamer.cpp
-+++ b/Source/WebCore/platform/graphics/gstreamer/WebKitCommonEncryptionDecryptorGStreamer.cpp
-@@ -51,7 +51,7 @@ static GstStaticPadTemplate sinkTemplate = GST_STATIC_PAD_TEMPLATE("sink",
+diff -urN a/Source/WebCore/platform/graphics/gstreamer/WebKitCommonEncryptionDecryptorGStreamer.cpp b/Source/WebCore/platform/graphics/gstreamer/WebKitCommonEncryptionDecryptorGStreamer.cpp
+--- a/Source/WebCore/platform/graphics/gstreamer/WebKitCommonEncryptionDecryptorGStreamer.cpp	2015-07-18 12:52:08.000000000 +0200
++++ b/Source/WebCore/platform/graphics/gstreamer/WebKitCommonEncryptionDecryptorGStreamer.cpp	2015-07-20 20:22:44.428260761 +0200
+@@ -51,7 +51,7 @@
      GST_PAD_SINK,
      GST_PAD_ALWAYS,
      GST_STATIC_CAPS("application/x-cenc, original-media-type=(string)video/x-h264, protection-system=(string)" CLEAR_KEY_PROTECTION_SYSTEM_ID "; "
@@ -567,7 +649,7 @@ index 0cba28b..6a206a1 100644
  
  static GstStaticPadTemplate srcTemplate = GST_STATIC_PAD_TEMPLATE("src",
      GST_PAD_SRC,
-@@ -94,6 +94,28 @@ static void webkit_media_common_encryption_decrypt_init(WebKitMediaCommonEncrypt
+@@ -94,6 +94,28 @@
  }
  
  /*
@@ -596,7 +678,7 @@ index 0cba28b..6a206a1 100644
    Given the pad in this direction and the given caps, what caps are allowed on
    the other pad in this element ?
  */
-@@ -153,22 +175,11 @@ static GstCaps* webkitMediaCommonEncryptionDecryptTransformCaps(GstBaseTransform
+@@ -153,22 +175,11 @@
                  "original-media-type", G_TYPE_STRING, gst_structure_get_name(in), nullptr);
  
              gst_structure_set_name(out, "application/x-cenc");
@@ -621,12 +703,10 @@ index 0cba28b..6a206a1 100644
      }
  
      if (filter) {
-diff --git a/Source/WebCore/platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.cpp b/Source/WebCore/platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.cpp
-new file mode 100644
-index 0000000..55019e3
---- /dev/null
-+++ b/Source/WebCore/platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.cpp
-@@ -0,0 +1,380 @@
+diff -urN a/Source/WebCore/platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.cpp b/Source/WebCore/platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.cpp
+--- a/Source/WebCore/platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.cpp	1970-01-01 01:00:00.000000000 +0100
++++ b/Source/WebCore/platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.cpp	2015-07-20 20:23:57.928260561 +0200
+@@ -0,0 +1,364 @@
 +/* GStreamer ClearKey common encryption decryptor
 + *
 + * Copyright (C) 2015 Igalia S.L
@@ -652,15 +732,14 @@ index 0000000..55019e3
 +
 +#if (ENABLE(ENCRYPTED_MEDIA) || ENABLE(ENCRYPTED_MEDIA_V2)) && USE(GSTREAMER) && USE(DXDRM)
 +#include "WebKitPlayReadyDecryptorGStreamer.h"
++#include "CDMPRSessionGStreamer.h"
 +
 +#include <gst/base/gstbasetransform.h>
 +#include <gst/base/gstbytereader.h>
-+#include <dxdrm/DxDrmClient.h>
-+#include <dxdrm/DxDrmDebugApi.h>
 +
 +struct _WebKitMediaPlayReadyDecrypt {
 +    GstBaseTransform parent;
-+    HDxDrmStream drmStream;
++    WebCore::CDMPRSessionGStreamer* sessionMetaData;
 +    gboolean streamReceived;
 +
 +    GMutex mutex;
@@ -672,7 +751,6 @@ index 0000000..55019e3
 +};
 +
 +static bool keyRequested = false;
-+
 +
 +static GstCaps* webkitMediaPlayReadyDecryptTransformCaps(GstBaseTransform*, GstPadDirection, GstCaps*, GstCaps* filter);
 +static GstFlowReturn webkitMediaPlayReadyDecryptTransformInPlace(GstBaseTransform*, GstBuffer*);
@@ -851,7 +929,6 @@ index 0000000..55019e3
 +    const GValue* value;
 +    guint sampleIndex = 0;
 +    int errorCode;
-+    unsigned long activeFlags;
 +    unsigned trackID = 0;
 +    GstPad* pad;
 +    GstCaps* caps;
@@ -881,14 +958,6 @@ index 0000000..55019e3
 +    if (!gst_buffer_map(buffer, &map, static_cast<GstMapFlags>(GST_MAP_READWRITE))) {
 +        GST_ERROR_OBJECT(self, "Failed to map buffer");
 +        result = GST_FLOW_NOT_SUPPORTED;
-+        goto beach;
-+    }
-+
-+    if ((errorCode = DxDrmStream_GetFlags(self->drmStream,
-+                                          DX_FLAG_CAN_PLAY | DX_FLAG_HAS_FUTURE_RIGHTS,
-+                                          &activeFlags, DX_ALL_PERMISSIONS, 0)) != DX_DRM_SUCCESS) {
-+        GST_WARNING_OBJECT(self, "DX: ERROR - getflags failed [%d]", errorCode);
-+        result = GST_FLOW_ERROR;
 +        goto beach;
 +    }
 +
@@ -922,13 +991,8 @@ index 0000000..55019e3
 +    }
 +
 +    GST_TRACE_OBJECT(self, "decrypt sample %u", sampleIndex);
-+
-+    if ((errorCode = DxDrmStream_ProcessPiffPacket(self->drmStream, (void*) map.data,
-+                                                   (unsigned int) map.size,
-+                                                   (const void*) boxMap.data,
-+                                                   (unsigned int) boxMap.size,
-+                                                   (unsigned int) sampleIndex, trackID)) != DX_DRM_SUCCESS) {
-+        GST_WARNING_OBJECT(self, "DX: ERROR - packet decryption failed [%d]", errorCode);
++    if ((errorCode = self->sessionMetaData->decrypt( map, boxMap,  sampleIndex, trackID)) != 0) {
++        GST_WARNING_OBJECT(self, "ERROR - packet decryption failed [%d]", errorCode);
 +        GST_MEMDUMP_OBJECT(self, "box", boxMap.data, boxMap.size);
 +        result = GST_FLOW_ERROR;
 +        goto beach;
@@ -988,7 +1052,7 @@ index 0000000..55019e3
 +            GST_INFO_OBJECT(self, "received drm-cipher");
 +
 +            const GValue* value = gst_structure_get_value(structure, "stream");
-+            self->drmStream = (HDxDrmStream) g_value_get_pointer(value);
++            self->sessionMetaData = reinterpret_cast<WebCore::CDMPRSessionGStreamer*>(g_value_get_pointer(value));
 +            self->streamReceived = TRUE;
 +            g_cond_signal(&self->condition);
 +        }
@@ -1007,11 +1071,9 @@ index 0000000..55019e3
 +}
 +
 +#endif
-diff --git a/Source/WebCore/platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.h b/Source/WebCore/platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.h
-new file mode 100644
-index 0000000..feb7a50
---- /dev/null
-+++ b/Source/WebCore/platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.h
+diff -urN a/Source/WebCore/platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.h b/Source/WebCore/platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.h
+--- a/Source/WebCore/platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.h	1970-01-01 01:00:00.000000000 +0100
++++ b/Source/WebCore/platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.h	2015-07-20 20:23:58.004260561 +0200
 @@ -0,0 +1,45 @@
 +/* GStreamer ClearKey common encryption decryptor
 + *
@@ -1058,11 +1120,10 @@ index 0000000..feb7a50
 +
 +#endif
 +#endif
-diff --git a/Source/WebCore/platform/graphics/gstreamer/WebKitWebSourceGStreamer.cpp b/Source/WebCore/platform/graphics/gstreamer/WebKitWebSourceGStreamer.cpp
-index 9da20d2..69beb44 100644
---- a/Source/WebCore/platform/graphics/gstreamer/WebKitWebSourceGStreamer.cpp
-+++ b/Source/WebCore/platform/graphics/gstreamer/WebKitWebSourceGStreamer.cpp
-@@ -1082,8 +1082,8 @@ void StreamingClient::handleDataReceived(const char* data, int length)
+diff -urN a/Source/WebCore/platform/graphics/gstreamer/WebKitWebSourceGStreamer.cpp b/Source/WebCore/platform/graphics/gstreamer/WebKitWebSourceGStreamer.cpp
+--- a/Source/WebCore/platform/graphics/gstreamer/WebKitWebSourceGStreamer.cpp	2015-07-18 12:52:08.000000000 +0200
++++ b/Source/WebCore/platform/graphics/gstreamer/WebKitWebSourceGStreamer.cpp	2015-07-20 20:22:44.428260761 +0200
+@@ -1082,8 +1082,8 @@
      priv->offset += length;
      // priv->size == 0 if received length on didReceiveResponse < 0.
      if (priv->size > 0 && priv->offset > priv->size) {
@@ -1073,6 +1134,18 @@ index 9da20d2..69beb44 100644
          priv->size = priv->offset;
      }
      GST_BUFFER_OFFSET_END(priv->buffer.get()) = priv->offset;
--- 
-2.1.4
-
+diff -urN a/Source/WebCore/PlatformWPE.cmake b/Source/WebCore/PlatformWPE.cmake
+--- a/Source/WebCore/PlatformWPE.cmake	2015-07-18 12:52:08.000000000 +0200
++++ b/Source/WebCore/PlatformWPE.cmake	2015-07-20 20:22:44.428260761 +0200
+@@ -335,4 +335,11 @@
+         platform/graphics/gstreamer/WebKitCommonEncryptionDecryptorGStreamer.cpp
+         platform/graphics/gstreamer/WebKitMediaAesCtr.c
+     )
++
++    if (ENABLE_ENCRYPTED_MEDIA_V2 AND ENABLE_DXDRM)
++        list(APPEND WebCore_SOURCES
++            platform/graphics/gstreamer/CDMPRSessionGStreamer.cpp
++            platform/graphics/gstreamer/WebKitPlayReadyDecryptorGStreamer.cpp
++        )
++    endif ()
+ endif ()
