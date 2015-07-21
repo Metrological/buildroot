@@ -485,15 +485,6 @@ diff -urN a/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStream
  #if ENABLE(MEDIA_SOURCE)
      GRefPtr<GstElementFactory> WebKitMediaSrcFactory = gst_element_factory_find("webkitmediasrc");
      if (!WebKitMediaSrcFactory)
-@@ -428,7 +444,7 @@
- #endif
- 
- #if ENABLE(MEDIA_STREAM)
--void MediaPlayerPrivateGStreamer::load(MediaStreamPrivate&)
-+void MediaPlayerPrivateGStreamer::load(MediaStreamPrivate*)
- {
-     notImplemented();
- }
 @@ -704,9 +720,9 @@
      if (!rate)
          rate = 1.0;
@@ -602,15 +593,6 @@ diff -urN a/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStream
 diff -urN a/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.h b/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.h
 --- a/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.h	2015-07-18 12:52:08.000000000 +0200
 +++ b/Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.h	2015-07-20 20:23:57.928260561 +0200
-@@ -82,7 +82,7 @@
-     void load(const String& url, MediaSourcePrivateClient*) override;
- #endif
- #if ENABLE(MEDIA_STREAM)
--    void load(MediaStreamPrivate&) override;
-+    void load(MediaStreamPrivate*) override;
- #endif
-     void commitLoad();
-     void cancelLoad() override;
 @@ -163,6 +163,12 @@
      void notifyAppendComplete();
  #endif
