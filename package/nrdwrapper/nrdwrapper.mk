@@ -4,9 +4,9 @@
 #
 ################################################################################
 
-NRDWRAPPER_VERSION = custom
-NRDWRAPPER_SITE = /home/debian/nrdwrapper/
-NRDWRAPPER_SITE_METHOD = local
+NRDWRAPPER_VERSION = c2e7a52cd7053038b48c03575695817a9cf32f65
+NRDWRAPPER_SITE_METHOD = git
+NRDWRAPPER_SITE = git@github.com:Metrological/nrdwrapper.git
 NRDWRAPPER_LICENSE = PROPRIETARY
 
 NRDWRAPPER_DEPENDENCIES = cppsdk
