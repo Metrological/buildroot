@@ -3,8 +3,8 @@
 # WPE
 #
 ################################################################################
-WPE_VERSION = b2c72aab55f614ef596984b3eb0c00a93a617cf8
 
+WPE_VERSION = 0cf890a84a23dea80d806eabc2d070d380721add
 WPE_SITE = $(call github,Metrological,WebKitForWayland,$(WPE_VERSION))
 
 WPE_INSTALL_STAGING = YES
@@ -121,8 +121,11 @@ ifeq ($(BR2_ENABLE_DEBUG),y)
 BUILDTYPE = Debug
 WPE_FLAGS += \
 	-DCMAKE_C_FLAGS_DEBUG="-O0 -g -Wno-cast-align" \
-	-DCMAKE_CXX_FLAGS_DEBUG="-O0 -g -Wno-cast-align" \
+	-DCMAKE_CXX_FLAGS_DEBUG="-O0 -g -Wno-cast-align"
+ifeq ($(BR2_BINUTILS_VERSION_2_25),y)
+WPE_FLAGS += \
 	-DDEBUG_FISSION=TRUE
+endif
 else
 BUILDTYPE = Release
 WPE_FLAGS += \
@@ -132,11 +135,12 @@ endif
 
 ifeq ($(BR2_PACKAGE_WPE_USE_DXDRM_EME),y)
 WPE_DEPENDENCIES += dxdrm
-WPE_FLAGS += -DENABLE_DXDRM=ON
+WPE_FLAGS += -DENABLE_ENCRYPTED_MEDIA_V2=ON -DENABLE_DXDRM=ON
 endif
 
 ifeq ($(BR2_PACKAGE_WPE_USE_ENCRYPTED_MEDIA),y)
-WPE_FLAGS += -DENABLE_ENCRYPTED_MEDIA_V2=ON -DENABLE_ENCRYPTED_MEDIA=ON
+WPE_DEPENDENCIES += openssl
+WPE_FLAGS += -DENABLE_ENCRYPTED_MEDIA=ON
 endif
 
 ifeq ($(BR2_PACKAGE_WPE_USE_MEDIA_SOURCE),y)
@@ -181,13 +185,6 @@ define WPE_BUILD_CMDS
 	$(WPE_MAKE_ENV) $(HOST_DIR)/usr/bin/ninja -C $(WPE_BUILDDIR) $(WPE_NINJA_EXTRA_OPTIONS) libWPEWebKit.so libWPEWebInspectorResources.so WPE{Web,Network}Process WPE$(WPE_SHELL)Shell
 endef
 
-ifeq ($(BR2_PACKAGE_WPE_INSTALL_ROOTCA),y)
-define WPE_INSTALL_ROOTCA
-	mkdir -p $(TARGET_DIR)/etc/ssl/certs/
-	$(WGET) -O $(TARGET_DIR)/etc/ssl/certs/ca-certificates.crt http://curl.haxx.se/ca/cacert.pem
-endef
-endif
-
 define WPE_INSTALL_STAGING_CMDS
 	(cd $(WPE_BUILDDIR) && \
 	cp bin/WPE{Network,Web}Process $(STAGING_DIR)/usr/bin/ && \
@@ -200,7 +197,6 @@ define WPE_INSTALL_TARGET_CMDS
 	cp -d lib/libWPE* $(TARGET_DIR)/usr/lib/ && \
 	$(STRIPCMD) $(TARGET_DIR)/usr/lib/libWPEWebKit.so.0.0.1 && \
 	popd > /dev/null)
-	$(WPE_INSTALL_ROOTCA)
 	$(WPE_INSTALL_AUTOSTART)
 endef
 

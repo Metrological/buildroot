@@ -2,6 +2,7 @@ config BR2_PACKAGE_GNUTLS
 	bool "gnutls"
 	select BR2_PACKAGE_NETTLE
 	select BR2_PACKAGE_PCRE
+	select BR2_TARGET_GENERIC_CABUNDLE
 	depends on BR2_USE_WCHAR
 	help
 	  GnuTLS is a secure communications library implementing the SSL

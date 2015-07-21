@@ -46,8 +46,8 @@ then
 	export HOME=/root
 	while true;
 	do
-		eval "WPE_SHELL_URL=$2 $WPE_CONFIG $PREFIX athol"
+		eval "WPE_SHELL_URL=\"$2\" $WPE_CONFIG $PREFIX athol"
 	done
 else
-	eval "WPE_SHELL_URL=$1 $WPE_CONFIG $PREFIX athol"
+	eval "WPE_SHELL_URL=\"$1\" $WPE_CONFIG $PREFIX athol"
 fi

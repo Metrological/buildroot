@@ -6,7 +6,7 @@
 
 GST1_PLUGINS_BAD_VERSION = $(GSTREAMER1_VERSION)
 ifeq ($(BR2_PACKAGE_GSTREAMER1_GIT),y)
-GST1_PLUGINS_BAD_VERSION = 9e7454a90abe7ea6075e3bcaa0731ed4a8a22b54
+GST1_PLUGINS_BAD_VERSION = 04beac6e0f14879415e4eab963f61933e8e2ae02
 endif
 GST1_PLUGINS_BAD_SOURCE = gst-plugins-bad-$(GST1_PLUGINS_BAD_VERSION).tar.gz
 GST1_PLUGINS_BAD_SITE = http://cgit.freedesktop.org/gstreamer/gst-plugins-bad/snapshot/
@@ -39,6 +39,11 @@ GST1_PLUGINS_BAD_CONF_OPT = \
 	--disable-sdltest \
 	--disable-wininet \
 	--disable-acm
+
+ifeq ($(BR2_PACKAGE_GSTREAMER1_GIT),y)
+GST1_PLUGINS_BAD_CONF_OPT += \
+	--disable-qt
+endif
 
 # Options which require currently unpackaged libraries
 GST1_PLUGINS_BAD_CONF_OPT += \

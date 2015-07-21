@@ -32,6 +32,7 @@ define RPI_USERLAND_POST_TARGET_CLEANUP_TOOLS
 	rm -f $(TARGET_DIR)/usr/bin/raspi*
 	rm -f $(TARGET_DIR)/usr/bin/containers_*
 	rm -f $(TARGET_DIR)/usr/bin/mmal_vc*
+	rm -rf $(TARGET_DIR)/usr/lib/plugins
 endef
 
 ifneq ($(BR2_PACKAGE_RPI_USERLAND_INSTALL_TOOLS),y)

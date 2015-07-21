@@ -1,7 +1,7 @@
-From 10830e0ee3d7c950f9f59d101d5560a8fc3f25cb Mon Sep 17 00:00:00 2001
+From f2a001fd4325aa5a2bda462f5d9da923b8145735 Mon Sep 17 00:00:00 2001
 From: Philippe Normand <philn@igalia.com>
 Date: Wed, 3 Jun 2015 15:25:28 +0200
-Subject: [PATCH 2/2] qtdemux: support for cenc auxiliary info parsing outside
+Subject: [PATCH 2/4] qtdemux: support for cenc auxiliary info parsing outside
  of moof box
 
 When the cenc aux info index is out of moof boundaries, keep track of
@@ -14,10 +14,10 @@ https://bugzilla.gnome.org/show_bug.cgi?id=705991
  2 files changed, 55 insertions(+), 37 deletions(-)
 
 diff --git a/gst/isomp4/qtdemux.c b/gst/isomp4/qtdemux.c
-index e82aefd..79cc14f 100644
+index e50fb7f..2da90ff 100644
 --- a/gst/isomp4/qtdemux.c
 +++ b/gst/isomp4/qtdemux.c
-@@ -597,6 +597,7 @@ gst_qtdemux_init (GstQTDemux * qtdemux)
+@@ -606,6 +606,7 @@ gst_qtdemux_init (GstQTDemux * qtdemux)
    qtdemux->have_group_id = FALSE;
    qtdemux->group_id = G_MAXUINT;
    qtdemux->protection_system_ids = NULL;
@@ -25,7 +25,7 @@ index e82aefd..79cc14f 100644
    gst_segment_init (&qtdemux->segment, GST_FORMAT_TIME);
    qtdemux->flowcombiner = gst_flow_combiner_new ();
  
-@@ -614,6 +615,11 @@ gst_qtdemux_dispose (GObject * object)
+@@ -623,6 +624,11 @@ gst_qtdemux_dispose (GObject * object)
    }
    gst_flow_combiner_free (qtdemux->flowcombiner);
  
@@ -37,7 +37,7 @@ index e82aefd..79cc14f 100644
    G_OBJECT_CLASS (parent_class)->dispose (object);
  }
  
-@@ -3019,8 +3025,7 @@ qtdemux_get_cenc_sample_properties (GstQTDemux * qtdemux,
+@@ -3043,8 +3049,7 @@ qtdemux_get_cenc_sample_properties (GstQTDemux * qtdemux,
   * as given in a saiz box. Returns TRUE if successful; FALSE otherwise. */
  static gboolean
  qtdemux_parse_saiz (GstQTDemux * qtdemux, QtDemuxStream * stream,
@@ -47,7 +47,7 @@ index e82aefd..79cc14f 100644
  {
    guint32 flags = 0;
    guint32 aux_info_type = 0;
-@@ -3030,9 +3035,6 @@ qtdemux_parse_saiz (GstQTDemux * qtdemux, QtDemuxStream * stream,
+@@ -3054,9 +3059,6 @@ qtdemux_parse_saiz (GstQTDemux * qtdemux, QtDemuxStream * stream,
    g_return_val_if_fail (qtdemux != NULL, FALSE);
    g_return_val_if_fail (stream != NULL, FALSE);
    g_return_val_if_fail (br != NULL, FALSE);
@@ -57,7 +57,7 @@ index e82aefd..79cc14f 100644
  
    if (!gst_byte_reader_get_uint32_be (br, &flags))
      return FALSE;
-@@ -3057,24 +3059,25 @@ qtdemux_parse_saiz (GstQTDemux * qtdemux, QtDemuxStream * stream,
+@@ -3081,24 +3083,25 @@ qtdemux_parse_saiz (GstQTDemux * qtdemux, QtDemuxStream * stream,
        "aux_info_type_parameter:  %#06x",
        GST_FOURCC_ARGS (aux_info_type), aux_info_type_parameter);
  
@@ -93,7 +93,7 @@ index e82aefd..79cc14f 100644
    }
  
    return TRUE;
-@@ -3153,8 +3156,7 @@ qtdemux_parse_saio (GstQTDemux * qtdemux, QtDemuxStream * stream,
+@@ -3177,8 +3180,7 @@ qtdemux_parse_saio (GstQTDemux * qtdemux, QtDemuxStream * stream,
   * ISO/IEC 23001-7. Returns TRUE if successful; FALSE otherwise. */
  static gboolean
  qtdemux_parse_cenc_aux_info (GstQTDemux * qtdemux, QtDemuxStream * stream,
@@ -103,7 +103,7 @@ index e82aefd..79cc14f 100644
  {
    QtDemuxCencSampleSetInfo *ss_info = NULL;
    guint8 size;
-@@ -3167,8 +3169,8 @@ qtdemux_parse_cenc_aux_info (GstQTDemux * qtdemux, QtDemuxStream * stream,
+@@ -3191,8 +3193,8 @@ qtdemux_parse_cenc_aux_info (GstQTDemux * qtdemux, QtDemuxStream * stream,
    g_return_val_if_fail (stream->protection_scheme_info != NULL, FALSE);
  
    /* Must have a non-zero default_info_size if no array of sizes is provided. */
@@ -114,7 +114,7 @@ index e82aefd..79cc14f 100644
  
    ss_info = (QtDemuxCencSampleSetInfo *) stream->protection_scheme_info;
  
-@@ -3179,7 +3181,7 @@ qtdemux_parse_cenc_aux_info (GstQTDemux * qtdemux, QtDemuxStream * stream,
+@@ -3203,7 +3205,7 @@ qtdemux_parse_cenc_aux_info (GstQTDemux * qtdemux, QtDemuxStream * stream,
  
    ss_info->crypto_info = gst_caps_new_empty ();
  
@@ -123,7 +123,7 @@ index e82aefd..79cc14f 100644
      GstStructure *properties;
      guint16 n_subsamples;
      guint8 *data;
-@@ -3208,8 +3210,9 @@ qtdemux_parse_cenc_aux_info (GstQTDemux * qtdemux, QtDemuxStream * stream,
+@@ -3232,8 +3234,9 @@ qtdemux_parse_cenc_aux_info (GstQTDemux * qtdemux, QtDemuxStream * stream,
      }
      gst_structure_set (properties, "iv", GST_TYPE_BUFFER, buf, NULL);
  
@@ -135,7 +135,7 @@ index e82aefd..79cc14f 100644
  
      if (size > iv_size) {
        if (!gst_byte_reader_get_uint16_be (br, &n_subsamples)
-@@ -3219,7 +3222,8 @@ qtdemux_parse_cenc_aux_info (GstQTDemux * qtdemux, QtDemuxStream * stream,
+@@ -3243,7 +3246,8 @@ qtdemux_parse_cenc_aux_info (GstQTDemux * qtdemux, QtDemuxStream * stream,
              "failed to get subsample count for sample %u", i);
          return FALSE;
        }
@@ -145,7 +145,7 @@ index e82aefd..79cc14f 100644
        gst_structure_set (properties, "subsample_count", G_TYPE_UINT,
            n_subsamples, NULL);
  
-@@ -3370,12 +3374,9 @@ qtdemux_parse_moof (GstQTDemux * qtdemux, const guint8 * buffer, guint length,
+@@ -3394,12 +3398,9 @@ qtdemux_parse_moof (GstQTDemux * qtdemux, const guint8 * buffer, guint length,
          qtdemux_tree_get_child_by_type_full (traf_node, FOURCC_saiz,
          &saiz_data);
      if (saiz_node) {
@@ -159,7 +159,7 @@ index e82aefd..79cc14f 100644
          GST_ERROR_OBJECT (qtdemux, "failed to parse saiz box");
        } else {
          saio_node =
-@@ -3394,16 +3395,15 @@ qtdemux_parse_moof (GstQTDemux * qtdemux, const guint8 * buffer, guint length,
+@@ -3418,16 +3419,15 @@ qtdemux_parse_moof (GstQTDemux * qtdemux, const guint8 * buffer, guint length,
            offset += (base_offset > 0) ? (guint64) base_offset : 0;
  
            if (info_type == FOURCC_cenc && info_type_parameter == 0U) {
@@ -182,7 +182,7 @@ index e82aefd..79cc14f 100644
                  GST_ERROR_OBJECT (qtdemux,
                      "failed to parse cenc auxiliary info");
                  goto fail;
-@@ -3414,9 +3414,6 @@ qtdemux_parse_moof (GstQTDemux * qtdemux, const guint8 * buffer, guint length,
+@@ -3438,9 +3438,6 @@ qtdemux_parse_moof (GstQTDemux * qtdemux, const guint8 * buffer, guint length,
            GST_INFO_OBJECT (qtdemux,
                "saiz box without a corresponding saio box");
          }
@@ -192,7 +192,7 @@ index e82aefd..79cc14f 100644
        }
      }
  
-@@ -5909,6 +5906,22 @@ gst_qtdemux_process_adapter (GstQTDemux * demux, gboolean force)
+@@ -5949,6 +5946,22 @@ gst_qtdemux_process_adapter (GstQTDemux * demux, gboolean force)
          }
  
          if (demux->todrop) {
@@ -216,7 +216,7 @@ index e82aefd..79cc14f 100644
          }
  
 diff --git a/gst/isomp4/qtdemux.h b/gst/isomp4/qtdemux.h
-index dae9f5b..9354823 100644
+index b332b3d..6440cb2 100644
 --- a/gst/isomp4/qtdemux.h
 +++ b/gst/isomp4/qtdemux.h
 @@ -148,6 +148,11 @@ struct _GstQTDemux {

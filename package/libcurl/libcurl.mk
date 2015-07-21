@@ -23,7 +23,14 @@ LIBCURL_CONF_OPT = --disable-verbose --disable-manual --disable-ntlm-wb \
 	--enable-hidden-symbols --with-random=/dev/urandom
 LIBCURL_CONFIG_SCRIPTS = curl-config
 
-ifeq ($(BR2_PACKAGE_OPENSSL),y)
+define LIBCURL_FIX_DOT_PC
+	printf 'Requires: openssl\n' >>$(@D)/libcurl.pc.in
+endef
+
+ifeq ($(BR2_PACKAGE_GNUTLS),y)
+LIBCURL_CONF_OPT += --with-gnutls=$(STAGING_DIR)/usr
+LIBCURL_DEPENDENCIES += gnutls
+else ifeq ($(BR2_PACKAGE_OPENSSL),y)
 LIBCURL_DEPENDENCIES += openssl
 LIBCURL_CONF_ENV += ac_cv_lib_crypto_CRYPTO_lock=yes
 # configure adds the cross openssl dir to LD_LIBRARY_PATH which screws up
@@ -33,9 +40,7 @@ LIBCURL_CONF_ENV += ac_cv_lib_crypto_CRYPTO_lock=yes
 LIBCURL_CONF_ENV += LD_LIBRARY_PATH=$$LD_LIBRARY_PATH:/lib:/usr/lib
 LIBCURL_CONF_OPT += --with-ssl=$(STAGING_DIR)/usr \
 	--with-ca-path=/etc/ssl/certs
-else ifeq ($(BR2_PACKAGE_GNUTLS),y)
-LIBCURL_CONF_OPT += --with-gnutls=$(STAGING_DIR)/usr
-LIBCURL_DEPENDENCIES += gnutls
+LIBCURL_POST_PATCH_HOOKS += LIBCURL_FIX_DOT_PC
 else ifeq ($(BR2_PACKAGE_POLARSSL),y)
 LIBCURL_CONF_OPT += --with-polarssl=$(STAGING_DIR)/usr
 LIBCURL_DEPENDENCIES += polarssl
@@ -48,6 +53,10 @@ LIBCURL_CONF_OPT += --without-ssl --without-gnutls \
 	--without-polarssl --without-nss
 endif
 
+ifeq ($(BR2_TARGET_GENERIC_CABUNDLE),y)
+	LIBCURL_CONF_OPT += --with-ca-bundle=/etc/ssl/certs/ca-certificates.crt
+endif
+
 # Configure curl to support libssh2
 ifeq ($(BR2_PACKAGE_LIBSSH2),y)
 LIBCURL_DEPENDENCIES += libssh2
@@ -55,11 +64,6 @@ LIBCURL_CONF_OPT += --with-libssh2
 else
 LIBCURL_CONF_OPT += --without-libssh2
 endif
-
-define LIBCURL_FIX_DOT_PC
-	printf 'Requires: openssl\n' >>$(@D)/libcurl.pc.in
-endef
-LIBCURL_POST_PATCH_HOOKS += $(if $(BR2_PACKAGE_OPENSSL),LIBCURL_FIX_DOT_PC)
 
 ifeq ($(BR2_PACKAGE_CURL),)
 define LIBCURL_TARGET_CLEANUP

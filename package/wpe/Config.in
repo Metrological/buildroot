@@ -22,12 +22,6 @@ config BR2_PACKAGE_WPE
 
 menu "Extra options"
 
-config BR2_PACKAGE_WPE_INSTALL_ROOTCA
-	bool "wpe-rootca"
-	default y
-	help
-	  Install Root CA's on filesystem
-
 config BR2_PACKAGE_WPE_USE_GSTREAMER
 	bool "wpe-gstreamer"
 	default y
@@ -43,6 +37,7 @@ comment "wpe-gstreamer requires gstreamer 1.x"
  
 config BR2_PACKAGE_WPE_USE_ENCRYPTED_MEDIA
 	bool "encrypted-media"
+	select BR2_PACKAGE_OPENSSL
 	depends on BR2_PACKAGE_WPE_USE_GSTREAMER
 	depends on BR2_PACKAGE_GSTREAMER1_GIT
 	default n
