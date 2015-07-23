@@ -1,0 +1,26 @@
+--- a/Source/WebCore/platform/graphics/surfaces/qt/GraphicsSurfaceEGL.cpp
++++ b/Source/WebCore/platform/graphics/surfaces/qt/GraphicsSurfaceEGL.cpp
+@@ -3,18 +3,18 @@
+ 
+ #if USE(GRAPHICS_SURFACE)
+ 
+-#include "NotImplemented.h"
+-#include "TextureMapperGL.h"
+ #include <QGuiApplication>
+-#include <GLES2/gl2.h>
+-#include <EGL/egl.h>
+-#include <EGL/eglext.h>
+ #include <QOpenGLFramebufferObject>
+ #include <QOpenGLPaintDevice>
+ #include <QOffscreenSurface>
+ #include <QOpenGLContext>
+ #include <private/qopenglpaintengine_p.h>
++#include "NotImplemented.h"
++#include "TextureMapperGL.h"
+ #include "GLSharedContext.h"
++#include <GLES2/gl2.h>
++#include <EGL/egl.h>
++#include <EGL/eglext.h>
+ 
+ namespace WebCore {
+ 
