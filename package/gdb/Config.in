@@ -29,6 +29,11 @@ config BR2_PACKAGE_GDB
 
 if BR2_PACKAGE_GDB
 
+config BR2_PACKAGE_HOSTGDB_TUI
+	bool "gdb-tui"
+	help
+	  Enable the GDB Text User Interface for the host.
+
 config BR2_PACKAGE_GDB_SERVER
 	bool "gdbserver"
 	depends on !BR2_TOOLCHAIN_EXTERNAL_GDB_SERVER_COPY
