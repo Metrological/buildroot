@@ -8,7 +8,19 @@ config BR2_PACKAGE_MESA3D
 	select BR2_PACKAGE_LIBDRM
 	select BR2_PACKAGE_EXPAT
 	select BR2_PACKAGE_HOST_LIBXML2_PYTHON
+	select BR2_PACKAGE_HAS_OPENGL_EGL
+	select BR2_PACKAGE_HAS_OPENGL_ES
 	depends on BR2_PACKAGE_XSERVER_XORG_SERVER_MODULAR
 	depends on BR2_INSTALL_LIBSTDCPP
 	help
 	  Mesa 3D, an open-source implementation of the OpenGL specification.
+
+if BR2_PACKAGE_MESA3D
+
+config BR2_PACKAGE_PROVIDES_OPENGL_ES
+	default "mesa3d"
+
+config BR2_PACKAGE_PROVIDES_OPENGL_EGL
+	default "mesa3d"
+
+endif

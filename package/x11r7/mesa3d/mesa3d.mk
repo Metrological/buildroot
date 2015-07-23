@@ -14,7 +14,9 @@ MESA3D_AUTORECONF = YES
 MESA3D_INSTALL_STAGING = YES
 
 MESA3D_CONF_OPT = \
-	--disable-egl \
+	--enable-egl \
+	--enable-gles2 \
+	--enable-gles-overlay \
 	--disable-glu \
 	--disable-glw \
 	--disable-glut \
