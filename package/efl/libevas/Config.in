@@ -148,8 +148,11 @@ choice
 
 config BR2_PACKAGE_LIBEVAS_GL
 	bool "generic OpenGL"
-	select BR2_PACKAGE_MESA3D
+	depends on BR2_PACKAGE_MESA3D
 	select BR2_PACKAGE_LIBEET
+
+comment "libevas generic OpenGL requires Mesa3D"
+	depends on !BR2_PACKAGE_LIBEVAS_GL
 
 config BR2_PACKAGE_LIBEVAS_GLES_SGX
 	bool "OpenGL-ES SGX"
