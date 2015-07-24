@@ -6,3 +6,12 @@ config BR2_PACKAGE_LIBXKBCOMMON
 	  specification.
 
 	  http://xkbcommon.org/
+
+config BR2_PACKAGE_LIBXKBCOMMON_X11
+	bool "libxkbcommon-x11"
+	depends on BR2_PACKAGE_LIBXKBCOMMON
+	help
+	  Support creating keymaps with the X11 protocol
+
+comment "libxkbcommon-x11 depends on libxkbcommon"
+	depends on !BR2_PACKAGE_LIBXKBCOMMON

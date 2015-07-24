@@ -14,6 +14,11 @@ LIBXKBCOMMON_INSTALL_STAGING = YES
 LIBXKBCOMMON_DEPENDENCIES = host-bison host-flex
 # uses C99 features
 LIBXKBCOMMON_CONF_ENV = CFLAGS="$(TARGET_CFLAGS) -std=gnu99"
+
+ifeq ($(BR2_PACKAGE_LIBXKBCOMMON_X11),y)
+LIBXKBCOMMON_CONF_OPT += --enable-x11
+else
 LIBXKBCOMMON_CONF_OPT = --disable-x11
+endif
 
 $(eval $(autotools-package))
