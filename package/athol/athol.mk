@@ -10,7 +10,7 @@ ATHOL_SITE = $(call github,Metrological,athol,$(ATHOL_VERSION))
 ATHOL_INSTALL_STAGING = YES
 
 ifeq ($(BR2_PACKAGE_BCM_REFSW),y)
-ATHOL_DEPENDENCIES = wayland libegl libglib2 libglib2 bcm-refsw
+ATHOL_DEPENDENCIES = wayland libegl libglib2 libinput bcm-refsw
 ATHOL_CONF_OPT = -DCMAKE_BUILD_TYPE=Release -DBROADCOM_NEXUS=1
 else
 ATHOL_DEPENDENCIES = wayland libegl libglib2 libinput
