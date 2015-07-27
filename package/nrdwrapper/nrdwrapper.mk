@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-NRDWRAPPER_VERSION = d483bdfb2a68465bc9ad914b1505d1f6c431d49c
+NRDWRAPPER_VERSION = cec8dd5065b165dee3b252efeb2b77a98abf9b82
 NRDWRAPPER_SITE_METHOD = git
 NRDWRAPPER_SITE = git@github.com:Metrological/nrdwrapper.git
 NRDWRAPPER_LICENSE = PROPRIETARY

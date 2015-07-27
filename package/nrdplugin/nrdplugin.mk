@@ -3,9 +3,9 @@
 # nrdplugin
 #
 ################################################################################
-NRDPLUGIN_VERSION = 3b3efaa857447a06540ae31012f79562f0676524
-NRDPLUGIN_SITE_METHOD = git
+NRDPLUGIN_VERSION = 5a604064a0f51ad0a7dd2bfb15c7f53384ff7752
 NRDPLUGIN_SITE = git@github.com:Metrological/nrdplugin.git
+NRDPLUGIN_SITE_METHOD = git
 NRDPLUGIN_INSTALL_STAGING = YES
 NRDPLUGIN_DEPENDENCIES += nrd cppsdk
 
