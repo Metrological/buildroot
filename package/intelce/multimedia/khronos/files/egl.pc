@@ -1,0 +1,10 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib/
+includedir=${prefix}/include/intelce
+
+Name: egl
+Description: Intel CE EGL implementation
+Version: 1.4
+Libs: -L${libdir} -lEGL -lIMGegl -lsrv_um -lpal -losal -lgdl -lplatform_config -lsystem_utils -licepm 
+Cflags: -I${includedir}/khronos -I${includedir}/libgdl

@@ -1,0 +1,10 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib/
+includedir=${prefix}/include/intelce/khronos/
+
+Name: vg
+Description: Intel CE OpenVG implementation
+Version: 1.1
+Libs: -L${libdir} -lOpenVG -lIMGegl -lsrv_um -lsystem_utils -lplatform_config -lpal -losal
+Cflags: -I${includedir}

@@ -1,0 +1,9 @@
+config BR2_PACKAGE_LIBSYSTEM_UTILS
+	bool "libsystem-utils"
+	depends on BR2_TOOLCHAIN_HAS_THREADS
+	select BR2_PACKAGE_LIBPLATFORMCONFIG
+	help
+		Intel CE System Utils library
+
+comment "libsystem-utils requires a toolchain with thread support"
+	depends on !BR2_TOOLCHAIN_HAS_THREADS

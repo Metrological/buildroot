@@ -1,0 +1,31 @@
+config BR2_PACKAGE_INTELCE
+	bool "intelce"
+	depends on BR2_i386
+	depends on BR2_x86_pentium_m
+	help
+		Intel CE hardware libraries for the CE3100 platform	
+
+comment "Intel CE requires an i386 pentium mobile architecture"
+        depends on !BR2_i386 || !BR2_x86_pentium_m
+
+if BR2_PACKAGE_INTELCE
+
+menu "Libraries"
+source "package/intelce/autoeas/Config.in"
+source "package/intelce/multimedia/khronos/Config.in"
+source "package/intelce/libraries/libclockcontrol/Config.in"
+source "package/intelce/libraries/libflash/Config.in"
+source "package/intelce/libraries/libgdl/Config.in"
+source "package/intelce/libraries/libgma/Config.in"
+source "package/intelce/libraries/libhdmihdcp/Config.in"
+source "package/intelce/libraries/libicepm/Config.in"
+source "package/intelce/libraries/libidl/Config.in"
+source "package/intelce/libraries/libosal/Config.in"
+source "package/intelce/libraries/libpal/Config.in"
+source "package/intelce/libraries/libplatformconfig/Config.in"
+source "package/intelce/libraries/libsec/Config.in"
+source "package/intelce/libraries/libsven/Config.in"
+source "package/intelce/libraries/libsystemutils/Config.in"
+endmenu
+
+endif

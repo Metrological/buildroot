@@ -1,0 +1,8 @@
+config BR2_PACKAGE_LIBFLASH
+	bool "libflash"
+	depends on BR2_TOOLCHAIN_HAS_THREADS
+	select BR2_PACKAGE_LIBOSAL
+	help
+		Intel CE flash library
+
+#comment "libflash comments"

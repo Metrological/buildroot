@@ -1,0 +1,9 @@
+config BR2_PACKAGE_LIBOSAL
+	bool "libosal"
+	depends on BR2_TOOLCHAIN_HAS_THREADS
+	depends on BR2_USE_WCHAR
+	help
+		Intel CE OSAL library
+
+comment "libosal requires a toolchain with wchar and thread support"
+	depends on !BR2_USE_WCHAR || !BR2_TOOLCHAIN_HAS_THREADS

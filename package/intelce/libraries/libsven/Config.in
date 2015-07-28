@@ -1,0 +1,10 @@
+config BR2_PACKAGE_LIBSVEN
+	bool "libsven"
+	select BR2_PACKAGE_AUTOEAS
+	select BR2_PACKAGE_LIBOSAL
+	select BR2_PACKAGE_LIBPAL
+	select BR2_PACKAGE_LIBPLATFORM_CONFIG
+	help
+		Intel CE SVEN library
+
+#comment "libsven comments"

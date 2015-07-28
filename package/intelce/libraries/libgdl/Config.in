@@ -1,0 +1,20 @@
+config BR2_PACKAGE_LIBGDL
+	bool "libgdl"
+	depends on BR2_TOOLCHAIN_HAS_THREADS
+	select BR2_PACKAGE_OPENSSL
+	select BR2_PACKAGE_LIBOSAL
+	select BR2_PACKAGE_LIBPAL
+	select BR2_PACKAGE_LIBPLATFORM_CONFIG
+	select BR2_PACKAGE_LIBSYSTEM_UTILS
+	select BR2_PACKAGE_LIBICEPM
+	select BR2_PACKAGE_LIBSVEN
+	select BR2_PACKAGE_LIBCLOCK_CONTROL
+	select BR2_PACKAGE_LIBSEC
+	select BR2_PACKAGE_LIBFLASH
+	select BR2_PACKAGE_LIBHDMI_HDCP
+	select BR2_PACKAGE_LIBIDL
+	help
+		Intel CE Display library
+
+comment "libgdl requires a toolchain with thread support"
+	depends on !BR2_TOOLCHAIN_HAS_THREADS

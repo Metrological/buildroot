@@ -1,0 +1,12 @@
+config BR2_PACKAGE_LIBICEPM
+	bool "libicepm"
+	depends on BR2_TOOLCHAIN_HAS_THREADS
+	select BR2_PACKAGE_LIBOSAL
+	select BR2_PACKAGE_LIBPAL
+	select BR2_PACKAGE_LIBPLATFORM_CONFIG
+	select BR2_PACKAGE_LIBSYSTEM_UTILS
+	help
+		Intel CE Power Managment library
+
+comment "libicepm requires a toolchain with thread support"
+	depends on !BR2_TOOLCHAIN_HAS_THREADS

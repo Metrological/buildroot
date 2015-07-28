@@ -1,0 +1,10 @@
+prefix=/usr
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib/
+includedir=${prefix}/include/intelce/khronos/
+
+Name: glesv2
+Description: Intel CE OpenGLES V2 implementation
+Version: 2.0
+Libs: -L${libdir} -lGLESv2 -lIMGegl -lsrv_um -lsystem_utils -lplatform_config -lpal -losal
+Cflags: -I${includedir}
