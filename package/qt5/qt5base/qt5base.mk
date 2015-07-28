@@ -95,7 +95,9 @@ QT5BASE_CONFIGURE_OPTS += $(if $(BR2_PACKAGE_QT5BASE_DIRECTFB),-directfb,-no-dir
 QT5BASE_DEPENDENCIES   += $(if $(BR2_PACKAGE_QT5BASE_DIRECTFB),directfb)
 
 ifeq ($(BR2_PACKAGE_QT5BASE_XCB),y)
-QT5BASE_CONFIGURE_OPTS += -xcb -system-xkbcommon
+QT5BASE_CONFIGURE_OPTS += \
+	-xcb -system-xkbcommon \
+	-device-option QMAKE_LIBS_EGL="-lX11 -lX11-xcb -lxcb"
 QT5BASE_DEPENDENCIES   += \
 	libxcb \
 	xcb-util-wm \
@@ -103,6 +105,7 @@ QT5BASE_DEPENDENCIES   += \
 	xcb-util-keysyms \
 	xlib_libX11 \
 	libxkbcommon
+EGLFS_PLATFORM_HOOKS_SOURCES += qeglfshooks_x11.cpp
 ifeq ($(BR2_PACKAGE_QT5BASE_WIDGETS),y)
 QT5BASE_DEPENDENCIES   += xlib_libXext
 endif
