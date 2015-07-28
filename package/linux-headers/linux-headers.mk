@@ -17,6 +17,14 @@ LINUX_HEADERS_SOURCE = linux-$(LINUX_HEADERS_VERSION).tar.xz
 
 LINUX_HEADERS_INSTALL_STAGING = YES
 
+ifeq ($(BR2_PACKAGE_INTELCE),y)
+LINUX_HEADERS_POST_INSTALL_STAGING_HOOKS += LINUX_HEADERS_COPY_DRIVERS
+endif
+
+define LINUX_HEADERS_COPY_DRIVERS
+cp -R $(INTELCE_SITE)/linux-headers/drivers/* $(LINUX_HEADERS_DIR)/drivers/
+endef
+
 # For some architectures (eg. Arc, Cris, Hexagon, ia64, parisc,
 # score and xtensa), the Linux buildsystem tries to call the
 # cross-compiler, although it is not needed at all.

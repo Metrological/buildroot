@@ -1,0 +1,12 @@
+--- a/build-aux/git-version-gen
++++ b/build-aux/git-version-gen
+@@ -136,7 +136,8 @@
+ # Don't declare a version "dirty" merely because a time stamp has changed.
+ git update-index --refresh > /dev/null 2>&1
+ 
+-dirty=`sh -c 'git diff-index --name-only HEAD' 2>/dev/null` || dirty=
++#dirty=`sh -c 'git diff-index --name-only HEAD' 2>/dev/null` || dirty=
++dirty=
+ case "$dirty" in
+     '') ;;
+     *) # Append the suffix only if there isn't one already.
