@@ -27,7 +27,8 @@ QT5BASE_CONFIGURE_OPTS += \
 	-no-gtkstyle \
 	-system-zlib \
 	-system-pcre \
-	-no-pch
+	-no-pch \
+	-no-use-gold-linker
 
 ifeq ($(findstring 2.19,$(BR2_BINUTILS_VERSION)),2.19)
 ifeq ($(BR2_mips)$(BR2_mipsel),y)
