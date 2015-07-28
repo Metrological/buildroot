@@ -9,18 +9,18 @@ config BR2_PACKAGE_TVERSITY_CLIENT
 	select BR2_PACKAGE_GST1_PLUGINS_GOOD
 	select BR2_PACKAGE_GST1_PLUGINS_UGLY
 	help
-	  Client for tversity cloud TV
+		Client for tversity cloud TV
 
-	  https://github.com/Metrological/tversity-client
+		https://github.com/Metrological/tversity-client
 
-  comment "No gstreamer-1.0 found."
+	comment "No gstreamer-1.0 found."
 		depends on !BR2_PACKAGE_GSTREAMER1
 
-  comment "No lipsoup found."
+	comment "No lipsoup found."
 		depends on !BR2_PACKAGE_LIBSOUP
 
-  comment "No lipopenmax found."
+	comment "No lipopenmax found."
 		depends on !BR2_PACKAGE_HAS_OPENMAX
 
-  comment "Not all plugins found"
+	comment "Not all plugins found"
 		depends on !BR2_PACKAGE_GST1_PLUGINS_BASE || !BR2_PACKAGE_GST1_PLUGINS_GOOD || !BR2_PACKAGE_GST1_PLUGINS_BAD || !BR2_PACKAGE_GST1_PLUGINS_UGLY
