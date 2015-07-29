@@ -141,6 +141,11 @@ config BR2_PACKAGE_NRD_PLAYER_RASPBERRY
 	help
 	  Build NRD with raspberry support
 
+config BR2_PACKAGE_NRD_PLAYER_INTELCE
+	bool "intelce"
+	help
+	  Build NRD with Intel CE 3100 support
+
 endchoice
 
 config BR2_PACKAGE_NRD_PLAYER
@@ -149,7 +154,7 @@ config BR2_PACKAGE_NRD_PLAYER
 	default "reference" if BR2_PACKAGE_NRD_PLAYER_X86
 	default "metrological" if BR2_PACKAGE_NRD_PLAYER_METROLOGICAL
 	default "raspberrypi" if BR2_PACKAGE_NRD_PLAYER_RASPBERRY
-
+	default "intelce" if BR2_PACKAGE_NRD_PLAYER_INTELCE
 
 choice
 	prompt "Which input method should we use:"

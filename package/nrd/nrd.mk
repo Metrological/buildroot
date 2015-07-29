@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-NRD_VERSION = 36875b34d433fa6d7b38c8df575e1df36b2d440a
+NRD_VERSION = 6e3a9e79539f20b9589a40d86a80c22836cace4a
 NRD_SITE = git@github.com:Metrological/nrd.git
 NRD_SITE_METHOD = git
 NRD_LICENSE = PROPRIETARY
@@ -37,7 +37,12 @@ endif
 ifeq ($(BR2_PACKAGE_RPI_USERLAND),y)
 NRD_CMAKE_FLAGS += -DGIBBON_PLATFORM=rpi
 else
+ifeq ($(BR2_PACKAGE_INTELCE),y)
+NRD_CMAKE_FLAGS += -DGIBBON_PLATFORM=intelce
+NRD_EXTRA_CXXFLAGS += -DINTELCE
+else
 NRD_CMAKE_FLAGS += -DGIBBON_PLATFORM=posix
+endif
 endif
 
 NRD_EXTRA_CFLAGS   += -I$(STAGING_DIR)/usr/include/harfbuzz/ -I$(STAGING_DIR)/usr/include/freetype2/
