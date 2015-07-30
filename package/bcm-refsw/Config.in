@@ -34,36 +34,8 @@ config BR2_PACKAGE_BCM_REFSW_PLATFORM
 config BR2_PACKAGE_BCM_REFSW_PLATFORM_REV
 	string "Broadcom target platform revision"
 
-config BR2_BCMREFSW_PROXY_MODE
-	bool "proxy"
-	help
-	  In ProxyMode, the Broadcom Reference software is build i such a way that most of
-	  the functionality is placed in kermnel modules. This means that the client lib, 
-          included in the applications is just a proxy towards the kernel module.
-	  if enabled, NEXUS_MODE=proxy.
-
 choice
-        prompt "Broadcom reference software debug level "
-
-config BR2_BCM_REFSW_DEBUG_LEVEL_OFF
-        bool "none"
-        help
-	   No debugging at all (B_REFSW_DEBUG=n)
-
-config BR2_BCM_REFSW_DEBUG_LEVEL_ERROR
-        bool "error"
-        help
-	   Errors during the run will be reported (B_REFSW_DEBUG=y, B_REFSW_DEBUG_LEVEL=err)
-
-config BR2_BCM_REFSW_DEBUG_LEVEL_WARNING
-        bool "warning"
-        help
-	   Errors and warnings during the run will be reported (B_REFSW_DEBUG=y, B_REFSW_DEBUG_LEVEL=wrn)
-
-endchoice
-
-choice
-        prompt "Broadcom reference software version"
+        prompt "Reference software version"
 
 config BR2_BCM_REFSW_VERSION_V12
         bool "V12"
@@ -85,7 +57,6 @@ config BR2_BCM_REFSW_VERSION_V15
         help
 	   Use official release from Broadcom labeled V20150326
 
-
 config BR2_BCM_REFSW_CUSTOM
         bool "Custom"
         help
@@ -94,10 +65,85 @@ config BR2_BCM_REFSW_CUSTOM
 
 endchoice
 
+if BR2_BCM_REFSW_CUSTOM
+
 config BR2_BCMREFSW_CUSTOM_LOCATION
         string "Location of the Broadcom reference software tarball"
         depends on BR2_BCM_REFSW_CUSTOM
 
+endif
+
+config BR2_BCMREFSW_PROXY_MODE
+	bool "proxy"
+	help
+	  In ProxyMode, the Broadcom Reference software is build i such a way that most of
+	  the functionality is placed in kermnel modules. This means that the client lib, 
+          included in the applications is just a proxy towards the kernel module.
+	  if enabled, NEXUS_MODE=proxy.
+
+if BR2_BCM_REFSW_VERSION_V15
+
+choice 
+        prompt "Reference support for Wayland"
+
+config BR2_BCMREFSW_WAYLAND_SUPPORT_NONE
+        bool "none"
+        help
+	   No support for wayland
+
+config BR2_BCMREFSW_WAYLAND_SUPPORT_EGL
+        bool "egl"
+        help
+	   Wayland support, implemented using the EGL api.
+
+config BR2_BCMREFSW_WAYLAND_SUPPORT_NXPL
+        bool "nxpl"
+        help
+	   Wayland support, implemented using the native NXPL api.
+
+config BR2_BCMREFSW_WAYLAND_SUPPORT_NEXUS
+        bool "nexus"
+        help
+	   Wayland support, implemented using the native NEXUS api.
+
+endchoice
+
+choice 
+        prompt "Video graphics driver"
+
+config BR2_BCMREFSW_VIDEODRIVER_V3D
+        bool "V3D"
+        help
+	   Use the v3d Videodriver from the Nexus build.
+
+config BR2_BCMREFSW_VIDEODRIVER_VC5
+        bool "VC5"
+        help
+	   Use the VC5 Videodriver from the Nexus build.
+
+endchoice
+
+endif
+
+choice
+        prompt "Software debug level "
+
+config BR2_BCM_REFSW_DEBUG_LEVEL_OFF
+        bool "none"
+        help
+	   No debugging at all (B_REFSW_DEBUG=n)
+
+config BR2_BCM_REFSW_DEBUG_LEVEL_ERROR
+        bool "error"
+        help
+	   Errors during the run will be reported (B_REFSW_DEBUG=y, B_REFSW_DEBUG_LEVEL=err)
+
+config BR2_BCM_REFSW_DEBUG_LEVEL_WARNING
+        bool "warning"
+        help
+	   Errors and warnings during the run will be reported (B_REFSW_DEBUG=y, B_REFSW_DEBUG_LEVEL=wrn)
+
+endchoice
 
 endif
 
