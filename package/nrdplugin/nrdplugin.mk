@@ -3,7 +3,7 @@
 # nrdplugin
 #
 ################################################################################
-NRDPLUGIN_VERSION = 5a604064a0f51ad0a7dd2bfb15c7f53384ff7752
+NRDPLUGIN_VERSION = 4b7870bca9565e43df64540e8365906f251e3b1b
 NRDPLUGIN_SITE = git@github.com:Metrological/nrdplugin.git
 NRDPLUGIN_SITE_METHOD = git
 NRDPLUGIN_INSTALL_STAGING = YES
