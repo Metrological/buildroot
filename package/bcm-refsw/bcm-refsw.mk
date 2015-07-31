@@ -212,7 +212,6 @@ define BCM_REFSW_INSTALL_STAGING_CMDS
     if [ $(BR2_BCMREFSW_WAYLAND_SUPPORT_EGL) = y ] ; then \
        $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/wayland/wayland-egl staging ; \
        $(INSTALL) -m 644 $(@D)/wayland/include/EGL/*.h $(STAGING_DIR)/usr/include/EGL/; \
-       $(INSTALL) -m 644 $(@D)/wayland/protocol/EGL/*.h $(STAGING_DIR)/usr/include/EGL/; \
     fi
     if [ $(BR2_BCMREFSW_WAYLAND_SUPPORT_NXPL) = y ] ; then \
        $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/wayland/nxpl-wayland staging ; \
