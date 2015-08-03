@@ -60,7 +60,7 @@ endif
 
 ifeq ($(BR2_BCMREFSW_WAYLAND_SUPPORT_EGL), y)
 BCM_REFSW_DEPENDENCIES += wayland
-BCM_WAYLAND_SUPPORT = -lwayland-egl
+BCM_WAYLAND_SUPPORT = -lwayland-client -lwayland-egl
 else ifeq ($(BR2_BCMREFSW_WAYLAND_SUPPORT_NXPL), y)
 BCM_REFSW_DEPENDENCIES += wayland
 else ifeq ($(BR2_BCMREFSW_WAYLAND_SUPPORT_NEXUS), y)
