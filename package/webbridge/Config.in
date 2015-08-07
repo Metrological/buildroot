@@ -10,6 +10,14 @@ config BR2_PACKAGE_WEBBRIDGE
 
 if BR2_PACKAGE_WEBBRIDGE
 
+config BR2_PACKAGE_WEBBRIDGE_DAEMON
+  bool "deamon"
+  default n
+  help
+    Build the webbridge to be run as a daemon, no user input allowed
+    the service will be started in the background.
+
+
 config BR2_PACKAGE_PLUGIN_FANCONTROL
   bool "fancontrol"
   help

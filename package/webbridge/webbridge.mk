@@ -63,9 +63,14 @@ ifeq ($(BR2_PACKAGE_PLUGIN_SURFACECOMPOSITOR),y)
 	WEBBRIDGE_DEPENDENCIES += bcm-refsw
 endif
 
+ifeq ($(BR2_PACKAGE_WEBBRIDGE_DAEMON),y)
+	WEBBRIDGE_APPLICATION_FLAGS = "CFLAGS=-D__DAEMON__"
+	WEBBRIDGE_APPLICATION_INSTALL_TARGET = $(MAKE) -C $(@D)/WebBridge daemon ;
+endif
+
 define WEBBRIDGE_BUILD_CMDS
 	$(MAKE) CXX="$(TARGET_CXX)" -C $(@D)/WebBridgeSupport build
-	$(MAKE) CXX="$(TARGET_CXX)" -C $(@D)/WebBridge build
+	$(MAKE) CXX="$(TARGET_CXX)" $(WEBBRIDGE_APPLICATION_FLAGS) -C $(@D)/WebBridge build
 	$(WEBBRIDGE_PLUGIN_BUILD)
 endef
 
@@ -79,6 +84,7 @@ define WEBBRIDGE_INSTALL_TARGET_CMDS
 	$(MAKE) -C $(@D)/WebBridgeSupport target
 	$(MAKE) -C $(@D)/WebBridge target
 	$(WEBBRIDGE_PLUGIN_INSTALL_TARGET)
+	$(WEBBRIDGE_APPLICATION_INSTALL_TARGET)
 endef
 
 $(eval $(generic-package))
