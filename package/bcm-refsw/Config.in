@@ -39,16 +39,19 @@ choice
 
 config BR2_BCM_REFSW_VERSION_V12
         bool "V12"
+        select BR2_BCMREFSW_VIDEODRIVER_V3D
         help
 	   Use official release from Broadcom labeled V20121210
 
 config BR2_BCM_REFSW_VERSION_V13
         bool "V13"
+        select BR2_BCMREFSW_VIDEODRIVER_V3D
         help
 	   Use official release from Broadcom labeled V20131218
 
 config BR2_BCM_REFSW_VERSION_V14
         bool "V14"
+        select BR2_BCMREFSW_VIDEODRIVER_V3D
         help
 	   Use official release from Broadcom labeled V20141217
 	   
