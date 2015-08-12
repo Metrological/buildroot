@@ -26,7 +26,7 @@ export WPE_NETWORK_PROCESS=1
 #export WPE_LAYER_TREE_HOST_FPS=1
 
 # Pointer support
-# export ATHOL_POINTER_EVENTS=1
+export ATHOL_POINTER_EVENTS=1
 
 # Grant permission to use media devices supported by WebRTC.
 export WPE_WEBRTC_GRANT_PERMISSION=1
