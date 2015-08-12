@@ -7,18 +7,22 @@ ifeq ($(BR2_BCM_REFSW_VERSION_V12), y)
 	BCM_REFSW_SITE = file://../bcm-refsw
 	BCM_REFSW_VERSION = 20121210
 	BCM_REFSW_SOURCE = refsw_release_unified_$(BCM_REFSW_VERSION).src.tar.xz
+	BCM_REFSW_EXTRA_DOWNLOADS = refsw_wayland.tar.gz
 else ifeq ($(BR2_BCM_REFSW_VERSION_V13), y)
 	BCM_REFSW_SITE = file://../bcm-refsw
 	BCM_REFSW_VERSION = 20131218
 	BCM_REFSW_SOURCE = refsw_release_unified_$(BCM_REFSW_VERSION).src.tar.xz
+	BCM_REFSW_EXTRA_DOWNLOADS = refsw_wayland.tar.gz
 else ifeq ($(BR2_BCM_REFSW_VERSION_V14), y)
 	BCM_REFSW_SITE = file://../bcm-refsw
 	BCM_REFSW_VERSION = 20141217
 	BCM_REFSW_SOURCE = refsw_release_unified_$(BCM_REFSW_VERSION).src.tar.xz
+	BCM_REFSW_EXTRA_DOWNLOADS = refsw_wayland.tar.gz
 else ifeq ($(BR2_BCM_REFSW_VERSION_V15), y)
 	BCM_REFSW_SITE = file://../bcm-refsw
 	BCM_REFSW_VERSION = 20150326
 	BCM_REFSW_SOURCE = refsw_release_unified_$(BCM_REFSW_VERSION).src.tar.xz
+	BCM_REFSW_EXTRA_DOWNLOADS = refsw_wayland.tar.gz
 else
 	BCM_REFSW_SITE = file:///
 	BCM_REFSW_VERSION = CUSTOM
@@ -41,7 +45,7 @@ BCM_MAKE_ENV = \
 	TOOLCHAIN_ROOT=$(HOST_DIR)/usr/bin/ \
 	SC_PLATFORM=bcm$(call qstrip,${BR2_PACKAGE_BCM_REFSW_PLATFORM})nexus
 
-ifeq ($BR2_PACKAGE_BCM_REFSW_PLATFORM_REV), D0)
+ifeq ($(BR2_PACKAGE_BCM_REFSW_PLATFORM_REV), D0)
 BCM_MAKE_ENV += \
 	NEXUS_USE_7449_VMS_SFF=y \
 	NEXUS_FRONTEND_3128=y \
@@ -52,6 +56,15 @@ BCM_MAKE_ENV += \
 	STREAMING_SUPPORT=n \
 	CABLE_SUPPORT=y \
 	CDL_SUPPORT=n
+endif
+
+ifeq ($(BR2_BCMREFSW_WAYLAND_SUPPORT_EGL), y)
+BCM_REFSW_DEPENDENCIES += wayland
+BCM_WAYLAND_SUPPORT = -lwayland-client -lwayland-egl
+else ifeq ($(BR2_BCMREFSW_WAYLAND_SUPPORT_NXPL), y)
+BCM_REFSW_DEPENDENCIES += wayland
+else ifeq ($(BR2_BCMREFSW_WAYLAND_SUPPORT_NEXUS), y)
+BCM_REFSW_DEPENDENCIES += wayland
 endif
 
 ifeq ($(BR2_BCM_REFSW_DEBUG_LEVEL_OFF), y)
@@ -71,6 +84,12 @@ else
 BCM_OUTPUT = /
 endif
 
+ifeq ($(BR2_BCMREFSW_VIDEODRIVER_V3D),y)
+    BCM_NEXUS_EGL_PACKAGE=v3d
+else ifeq ($(BR2_BCMREFSW_VIDEODRIVER_VC5),y)
+    BCM_NEXUS_EGL_PACKAGE=vc5
+endif
+
 ifeq ($(BR2_PACKAGE_PLUGIN_SURFACECOMPOSITOR),y)
 BCM_COMPOSITIONDEFINE=-DNEXUS_SURFACE_COMPOSITION
 else ifeq ($(BR2_PACKAGE_DAWN_SDK),y)
@@ -81,24 +100,25 @@ endif
 
 ifeq ($(BR2_BCMREFSW_PROXY_MODE),y)
 BCM_MAKE_ENV += NEXUS_MODE=proxy
-BCM_CLIENTLIB = 
 else
 BCM_MAKE_ENV += NEXUS_MODE=client
 BCM_CLIENTLIB = -lnxclient
 endif
 
 BCM_MAKEFLAGS  = CROSS_COMPILE="${TARGET_CROSS}"
+BCM_REFSW_DEPENDENCIES += wayland
 BCM_MAKEFLAGS += TOOLCHAIN_DIR="${HOST_DIR}/usr/bin"
 BCM_MAKEFLAGS += B_REFSW_ARCH=$(call qstrip,${BR2_ARCH})-linux
 BCM_MAKEFLAGS += PATH=${HOST_DIR}/usr/bin:${PATH}
 BCM_MAKEFLAGS += PKG_CONFIG_PATH="$(STAGING_DIR)/usr/lib/pkgconfig:$(STAGING_DIR)/usr/share/pkgconfig"
 BCM_MAKEFLAGS += HOST_DIR="${HOST_DIR}"
 BCM_MAKEFLAGS += APPLIBS_TOP=${BCM_APPS_DIR}
-
+BCM_MAKEFLAGS += VCX=${BCM_NEXUS_EGL_PACKAGE}
 
 define BCM_REFSW_EXTRACT_CMDS
-	xz -d -c $(DL_DIR)/$(BCM_REFSW_SOURCE) \
-		| $(TAR) --strip-components=0 -C $(@D) -xf -
+    xz -d -c $(DL_DIR)/$(BCM_REFSW_SOURCE) \
+        | $(TAR) --strip-components=0 -C $(@D) -xf -
+    $(TAR) --strip-components=0 -C $(@D) -xf $(DL_DIR)/refsw_wayland.tar.gz
 endef
 
 define BCM_REFSW_BUILD_CMDS
@@ -110,9 +130,21 @@ define BCM_REFSW_BUILD_CMDS
 	else \
        $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/middleware/v3d -f V3DDriver.mk; \
        $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/middleware/platform/nexus -f platform_nexus.mk; \
-	fi
+    fi
 	
-	$(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/applications/khronos/v3d/nexus/cube
+    $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/applications/khronos/v3d/nexus/cube
+
+    if [ $(BR2_BCMREFSW_WAYLAND_SUPPORT_EGL) = y ] ; then \
+       $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/wayland/protocol all; \
+       $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/wayland/wayland-egl build; \
+    fi
+    if [ $(BR2_BCMREFSW_WAYLAND_SUPPORT_NXPL) = y ] ; then \
+       $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/wayland/protocol all; \
+       $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/wayland/nxpl-wayland build ; \
+    fi
+    if [ $(BR2_BCMREFSW_WAYLAND_SUPPORT_NEXUS) = y ] ; then \
+       $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/wayland/wayland-nxclient build ; \
+    fi
 endef
    
 define BCM_REFSW_INSTALL_LIBS
@@ -133,6 +165,16 @@ define BCM_REFSW_INSTALL_LIBS
 		ln -sf libv3ddriver.so libEGL.so && \
 		ln -sf libv3ddriver.so libGLESv2.so && \
 		ln -sf libv3ddriver.so libOpenVG.so
+
+    if [ $(BR2_BCMREFSW_WAYLAND_SUPPORT_EGL) = y ] ; then \
+       $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/wayland/wayland-egl install ; \
+    fi
+    if [ $(BR2_BCMREFSW_WAYLAND_SUPPORT_NXPL) = y ] ; then \
+       $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/wayland/nxpl-wayland install ; \
+    fi
+    if [ $(BR2_BCMREFSW_WAYLAND_SUPPORT_NEXUS) = y ] ; then \
+       $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/wayland/wayland-nxclient install ; \
+    fi
 endef
 
 define BCM_REFSW_INSTALL_STAGING_CMDS
@@ -142,28 +184,41 @@ define BCM_REFSW_INSTALL_STAGING_CMDS
 	$(INSTALL) -m 755 -d $(STAGING_DIR)/usr/include/EGL
 	$(INSTALL) -m 755 -d $(STAGING_DIR)/usr/include/VG
 	$(INSTALL) -m 755 -d $(STAGING_DIR)/usr/include/refsw
-	sed 's/%NEXUS_COMPOSITION%/$(BCM_COMPOSITIONDEFINE)/g' package/bcm-refsw/egl.pc.in | sed 's/%NEXUS_CLIENT%/$(BCM_CLIENTLIB)/g' >$(STAGING_DIR)/usr/lib/pkgconfig/egl.pc
+	sed 's/%NEXUS_COMPOSITION%/$(BCM_COMPOSITIONDEFINE)/g' package/bcm-refsw/egl.pc.in | \
+        sed 's/%NEXUS_CLIENT%/$(BCM_CLIENTLIB)/g' | \
+	sed 's/%WAYLAND_SUPPORT%/$(BCM_WAYLAND_SUPPORT)/g' >$(STAGING_DIR)/usr/lib/pkgconfig/egl.pc
 	$(INSTALL) -m 644 package/bcm-refsw/glesv2.pc $(STAGING_DIR)/usr/lib/pkgconfig/
 	$(INSTALL) -m 644 package/bcm-refsw/vg.pc $(STAGING_DIR)/usr/lib/pkgconfig/
 	$(INSTALL) -m 644 $(@D)$(BCM_OUTPUT)nexus/bin/include/*.h $(STAGING_DIR)/usr/include/refsw/
 	
 	if [ $(BR2_BCM_REFSW_VERSION_V15) = y ] ; then \
-		$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/platform/nexus/*.h $(STAGING_DIR)/usr/include/refsw/; \
-		$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/driver/interface/khronos/include/GLES/*.h $(STAGING_DIR)/usr/include/GLES/; \
-		$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/driver/interface/khronos/include/GLES2/*.h $(STAGING_DIR)/usr/include/GLES2/; \
-		$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/driver/interface/khronos/include/EGL/*.h $(STAGING_DIR)/usr/include/EGL/; \
-		$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/driver/interface/khronos/include/VG/*.h $(STAGING_DIR)/usr/include/VG/; \
-		$(INSTALL) -m 644 -D $(@D)/rockford/middleware/v3d/driver/interface/khronos/include/KHR/khrplatform.h $(STAGING_DIR)/usr/include/KHR/khrplatform.h; \
+		$(INSTALL) -m 644 $(@D)/rockford/middleware/${BCM_NEXUS_EGL_PACKAGE}/platform/nexus/*.h $(STAGING_DIR)/usr/include/refsw/; \
+		$(INSTALL) -m 644 $(@D)/rockford/middleware/${BCM_NEXUS_EGL_PACKAGE}/driver/interface/khronos/include/GLES/*.h $(STAGING_DIR)/usr/include/GLES/; \
+		$(INSTALL) -m 644 $(@D)/rockford/middleware/${BCM_NEXUS_EGL_PACKAGE}/driver/interface/khronos/include/GLES2/*.h $(STAGING_DIR)/usr/include/GLES2/; \
+		$(INSTALL) -m 644 $(@D)/rockford/middleware/${BCM_NEXUS_EGL_PACKAGE}/driver/interface/khronos/include/EGL/*.h $(STAGING_DIR)/usr/include/EGL/; \
+		$(INSTALL) -m 644 $(@D)/rockford/middleware/${BCM_NEXUS_EGL_PACKAGE}/driver/interface/khronos/include/VG/*.h $(STAGING_DIR)/usr/include/VG/; \
+		$(INSTALL) -m 644 -D $(@D)/rockford/middleware/${BCM_NEXUS_EGL_PACKAGE}/driver/interface/khronos/include/KHR/khrplatform.h $(STAGING_DIR)/usr/include/KHR/khrplatform.h; \
 	else \
 		$(INSTALL) -m 644 $(@D)/rockford/middleware/platform/nexus/*.h $(STAGING_DIR)/usr/include/refsw/; \
-		$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/interface/khronos/include/GLES/*.h $(STAGING_DIR)/usr/include/GLES/; \
-		$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/interface/khronos/include/GLES2/*.h $(STAGING_DIR)/usr/include/GLES2/; \
-		$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/interface/khronos/include/EGL/*.h $(STAGING_DIR)/usr/include/EGL/; \
-		$(INSTALL) -m 644 $(@D)/rockford/middleware/v3d/interface/khronos/include/VG/*.h $(STAGING_DIR)/usr/include/VG/; \
-		$(INSTALL) -m 644 -D $(@D)/rockford/middleware/v3d/interface/khronos/include/KHR/khrplatform.h $(STAGING_DIR)/usr/include/KHR/khrplatform.h; \
+		$(INSTALL) -m 644 $(@D)/rockford/middleware/${BCM_NEXUS_EGL_PACKAGE}/interface/khronos/include/GLES/*.h $(STAGING_DIR)/usr/include/GLES/; \
+		$(INSTALL) -m 644 $(@D)/rockford/middleware/${BCM_NEXUS_EGL_PACKAGE}/interface/khronos/include/GLES2/*.h $(STAGING_DIR)/usr/include/GLES2/; \
+		$(INSTALL) -m 644 $(@D)/rockford/middleware/${BCM_NEXUS_EGL_PACKAGE}/interface/khronos/include/EGL/*.h $(STAGING_DIR)/usr/include/EGL/; \
+		$(INSTALL) -m 644 $(@D)/rockford/middleware/${BCM_NEXUS_EGL_PACKAGE}/interface/khronos/include/VG/*.h $(STAGING_DIR)/usr/include/VG/; \
+		$(INSTALL) -m 644 -D $(@D)/rockford/middleware/${BCM_NEXUS_EGL_PACKAGE}/interface/khronos/include/KHR/khrplatform.h $(STAGING_DIR)/usr/include/KHR/khrplatform.h; \
 	fi 
-	
+
 	$(call BCM_REFSW_INSTALL_LIBS,$(STAGING_DIR))
+	
+    if [ $(BR2_BCMREFSW_WAYLAND_SUPPORT_EGL) = y ] ; then \
+       $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/wayland/wayland-egl staging ; \
+       $(INSTALL) -m 644 $(@D)/wayland/include/EGL/*.h $(STAGING_DIR)/usr/include/EGL/; \
+    fi
+    if [ $(BR2_BCMREFSW_WAYLAND_SUPPORT_NXPL) = y ] ; then \
+       $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/wayland/nxpl-wayland staging ; \
+    fi
+    if [ $(BR2_BCMREFSW_WAYLAND_SUPPORT_NEXUS) = y ] ; then \
+       $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/wayland/wayland-nxclient staging ; \
+    fi
 endef
 
 define BCM_REFSW_INSTALL_TARGET_CMDS

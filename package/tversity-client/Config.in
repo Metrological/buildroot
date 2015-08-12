@@ -1,20 +1,12 @@
 config BR2_PACKAGE_TVERSITY_CLIENT
-	bool "tversity-client"
+	bool "tversity_client"
 	depends on BR2_PACKAGE_HAS_OPENMAX
-	select BR2_PACKAGE_GSTREAMER1
-	select BR2_PACKAGE_GST1_OMX
+	depends on BR2_PACKAGE_GSTREAMER1
 	select BR2_PACKAGE_GST1_PLUGINS_BASE
-	select BR2_PACKAGE_GST1_PLUGINS_BAD
 	select BR2_PACKAGE_GST1_PLUGINS_GOOD
-	select BR2_PACKAGE_GST1_PLUGINS_UGLY
+	select BR2_PACKAGE_GST1_PLUGINS_BAD
+	select BR2_PACKAGE_GST1_PLUGINS_BAD_PLUGIN_GL
 	help
 	  Client for tversity cloud TV
 
 	  https://github.com/Metrological/tversity-client
-
-config BR2_PACKAGE_TVERSITY_CLIENT_DEBUG
-	bool "tversity-client-debug"
-	default n
-	depends on BR2_PACKAGE_TVERSITY_CLIENT
-	help
-	  Enable tversity client debug option.
