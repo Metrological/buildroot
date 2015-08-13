@@ -219,6 +219,15 @@ NRD_CONFIGURE_CMDS = \
 	$(@D)/netflix \
 	$(NRD_CMAKE_FLAGS)
 
-NRD_BUILD_CMDS = cd $(@D)/output ; $(TARGET_MAKE_ENV) make 
+define NRD_BUILD_CMDS
+	( \
+	cd $(@D)/output; \
+	$(TARGET_MAKE_ENV) make \
+	)
+	#enable reconfigure to execute the 'same' custom cmake commands as a normal build
+	if [ -f $(@D)/output/CMakeCache.txt ]; then \
+		rm $(@D)/output/CMakeCache.txt; \
+	fi
+endef
 
 $(eval $(cmake-package))
