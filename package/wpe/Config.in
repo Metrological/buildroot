@@ -34,6 +34,14 @@ config BR2_PACKAGE_WPE_USE_GSTREAMER
 	  Enable GStreamer playback.
 comment "wpe-gstreamer requires gstreamer 1.x"
 	depends on !BR2_PACKAGE_GSTREAMER1
+
+config BR2_PACKAGE_WPE_USE_GSTREAMER_GL
+	bool "gstreamer-gl"
+	depends on BR2_PACKAGE_WPE_USE_GSTREAMER
+	depends on BR2_PACKAGE_GSTREAMER1_GIT
+	default n
+	help
+	  Use gstreamer-gl video sink for rendering
  
 config BR2_PACKAGE_WPE_USE_ENCRYPTED_MEDIA
 	bool "encrypted-media"
