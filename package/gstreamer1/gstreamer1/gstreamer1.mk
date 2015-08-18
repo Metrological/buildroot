@@ -19,6 +19,7 @@ GSTREAMER1_AUTORECONF_OPT = -I $(@D)/m4 -I $(@D)/common/m4
 GSTREAMER1_POST_DOWNLOAD_HOOKS += GSTREAMER1_COMMON_DOWNLOAD
 GSTREAMER1_POST_EXTRACT_HOOKS += GSTREAMER1_COMMON_EXTRACT
 GSTREAMER1_PRE_CONFIGURE_HOOKS += GSTREAMER1_FIX_AUTOPOINT
+GSTREAMER1_POST_INSTALL_TARGET_HOOKS += GSTREAMER1_REMOVE_LA_FILES
 
 # Checking if unaligned memory access works correctly cannot be done when cross
 # compiling. For the following architectures there is no information available
