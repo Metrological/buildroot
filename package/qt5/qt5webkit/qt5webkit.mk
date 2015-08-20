@@ -171,7 +171,7 @@ endif
 
 ifeq ($(BR2_QT5WEBKIT_ENABLE_JS_MEMORY_TRACKING),y)
 	QT5WEBKIT_CONFIG += \
-		WEBKIT_CONFIG+=enable_js_memory_tracking
+		WEBKIT_CONFIG+=js_memory_tracking
 endif
 
 ifeq ($(BR2_QT5WEBKIT_ENABLE_DUMP_NODE_STATISTICS),y)
