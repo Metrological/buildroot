@@ -27,6 +27,11 @@ config BR2_PACKAGE_NRD_APPLICATION_EXECUTABLE
 
 if BR2_PACKAGE_NRD_APPLICATION_EXECUTABLE
 
+	config BR2_PACKAGE_NRD_BROWSER_PLUGIN_MODE
+	bool "browser plugin mode"
+	help
+	  Build support to start nrd by the NRDPLUGIN
+
 choice
 	prompt "JSC links to the NRD main as:"
 
