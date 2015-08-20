@@ -187,11 +187,12 @@ config BR2_PACKAGE_NRD_INPUT
 	default "metrological" if BR2_PACKAGE_NRD_INPUT_METROLOGICAL
 	default "null" if !BR2_PACKAGE_NRD_INPUT_DEVINPUT || !BR2_PACKAGE_NRD_INPUT_METROLOGICAL
 
-
-
 config BR2_PACKAGE_NRD_DRM_ENABLED
 	bool "playready"
 	depends on BR2_PACKAGE_DXDRM
+
+comment "playready support depends on dxdrm"
+	depends on !BR2_PACKAGE_DXDRM
 
 if BR2_PACKAGE_NRD_DRM_ENABLED
 
