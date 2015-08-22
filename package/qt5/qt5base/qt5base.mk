@@ -121,7 +121,9 @@ QT5BASE_CONFIGURE_OPTS += \
  	-no-xrender
 endif
 
+ifeq ($(BR2_TARGET_GENERIC_CABUNDLE),)
 QT5BASE_DEPENDENCIES   += $(if $(BR2_PACKAGE_OPENSSL),ca-certificates)
+endif
 
 ifeq ($(BR2_PACKAGE_QT5BASE_EGLFS),y)
 QT5BASE_CONFIGURE_OPTS += \
