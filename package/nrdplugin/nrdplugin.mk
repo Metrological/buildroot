@@ -26,7 +26,7 @@ NRDPLUGIN_EXTRA_LDFLAGS  += $(shell $(PKG_CONFIG_HOST_BINARY) --libs egl)
 else
 $(error EGL is required.)
 endif
-  NRDPLUGIN_DEPENDENCIES += qt5webkit
+  NRDPLUGIN_DEPENDENCIES += nrdwrapper qt5webkit
   NRDPLUGIN_PLUGIN_CONFIG = (cd $(@D)/qt5; $(TARGET_MAKE_ENV) $(HOST_DIR)/usr/bin/qmake QMAKE_CXXFLAGS="$(NRDPLUGIN_EXTRA_CXXFLAGS)" ./nrdplugin.pro)
   NRDPLUGIN_PLUGIN_BUILD = $(TARGET_MAKE_ENV) $(MAKE) -C $(@D)/qt5
   define NRDPLUGIN_PLUGIN_INSTALL_STAGING
