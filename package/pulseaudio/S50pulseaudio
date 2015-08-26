@@ -7,7 +7,7 @@
 start() {
 	echo -n "Starting pulseaudio: "
 	umask 077
-	/usr/bin/pulseaudio --system --daemonize
+	/usr/bin/pulseaudio --system --daemonize --disallow-module-loading --disallow-exit 
 	echo "OK"
 }
 stop() {
