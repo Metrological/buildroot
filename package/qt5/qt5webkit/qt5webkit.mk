@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-QT5WEBKIT_VERSION = 1c888478fca0c3dad600889ca0829c45cd952e5f
+QT5WEBKIT_VERSION = f4c76d5c99c04d84d2090ed55bd46b438efe0f11
 ifeq ($(BR2_QT5WEBKIT_USE_WEBRTC),y)
 QT5WEBKIT_VERSION = de07f58fb904c81794af37238e2c0c2989a59898
 endif
@@ -100,12 +100,12 @@ QT5WEBKIT_CONFIG += \
 	WEBKIT_CONFIG+=encrypted_media_v2
 endif
 
-ifeq ($(BR2_PACKAGE_LIBSOUP),y)
-QT5WEBKIT_CONFIG += \
-	WEBKIT_CONFIG+=use_soup \
-	WEBKIT_CONFIG+=use_glib
-QT5WEBKIT_DEPENDENCIES+=libsoup
-endif
+#ifeq ($(BR2_PACKAGE_LIBSOUP),y)
+#QT5WEBKIT_CONFIG += \
+#	WEBKIT_CONFIG+=use_soup \
+#	WEBKIT_CONFIG+=use_glib
+#QT5WEBKIT_DEPENDENCIES+=libsoup
+#endif
 
 ifeq ($(BR2_PACKAGE_MINIBROWSER),y)
 QT5WEBKIT_CONFIG += \
