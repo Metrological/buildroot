@@ -100,12 +100,12 @@ QT5WEBKIT_CONFIG += \
 	WEBKIT_CONFIG+=encrypted_media_v2
 endif
 
-#ifeq ($(BR2_PACKAGE_LIBSOUP),y)
-#QT5WEBKIT_CONFIG += \
-#	WEBKIT_CONFIG+=use_soup \
-#	WEBKIT_CONFIG+=use_glib
-#QT5WEBKIT_DEPENDENCIES+=libsoup
-#endif
+ifeq ($(BR2_PACKAGE_LIBSOUP),y)
+QT5WEBKIT_CONFIG += \
+	WEBKIT_CONFIG+=use_soup \
+	WEBKIT_CONFIG+=use_glib
+QT5WEBKIT_DEPENDENCIES+=libsoup
+endif
 
 ifeq ($(BR2_PACKAGE_MINIBROWSER),y)
 QT5WEBKIT_CONFIG += \
