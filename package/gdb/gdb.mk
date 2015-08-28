@@ -23,7 +23,7 @@ ifeq ($(GDB_VERSION),6.7.1-avr32-2.1.5)
 GDB_SITE = ftp://www.at91.com/pub/buildroot/
 endif
 
-GDB_SOURCE ?= gdb-$(GDB_VERSION).tar.bz2
+GDB_SOURCE ?= gdb-$(GDB_VERSION).tar.gz
 GDB_LICENSE = GPLv2+ LGPLv2+ GPLv3+ LGPLv3+
 GDB_LICENSE_FILES = COPYING COPYING.LIB COPYING3 COPYING3.LIB
 
