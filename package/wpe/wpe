@@ -31,10 +31,9 @@ export ATHOL_POINTER_EVENTS=1
 # (WebRTC) Grant permission to use media devices supported by WebRTC.
 export WPE_WEBRTC_GRANT_PERMISSION=1
 
-# (WebRTC) Temporary solution to hint about preferred device names.
-# Source/WebCore/platform/mediastream/openwebrtc/RealtimeMediaSourceCenterOwr.cpp
-# export WEBKIT_AUDIO_SOURCE_NAME=
-# export WEBKIT_VIDEO_SOURCE_NAME=
+# (WebRTC) Temporary solution to set which media devices to use.
+#export WEBKIT_AUDIO_SOURCE_NAME="HD Pro Webcam C920 Analog Stereo"
+#export WEBKIT_VIDEO_SOURCE_NAME="HD Pro Webcam C920"
 
 export TZ=$(wget -qO- http://jsonip.metrological.com/ | sed -e 's/^.*"tz":"\([^"]*\)".*$/\1/')
 
