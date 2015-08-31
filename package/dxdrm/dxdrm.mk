@@ -18,6 +18,7 @@ ifeq ($(BR2_PACKAGE_DXDRM_INTERNAL), y)
 DXDRM_LOCATOR = internal
 else
 DXDRM_LOCATOR = external
+DXDRM_DEPENDENCIES += openssl
 endif
 
 define DXDRM_INSTALL_STAGING_CMDS

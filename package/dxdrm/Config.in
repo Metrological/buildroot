@@ -16,8 +16,8 @@ choice
 	prompt "Device/Model credential provisioning"
 
 config BR2_PACKAGE_DXDRM_EXTERNAL
-	default y
 	bool "external"
+	select BR2_PACKAGE_OPENSSL
 	help
 	  Device Credentials will be provisioned via an external system.
 
