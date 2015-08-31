@@ -15,32 +15,32 @@ DXDRM_INSTALL_STAGING = YES
 DXDRM_DEPENDENCIES = libcurl
 
 ifeq ($(BR2_PACKAGE_DXDRM_INTERNAL), y)
-    LOCATOR = internal
+DXDRM_LOCATOR = internal
 else
-    LOCATOR = external
+DXDRM_LOCATOR = external
 endif
 
 define DXDRM_INSTALL_STAGING_CMDS
-	$(INSTALL) -m 755 $(@D)/$(LOCATOR)/$(call qstrip,$(BR2_ARCH))/release/libDxDrm.so $(STAGING_DIR)/usr/lib/libDxDrm.so
-	$(INSTALL) -m 755 $(@D)/$(LOCATOR)/$(call qstrip,$(BR2_ARCH))/release/libTrusted.so $(STAGING_DIR)/usr/lib/libTrusted.so
+	$(INSTALL) -m 755 $(@D)/$(DXDRM_LOCATOR)/$(call qstrip,$(BR2_ARCH))/release/libDxDrm.so $(STAGING_DIR)/usr/lib/libDxDrm.so
+	$(INSTALL) -m 755 $(@D)/$(DXDRM_LOCATOR)/$(call qstrip,$(BR2_ARCH))/release/libTrusted.so $(STAGING_DIR)/usr/lib/libTrusted.so
 	$(INSTALL) -d -m 755 $(STAGING_DIR)/usr/include/dxdrm
-	$(INSTALL) -m 644 $(@D)/$(LOCATOR)/include/*.h $(STAGING_DIR)/usr/include/dxdrm
-        if [ "x$(BR2_PACKAGE_DXDRM_EXTERNAL)" = "xy" ] ; then                                \
-	    $(INSTALL) -m 755 $(@D)/$(LOCATOR)/$(call qstrip,$(BR2_ARCH))/release/libprovisioning.so $(STAGING_DIR)/usr/lib/libprovisioning.so ; \
-        fi
+	$(INSTALL) -m 644 $(@D)/$(DXDRM_LOCATOR)/include/*.h $(STAGING_DIR)/usr/include/dxdrm
+	if [ "x$(BR2_PACKAGE_DXDRM_EXTERNAL)" = "xy" ] ; then \
+		$(INSTALL) -m 755 $(@D)/$(DXDRM_LOCATOR)/$(call qstrip,$(BR2_ARCH))/release/libprovisioning.so $(STAGING_DIR)/usr/lib/libprovisioning.so; \
+	fi
 endef
 
 define DXDRM_INSTALL_TARGET_CMDS
-	$(INSTALL) -m 755 $(@D)/$(LOCATOR)/$(call qstrip,$(BR2_ARCH))/release/libDxDrm.so $(TARGET_DIR)/usr/lib/libDxDrm.so
-	$(INSTALL) -m 755 $(@D)/$(LOCATOR)/$(call qstrip,$(BR2_ARCH))/release/libTrusted.so $(TARGET_DIR)/usr/lib/libTrusted.so
+	$(INSTALL) -m 755 $(@D)/$(DXDRM_LOCATOR)/$(call qstrip,$(BR2_ARCH))/release/libDxDrm.so $(TARGET_DIR)/usr/lib/libDxDrm.so
+	$(INSTALL) -m 755 $(@D)/$(DXDRM_LOCATOR)/$(call qstrip,$(BR2_ARCH))/release/libTrusted.so $(TARGET_DIR)/usr/lib/libTrusted.so
 	$(INSTALL) -d -m 755 $(TARGET_DIR)/etc/dxdrm
-	$(INSTALL) -m 644 $(@D)/$(LOCATOR)/dxdrm.config $(TARGET_DIR)/etc/dxdrm
-        if [ "x$(BR2_PACKAGE_DXDRM_INTERNAL)" = "xy" ] ; then                                \
-	    $(INSTALL) -m 644 $(@D)/$(LOCATOR)/credentials/* $(TARGET_DIR)/etc/dxdrm ;       \
-        fi
-        if [ "x$(BR2_PACKAGE_DXDRM_EXTERNAL)" = "xy" ] ; then                                \
-	    $(INSTALL) -m 755 $(@D)/$(LOCATOR)/$(call qstrip,$(BR2_ARCH))/release/libprovisioning.so $(STAGING_DIR)/usr/lib/libprovisioning.so ; \
-        fi
+	$(INSTALL) -m 644 $(@D)/$(DXDRM_LOCATOR)/dxdrm.config $(TARGET_DIR)/etc/dxdrm
+	if [ "x$(BR2_PACKAGE_DXDRM_INTERNAL)" = "xy" ]; then \
+		$(INSTALL) -m 644 $(@D)/$(DXDRM_LOCATOR)/credentials/* $(TARGET_DIR)/etc/dxdrm; \
+	fi
+	if [ "x$(BR2_PACKAGE_DXDRM_EXTERNAL)" = "xy" ]; then \
+		$(INSTALL) -m 755 $(@D)/$(DXDRM_LOCATOR)/$(call qstrip,$(BR2_ARCH))/release/libprovisioning.so $(TARGET_DIR)/usr/lib/libprovisioning.so; \
+	fi
 endef
 
 $(eval $(generic-package))

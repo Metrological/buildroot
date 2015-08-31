@@ -13,17 +13,18 @@ config BR2_PACKAGE_DXDRM
 if BR2_PACKAGE_DXDRM
 
 choice
-        prompt "Device/Model credential provisioning"
+	prompt "Device/Model credential provisioning"
 
 config BR2_PACKAGE_DXDRM_EXTERNAL
-        bool "external"
-        help
-           Device Credentials will be provisioned via an external system.
+	default y
+	bool "external"
+	help
+	  Device Credentials will be provisioned via an external system.
 
 config BR2_PACKAGE_DXDRM_INTERNAL
-        bool "internal"
-        help
-           Device credentials are provisioned from locally stored model credentials.
+	bool "internal"
+	help
+	  Device credentials are provisioned from locally stored model credentials.
 
 endchoice
 
