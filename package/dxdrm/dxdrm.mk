@@ -28,6 +28,11 @@ define DXDRM_INSTALL_STAGING_CMDS
 	$(INSTALL) -m 644 $(@D)/$(DXDRM_LOCATOR)/include/*.h $(STAGING_DIR)/usr/include/dxdrm
 	if [ "x$(BR2_PACKAGE_DXDRM_EXTERNAL)" = "xy" ] ; then \
 		$(INSTALL) -m 755 $(@D)/$(DXDRM_LOCATOR)/$(call qstrip,$(BR2_ARCH))/release/libprovisioning.so $(STAGING_DIR)/usr/lib/libprovisioning.so; \
+		$(INSTALL) -m 755 $(@D)/$(DXDRM_LOCATOR)/$(call qstrip,$(BR2_ARCH))/release/libprovisioningproxy.so $(STAGING_DIR)/usr/lib/libprovisioningproxy.so; \
+		$(INSTALL) -d -m 755 $(STAGING_DIR)/usr/include/rpc; \
+		$(INSTALL) -m 644 $(@D)/$(DXDRM_LOCATOR)/include/rpc/*.h $(STAGING_DIR)/usr/include/rpc; \
+		$(INSTALL) -d -m 755 $(STAGING_DIR)/usr/include/provisioning; \
+		$(INSTALL) -m 644 $(@D)/$(DXDRM_LOCATOR)/include/provisioning/*.h $(STAGING_DIR)/usr/include/provisioning; \
 	fi
 endef
 
@@ -41,6 +46,7 @@ define DXDRM_INSTALL_TARGET_CMDS
 	fi
 	if [ "x$(BR2_PACKAGE_DXDRM_EXTERNAL)" = "xy" ]; then \
 		$(INSTALL) -m 755 $(@D)/$(DXDRM_LOCATOR)/$(call qstrip,$(BR2_ARCH))/release/libprovisioning.so $(TARGET_DIR)/usr/lib/libprovisioning.so; \
+		$(INSTALL) -m 755 $(@D)/$(DXDRM_LOCATOR)/$(call qstrip,$(BR2_ARCH))/release/libprovisioningproxy.so $(TARGET_DIR)/usr/lib/libprovisioningproxy.so; \
 	fi
 endef
 
