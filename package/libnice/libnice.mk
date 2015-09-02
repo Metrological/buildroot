@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-LIBNICE_VERSION = 0.1.12
+LIBNICE_VERSION = 0.1.13
 LIBNICE_SOURCE = libnice-$(LIBNICE_VERSION).tar.gz
 LIBNICE_SITE = http://nice.freedesktop.org/releases/
 LIBNICE_INSTALL_STAGING = YES
