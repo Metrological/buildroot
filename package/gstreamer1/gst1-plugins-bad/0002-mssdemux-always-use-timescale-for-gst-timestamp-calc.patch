@@ -1,0 +1,49 @@
+From 87a12891996f6c8e028c7d3162ba440014449bf0 Mon Sep 17 00:00:00 2001
+From: Philippe Normand <philn@igalia.com>
+Date: Thu, 3 Sep 2015 15:11:00 +0200
+Subject: [PATCH] mssdemux: always use timescale for gst timestamp calculation
+
+Not doing this can lead the demuxer to attempt downloading fragments
+for an invalid start time. The server would then send a HTTP
+Precondition failed error, the demuxer would try some more times to
+download the invalid fragment and eventually error out.
+
+https://bugzilla.gnome.org/show_bug.cgi?id=754523
+---
+ ext/smoothstreaming/gstmssmanifest.c | 11 +++++------
+ 1 file changed, 5 insertions(+), 6 deletions(-)
+
+diff --git a/ext/smoothstreaming/gstmssmanifest.c b/ext/smoothstreaming/gstmssmanifest.c
+index 80feb0d..8845702 100644
+--- a/ext/smoothstreaming/gstmssmanifest.c
++++ b/ext/smoothstreaming/gstmssmanifest.c
+@@ -959,7 +959,7 @@ gst_mss_stream_get_fragment_gst_timestamp (GstMssStream * stream)
+   guint64 timescale;
+   GstMssStreamFragment *fragment;
+ 
+-  g_return_val_if_fail (stream->active, GST_FLOW_ERROR);
++  g_return_val_if_fail (stream->active, GST_CLOCK_TIME_NONE);
+ 
+   if (!stream->current_fragment) {
+     GList *last = g_list_last (stream->fragments);
+@@ -967,13 +967,12 @@ gst_mss_stream_get_fragment_gst_timestamp (GstMssStream * stream)
+       return GST_CLOCK_TIME_NONE;
+ 
+     fragment = last->data;
+-    return fragment->time + (fragment->duration * fragment->repetitions);
++    time = fragment->time + (fragment->duration * fragment->repetitions);
++  } else {
++    fragment = stream->current_fragment->data;
++    time = fragment->time + (fragment->duration * stream->fragment_repetition_index);
+   }
+ 
+-  fragment = stream->current_fragment->data;
+-
+-  time =
+-      fragment->time + (fragment->duration * stream->fragment_repetition_index);
+   timescale = gst_mss_stream_get_timescale (stream);
+   return (GstClockTime) gst_util_uint64_scale_round (time, GST_SECOND,
+       timescale);
+-- 
+2.5.0
+
