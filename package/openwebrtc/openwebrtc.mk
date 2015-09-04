@@ -3,7 +3,7 @@
 # openwebrtc
 #
 ################################################################################
-OPENWEBRTC_VERSION = f23a4ef181ef401c8d1aee3ac06b6e69154b5f97
+OPENWEBRTC_VERSION = 3fe6795aa86701eb848590efb0de39442f4972f5
 OPENWEBRTC_SITE = $(call github,Metrological,openwebrtc,$(OPENWEBRTC_VERSION))
 OPENWEBRTC_INSTALL_STAGING = YES
 OPENWEBRTC_AUTORECONF = YES

@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-WPE_VERSION = b1dd33125afbdb479bae3bf7c1d71dca9a0a0512
+WPE_VERSION = 3232b586ebb27e307a498fcbfe125f3699efdaee
 WPE_SITE = $(call github,Metrological,WebKitForWayland,$(WPE_VERSION))
 
 WPE_INSTALL_STAGING = YES
@@ -136,6 +136,11 @@ BUILDTYPE = Release
 WPE_FLAGS += \
 	-DCMAKE_C_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align" \
 	-DCMAKE_CXX_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align"
+endif
+
+ifeq ($(BR2_PACKAGE_WPE_USE_MEDIA_STREAM),y)
+WPE_DEPENDENCIES += openwebrtc
+WPE_FLAGS += -DENABLE_MEDIA_STREAM=ON
 endif
 
 ifeq ($(BR2_PACKAGE_WPE_USE_DXDRM_EME),y)
