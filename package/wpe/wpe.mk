@@ -3,7 +3,8 @@
 # WPE
 #
 ################################################################################
-WPE_VERSION = c1a765eed926985c69ee440e1eb36a8926c6d4fc
+
+WPE_VERSION = b1dd33125afbdb479bae3bf7c1d71dca9a0a0512
 WPE_SITE = $(call github,Metrological,WebKitForWayland,$(WPE_VERSION))
 
 WPE_INSTALL_STAGING = YES
@@ -149,11 +150,6 @@ endif
 
 ifeq ($(BR2_PACKAGE_WPE_USE_MEDIA_SOURCE),y)
 WPE_FLAGS += -DENABLE_MEDIA_SOURCE=ON
-endif
-
-ifeq ($(BR2_PACKAGE_WPE_USE_MEDIA_STREAM),y)
-WPE_DEPENDENCIES += openwebrtc
-WPE_FLAGS += -DENABLE_MEDIA_STREAM=ON
 endif
 
 ifeq ($(BR2_PACKAGE_WPE_ENABLE_JS_MEMORY_TRACKING),y)

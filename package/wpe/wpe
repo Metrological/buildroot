@@ -8,6 +8,9 @@ chmod 0700 $XDG_RUNTIME_DIR
 
 export ATHOL_SHELL=/usr/lib/libWPEAtholShell.so
 
+# Enable cookie persistent storage
+export WPE_SHELL_COOKIE_STORAGE=1
+
 # FIXME: gst-gl's dispmanx backend is messing up with our compositor
 # when it creates its initial 16x16px surface.
 export GST_GL_WINDOW=dummy

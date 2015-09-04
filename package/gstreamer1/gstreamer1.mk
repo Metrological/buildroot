@@ -21,4 +21,9 @@ define GSTREAMER1_FIX_AUTOPOINT
 	cd $(@D) && PATH=$(HOST_PATH) autopoint --force
 endef
 
+define GSTREAMER1_REMOVE_LA_FILES
+	rm -f $(TARGET_DIR)/usr/lib/libgst*.la $(TARGET_DIR)/usr/lib/gstreamer-1.0/*.la
+	rm -f $(TARGET_DIR)/usr/lib/libgst*.a $(TARGET_DIR)/usr/lib/gstreamer-1.0/*.a
+endef
+
 include package/gstreamer1/*/*.mk

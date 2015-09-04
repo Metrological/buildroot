@@ -13,6 +13,8 @@ GST1_LIBAV_DEPENDENCIES = host-pkgconf gstreamer1 gst1-plugins-base
 GST1_LIBAV_AUTORECONF = YES
 GST1_LIBAV_AUTORECONF_OPT = -I $(@D)/m4 -I $(@D)/common/m4
 
+GST1_LIBAV_POST_INSTALL_TARGET_HOOKS += GSTREAMER1_REMOVE_LA_FILES
+
 GST1_LIBAV_CONF_EXTRA_OPT = \
 	--cross-prefix=$(TARGET_CROSS) \
 	--target-os=linux \

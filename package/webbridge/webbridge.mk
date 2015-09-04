@@ -26,6 +26,11 @@ ifeq ($(BR2_PACKAGE_PLUGIN_DELAYEDRESPONSE),y)
 	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/DelayedResponse target ;
 endif
 
+ifeq ($(BR2_PACKAGE_PLUGIN_PROVISIONING),y)
+	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX=$(TARGET_CXX) -C $(@D)/Plugins/Provisioning build ;
+	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/Provisioning target ;
+endif
+
 ifeq ($(BR2_PACKAGE_PLUGIN_DEVICEINFO),y)
 	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX=$(TARGET_CXX) -C $(@D)/Plugins/DeviceInfo build ;
 	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/DeviceInfo target ;

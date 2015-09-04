@@ -34,27 +34,50 @@ config BR2_PACKAGE_WPE_USE_GSTREAMER
 	  Enable GStreamer playback.
 comment "wpe-gstreamer requires gstreamer 1.x"
 	depends on !BR2_PACKAGE_GSTREAMER1
+
+config BR2_PACKAGE_WPE_USE_GSTREAMER_GL
+	bool "gstreamer-gl"
+	depends on BR2_PACKAGE_WPE_USE_GSTREAMER
+	depends on BR2_PACKAGE_GSTREAMER1_GIT
+	default n
+	help
+	  Use gstreamer-gl video sink for rendering
  
 config BR2_PACKAGE_WPE_USE_ENCRYPTED_MEDIA
 	bool "encrypted-media"
 	select BR2_PACKAGE_OPENSSL
 	depends on BR2_PACKAGE_WPE_USE_GSTREAMER
 	depends on BR2_PACKAGE_GSTREAMER1_GIT
+	depends on !BR2_PACKAGE_WPE_USE_ENCRYPTED_MEDIA_V2
 	default n
 	help
 	  Enable Encrypted Media Extensions.
 comment "encrypted-media requires wpe-gstreamer"
 	depends on !BR2_PACKAGE_WPE_USE_GSTREAMER
+comment "encrypted-media conflicts with encrypted-media-v2"
+	depends on BR2_PACKAGE_WPE_USE_ENCRYPTED_MEDIA_V2
+
+config BR2_PACKAGE_WPE_USE_ENCRYPTED_MEDIA_V2
+	bool "encrypted-media-v2"
+	depends on BR2_PACKAGE_WPE_USE_GSTREAMER
+	depends on BR2_PACKAGE_GSTREAMER1_GIT
+	default n
+	help
+	  Enable Encrypted Media Extensions V2.
+comment "encrypted-media-v2 requires wpe-gstreamer"
+	depends on !BR2_PACKAGE_WPE_USE_GSTREAMER
+comment "encrypted-media-v2 conflicts with encrypted-media"
+	depends on BR2_PACKAGE_WPE_USE_ENCRYPTED_MEDIA
 
 config BR2_PACKAGE_WPE_USE_DXDRM_EME
 	bool "dxdrm-eme"
 	default n
-	depends on BR2_PACKAGE_WPE_USE_ENCRYPTED_MEDIA
+	depends on BR2_PACKAGE_WPE_USE_ENCRYPTED_MEDIA || BR2_PACKAGE_WPE_USE_ENCRYPTED_MEDIA_V2
 	depends on BR2_PACKAGE_DXDRM
 	help
 	  Enable Discretix DRM Encrypted Media Extensions backend.
-comment "dxdrm-eme requires encrypted-media and dxdrm"
-	depends on !BR2_PACKAGE_WPE_USE_ENCRYPTED_MEDIA || !BR2_PACKAGE_DXDRM
+comment "dxdrm-eme requires encrypted-media(-v2) and dxdrm"
+	depends on (!BR2_PACKAGE_WPE_USE_ENCRYPTED_MEDIA && !BR2_PACKAGE_WPE_USE_ENCRYPTED_MEDIA_V2) || !BR2_PACKAGE_DXDRM
 
 config BR2_PACKAGE_WPE_USE_MEDIA_SOURCE
 	bool "media-source"

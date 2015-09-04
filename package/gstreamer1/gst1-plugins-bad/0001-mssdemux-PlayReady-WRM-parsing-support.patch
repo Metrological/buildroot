@@ -1,30 +1,36 @@
-From 1e48dfec2ea84774c37413df3f62518a320396c9 Mon Sep 17 00:00:00 2001
+From d6ce5baa26c16fe378802c49d7212b3b2100f77b Mon Sep 17 00:00:00 2001
 From: Philippe Normand <philn@igalia.com>
 Date: Mon, 8 Jun 2015 15:33:22 +0200
-Subject: [PATCH 2/2] [wip] mssdemux: parse PlayReady WRM
+Subject: [PATCH] mssdemux: PlayReady WRM parsing support
 
+If the manifest has a ProtectionHeader node then parse it and emit
+protection events according to the specified protection SystemID.
+
+https://bugzilla.gnome.org/show_bug.cgi?id=753613
 ---
- ext/smoothstreaming/gstmssdemux.c    | 65 ++++++++++++++++++++++++++++++++++++
+ ext/smoothstreaming/gstmssdemux.c    | 74 ++++++++++++++++++++++++++++++++++++
  ext/smoothstreaming/gstmssdemux.h    |  1 +
- ext/smoothstreaming/gstmssmanifest.c | 39 ++++++++++++++++++++++
- ext/smoothstreaming/gstmssmanifest.h |  2 ++
- 4 files changed, 107 insertions(+)
+ ext/smoothstreaming/gstmssmanifest.c | 55 +++++++++++++++++++++++++++
+ ext/smoothstreaming/gstmssmanifest.h |  2 +
+ 4 files changed, 132 insertions(+)
 
 diff --git a/ext/smoothstreaming/gstmssdemux.c b/ext/smoothstreaming/gstmssdemux.c
-index 8f10d7d..a49caf8 100644
+index 8f10d7d..f38d391 100644
 --- a/ext/smoothstreaming/gstmssdemux.c
 +++ b/ext/smoothstreaming/gstmssdemux.c
-@@ -392,6 +392,9 @@ gst_mss_demux_setup_streams (GstAdaptiveDemux * demux)
+@@ -392,6 +392,11 @@ gst_mss_demux_setup_streams (GstAdaptiveDemux * demux)
      GstMssStream *manifeststream = iter->data;
      GstCaps *caps;
      const gchar *lang;
-+    const gchar *protection_system_id = gst_mss_manifest_get_protection_system_id(mssdemux->manifest);
-+    const gchar *protection_data = gst_mss_manifest_get_protection_data(mssdemux->manifest);
++    const gchar *protection_system_id =
++        gst_mss_manifest_get_protection_system_id (mssdemux->manifest);
++    const gchar *protection_data =
++        gst_mss_manifest_get_protection_data (mssdemux->manifest);
 +    gboolean protected = protection_system_id && protection_data;
  
      srcpad = _create_pad (mssdemux, manifeststream);
  
-@@ -405,6 +408,30 @@ gst_mss_demux_setup_streams (GstAdaptiveDemux * demux)
+@@ -405,6 +410,30 @@ gst_mss_demux_setup_streams (GstAdaptiveDemux * demux)
      stream->manifest_stream = manifeststream;
      gst_mss_stream_set_active (manifeststream, TRUE);
      caps = gst_mss_stream_get_caps (stream->manifest_stream);
@@ -55,30 +61,37 @@ index 8f10d7d..a49caf8 100644
      gst_adaptive_demux_stream_set_caps (GST_ADAPTIVE_DEMUX_STREAM_CAST (stream),
          create_mss_caps (stream, caps));
      gst_caps_unref (caps);
-@@ -417,6 +444,16 @@ gst_mss_demux_setup_streams (GstAdaptiveDemux * demux)
+@@ -417,6 +446,21 @@ gst_mss_demux_setup_streams (GstAdaptiveDemux * demux)
        gst_adaptive_demux_stream_set_tags (GST_ADAPTIVE_DEMUX_STREAM_CAST
            (stream), tags);
      }
 +
 +    if (protected) {
-+        gsize protection_data_len;
-+        guchar *decoded_data = g_base64_decode(protection_data, &protection_data_len);
-+        GstBuffer *protection_buffer = gst_buffer_new_wrapped (decoded_data, protection_data_len);
-+        GstEvent *event = gst_event_new_protection (protection_system_id, protection_buffer, "smooth-streaming");
-+        GST_LOG_OBJECT (stream, "Queuing Protection event on source pad");
-+        gst_adaptive_demux_stream_add_event ((GstAdaptiveDemuxStream *) stream, event);
-+        gst_buffer_unref (protection_buffer);
++      gsize protection_data_len;
++      guchar *decoded_data =
++          g_base64_decode (protection_data, &protection_data_len);
++      GstBuffer *protection_buffer =
++          gst_buffer_new_wrapped (decoded_data, protection_data_len);
++      GstEvent *event =
++          gst_event_new_protection (protection_system_id, protection_buffer,
++          "smooth-streaming");
++      GST_LOG_OBJECT (stream, "Queuing Protection event on source pad");
++      gst_adaptive_demux_stream_queue_event ((GstAdaptiveDemuxStream *) stream,
++          event);
++      gst_buffer_unref (protection_buffer);
 +    }
    }
  
    return TRUE;
-@@ -476,10 +513,38 @@ gst_mss_demux_stream_select_bitrate (GstAdaptiveDemuxStream * stream,
+@@ -476,10 +520,40 @@ gst_mss_demux_stream_select_bitrate (GstAdaptiveDemuxStream * stream,
    if (gst_mss_stream_select_bitrate (mssstream->manifest_stream, bitrate)) {
      GstCaps *caps;
      GstCaps *msscaps;
-+    GstMssDemux *mssdemux = GST_MSS_DEMUX_CAST(stream->demux);
-+    const gchar *protection_system_id = gst_mss_manifest_get_protection_system_id(mssdemux->manifest);
-+    const gchar *protection_data = gst_mss_manifest_get_protection_data(mssdemux->manifest);
++    GstMssDemux *mssdemux = GST_MSS_DEMUX_CAST (stream->demux);
++    const gchar *protection_system_id =
++        gst_mss_manifest_get_protection_system_id (mssdemux->manifest);
++    const gchar *protection_data =
++        gst_mss_manifest_get_protection_data (mssdemux->manifest);
 +    gboolean protected = protection_system_id && protection_data;
      caps = gst_mss_stream_get_caps (mssstream->manifest_stream);
  
@@ -124,7 +137,7 @@ index cc5ff7f..5c56e23 100644
  #include <gst/uridownloader/gsturidownloader.h>
  
 diff --git a/ext/smoothstreaming/gstmssmanifest.c b/ext/smoothstreaming/gstmssmanifest.c
-index e92e3da..d2b4451 100644
+index e92e3da..80feb0d 100644
 --- a/ext/smoothstreaming/gstmssmanifest.c
 +++ b/ext/smoothstreaming/gstmssmanifest.c
 @@ -95,6 +95,9 @@ struct _GstMssManifest
@@ -137,22 +150,38 @@ index e92e3da..d2b4451 100644
    GSList *streams;
  };
  
-@@ -267,6 +270,22 @@ _gst_mss_stream_init (GstMssStream * stream, xmlNodePtr node)
+@@ -267,6 +270,38 @@ _gst_mss_stream_init (GstMssStream * stream, xmlNodePtr node)
    stream->regex_position = g_regex_new ("\\{start[ _]time\\}", 0, 0, NULL);
  }
  
 +
 +static void
-+_gst_mss_parse_protection(GstMssManifest* manifest, xmlNodePtr protection_node)
++_gst_mss_parse_protection (GstMssManifest * manifest,
++    xmlNodePtr protection_node)
 +{
 +  xmlNodePtr nodeiter;
 +
-+  for (nodeiter = protection_node->children; nodeiter; nodeiter = nodeiter->next) {
++  for (nodeiter = protection_node->children; nodeiter;
++      nodeiter = nodeiter->next) {
 +    if (nodeiter->type == XML_ELEMENT_NODE
-+        && (strcmp((const char*) nodeiter->name, "ProtectionHeader") == 0)) {
-+        manifest->protection_system_id = g_ascii_strdown((gchar *) xmlGetProp (nodeiter, (xmlChar *) "SystemID"), -1);
-+        manifest->protection_data = (gchar *) xmlNodeGetContent (nodeiter);
-+        break;
++        && (strcmp ((const char *) nodeiter->name, "ProtectionHeader") == 0)) {
++      xmlChar *system_id_attribute =
++          xmlGetProp (nodeiter, (xmlChar *) "SystemID");
++      gchar *system_id = g_ascii_strdown ((gchar *) system_id_attribute, -1);
++      gchar *stripped_system_id = NULL;
++      if (system_id[0] == '{' && system_id[strlen (system_id) - 1] == '}') {
++        gchar *tmp = system_id;
++        tmp++;
++        tmp[strlen (tmp) - 1] = 0;
++        stripped_system_id = g_strdup (tmp);
++        g_free (system_id);
++        system_id = stripped_system_id;
++      }
++
++      manifest->protection_system_id = system_id;
++      manifest->protection_data = (gchar *) xmlNodeGetContent (nodeiter);
++      xmlFree (system_id_attribute);
++      break;
 +    }
 +  }
 +}
@@ -160,23 +189,23 @@ index e92e3da..d2b4451 100644
  GstMssManifest *
  gst_mss_manifest_new (GstBuffer * data)
  {
-@@ -300,6 +319,11 @@ gst_mss_manifest_new (GstBuffer * data)
+@@ -300,6 +335,11 @@ gst_mss_manifest_new (GstBuffer * data)
        manifest->streams = g_slist_append (manifest->streams, stream);
        _gst_mss_stream_init (stream, nodeiter);
      }
 +
 +    if (nodeiter->type == XML_ELEMENT_NODE
-+        && (strcmp((const char*) nodeiter->name, "Protection") == 0)) {
-+        _gst_mss_parse_protection (manifest, nodeiter);
++        && (strcmp ((const char *) nodeiter->name, "Protection") == 0)) {
++      _gst_mss_parse_protection (manifest, nodeiter);
 +    }
    }
  
    gst_buffer_unmap (data, &mapinfo);
-@@ -327,10 +351,25 @@ gst_mss_manifest_free (GstMssManifest * manifest)
+@@ -327,10 +367,25 @@ gst_mss_manifest_free (GstMssManifest * manifest)
  
    g_slist_free_full (manifest->streams, (GDestroyNotify) gst_mss_stream_free);
  
-+  xmlFree (manifest->protection_system_id);
++  g_free (manifest->protection_system_id);
 +  xmlFree (manifest->protection_data);
 +
    xmlFreeDoc (manifest->xml);
@@ -186,13 +215,13 @@ index e92e3da..d2b4451 100644
 +const gchar *
 +gst_mss_manifest_get_protection_system_id (GstMssManifest * manifest)
 +{
-+    return manifest->protection_system_id;
++  return manifest->protection_system_id;
 +}
 +
 +const gchar *
 +gst_mss_manifest_get_protection_data (GstMssManifest * manifest)
 +{
-+    return manifest->protection_data;
++  return manifest->protection_data;
 +}
 +
  GSList *
@@ -212,5 +241,5 @@ index 364f6d1..65330b4 100644
  GstMssStreamType gst_mss_stream_get_type (GstMssStream *stream);
  GstCaps * gst_mss_stream_get_caps (GstMssStream * stream);
 -- 
-2.1.4
+2.5.0
 

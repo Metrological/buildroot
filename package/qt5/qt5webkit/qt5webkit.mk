@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-QT5WEBKIT_VERSION = f0888c516bc5ef6a0f3db00aa1288000acd060d9
+QT5WEBKIT_VERSION = f4c76d5c99c04d84d2090ed55bd46b438efe0f11
 ifeq ($(BR2_QT5WEBKIT_USE_WEBRTC),y)
 QT5WEBKIT_VERSION = de07f58fb904c81794af37238e2c0c2989a59898
 endif
@@ -171,7 +171,7 @@ endif
 
 ifeq ($(BR2_QT5WEBKIT_ENABLE_JS_MEMORY_TRACKING),y)
 	QT5WEBKIT_CONFIG += \
-		WEBKIT_CONFIG+=enable_js_memory_tracking
+		WEBKIT_CONFIG+=js_memory_tracking
 endif
 
 ifeq ($(BR2_QT5WEBKIT_ENABLE_DUMP_NODE_STATISTICS),y)
