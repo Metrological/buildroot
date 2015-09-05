@@ -12,52 +12,52 @@ WEBBRIDGE_INSTALL_STAGING = YES
 WEBBRIDGE_DEPENDENCIES += cppsdk
 
 ifeq ($(BR2_PACKAGE_PLUGIN_FANCONTROL),y)
-	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX=$(TARGET_CXX) -C $(@D)/Plugins/FanControl build ;
+	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX="$(TARGET_CXX)" -C $(@D)/Plugins/FanControl build ;
 	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/FanControl target ;
 endif
 
 ifeq ($(BR2_PACKAGE_PLUGIN_TRACECONTROL),y)
-	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX=$(TARGET_CXX) -C $(@D)/Plugins/TraceControl build ;
+	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX="$(TARGET_CXX)" -C $(@D)/Plugins/TraceControl build ;
 	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/TraceControl target ;
 endif
 
 ifeq ($(BR2_PACKAGE_PLUGIN_DELAYEDRESPONSE),y)
-	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX=$(TARGET_CXX) -C $(@D)/Plugins/DelayedResponse build ;
+	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX="$(TARGET_CXX)" -C $(@D)/Plugins/DelayedResponse build ;
 	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/DelayedResponse target ;
 endif
 
 ifeq ($(BR2_PACKAGE_PLUGIN_PROVISIONING),y)
-	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX=$(TARGET_CXX) -C $(@D)/Plugins/Provisioning build ;
+	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX="$(TARGET_CXX)" -C $(@D)/Plugins/Provisioning build ;
 	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/Provisioning target ;
 endif
 
 ifeq ($(BR2_PACKAGE_PLUGIN_DEVICEINFO),y)
-	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX=$(TARGET_CXX) -C $(@D)/Plugins/DeviceInfo build ;
+	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX="$(TARGET_CXX)" -C $(@D)/Plugins/DeviceInfo build ;
 	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/DeviceInfo target ;
 endif
 
 ifeq ($(BR2_PACKAGE_PLUGIN_BROWSER),y)
-	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX=$(TARGET_CXX) -C $(@D)/Plugins/Browser build ;
+	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX="$(TARGET_CXX)" -C $(@D)/Plugins/Browser build ;
 	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/Browser target ;
 endif
 
 ifeq ($(BR2_PACKAGE_PLUGIN_I2CCONTROL),y)
-	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX=$(TARGET_CXX) -C $(@D)/Plugins/I2CControl build ;
+	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX="$(TARGET_CXX)" -C $(@D)/Plugins/I2CControl build ;
 	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/I2CControl target ;
 endif
 
 ifeq ($(BR2_PACKAGE_PLUGIN_SPICONTROL),y)
-	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX=$(TARGET_CXX) -C $(@D)/Plugins/SPIControl build ;
+	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX="$(TARGET_CXX)" -C $(@D)/Plugins/SPIControl build ;
 	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/SPIControl target ;
 endif
 
 ifeq ($(BR2_PACKAGE_PLUGIN_TEMPCONTROL),y)
-	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX=$(TARGET_CXX) -C $(@D)/Plugins/TempControl build ;
+	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX="$(TARGET_CXX)" -C $(@D)/Plugins/TempControl build ;
 	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/TempControl target ;
 endif
 
 ifeq ($(BR2_PACKAGE_PLUGIN_FILESERVER),y)
-	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX=$(TARGET_CXX) -C $(@D)/Plugins/FileServer build ;
+	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX="$(TARGET_CXX)" -C $(@D)/Plugins/FileServer build ;
 	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/FileServer target ;
 endif
 
