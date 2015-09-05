@@ -42,12 +42,16 @@ config BR2_PACKAGE_PLUGIN_DELAYEDRESPONSE
 
 config BR2_PACKAGE_PLUGIN_PROVISIONING
   bool "provisioning"
+  depends on BR2_PACKAGE_DXDRM_EXTERNAL
   help
     A component to allow external provisioning of devices with the 
     proper credentials. Currently focused on provisioning from the
     Metrological Back Office.
 
-config BR2_PACKAGE_PLUGIN_I2CCONTROL
+comment "provisioning needs the package DxDRM in external mode."
+        depends on !BR2_PACKAGE_DXDRM_EXTERNAL
+
+ config BR2_PACKAGE_PLUGIN_I2CCONTROL
   bool "i2ccontrol"
   help
     An implementation of a i2c bridge to a web request. Using this plugin
