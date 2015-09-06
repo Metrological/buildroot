@@ -7,22 +7,38 @@ ifeq ($(BR2_BCM_REFSW_VERSION_V12), y)
 	BCM_REFSW_SITE = file://../bcm-refsw
 	BCM_REFSW_VERSION = 20121210
 	BCM_REFSW_SOURCE = refsw_release_unified_$(BCM_REFSW_VERSION).src.tar.xz
-	BCM_REFSW_EXTRA_DOWNLOADS = refsw_wayland.tar.gz
+	ifeq ($(BR2_BCMREFSW_WAYLAND_SUPPORT_NONE),y)
+		BCM_REFSW_EXTRA_DOWNLOADS = 
+	else
+		BCM_REFSW_EXTRA_DOWNLOADS = refsw_wayland.tar.gz
+	endif
 else ifeq ($(BR2_BCM_REFSW_VERSION_V13), y)
 	BCM_REFSW_SITE = file://../bcm-refsw
 	BCM_REFSW_VERSION = 20131218
 	BCM_REFSW_SOURCE = refsw_release_unified_$(BCM_REFSW_VERSION).src.tar.xz
-	BCM_REFSW_EXTRA_DOWNLOADS = refsw_wayland.tar.gz
+	ifeq ($(BR2_BCMREFSW_WAYLAND_SUPPORT_NONE),y)
+		BCM_REFSW_EXTRA_DOWNLOADS = 
+	else
+		BCM_REFSW_EXTRA_DOWNLOADS = refsw_wayland.tar.gz
+	endif
 else ifeq ($(BR2_BCM_REFSW_VERSION_V14), y)
 	BCM_REFSW_SITE = file://../bcm-refsw
 	BCM_REFSW_VERSION = 20141217
 	BCM_REFSW_SOURCE = refsw_release_unified_$(BCM_REFSW_VERSION).src.tar.xz
-	BCM_REFSW_EXTRA_DOWNLOADS = refsw_wayland.tar.gz
+	ifeq ($(BR2_BCMREFSW_WAYLAND_SUPPORT_NONE),y)
+		BCM_REFSW_EXTRA_DOWNLOADS = 
+	else
+		BCM_REFSW_EXTRA_DOWNLOADS = refsw_wayland.tar.gz
+	endif
 else ifeq ($(BR2_BCM_REFSW_VERSION_V15), y)
 	BCM_REFSW_SITE = file://../bcm-refsw
 	BCM_REFSW_VERSION = 20150326
 	BCM_REFSW_SOURCE = refsw_release_unified_$(BCM_REFSW_VERSION).src.tar.xz
-	BCM_REFSW_EXTRA_DOWNLOADS = refsw_wayland.tar.gz
+	ifeq ($(BR2_BCMREFSW_WAYLAND_SUPPORT_NONE),y)
+		BCM_REFSW_EXTRA_DOWNLOADS = 
+	else
+		BCM_REFSW_EXTRA_DOWNLOADS = refsw_wayland.tar.gz
+	endif
 else
 	BCM_REFSW_SITE = file:///
 	BCM_REFSW_VERSION = CUSTOM
@@ -106,7 +122,6 @@ BCM_CLIENTLIB = -lnxclient
 endif
 
 BCM_MAKEFLAGS  = CROSS_COMPILE="${TARGET_CROSS}"
-BCM_REFSW_DEPENDENCIES += wayland
 BCM_MAKEFLAGS += TOOLCHAIN_DIR="${HOST_DIR}/usr/bin"
 BCM_MAKEFLAGS += B_REFSW_ARCH=$(call qstrip,${BR2_ARCH})-linux
 BCM_MAKEFLAGS += PATH=${HOST_DIR}/usr/bin:${PATH}
@@ -115,11 +130,19 @@ BCM_MAKEFLAGS += HOST_DIR="${HOST_DIR}"
 BCM_MAKEFLAGS += APPLIBS_TOP=${BCM_APPS_DIR}
 BCM_MAKEFLAGS += VCX=${BCM_NEXUS_EGL_PACKAGE}
 
+ifeq ($(BR2_BCMREFSW_WAYLAND_SUPPORT_NONE),y)
+define BCM_REFSW_EXTRACT_CMDS
+    xz -d -c $(DL_DIR)/$(BCM_REFSW_SOURCE) \
+	| $(TAR) --strip-components=0 -C $(@D) -xf -
+endef 
+else 
 define BCM_REFSW_EXTRACT_CMDS
     xz -d -c $(DL_DIR)/$(BCM_REFSW_SOURCE) \
         | $(TAR) --strip-components=0 -C $(@D) -xf -
     $(TAR) --strip-components=0 -C $(@D) -xf $(DL_DIR)/refsw_wayland.tar.gz
-endef
+
+endef 
+endif
 
 define BCM_REFSW_BUILD_CMDS
 	$(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/nexus/build all
