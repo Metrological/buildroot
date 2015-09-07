@@ -40,6 +40,13 @@ then
 	WPE_CONFIG=$(grep -v '^#' $WPE_CONF_FILE | tr -d "\r" | tr "\n" " " | tr -s " ")
 fi
 
+# Core dumps
+#echo 1 > /proc/sys/kernel/core_uses_pid
+#echo 2 > /proc/sys/fs/suid_dumpable
+#echo "/root/cores/core-pid_%p--process%E" > /proc/sys/kernel/core_pattern
+#mkdir -p /root/cores
+#ulimit -c unlimited
+
 # The PREFIX env var can be useful when debugging athol with gdbserver.
 if [ "$1" = "--loop" ];
 then
