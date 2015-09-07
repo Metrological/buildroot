@@ -4,9 +4,9 @@
 #
 ################################################################################
 
-DXDRM_VERSION = 1.6.0
-DXDRM_SITE = ../dxdrm
-DXDRM_SITE_METHOD = local
+DXDRM_VERSION = ba4fd614088afea186c5fd623a28e83450c4d527
+DXDRM_SITE_METHOD = git
+DXDRM_SITE = git@github.com:Metrological/dxdrm.git
 DXDRM_LICENSE = PROPRIETARY
 DXDRM_REDISTRIBUTE = NO
 
