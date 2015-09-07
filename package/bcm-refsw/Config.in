@@ -60,6 +60,11 @@ config BR2_BCM_REFSW_VERSION_V15
         help
 	   Use official release from Broadcom labeled V20150326
 
+config BR2_BCM_REFSW_VERSION_V15_2
+        bool "V15_2"
+        help
+	   Use official release from Broadcom labeled V20150619
+
 config BR2_BCM_REFSW_CUSTOM
         bool "Custom"
         help
@@ -84,7 +89,7 @@ config BR2_BCMREFSW_PROXY_MODE
           included in the applications is just a proxy towards the kernel module.
 	  if enabled, NEXUS_MODE=proxy.
 
-if BR2_BCM_REFSW_VERSION_V15
+if BR2_BCM_REFSW_VERSION_V15 || BR2_BCM_REFSW_VERSION_V15_2
 
 choice 
         prompt "Reference support for Wayland"
