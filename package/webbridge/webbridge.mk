@@ -71,7 +71,6 @@ endif
 
 ifeq ($(BR2_PACKAGE_WEBBRIDGE_DAEMON),y)
 	WEBBRIDGE_APPLICATION_FLAGS = "CFLAGS=-D__DAEMON__"
-	WEBBRIDGE_APPLICATION_INSTALL_TARGET = $(MAKE) -C $(@D)/WebBridge daemon ;
 endif
 
 define WEBBRIDGE_BUILD_CMDS
@@ -90,7 +89,6 @@ define WEBBRIDGE_INSTALL_TARGET_CMDS
 	$(MAKE) -C $(@D)/WebBridgeSupport target
 	$(MAKE) -C $(@D)/WebBridge target
 	$(WEBBRIDGE_PLUGIN_INSTALL_TARGET)
-	$(WEBBRIDGE_APPLICATION_INSTALL_TARGET)
 endef
 
 $(eval $(generic-package))
