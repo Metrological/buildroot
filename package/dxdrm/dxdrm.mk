@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-DXDRM_VERSION = ba4fd614088afea186c5fd623a28e83450c4d527
+DXDRM_VERSION = 474837c846bfea260ff3f7b170cac305a7ad5e71
 DXDRM_SITE_METHOD = git
 DXDRM_SITE = git@github.com:Metrological/dxdrm.git
 DXDRM_LICENSE = PROPRIETARY
