@@ -1,5 +1,10 @@
 #!/bin/sh
-killall athol WPEWebProcess WPENetworkProcess &> /dev/null
+if [ "$1" = "--loop" ];
+then
+	killall athol WPEWebProcess WPENetworkProcess &> /dev/null
+else
+	killall wpe athol WPEWebProcess WPENetworkProcess &> /dev/null
+fi
 
 export XDG_RUNTIME_DIR=/root/shm/wayland
 rm -rf $XDG_RUNTIME_DIR
