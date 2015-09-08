@@ -3,7 +3,7 @@ if [ "$1" = "--loop" ];
 then
 	killall athol WPEWebProcess WPENetworkProcess &> /dev/null
 else
-	killall wpe athol WPEWebProcess WPENetworkProcess &> /dev/null
+	/etc.init.d/S90wpe stop &> /dev/null
 fi
 
 export XDG_RUNTIME_DIR=/root/shm/wayland
