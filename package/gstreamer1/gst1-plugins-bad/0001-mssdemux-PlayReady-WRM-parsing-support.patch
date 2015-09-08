@@ -1,4 +1,4 @@
-From ff832ec4e9fc7d1155e6ed66f96790ca8329178b Mon Sep 17 00:00:00 2001
+From eb73e165c1539a17fe7ea6a849c1b9314814b303 Mon Sep 17 00:00:00 2001
 From: Philippe Normand <philn@igalia.com>
 Date: Mon, 8 Jun 2015 15:33:22 +0200
 Subject: [PATCH] mssdemux: PlayReady WRM parsing support
@@ -10,9 +10,9 @@ https://bugzilla.gnome.org/show_bug.cgi?id=753613
 ---
  ext/smoothstreaming/gstmssdemux.c    | 74 ++++++++++++++++++++++++++++++++++++
  ext/smoothstreaming/gstmssdemux.h    |  1 +
- ext/smoothstreaming/gstmssmanifest.c | 58 ++++++++++++++++++++++++++++
+ ext/smoothstreaming/gstmssmanifest.c | 60 +++++++++++++++++++++++++++++
  ext/smoothstreaming/gstmssmanifest.h |  2 +
- 4 files changed, 135 insertions(+)
+ 4 files changed, 137 insertions(+)
 
 diff --git a/ext/smoothstreaming/gstmssdemux.c b/ext/smoothstreaming/gstmssdemux.c
 index 8f10d7d..f38d391 100644
@@ -137,7 +137,7 @@ index cc5ff7f..5c56e23 100644
  #include <gst/uridownloader/gsturidownloader.h>
  
 diff --git a/ext/smoothstreaming/gstmssmanifest.c b/ext/smoothstreaming/gstmssmanifest.c
-index e92e3da..648e6ec 100644
+index e92e3da..56cafda 100644
 --- a/ext/smoothstreaming/gstmssmanifest.c
 +++ b/ext/smoothstreaming/gstmssmanifest.c
 @@ -95,6 +95,9 @@ struct _GstMssManifest
@@ -204,7 +204,7 @@ index e92e3da..648e6ec 100644
    }
  
    gst_buffer_unmap (data, &mapinfo);
-@@ -327,10 +370,25 @@ gst_mss_manifest_free (GstMssManifest * manifest)
+@@ -327,10 +370,27 @@ gst_mss_manifest_free (GstMssManifest * manifest)
  
    g_slist_free_full (manifest->streams, (GDestroyNotify) gst_mss_stream_free);
  
@@ -218,7 +218,9 @@ index e92e3da..648e6ec 100644
 +const gchar *
 +gst_mss_manifest_get_protection_system_id (GstMssManifest * manifest)
 +{
-+  return manifest->protection_system_id->str;
++  if (manifest->protection_system_id)
++    return manifest->protection_system_id->str;
++  return NULL;
 +}
 +
 +const gchar *
