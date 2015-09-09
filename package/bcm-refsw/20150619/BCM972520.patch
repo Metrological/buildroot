@@ -1,0 +1,2902 @@
+Binary files Orig/BSEAV/cable/bin/97449/bcm933843ecm_rgmii_dualeth_b2b_rgmii_fat_sto.bin and SeaChange/BSEAV/cable/bin/97449/bcm933843ecm_rgmii_dualeth_b2b_rgmii_fat_sto.bin differ
+Binary files Orig/BSEAV/cable/bin/97449/bootloader933843ecm_2.5.0beta1_slim_jtag.bin and SeaChange/BSEAV/cable/bin/97449/bootloader933843ecm_2.5.0beta1_slim_jtag.bin differ
+diff -crBN Orig/BSEAV/cable/bin/97449/rc.user.D0 SeaChange/BSEAV/cable/bin/97449/rc.user.D0
+*** Orig/BSEAV/cable/bin/97449/rc.user.D0	1969-12-31 16:00:00.000000000 -0800
+--- SeaChange/BSEAV/cable/bin/97449/rc.user.D0	2015-01-06 19:00:51.000000000 -0800
+***************
+*** 0 ****
+--- 1,10 ----
++ # patch command for kernel rgmii_1 issue
++ devmem 0xf0b00164 32 0x4b
++ 
++ # enable memory overcommit
++ echo 0 > /proc/sys/vm/overcommit_memory
++ 
++ ipcfg rgmii_1:0 static 192.168.17.10 255.255.255.0
++ ifup rgmii_1:0
++ # insmod pod97445.ko
++ mknod /dev/pod c 38 0
+diff -crBN Orig/BSEAV/cable/lib/mpod/src/driver/build/bcm97449d0/linux/Makefile SeaChange/BSEAV/cable/lib/mpod/src/driver/build/bcm97449d0/linux/Makefile
+*** Orig/BSEAV/cable/lib/mpod/src/driver/build/bcm97449d0/linux/Makefile	1969-12-31 16:00:00.000000000 -0800
+--- SeaChange/BSEAV/cable/lib/mpod/src/driver/build/bcm97449d0/linux/Makefile	2015-01-06 19:00:51.000000000 -0800
+***************
+*** 0 ****
+--- 1,144 ----
++ #############################################################################
++ # (c) 2003-2014 Broadcom Corporation
++ #
++ # This program is the proprietary software of Broadcom Corporation and/or its
++ # licensors, and may only be used, duplicated, modified or distributed pursuant
++ # to the terms and conditions of a separate, written license agreement executed
++ # between you and Broadcom (an "Authorized License").  Except as set forth in
++ # an Authorized License, Broadcom grants no license (express or implied), right
++ # to use, or waiver of any kind with respect to the Software, and Broadcom
++ # expressly reserves all rights in and to the Software and all intellectual
++ # property rights therein.  IF YOU HAVE NO AUTHORIZED LICENSE, THEN YOU
++ # HAVE NO RIGHT TO USE THIS SOFTWARE IN ANY WAY, AND SHOULD IMMEDIATELY
++ # NOTIFY BROADCOM AND DISCONTINUE ALL USE OF THE SOFTWARE.
++ #
++ # Except as expressly set forth in the Authorized License,
++ #
++ # 1. This program, including its structure, sequence and organization,
++ #    constitutes the valuable trade secrets of Broadcom, and you shall use all
++ #    reasonable efforts to protect the confidentiality thereof, and to use
++ #    this information only in connection with your use of Broadcom integrated
++ #    circuit products.
++ #
++ # 2. TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE SOFTWARE IS PROVIDED "AS IS"
++ #    AND WITH ALL FAULTS AND BROADCOM MAKES NO PROMISES, REPRESENTATIONS OR
++ #    WARRANTIES, EITHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE, WITH RESPECT
++ #    TO THE SOFTWARE.  BROADCOM SPECIFICALLY DISCLAIMS ANY AND ALL IMPLIED
++ #    WARRANTIES OF TITLE, MERCHANTABILITY, NONINFRINGEMENT, FITNESS FOR A
++ #    PARTICULAR PURPOSE, LACK OF VIRUSES, ACCURACY OR COMPLETENESS, QUIET
++ #    ENJOYMENT, QUIET POSSESSION OR CORRESPONDENCE TO DESCRIPTION. YOU ASSUME
++ #    THE ENTIRE RISK ARISING OUT OF USE OR PERFORMANCE OF THE SOFTWARE.
++ #
++ # 3. TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL BROADCOM OR ITS
++ #    LICENSORS BE LIABLE FOR (i) CONSEQUENTIAL, INCIDENTAL, SPECIAL, INDIRECT,
++ #    OR EXEMPLARY DAMAGES WHATSOEVER ARISING OUT OF OR IN ANY WAY RELATING TO
++ #    YOUR USE OF OR INABILITY TO USE THE SOFTWARE EVEN IF BROADCOM HAS BEEN
++ #    ADVISED OF THE POSSIBILITY OF SUCH DAMAGES; OR (ii) ANY AMOUNT IN EXCESS
++ #    OF THE AMOUNT ACTUALLY PAID FOR THE SOFTWARE ITSELF OR U.S. $1, WHICHEVER
++ #    IS GREATER. THESE LIMITATIONS SHALL APPLY NOTWITHSTANDING ANY FAILURE OF
++ #    ESSENTIAL PURPOSE OF ANY LIMITED REMEDY.
++ #
++ #############################################################################
++ #
++ # definition of BCHP and BOARD
++ #
++ 
++ BCM_CHIP        = 7445
++ BCM_BOARD       = 97445
++ 
++ #
++ # Driver options
++ #
++ 
++ ifeq ($(KBUILD_EXTMOD),)
++ BUILDDIR        = $(shell /bin/pwd)
++ else
++ BUILDDIR        = $(KBUILD_EXTMOD)
++ endif
++ 
++ DRVNAME         = pod
++ 
++ # check LINUX
++ ifeq ($(LINUX),)
++ $(error "need Linux kernel path, use 'export LINUX=your_linux_kernel'")
++ endif
++ 
++ 
++ #
++ # Useful directory definitions
++ #
++ POD_DIR         = $(shell (cd $(BUILDDIR)/../../../../../../mpod; pwd))
++ SETTOP_DIR      = $(shell (cd $(POD_DIR)/../../../../SetTop; pwd))
++ MAGNUM_DIR      = $(shell (cd $(POD_DIR)/../../../../magnum; pwd))
++ ROCKFORD_DIR    = $(shell (cd $(POD_DIR)/../../../../rockford; pwd))
++ 
++ include $(POD_DIR)/src/driver/build/linux/Tools.make
++ 
++ CHIP_VER = $(shell awk 'BEGIN{print tolower("$(BCHP_VER)")}')
++ 
++ #HWCHIP_INC_DIR = $(MAGNUM_DIR)/basemodules/chp/$(BCM_CHIP)/rdb/$(CHIP_VER)
++ HWCHIP_INC_DIR = $(MAGNUM_DIR)/basemodules/chp/include/$(BCM_CHIP)/rdb/$(CHIP_VER)
++ HWBOARD_INC_DIR = $(ROCKFORD_DIR)/bsp/bcm$(BCM_BOARD)/common
++ 
++ TARGET          = $(DRVNAME)$(BCM_BOARD)
++ 
++ POD_VPATH       =       $(POD_DIR)/include 					\
++                         $(POD_DIR)/src/driver 					\
++                         $(POD_DIR)/src/driver/hw/bcm$(BCM_BOARD)$(CHIP_VER) 	\
++                         $(HWBOARD_INC_DIR) 					\
++                         $(HWCHIP_INC_DIR) 					\
++                         $(LINUX)/arch/arm/include 				\
++                         $(LINUX)/include/linux/brcmstb 			\
++                         $(LINUX)/include/linux/brcmstb/bcm$(BCM_BOARD) 	\
++                         $(LINUX)/arch/arm/include/asm/mach-brcmstb 		\
++                         $(LINUX)/arch/arm/include/asm/mach-generic 		\
++                         $(POD_DIR)/src/util
++ 
++ POD_INCLUDE=$(patsubst %,-I%,$(subst :, ,$(POD_VPATH)))
++ 
++ #
++ # Source files
++ #
++ POD_SRC = 								\
++                   mpod_os_kernel.c 					\
++                   hw/bcm$(BCM_BOARD)$(CHIP_VER)/mpod_hw.c 		\
++                   mpod_dbg.c 						\
++                   mpoddrv_os.c 						\
++                   mpodnet.c
++ 
++ #
++ # Driver obj files
++ #
++ REL_POD_DIR :=../../../../../../mpod
++ POD_OBJS = $(addprefix $(REL_POD_DIR)/src/driver/, $(POD_SRC:.c=.o))
++ 
++ ifeq ($(KBUILD_EXTMOD),)
++ 
++ all:
++ 	make -C $(LINUX) modules KBUILD_EXTMOD=$(shell pwd)
++ 
++ install: $(TARGET).ko
++ ifeq ($(INSTALL_DIR),)
++ 	@echo "INSTALL_DIR is undefined !!!"
++ else
++ 	@echo "$(TARGET).ko ... !!!"
++ 	$(CP) -f $(TARGET).ko $(INSTALL_DIR)
++ endif
++ 
++ clean:
++ 	make -C $(LINUX) clean KBUILD_EXTMOD=$(shell pwd)
++ 	$(RM) -f ../../../*.o
++ 	$(RM) -f ../../../.*.cmd
++ 
++ else
++ EXTRA_CFLAGS :=$(POD_INCLUDE)
++ EXTRA_CFLAGS += -DSHARABLE_INT
++ EXTRA_CFLAGS += -DBCM_CHIP=$(BCM_CHIP)
++ 
++ ifeq ($(EN_EXT_CH_LIB),y)
++ EXTRA_CFLAGS += -DFOR_MULTIPLE_EC_ACCESS
++ endif
++ 
++ obj-m := $(TARGET).o
++ $(TARGET)-y := $(POD_OBJS)
++ endif
+diff -crBN Orig/nexus/platforms/97449/build/Makefile SeaChange/nexus/platforms/97449/build/Makefile
+*** Orig/nexus/platforms/97449/build/Makefile	1969-12-31 16:00:00.000000000 -0800
+--- SeaChange/nexus/platforms/97449/build/Makefile	2015-01-06 19:00:51.000000000 -0800
+***************
+*** 0 ****
+--- 1,58 ----
++ ############################################################
++ #     (c)2003-2013 Broadcom Corporation
++ #
++ #  This program is the proprietary software of Broadcom Corporation and/or its licensors,
++ #  and may only be used, duplicated, modified or distributed pursuant to the terms and
++ #  conditions of a separate, written license agreement executed between you and Broadcom
++ #  (an "Authorized License").  Except as set forth in an Authorized License, Broadcom grants
++ #  no license (express or implied), right to use, or waiver of any kind with respect to the
++ #  Software, and Broadcom expressly reserves all rights in and to the Software and all
++ #  intellectual property rights therein.  IF YOU HAVE NO AUTHORIZED LICENSE, THEN YOU
++ #  HAVE NO RIGHT TO USE THIS SOFTWARE IN ANY WAY, AND SHOULD IMMEDIATELY
++ #  NOTIFY BROADCOM AND DISCONTINUE ALL USE OF THE SOFTWARE.
++ #
++ #  Except as expressly set forth in the Authorized License,
++ #
++ #  1.     This program, including its structure, sequence and organization, constitutes the valuable trade
++ #  secrets of Broadcom, and you shall use all reasonable efforts to protect the confidentiality thereof,
++ #  and to use this information only in connection with your use of Broadcom integrated circuit products.
++ #
++ #  2.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE SOFTWARE IS PROVIDED "AS IS"
++ #  AND WITH ALL FAULTS AND BROADCOM MAKES NO PROMISES, REPRESENTATIONS OR
++ #  WARRANTIES, EITHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE, WITH RESPECT TO
++ #  THE SOFTWARE.  BROADCOM SPECIFICALLY DISCLAIMS ANY AND ALL IMPLIED WARRANTIES
++ #  OF TITLE, MERCHANTABILITY, NONINFRINGEMENT, FITNESS FOR A PARTICULAR PURPOSE,
++ #  LACK OF VIRUSES, ACCURACY OR COMPLETENESS, QUIET ENJOYMENT, QUIET POSSESSION
++ #  OR CORRESPONDENCE TO DESCRIPTION. YOU ASSUME THE ENTIRE RISK ARISING OUT OF
++ #  USE OR PERFORMANCE OF THE SOFTWARE.
++ #
++ #  3.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL BROADCOM OR ITS
++ #  LICENSORS BE LIABLE FOR (i) CONSEQUENTIAL, INCIDENTAL, SPECIAL, INDIRECT, OR
++ #  EXEMPLARY DAMAGES WHATSOEVER ARISING OUT OF OR IN ANY WAY RELATING TO YOUR
++ #  USE OF OR INABILITY TO USE THE SOFTWARE EVEN IF BROADCOM HAS BEEN ADVISED OF
++ #  THE POSSIBILITY OF SUCH DAMAGES; OR (ii) ANY AMOUNT IN EXCESS OF THE AMOUNT
++ #  ACTUALLY PAID FOR THE SOFTWARE ITSELF OR U.S. $1, WHICHEVER IS GREATER. THESE
++ #  LIMITATIONS SHALL APPLY NOTWITHSTANDING ANY FAILURE OF ESSENTIAL PURPOSE OF
++ #  ANY LIMITED REMEDY.
++ #
++ # $brcm_Workfile: $
++ # $brcm_Revision: $
++ # $brcm_Date: $
++ #
++ # Module Description:
++ #   This file defines the rules to build the 97400 platform
++ #
++ # Revision History:
++ #
++ # Created: 08/28/2007 by Jon Garrett
++ #
++ # $brcm_Log: $
++ #
++ ############################################################
++ 
++ NEXUS_TOP ?= nexus
++ 
++ # platform-specific overrides
++ PLATFORM_MODULES_INC=$(NEXUS_TOP)/platforms/$(NEXUS_PLATFORM)/build/platform_modules.inc
++ 
++ include $(NEXUS_TOP)/platforms/common/build/Makefile
+diff -crBN Orig/nexus/platforms/97449/build/platform_app.inc SeaChange/nexus/platforms/97449/build/platform_app.inc
+*** Orig/nexus/platforms/97449/build/platform_app.inc	1969-12-31 16:00:00.000000000 -0800
+--- SeaChange/nexus/platforms/97449/build/platform_app.inc	2015-01-06 19:00:51.000000000 -0800
+***************
+*** 0 ****
+--- 1,55 ----
++ ############################################################
++ #     (c)2003-2013 Broadcom Corporation
++ #
++ #  This program is the proprietary software of Broadcom Corporation and/or its licensors,
++ #  and may only be used, duplicated, modified or distributed pursuant to the terms and
++ #  conditions of a separate, written license agreement executed between you and Broadcom
++ #  (an "Authorized License").  Except as set forth in an Authorized License, Broadcom grants
++ #  no license (express or implied), right to use, or waiver of any kind with respect to the
++ #  Software, and Broadcom expressly reserves all rights in and to the Software and all
++ #  intellectual property rights therein.  IF YOU HAVE NO AUTHORIZED LICENSE, THEN YOU
++ #  HAVE NO RIGHT TO USE THIS SOFTWARE IN ANY WAY, AND SHOULD IMMEDIATELY
++ #  NOTIFY BROADCOM AND DISCONTINUE ALL USE OF THE SOFTWARE.
++ #
++ #  Except as expressly set forth in the Authorized License,
++ #
++ #  1.     This program, including its structure, sequence and organization, constitutes the valuable trade
++ #  secrets of Broadcom, and you shall use all reasonable efforts to protect the confidentiality thereof,
++ #  and to use this information only in connection with your use of Broadcom integrated circuit products.
++ #
++ #  2.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE SOFTWARE IS PROVIDED "AS IS"
++ #  AND WITH ALL FAULTS AND BROADCOM MAKES NO PROMISES, REPRESENTATIONS OR
++ #  WARRANTIES, EITHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE, WITH RESPECT TO
++ #  THE SOFTWARE.  BROADCOM SPECIFICALLY DISCLAIMS ANY AND ALL IMPLIED WARRANTIES
++ #  OF TITLE, MERCHANTABILITY, NONINFRINGEMENT, FITNESS FOR A PARTICULAR PURPOSE,
++ #  LACK OF VIRUSES, ACCURACY OR COMPLETENESS, QUIET ENJOYMENT, QUIET POSSESSION
++ #  OR CORRESPONDENCE TO DESCRIPTION. YOU ASSUME THE ENTIRE RISK ARISING OUT OF
++ #  USE OR PERFORMANCE OF THE SOFTWARE.
++ #
++ #  3.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL BROADCOM OR ITS
++ #  LICENSORS BE LIABLE FOR (i) CONSEQUENTIAL, INCIDENTAL, SPECIAL, INDIRECT, OR
++ #  EXEMPLARY DAMAGES WHATSOEVER ARISING OUT OF OR IN ANY WAY RELATING TO YOUR
++ #  USE OF OR INABILITY TO USE THE SOFTWARE EVEN IF BROADCOM HAS BEEN ADVISED OF
++ #  THE POSSIBILITY OF SUCH DAMAGES; OR (ii) ANY AMOUNT IN EXCESS OF THE AMOUNT
++ #  ACTUALLY PAID FOR THE SOFTWARE ITSELF OR U.S. $1, WHICHEVER IS GREATER. THESE
++ #  LIMITATIONS SHALL APPLY NOTWITHSTANDING ANY FAILURE OF ESSENTIAL PURPOSE OF
++ #  ANY LIMITED REMEDY.
++ #
++ # $brcm_Workfile: $
++ # $brcm_Revision: $
++ # $brcm_Date: $
++ #
++ # Revision History:
++ # $brcm_Log: $
++ #
++ ############################################################
++ ifndef NEXUS_TOP
++ $(error NEXUS_TOP is not defined)
++ endif
++ 
++ 
++ # platform-specific overrides
++ PLATFORM_MODULES_INC=$(NEXUS_TOP)/platforms/$(NEXUS_PLATFORM)/build/platform_modules.inc
++ 
++ 
++ include $(NEXUS_TOP)/platforms/common/build/platform_app.inc
+diff -crBN Orig/nexus/platforms/97449/build/platform_modules.inc SeaChange/nexus/platforms/97449/build/platform_modules.inc
+*** Orig/nexus/platforms/97449/build/platform_modules.inc	1969-12-31 16:00:00.000000000 -0800
+--- SeaChange/nexus/platforms/97449/build/platform_modules.inc	2015-01-06 19:00:51.000000000 -0800
+***************
+*** 0 ****
+--- 1,60 ----
++ ############################################################
++ #     (c)2003-2014 Broadcom Corporation
++ #
++ #  This program is the proprietary software of Broadcom Corporation and/or its licensors,
++ #  and may only be used, duplicated, modified or distributed pursuant to the terms and
++ #  conditions of a separate, written license agreement executed between you and Broadcom
++ #  (an "Authorized License").  Except as set forth in an Authorized License, Broadcom grants
++ #  no license (express or implied), right to use, or waiver of any kind with respect to the
++ #  Software, and Broadcom expressly reserves all rights in and to the Software and all
++ #  intellectual property rights therein.  IF YOU HAVE NO AUTHORIZED LICENSE, THEN YOU
++ #  HAVE NO RIGHT TO USE THIS SOFTWARE IN ANY WAY, AND SHOULD IMMEDIATELY
++ #  NOTIFY BROADCOM AND DISCONTINUE ALL USE OF THE SOFTWARE.
++ #
++ #  Except as expressly set forth in the Authorized License,
++ #
++ #  1.     This program, including its structure, sequence and organization, constitutes the valuable trade
++ #  secrets of Broadcom, and you shall use all reasonable efforts to protect the confidentiality thereof,
++ #  and to use this information only in connection with your use of Broadcom integrated circuit products.
++ #
++ #  2.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE SOFTWARE IS PROVIDED "AS IS"
++ #  AND WITH ALL FAULTS AND BROADCOM MAKES NO PROMISES, REPRESENTATIONS OR
++ #  WARRANTIES, EITHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE, WITH RESPECT TO
++ #  THE SOFTWARE.  BROADCOM SPECIFICALLY DISCLAIMS ANY AND ALL IMPLIED WARRANTIES
++ #  OF TITLE, MERCHANTABILITY, NONINFRINGEMENT, FITNESS FOR A PARTICULAR PURPOSE,
++ #  LACK OF VIRUSES, ACCURACY OR COMPLETENESS, QUIET ENJOYMENT, QUIET POSSESSION
++ #  OR CORRESPONDENCE TO DESCRIPTION. YOU ASSUME THE ENTIRE RISK ARISING OUT OF
++ #  USE OR PERFORMANCE OF THE SOFTWARE.
++ #
++ #  3.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL BROADCOM OR ITS
++ #  LICENSORS BE LIABLE FOR (i) CONSEQUENTIAL, INCIDENTAL, SPECIAL, INDIRECT, OR
++ #  EXEMPLARY DAMAGES WHATSOEVER ARISING OUT OF OR IN ANY WAY RELATING TO YOUR
++ #  USE OF OR INABILITY TO USE THE SOFTWARE EVEN IF BROADCOM HAS BEEN ADVISED OF
++ #  THE POSSIBILITY OF SUCH DAMAGES; OR (ii) ANY AMOUNT IN EXCESS OF THE AMOUNT
++ #  ACTUALLY PAID FOR THE SOFTWARE ITSELF OR U.S. $1, WHICHEVER IS GREATER. THESE
++ #  LIMITATIONS SHALL APPLY NOTWITHSTANDING ANY FAILURE OF ESSENTIAL PURPOSE OF
++ #  ANY LIMITED REMEDY.
++ #
++ # $brcm_Workfile: $
++ # $brcm_Revision: $
++ # $brcm_Date: $
++ #
++ # Revision History:
++ # $brcm_Log: $
++ #
++ ############################################################
++ ifeq ($(NEXUS_USE_7449_VMS_SFF),y)
++     NEXUS_PLATFORM_7449_CABLE := y
++     NEXUS_FRONTEND_3128 := y
++     NEXUS_FRONTEND_DOCSIS := y
++ endif
++ 
++ ifeq ($(NEXUS_PLATFORM_7449_CABLE),y)
++     ifeq ($(NEXUS_FRONTEND_312x_VER),)
++         NEXUS_FRONTEND_312x_VER := C0
++     else
++         NEXUS_FRONTEND_312x_VER := $(NEXUS_FRONTEND_312x_VER)
++     endif
++ endif
++ 
++ include $(NEXUS_TOP)/platforms/common/build/platform_modules.inc
+diff -crBN Orig/nexus/platforms/97449/build/platform_options.inc SeaChange/nexus/platforms/97449/build/platform_options.inc
+*** Orig/nexus/platforms/97449/build/platform_options.inc	1969-12-31 16:00:00.000000000 -0800
+--- SeaChange/nexus/platforms/97449/build/platform_options.inc	2015-01-06 19:00:51.000000000 -0800
+***************
+*** 0 ****
+--- 1,90 ----
++ #############################################################################
++ #    (c)2013-2014 Broadcom Corporation
++ #
++ # This program is the proprietary software of Broadcom Corporation and/or its licensors,
++ # and may only be used, duplicated, modified or distributed pursuant to the terms and
++ # conditions of a separate, written license agreement executed between you and Broadcom
++ # (an "Authorized License").  Except as set forth in an Authorized License, Broadcom grants
++ # no license (express or implied), right to use, or waiver of any kind with respect to the
++ # Software, and Broadcom expressly reserves all rights in and to the Software and all
++ # intellectual property rights therein.  IF YOU HAVE NO AUTHORIZED LICENSE, THEN YOU
++ # HAVE NO RIGHT TO USE THIS SOFTWARE IN ANY WAY, AND SHOULD IMMEDIATELY
++ # NOTIFY BROADCOM AND DISCONTINUE ALL USE OF THE SOFTWARE.
++ #
++ # Except as expressly set forth in the Authorized License,
++ #
++ # 1.     This program, including its structure, sequence and organization, constitutes the valuable trade
++ # secrets of Broadcom, and you shall use all reasonable efforts to protect the confidentiality thereof,
++ # and to use this information only in connection with your use of Broadcom integrated circuit products.
++ #
++ # 2.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE SOFTWARE IS PROVIDED "AS IS"
++ # AND WITH ALL FAULTS AND BROADCOM MAKES NO PROMISES, REPRESENTATIONS OR
++ # WARRANTIES, EITHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE, WITH RESPECT TO
++ # THE SOFTWARE.  BROADCOM SPECIFICALLY DISCLAIMS ANY AND ALL IMPLIED WARRANTIES
++ # OF TITLE, MERCHANTABILITY, NONINFRINGEMENT, FITNESS FOR A PARTICULAR PURPOSE,
++ # LACK OF VIRUSES, ACCURACY OR COMPLETENESS, QUIET ENJOYMENT, QUIET POSSESSION
++ # OR CORRESPONDENCE TO DESCRIPTION. YOU ASSUME THE ENTIRE RISK ARISING OUT OF
++ # USE OR PERFORMANCE OF THE SOFTWARE.
++ #
++ # 3.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL BROADCOM OR ITS
++ # LICENSORS BE LIABLE FOR (i) CONSEQUENTIAL, INCIDENTAL, SPECIAL, INDIRECT, OR
++ # EXEMPLARY DAMAGES WHATSOEVER ARISING OUT OF OR IN ANY WAY RELATING TO YOUR
++ # USE OF OR INABILITY TO USE THE SOFTWARE EVEN IF BROADCOM HAS BEEN ADVISED OF
++ # THE POSSIBILITY OF SUCH DAMAGES; OR (ii) ANY AMOUNT IN EXCESS OF THE AMOUNT
++ # ACTUALLY PAID FOR THE SOFTWARE ITSELF OR U.S. $1, WHICHEVER IS GREATER. THESE
++ # LIMITATIONS SHALL APPLY NOTWITHSTANDING ANY FAILURE OF ESSENTIAL PURPOSE OF
++ # ANY LIMITED REMEDY.
++ #
++ # $brcm_Workfile: $
++ # $brcm_Revision: $
++ # $brcm_Date: $
++ #
++ # Module Description:
++ #
++ # Revision History:
++ #
++ # $brcm_Log: $
++ #
++ #############################################################################
++ #
++ # this file is included by nexus/platform/common/build/platform_modules.inc
++ # you can define your platform's options here
++ 
++ ifeq ($(NEXUS_USE_7449_SV),y)
++ NEXUS_PLATFORM_DEFINES += NEXUS_USE_7445_SV=1
++ else
++     ifeq ($(NEXUS_USE_7449_VMS_SFF),y)
++     NEXUS_PLATFORM_DEFINES += NEXUS_USE_7449_VMS_SFF=1
++     else
++         ifeq ($(NEXUS_USE_7449_C),y)
++         NEXUS_PLATFORM_DEFINES += NEXUS_USE_7449_C=1
++         else
++              NEXUS_USE_7449_SV :=y
++              NEXUS_PLATFORM_DEFINES += NEXUS_USE_7449_SV=1
++         endif
++     endif
++ endif
++ 
++ ifeq ($(NEXUS_USE_7449_SV),y)
++     NEXUS_FRONTEND_3128 := y
++     NEXUS_FRONTEND_312x_OOB := y
++     ifeq ($(NEXUS_FRONTEND_312x_VER),)
++         NEXUS_FRONTEND_312x_VER := C0
++     else
++         NEXUS_FRONTEND_312x_VER := $(NEXUS_FRONTEND_312x_VER)
++     endif
++ endif
++ 
++ ifeq ($(NEXUS_USE_7449_C),y)
++ ifeq ($(NEXUS_USE_3461_FRONTEND_DAUGHTER_CARD),y)
++     NEXUS_FRONTEND_3461 := y
++     NEXUS_PLATFORM_DEFINES += NEXUS_USE_3461_FRONTEND_DAUGHTER_CARD=1
++ endif
++ endif
++ 
++ VIDEO_ENCODER_SUPPORT ?= y
++ 
++ #
++ # by default, we include the following
++ #
++ include $(NEXUS_TOP)/platforms/common/build/platform_generic_options.inc
+diff -crBN Orig/nexus/platforms/97449/include/nexus_platform_features.h SeaChange/nexus/platforms/97449/include/nexus_platform_features.h
+*** Orig/nexus/platforms/97449/include/nexus_platform_features.h	1969-12-31 16:00:00.000000000 -0800
+--- SeaChange/nexus/platforms/97449/include/nexus_platform_features.h	2015-01-06 19:00:51.000000000 -0800
+***************
+*** 0 ****
+--- 1,215 ----
++ /***************************************************************************
++ *     (c)2004-2014 Broadcom Corporation
++ *
++ *  This program is the proprietary software of Broadcom Corporation and/or its licensors,
++ *  and may only be used, duplicated, modified or distributed pursuant to the terms and
++ *  conditions of a separate, written license agreement executed between you and Broadcom
++ *  (an "Authorized License").  Except as set forth in an Authorized License, Broadcom grants
++ *  no license (express or implied), right to use, or waiver of any kind with respect to the
++ *  Software, and Broadcom expressly reserves all rights in and to the Software and all
++ *  intellectual property rights therein.  IF YOU HAVE NO AUTHORIZED LICENSE, THEN YOU
++ *  HAVE NO RIGHT TO USE THIS SOFTWARE IN ANY WAY, AND SHOULD IMMEDIATELY
++ *  NOTIFY BROADCOM AND DISCONTINUE ALL USE OF THE SOFTWARE.
++ *
++ *  Except as expressly set forth in the Authorized License,
++ *
++ *  1.     This program, including its structure, sequence and organization, constitutes the valuable trade
++ *  secrets of Broadcom, and you shall use all reasonable efforts to protect the confidentiality thereof,
++ *  and to use this information only in connection with your use of Broadcom integrated circuit products.
++ *
++ *  2.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE SOFTWARE IS PROVIDED "AS IS"
++ *  AND WITH ALL FAULTS AND BROADCOM MAKES NO PROMISES, REPRESENTATIONS OR
++ *  WARRANTIES, EITHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE, WITH RESPECT TO
++ *  THE SOFTWARE.  BROADCOM SPECIFICALLY DISCLAIMS ANY AND ALL IMPLIED WARRANTIES
++ *  OF TITLE, MERCHANTABILITY, NONINFRINGEMENT, FITNESS FOR A PARTICULAR PURPOSE,
++ *  LACK OF VIRUSES, ACCURACY OR COMPLETENESS, QUIET ENJOYMENT, QUIET POSSESSION
++ *  OR CORRESPONDENCE TO DESCRIPTION. YOU ASSUME THE ENTIRE RISK ARISING OUT OF
++ *  USE OR PERFORMANCE OF THE SOFTWARE.
++ *
++ *  3.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL BROADCOM OR ITS
++ *  LICENSORS BE LIABLE FOR (i) CONSEQUENTIAL, INCIDENTAL, SPECIAL, INDIRECT, OR
++ *  EXEMPLARY DAMAGES WHATSOEVER ARISING OUT OF OR IN ANY WAY RELATING TO YOUR
++ *  USE OF OR INABILITY TO USE THE SOFTWARE EVEN IF BROADCOM HAS BEEN ADVISED OF
++ *  THE POSSIBILITY OF SUCH DAMAGES; OR (ii) ANY AMOUNT IN EXCESS OF THE AMOUNT
++ *  ACTUALLY PAID FOR THE SOFTWARE ITSELF OR U.S. $1, WHICHEVER IS GREATER. THESE
++ *  LIMITATIONS SHALL APPLY NOTWITHSTANDING ANY FAILURE OF ESSENTIAL PURPOSE OF
++ *  ANY LIMITED REMEDY.
++  *
++  * $brcm_Workfile: $
++  * $brcm_Revision: $
++  * $brcm_Date: $
++  *
++  * Module Description:
++  *
++  * Revision History:
++  *
++  * $brcm_Log: $
++  *
++  ***************************************************************************/
++ #ifndef NEXUS_PLATFORM_FEATURES_H__
++ #define NEXUS_PLATFORM_FEATURES_H__
++ 
++ #include "bstd.h"
++ 
++ /* Interrupts */
++ #if BCHP_VER >= BCHP_VER_D0
++ #define NEXUS_NUM_L1_REGISTERS 5
++ #else
++ #define NEXUS_NUM_L1_REGISTERS 4
++ #endif
++ 
++ /* Transport Features */
++ #define NEXUS_NUM_INPUT_BANDS 3
++ #define NEXUS_NUM_PARSER_BANDS 12    /* Was 6. There are 24 avaliable */
++ #define NEXUS_NUM_PID_CHANNELS 768
++ #define NEXUS_NUM_VCXOS 3
++ #define NEXUS_NUM_TIMEBASES 14
++ #define NEXUS_NUM_STC_CHANNELS 16
++ #define NEXUS_NUM_MESSAGE_FILTERS 128
++ #define NEXUS_NUM_RAVE_CHANNELS 1
++ #define NEXUS_NUM_RAVE_CONTEXTS 24 /* 48 available */
++ #define NEXUS_NUM_RECPUMPS NEXUS_NUM_RAVE_CONTEXTS
++ #define NEXUS_NUM_PLAYPUMPS 24  /* 6*4 for headless config, 32 available */
++ #define NEXUS_NUM_REMUX 2
++ #define NEXUS_NUM_MTSIF 2
++ 
++ /* Video Features,do not change these numbers
++    this covers the chip max capabilities  */
++ #define NEXUS_NUM_VIDEO_DECODERS  3
++ #define NEXUS_NUM_XVD_DEVICES   2
++ #define NEXUS_NUM_MOSAIC_DECODES 14
++ #define NEXUS_NUM_STILL_DECODES 1
++ 
++ /* Audio Features */
++ #define NEXUS_NUM_AUDIO_DSP 1
++ #define NEXUS_NUM_AUDIO_DECODERS 3
++ #define NEXUS_NUM_AUDIO_INPUT_CAPTURES 1 /* Number of external inputs active at a time */
++ #define NEXUS_NUM_AUDIO_DACS 1
++ #define NEXUS_NUM_SPDIF_INPUTS 1
++ #define NEXUS_NUM_SPDIF_OUTPUTS 1
++ #define NEXUS_NUM_AUDIO_DUMMY_OUTPUTS 4
++ #define NEXUS_NUM_AUDIO_MIXERS 8
++ 
++ #define NEXUS_NUM_I2S_INPUTS 1
++ #define NEXUS_NUM_I2S_OUTPUTS 2
++ #define NEXUS_NUM_AUDIO_CAPTURE_CHANNELS 1
++ #define NEXUS_NUM_AUDIO_CAPTURES 1
++ #define NEXUS_NUM_AUDIO_PLAYBACKS 3
++ 
++ #define NEXUS_HAS_AUDIO_MUX_OUTPUT 1
++ 
++ /* Display Features */
++ #define NEXUS_NUM_656_INPUTS 0
++ #define NEXUS_NUM_656_OUTPUTS 1
++ #define NEXUS_NUM_HDMI_INPUTS 1
++ #define NEXUS_NUM_HDMI_OUTPUTS 1
++ #define NEXUS_NUM_CEC 1
++ #define NEXUS_NUM_COMPONENT_OUTPUTS 1
++ #define NEXUS_NUM_COMPOSITE_OUTPUTS 1
++ #define NEXUS_NUM_SVIDEO_OUTPUTS 0
++ #define NEXUS_NUM_RFM_OUTPUTS  1
++ 
++ /* Video Encoder Features,do not change these numbers
++    this covers the chip max capabilities  */
++ #define NEXUS_NUM_VCE_DEVICES    1
++ #define NEXUS_NUM_VCE_CHANNELS   2 /* per device */
++ #define NEXUS_NUM_VIDEO_ENCODERS   (NEXUS_NUM_VCE_CHANNELS * NEXUS_NUM_VCE_DEVICES)
++ 
++ /* Max number of displays and windows supported
++ by this platform. Actual numbers may vary depeding
++ upon the chip usage. See below */
++ #define NEXUS_NUM_DISPLAYS 5
++ 
++ #define NEXUS_NUM_VIDEO_WINDOWS   2 /* per display */
++ #define NEXUS_NUM_DNR 4 /* for 6xMFDs */
++ #define NEXUS_NUM_DCR 4
++ #define NEXUS_NUM_VIDEO_DACS 4
++ #define NEXUS_NUM_LAB 1
++ #define NEXUS_NUM_CAB 1
++ #define NEXUS_NUM_PEP 1
++ #define NEXUS_HAS_TNT 1
++ 
++ /* Graphics Features */
++ #if NEXUS_WEBCPU
++ /* 1 per instance of nexus_graphics2d */
++ #define NEXUS_NUM_2D_ENGINES 1
++ #else
++ #define NEXUS_NUM_2D_ENGINES 2
++ #endif
++ #define NEXUS_NUM_3D_ENGINES 1
++ #define NEXUS_HAS_GFD_VERTICAL_UPSCALE 1
++ 
++ /* Cable Frontend */
++ /* The maximum number of input bands on 7425 are 9. Also 3128 has 8 DS + 1 OB */
++ #if NEXUS_FRONTEND_3128
++ #define NEXUS_3128_MAX_DOWNSTREAM_CHANNELS 8
++ #elif NEXUS_FRONTEND_3124
++ #define NEXUS_3128_MAX_DOWNSTREAM_CHANNELS 4
++ #elif NEXUS_FRONTEND_3123
++ #define NEXUS_3128_MAX_DOWNSTREAM_CHANNELS 3
++ #endif
++ #if NEXUS_USE_FRONTEND_DAUGHTER_CARD
++ #define NEXUS_NUM_FRONTEND_CARD_SLOTS 1
++ #endif
++ 
++ #define NEXUS_MAX_3255_ADSCHN 8
++ #define NEXUS_3255_OOB_TUNER_IFFREQ (1250000)/* 1.25 MHz */
++ #define NEXUS_SHARED_FRONTEND_INTERRUPT 1
++ 
++ 
++ /* GPIO */
++ #define NEXUS_NUM_SGPIO_PINS 6
++ #define NEXUS_NUM_GPIO_PINS 112
++ 
++ /* AON GPIO */
++ #define NEXUS_NUM_AON_SGPIO_PINS 6
++ #define NEXUS_NUM_AON_GPIO_PINS 18
++ 
++ #define NEXUS_NUM_SPI_CHANNELS 3
++ #define NEXUS_NUM_I2C_CHANNELS 5
++ 
++ /* I2C channel usage assignments. Refer to BSC table in the board schematics. */
++ #define NEXUS_I2C_CHANNEL_HDMI_TX         0
++ #define NEXUS_I2C_CHANNEL_HDMI_RX         1  /* Unused */
++ /*#define NEXUS_I2C_CHANNEL_MOCA          2     BCM3450. Used by the kernel. */
++ #define NEXUS_I2C_CHANNEL_LNA             3  /* BCM3405 */
++ #define NEXUS_I2C_CHANNEL_EXT_RFM         3  /* External RFM */
++ #define NEXUS_I2C_CHANNEL_TUNERS_4_5      3  /* BCM3112_4/_5(for SV board) */
++ #define NEXUS_I2C_CHANNEL_TUNERS_0_1_2_3  4  /* BCM3112_0/_1/_2/_3(for SV board) */
++ #define NEXUS_I2C_CHANNEL_DSTRM_TUNER     4  /* BCM3128(for VMS board) */
++ 
++ /* DMA Channels */
++ #define NEXUS_NUM_DMA_CHANNELS 32
++ 
++ /* UARTS */
++ #define NEXUS_NUM_UARTS 3
++ 
++ /* UHF INPUTS */
++ #define NEXUS_NUM_UHF_INPUTS 0
++ 
++ /* SMARTCARD CHANNELS */
++ #define NEXUS_NUM_SMARTCARD_CHANNELS 2
++ 
++ /* DVB-CI Details */
++ #define NEXUS_DVB_CI_CHIP_SELECT 2
++ #define NEXUS_DVB_CI_MEMORY_BASE (0x19800000)
++ #define NEXUS_DVB_CI_MEMORY_LENGTH (1024*1024)
++ 
++ /* Memory features */
++ #define NEXUS_NUM_MEMC 2
++ 
++ /* default heap indices, refer to memory map document  */
++ #define NEXUS_MEMC0_MAIN_HEAP           0
++ #define NEXUS_VIDEO_SECURE_HEAP          1 /* CABAC, CDB, RS and XC buffers */
++ #define NEXUS_MEMC0_PICTURE_BUFFER_HEAP  2 /* XVD/VDC picture buffers for display and decoder */
++ #define NEXUS_MEMC0_GRAPHICS_HEAP        3
++ #define NEXUS_SAGE_SECURE_HEAP           4
++ #define NEXUS_MEMC1_GRAPHICS_HEAP        5
++ #define NEXUS_MEMC1_PICTURE_BUFFER_HEAP  6 /* For encoder and decoder*/
++ #define NEXUS_MEMC1_DRIVER_HEAP          7
++ 
++ #define NEXUS_PLATFORM_DEFAULT_HEAP (0)
++ 
++ 
++ #define NEXUS_AVS_MONITOR           0
++ #endif /* #ifndef NEXUS_PLATFORM_FEATURES_H__ */
+diff -crBN Orig/nexus/platforms/97449/include/nexus_platform_version.h SeaChange/nexus/platforms/97449/include/nexus_platform_version.h
+*** Orig/nexus/platforms/97449/include/nexus_platform_version.h	1969-12-31 16:00:00.000000000 -0800
+--- SeaChange/nexus/platforms/97449/include/nexus_platform_version.h	2015-01-06 19:00:51.000000000 -0800
+***************
+*** 0 ****
+--- 1,83 ----
++ /***************************************************************************
++ *     (c)2004-2013 Broadcom Corporation
++ *
++ *  This program is the proprietary software of Broadcom Corporation and/or its licensors,
++ *  and may only be used, duplicated, modified or distributed pursuant to the terms and
++ *  conditions of a separate, written license agreement executed between you and Broadcom
++ *  (an "Authorized License").  Except as set forth in an Authorized License, Broadcom grants
++ *  no license (express or implied), right to use, or waiver of any kind with respect to the
++ *  Software, and Broadcom expressly reserves all rights in and to the Software and all
++ *  intellectual property rights therein.  IF YOU HAVE NO AUTHORIZED LICENSE, THEN YOU
++ *  HAVE NO RIGHT TO USE THIS SOFTWARE IN ANY WAY, AND SHOULD IMMEDIATELY
++ *  NOTIFY BROADCOM AND DISCONTINUE ALL USE OF THE SOFTWARE.
++ *
++ *  Except as expressly set forth in the Authorized License,
++ *
++ *  1.     This program, including its structure, sequence and organization, constitutes the valuable trade
++ *  secrets of Broadcom, and you shall use all reasonable efforts to protect the confidentiality thereof,
++ *  and to use this information only in connection with your use of Broadcom integrated circuit products.
++ *
++ *  2.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE SOFTWARE IS PROVIDED "AS IS"
++ *  AND WITH ALL FAULTS AND BROADCOM MAKES NO PROMISES, REPRESENTATIONS OR
++ *  WARRANTIES, EITHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE, WITH RESPECT TO
++ *  THE SOFTWARE.  BROADCOM SPECIFICALLY DISCLAIMS ANY AND ALL IMPLIED WARRANTIES
++ *  OF TITLE, MERCHANTABILITY, NONINFRINGEMENT, FITNESS FOR A PARTICULAR PURPOSE,
++ *  LACK OF VIRUSES, ACCURACY OR COMPLETENESS, QUIET ENJOYMENT, QUIET POSSESSION
++ *  OR CORRESPONDENCE TO DESCRIPTION. YOU ASSUME THE ENTIRE RISK ARISING OUT OF
++ *  USE OR PERFORMANCE OF THE SOFTWARE.
++ *
++ *  3.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL BROADCOM OR ITS
++ *  LICENSORS BE LIABLE FOR (i) CONSEQUENTIAL, INCIDENTAL, SPECIAL, INDIRECT, OR
++ *  EXEMPLARY DAMAGES WHATSOEVER ARISING OUT OF OR IN ANY WAY RELATING TO YOUR
++ *  USE OF OR INABILITY TO USE THE SOFTWARE EVEN IF BROADCOM HAS BEEN ADVISED OF
++ *  THE POSSIBILITY OF SUCH DAMAGES; OR (ii) ANY AMOUNT IN EXCESS OF THE AMOUNT
++ *  ACTUALLY PAID FOR THE SOFTWARE ITSELF OR U.S. $1, WHICHEVER IS GREATER. THESE
++ *  LIMITATIONS SHALL APPLY NOTWITHSTANDING ANY FAILURE OF ESSENTIAL PURPOSE OF
++ *  ANY LIMITED REMEDY.
++ *
++ * $brcm_Workfile: $
++ * $brcm_Revision: $
++ * $brcm_Date: $
++ *
++ * API Description:
++ *   API name: Platform
++ *    Specific APIs to initialze the a board.
++ *
++ * Revision History:
++ *
++ * $brcm_Log: $
++ *
++ ***************************************************************************/
++ #ifndef NEXUS_PLATFORM_VERSION_H__
++ #define NEXUS_PLATFORM_VERSION_H__
++ 
++ #include "nexus_platform_init.h"
++ 
++ #ifdef __cplusplus
++ extern "C"
++ {
++ #endif
++ 
++ #ifndef NEXUS_PLATFORM
++ #error NEXUS_PLATFORM is defined by the Nexus build system. If not defined, something must be wrong in the Makefiles.
++ #endif
++ 
++ /**
++ This section defines the version information for this Nexus software release.
++ This file is modified before each release to note the correct verion and any custom version information.
++ **/
++ #ifdef NEXUS_COMMON_PLATFORM_VERSION
++ /* use a common version for all platforms */
++ #define NEXUS_PLATFORM_97449  NEXUS_COMMON_PLATFORM_VERSION
++ #define NEXUS_PLATFORM_97449_CUSTOM NEXUS_COMMON_PLATFORM_VERSION_CUSTOM
++ #else
++ /* define a platform-specific version here */
++ #define NEXUS_PLATFORM_97435        NEXUS_PLATFORM_VERSION(0,0)
++ #define NEXUS_PLATFORM_97435_CUSTOM ""
++ #endif
++ 
++ #ifdef __cplusplus
++ } /* extern "C" */
++ #endif
++ 
++ #endif /* #ifndef NEXUS_PLATFORM_VERSION_H__ */
+diff -crBN Orig/nexus/platforms/97449/src/nexus_platform_97449.c SeaChange/nexus/platforms/97449/src/nexus_platform_97449.c
+*** Orig/nexus/platforms/97449/src/nexus_platform_97449.c	1969-12-31 16:00:00.000000000 -0800
+--- SeaChange/nexus/platforms/97449/src/nexus_platform_97449.c	2015-01-06 19:00:51.000000000 -0800
+***************
+*** 0 ****
+--- 1,614 ----
++ /***************************************************************************
++ *     (c)2010-2014 Broadcom Corporation
++ *
++ *  This program is the proprietary software of Broadcom Corporation and/or its licensors,
++ *  and may only be used, duplicated, modified or distributed pursuant to the terms and
++ *  conditions of a separate, written license agreement executed between you and Broadcom
++ *  (an "Authorized License").  Except as set forth in an Authorized License, Broadcom grants
++ *  no license (express or implied), right to use, or waiver of any kind with respect to the
++ *  Software, and Broadcom expressly reserves all rights in and to the Software and all
++ *  intellectual property rights therein.  IF YOU HAVE NO AUTHORIZED LICENSE, THEN YOU
++ *  HAVE NO RIGHT TO USE THIS SOFTWARE IN ANY WAY, AND SHOULD IMMEDIATELY
++ *  NOTIFY BROADCOM AND DISCONTINUE ALL USE OF THE SOFTWARE.
++ *
++ *  Except as expressly set forth in the Authorized License,
++ *
++ *  1.     This program, including its structure, sequence and organization, constitutes the valuable trade
++ *  secrets of Broadcom, and you shall use all reasonable efforts to protect the confidentiality thereof,
++ *  and to use this information only in connection with your use of Broadcom integrated circuit products.
++ *
++ *  2.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE SOFTWARE IS PROVIDED "AS IS"
++ *  AND WITH ALL FAULTS AND BROADCOM MAKES NO PROMISES, REPRESENTATIONS OR
++ *  WARRANTIES, EITHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE, WITH RESPECT TO
++ *  THE SOFTWARE.  BROADCOM SPECIFICALLY DISCLAIMS ANY AND ALL IMPLIED WARRANTIES
++ *  OF TITLE, MERCHANTABILITY, NONINFRINGEMENT, FITNESS FOR A PARTICULAR PURPOSE,
++ *  LACK OF VIRUSES, ACCURACY OR COMPLETENESS, QUIET ENJOYMENT, QUIET POSSESSION
++ *  OR CORRESPONDENCE TO DESCRIPTION. YOU ASSUME THE ENTIRE RISK ARISING OUT OF
++ *  USE OR PERFORMANCE OF THE SOFTWARE.
++ *
++ *  3.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL BROADCOM OR ITS
++ *  LICENSORS BE LIABLE FOR (i) CONSEQUENTIAL, INCIDENTAL, SPECIAL, INDIRECT, OR
++ *  EXEMPLARY DAMAGES WHATSOEVER ARISING OUT OF OR IN ANY WAY RELATING TO YOUR
++ *  USE OF OR INABILITY TO USE THE SOFTWARE EVEN IF BROADCOM HAS BEEN ADVISED OF
++ *  THE POSSIBILITY OF SUCH DAMAGES; OR (ii) ANY AMOUNT IN EXCESS OF THE AMOUNT
++ *  ACTUALLY PAID FOR THE SOFTWARE ITSELF OR U.S. $1, WHICHEVER IS GREATER. THESE
++ *  LIMITATIONS SHALL APPLY NOTWITHSTANDING ANY FAILURE OF ESSENTIAL PURPOSE OF
++ *  ANY LIMITED REMEDY.
++ *
++ * $brcm_Workfile: $
++ * $brcm_Revision: $
++ * $brcm_Date: $
++ *
++ * Revision History:
++ *
++ * $brcm_Log: $
++ *
++ ***************************************************************************/
++ #include "nexus_platform_priv.h"
++ #include "nexus_platform_features.h"
++ #include "bchp_common.h"
++ #include "bchp_sun_top_ctrl.h"
++ #include "bchp_memc_ddr_0.h"
++ #include "bchp_memc_ddr_1.h"
++ #include "bchp_clkgen.h"
++ #include "bchp_memc_arb_0.h"
++ #include "bchp_memc_arb_1.h"
++ 
++ BDBG_MODULE(nexus_platform_97449);
++ 
++ 
++ static void nexus_p_modifyMemoryRtsSettings(NEXUS_MemoryRtsSettings *pRtsSettings )
++ {
++ #if NEXUS_HAS_VIDEO_DECODER
++     switch (pRtsSettings->boxMode) {
++     case 1:
++     case 3:
++         BDBG_WRN(("Box mode 1 or 3 are not supported on this platform"));
++         break;
++     case 2:
++         pRtsSettings->videoDecoder[0].mfdIndex = 0;   /* main, upto 4K@60 10 bit  */
++         pRtsSettings->videoDecoder[0].avdIndex = 0;   /* HVD 0 */
++         pRtsSettings->videoDecoder[1].mfdIndex = 1;   /* pip upto 1080p60  */
++         pRtsSettings->videoDecoder[1].avdIndex = 1;   /* HVD 1 */
++ 
++         pRtsSettings->avd[0].memcIndex = 1;           /* main video, Luma for 4K   */
++         pRtsSettings->avd[0].secondaryMemcIndex = 0;  /* main video, Chroma for 4K  */
++         pRtsSettings->avd[0].splitBufferHevc = true;
++         pRtsSettings->avd[1].memcIndex = 0;           /* pip */
++         break;
++     case 4:
++         pRtsSettings->videoDecoder[0].mfdIndex = 0;   /* main, upto 4K@50 10 bit  */
++         pRtsSettings->videoDecoder[0].avdIndex = 0;   /* SHVD 0 */
++         pRtsSettings->videoDecoder[1].mfdIndex = 1;   /* pip upto 1080p50  */
++         pRtsSettings->videoDecoder[1].avdIndex = 1;   /* HVD 1 */
++         pRtsSettings->videoDecoder[2].mfdIndex = 2;   /* transcode upto 720p25  */
++         pRtsSettings->videoDecoder[2].avdIndex = 1;   /* HVD 1 */
++ 
++         pRtsSettings->avd[0].memcIndex = 1;           /* main video, Luma for 4K   */
++         pRtsSettings->avd[0].secondaryMemcIndex = 0;  /* main video, Chroma for 4K  */
++         pRtsSettings->avd[0].splitBufferHevc = true;
++         pRtsSettings->avd[1].memcIndex = 0;           /* pip & transcode */
++         break;
++ 	case 5:
++         pRtsSettings->videoDecoder[0].mfdIndex = 0;   /* main, upto 4K@60 10 bit  */
++         pRtsSettings->videoDecoder[0].avdIndex = 0;   /* SHVD 0 */
++         pRtsSettings->videoDecoder[1].mfdIndex = 2;   /* transcode upto 720p30  */
++         pRtsSettings->videoDecoder[1].avdIndex = 1;   /* HVD 1 */
++ 
++         pRtsSettings->avd[0].memcIndex = 1;           /* main video, Luma for 4K   */
++         pRtsSettings->avd[0].secondaryMemcIndex = 0;  /* main video, Chroma for 4K  */
++         pRtsSettings->avd[0].splitBufferHevc = true;
++         pRtsSettings->avd[1].memcIndex = 0;           /* transcode */
++         break;
++ 	case 6:
++         pRtsSettings->videoDecoder[0].mfdIndex = 0;   /* main, upto HEVC 1080p@60 or AVC1080i60 */
++         pRtsSettings->videoDecoder[0].avdIndex = 0;   /* HVD 0 */
++         pRtsSettings->videoDecoder[1].mfdIndex = 2;   /* 1st transcode upto 720p30  */
++         pRtsSettings->videoDecoder[1].avdIndex = 1;   /* HVD 1 */
++ 		pRtsSettings->videoDecoder[2].mfdIndex = 3;   /* 2nd transcode upto 720p30  */
++         pRtsSettings->videoDecoder[2].avdIndex = 1;   /* HVD 1 */
++ 
++         pRtsSettings->avd[0].memcIndex = 1;           /* main video*/
++ 		pRtsSettings->avd[0].splitBufferHevc = false;
++         pRtsSettings->avd[1].memcIndex = 0;           /* transcode */
++         break;
++     default:
++         pRtsSettings->videoDecoder[0].mfdIndex = 0;
++         pRtsSettings->videoDecoder[0].avdIndex = 0;
++         pRtsSettings->videoDecoder[1].mfdIndex = 2;
++         pRtsSettings->videoDecoder[1].avdIndex = 1;
++ 
++         pRtsSettings->avd[0].memcIndex = 0;
++         pRtsSettings->avd[1].memcIndex = 1;
++     break;
++     }
++ #endif
++ 
++ #if NEXUS_HAS_VIDEO_ENCODER
++     switch (pRtsSettings->boxMode) {
++     case 1:
++     case 3:
++         BDBG_WRN(("Box mode 1 & 3 are not supported on this platform"));
++         break;
++     case 2:
++         break;
++ 	case 4:
++ 	case 5:
++ 	case 6:
++         pRtsSettings->vce[0].heap.firmware = NEXUS_MEMC1_DRIVER_HEAP;/* NEXUS_MEMC1_DRIVER_HEAP*/
++         pRtsSettings->vce[0].heap.output = NEXUS_MEMC0_MAIN_HEAP;     /* CPU accessible */
++         pRtsSettings->vce[0].heap.secure  = NEXUS_VIDEO_SECURE_HEAP;  /* mapped for CDB capture; must be memc0 */
++         pRtsSettings->vce[0].heap.system  = NEXUS_MEMC1_DRIVER_HEAP; /* FW debug log buffer */
++         pRtsSettings->vce[0].memcIndex = 1;
++         break;
++ 	default:
++     case 0: /* 7455 C0 */
++         pRtsSettings->vce[0].heap.firmware = NEXUS_MEMC1_DRIVER_HEAP /* NEXUS_MEMC1_DRIVER_HEAP*/;
++         pRtsSettings->vce[0].heap.output = NEXUS_MEMC0_MAIN_HEAP;     /* CPU accessible */
++         pRtsSettings->vce[0].heap.secure  = NEXUS_VIDEO_SECURE_HEAP;  /* mapped for CDB capture; must be memc0 */
++         pRtsSettings->vce[0].heap.system  = NEXUS_MEMC1_DRIVER_HEAP; /* FW debug log buffer */
++         pRtsSettings->vce[0].memcIndex = 1;
++         break;
++     }
++ #endif
++ 
++ #if NEXUS_HAS_DISPLAY
++     switch (pRtsSettings->boxMode) {
++     case 1:
++     case 3:
++         BDBG_WRN(("Box mode 1 & 3 are not supported on this platform"));
++         break;
++     case 2:
++         pRtsSettings->display[0].videoWindow[0].memcIndex = 1;  /* main:cap0,vfd0,mcvp  */
++         pRtsSettings->display[0].videoWindow[1].memcIndex = 0;  /* pip:cap1,vfd1 */
++         pRtsSettings->display[1].videoWindow[0].memcIndex = 0;  /* main:cap2,vfd2 */
++         pRtsSettings->display[1].videoWindow[1].memcIndex = 0;  /* pip:cap3,vfd3 */
++         break;
++     case 4:
++         pRtsSettings->display[0].videoWindow[0].memcIndex = 1;  /* main:cap0,vfd0,mcvp  */
++         pRtsSettings->display[0].videoWindow[1].memcIndex = 0;  /* pip:cap1,vfd1 */
++         pRtsSettings->display[1].videoWindow[0].memcIndex = 0;  /* main:cap2,vfd2 */
++         pRtsSettings->display[1].videoWindow[1].memcIndex = 0;  /* pip:cap3,vfd3 */
++         pRtsSettings->display[4].videoWindow[0].memcIndex = 0;  /* xcode:cap5,vfd5,madr2 */
++         break;
++ 	case 5:
++         pRtsSettings->display[0].videoWindow[0].memcIndex = 0;  /* main:cap0,vfd0,mcvp  */
++         pRtsSettings->display[1].videoWindow[0].memcIndex = 1;  /* main:cap2,vfd2 */
++ 		pRtsSettings->display[4].videoWindow[0].memcIndex = 0;  /* xcode:cap5,vfd5,madr2 */
++         break;
++ 	case 6:
++ 		pRtsSettings->display[0].videoWindow[0].memcIndex = 1;  /* main:cap0,vfd0,mcvp(MDI0,main) */
++ 		pRtsSettings->display[1].videoWindow[0].memcIndex = 1;  /* main:cap2,vfd2 (SDout) */
++ 		pRtsSettings->display[4].videoWindow[0].memcIndex = 1;  /* 1st xcode:cap5,vfd5,madr2 */
++ 		pRtsSettings->display[3].videoWindow[0].memcIndex = 1;  /* 2nd xcode:cap4,vfd4,madr1 */
++ 		break;
++ 	default:
++     case 0: /* 7449 C0 */
++     #if NEXUS_PLATFORM_97252_1U2T
++         pRtsSettings->display[0].videoWindow[0].memcIndex = 1;
++         pRtsSettings->display[1].videoWindow[0].memcIndex = 0;
++         pRtsSettings->display[3].videoWindow[0].memcIndex = 1;
++         pRtsSettings->display[4].videoWindow[0].memcIndex = 0;
++     #elif NEXUS_PLATFORM_97252_4K1T
++         pRtsSettings->display[0].videoWindow[0].memcIndex = 1;
++         pRtsSettings->display[1].videoWindow[0].memcIndex = 0;
++         pRtsSettings->display[4].videoWindow[0].memcIndex = 0;
++     #elif NEXUS_PLATFORM_97252_4KSTB
++         pRtsSettings->display[0].videoWindow[0].memcIndex = 1;
++         pRtsSettings->display[0].videoWindow[1].memcIndex = 0;
++         pRtsSettings->display[1].videoWindow[0].memcIndex = 0;
++         pRtsSettings->display[1].videoWindow[1].memcIndex = 0;
++     #else
++         pRtsSettings->display[0].videoWindow[0].memcIndex = 1;
++         pRtsSettings->display[1].videoWindow[0].memcIndex = 0;
++         pRtsSettings->display[4].videoWindow[0].memcIndex = 0;
++     #endif
++         break;
++     }
++     pRtsSettings->rdcMemcIndex = 0;
++ #endif
++ }
++ 
++ static void nexus_p_modifyMemoryConfiguration(NEXUS_MemoryConfiguration *pConfig)
++ {
++ #if NEXUS_HAS_DISPLAY
++     pConfig->display.primaryDisplayHeapIndex = NEXUS_MEMC1_PICTURE_BUFFER_HEAP;
++     pConfig->display.rdcHeapIndex = NEXUS_MEMC0_MAIN_HEAP;
++ #endif
++ #if NEXUS_HAS_VIDEO_DECODER
++     pConfig->videoDecoder.hostAccessibleHeapIndex = NEXUS_MEMC0_MAIN_HEAP;
++ #endif
++ }
++ 
++ static void nexus_p_modifyDefaultMemoryConfigurationSettings( NEXUS_MemoryConfigurationSettings *pSettings )
++ {
++     unsigned boxMode = g_pPreInitState->boxMode;
++     unsigned i;
++ #if NEXUS_HAS_VIDEO_DECODER
++     for (i=0;i<NEXUS_NUM_VIDEO_DECODERS;i++) {
++         pSettings->videoDecoder[i].supportedCodecs[NEXUS_VideoCodec_eH265] = true;
++     }
++     pSettings->videoDecoder[0].supportedCodecs[NEXUS_VideoCodec_eH264_Mvc] = true;
++ 
++     switch (boxMode) {
++     case 3:
++     case 1:
++         BDBG_WRN(("Box mode 1 & 3 are not supported on this platform"));
++         break;
++     case 2:
++         pSettings->videoDecoder[0].colorDepth = 10;
++         pSettings->videoDecoder[0].maxFormat = NEXUS_VideoFormat_e3840x2160p60hz;
++ 		pSettings->videoDecoder[0].mosaic.maxNumber =3;
++         pSettings->videoDecoder[0].mosaic.maxHeight =1920;
++         pSettings->videoDecoder[0].mosaic.maxWidth=1088;
++         pSettings->videoDecoder[2].used = false;
++         pSettings->videoDecoder[3].used = false;
++         pSettings->videoDecoder[4].used = false;
++         pSettings->videoDecoder[5].used = false;
++         break;
++ 	case 4:
++ 	case 5:
++         pSettings->videoDecoder[0].colorDepth = 10;
++         pSettings->videoDecoder[0].maxFormat = NEXUS_VideoFormat_e3840x2160p60hz;
++         pSettings->videoDecoder[3].used = false;
++         pSettings->videoDecoder[4].used = false;
++         pSettings->videoDecoder[5].used = false;
++         break;
++ 	case 6:
++ 		pSettings->videoDecoder[0].colorDepth = 8;
++ 		pSettings->videoDecoder[0].maxFormat = NEXUS_VideoFormat_e1080p60hz;
++         pSettings->videoDecoder[0].used = true;
++         pSettings->videoDecoder[1].colorDepth = 8;
++ 		pSettings->videoDecoder[1].maxFormat = NEXUS_VideoFormat_e1080p60hz;
++         pSettings->videoDecoder[1].used = true;
++         pSettings->videoDecoder[2].colorDepth = 8;
++ 		pSettings->videoDecoder[2].maxFormat = NEXUS_VideoFormat_e1080p60hz;
++         pSettings->videoDecoder[2].used = true;
++         pSettings->videoDecoder[3].used = false;
++         pSettings->videoDecoder[4].used = false;
++ 		pSettings->videoDecoder[5].used = false;
++ 		break;
++ 	default:
++     case 0: /* 7252 C0 */
++         #if NEXUS_PLATFORM_97252_1U2T
++         #else
++         pSettings->videoDecoder[0].maxFormat = NEXUS_VideoFormat_e3840x2160p30hz;
++         #endif
++         break;
++     }
++ #if NEXUS_NUM_STILL_DECODES
++     pSettings->stillDecoder[0].used = true;
++ if(boxMode == 6)
++     pSettings->stillDecoder[0].maxFormat = NEXUS_VideoFormat_e1080p60hz;
++ else
++     pSettings->stillDecoder[0].maxFormat = NEXUS_VideoFormat_e3840x2160p30hz;
++     pSettings->stillDecoder[0].supportedCodecs[NEXUS_VideoCodec_eH265] = true;
++ #endif
++ #endif
++ 
++ #if NEXUS_HAS_VIDEO_ENCODER
++     switch (boxMode) {
++     default:
++     case 1:
++     case 2:
++         for (i=0;i<NEXUS_NUM_VIDEO_ENCODERS;i++) {
++             /* no encode support for this box mode */
++             pSettings->videoEncoder[i].used = false;
++         }
++         break;
++     case 3:
++         BDBG_ERR(("box mode %d is not supported on this platform",boxMode));
++         break;
++     case 4: /* single 720p25 encode */
++         for (i=0;i<NEXUS_NUM_VIDEO_ENCODERS;i++) {
++             pSettings->videoEncoder[i].used = (i < 1);
++             pSettings->videoEncoder[i].maxWidth  = 1280;
++             pSettings->videoEncoder[i].maxHeight = 720;
++             pSettings->videoEncoder[i].interlaced = false;
++         }
++         break;
++ 	case 5: /* single 720p30 encode */
++ 		for (i=0;i<NEXUS_NUM_VIDEO_ENCODERS;i++) {
++ 			pSettings->videoEncoder[i].used = (i < 1);
++ 			pSettings->videoEncoder[i].maxWidth  = 1280;
++ 			pSettings->videoEncoder[i].maxHeight = 720;
++ 			pSettings->videoEncoder[i].interlaced = true;
++ 		}
++ 		break;
++ 	case 6: /* Dual 720p30 encode */
++ 		for (i=0;i<NEXUS_NUM_VIDEO_ENCODERS;i++) {
++ 			pSettings->videoEncoder[i].used = (i < 2);
++ 			pSettings->videoEncoder[i].maxWidth  = 1280;
++ 			pSettings->videoEncoder[i].maxHeight = 720;
++ 			pSettings->videoEncoder[i].interlaced = true;
++ 		}
++ 		break;
++ 	case 0: /* 7252 C0 */
++         break;
++     }
++ #else
++     BSTD_UNUSED(i);
++ #endif
++ 
++ #if NEXUS_HAS_DISPLAY /* NOTE: override maxFormat = 0 means to disable the display */
++     switch (boxMode) {
++     case 3:
++     case 1:
++         BDBG_WRN(("Box mode 1 & 3 are not supported on this platform"));
++         break;
++     case 2:
++         pSettings->display[0].maxFormat = NEXUS_VideoFormat_e3840x2160p60hz;
++         pSettings->display[2].maxFormat = 0;
++         pSettings->display[3].maxFormat = 0;
++         pSettings->display[4].maxFormat = 0;
++         pSettings->display[5].maxFormat = 0;
++         break;
++ 	case 4:
++ 	case 5: /* single encode on display 4 */
++         pSettings->display[0].maxFormat = NEXUS_VideoFormat_e3840x2160p60hz;
++         pSettings->display[3].maxFormat = 0;
++         pSettings->display[5].maxFormat = 0;
++         break;
++ 	case 6: /* dual encodes on display 4/3 */
++         pSettings->display[0].maxFormat = NEXUS_VideoFormat_e3840x2160p60hz;
++         pSettings->display[0].window[1].used = false; /* disable pip window */
++         pSettings->display[1].window[1].used = false; /* disable pip window */
++         pSettings->display[2].maxFormat = 0;
++         pSettings->display[3].maxFormat = NEXUS_VideoFormat_e720p;
++         pSettings->display[3].window[0].used = true;
++         pSettings->display[4].maxFormat = NEXUS_VideoFormat_e720p;
++         pSettings->display[4].window[0].used = true;
++         pSettings->display[5].maxFormat = 0;
++         break;
++     default:
++     case 0: /* 7252 C0 */
++         pSettings->display[0].maxFormat = NEXUS_VideoFormat_e3840x2160p30hz;
++         break;
++     }
++ #endif
++ }
++ 
++ void NEXUS_Platform_P_SetSpecificOps(struct NEXUS_PlatformSpecificOps *pOps)
++ {
++     pOps->modifyMemoryConfiguration = nexus_p_modifyMemoryConfiguration;
++     pOps->modifyDefaultMemoryConfigurationSettings = nexus_p_modifyDefaultMemoryConfigurationSettings;
++     pOps->modifyDefaultMemoryRtsSettings = nexus_p_modifyMemoryRtsSettings;
++ }
++ 
++ void NEXUS_Platform_P_GetDefaultSettings(NEXUS_PlatformSettings *pSettings)
++ {
++     unsigned managed = NEXUS_MEMORY_TYPE_MANAGED;
++     unsigned not_mapped = NEXUS_MEMORY_TYPE_NOT_MAPPED;
++ 
++ #if BMMA_USE_STUB
++     managed = 0;
++     not_mapped = 0;
++ #endif
++     pSettings->heap[NEXUS_MEMC0_MAIN_HEAP].memcIndex = 0;
++     pSettings->heap[NEXUS_MEMC0_MAIN_HEAP].subIndex = 0;
++     pSettings->heap[NEXUS_MEMC0_MAIN_HEAP].size =  192*1024*1024; /*decoder FW+general,xpt playback,audio other general purpose */
++     pSettings->heap[NEXUS_MEMC0_MAIN_HEAP].alignment = 16*1024*1024;
++     pSettings->heap[NEXUS_MEMC0_MAIN_HEAP].memoryType = NEXUS_MemoryType_eFull;
++ 
++     pSettings->heap[NEXUS_VIDEO_SECURE_HEAP].memcIndex = 0;
++     pSettings->heap[NEXUS_VIDEO_SECURE_HEAP].subIndex = 0;
++     pSettings->heap[NEXUS_VIDEO_SECURE_HEAP].size = 124*1024 *1024; /* CABACs(28)for 3 decoders + RAVE CDB(6+15) */
++     pSettings->heap[NEXUS_VIDEO_SECURE_HEAP].alignment = 16*1024*1024;
++     pSettings->heap[NEXUS_VIDEO_SECURE_HEAP].memoryType = NEXUS_MemoryType_eSecure;
++ 
++     pSettings->heap[NEXUS_MEMC0_PICTURE_BUFFER_HEAP].memcIndex = 0;
++     pSettings->heap[NEXUS_MEMC0_PICTURE_BUFFER_HEAP].subIndex = 1;
++     pSettings->heap[NEXUS_MEMC0_PICTURE_BUFFER_HEAP].size = 0; /* calculated */
++     pSettings->heap[NEXUS_MEMC0_PICTURE_BUFFER_HEAP].memoryType = managed | not_mapped;
++ 
++     switch(g_pPreInitState->boxMode)
++     {
++     case 3:
++     case 1:
++         BDBG_WRN(("Box mode 1 & 3 are not supported on this platform"));
++         break;
++     case 2:
++ 	pSettings->heap[NEXUS_MEMC0_GRAPHICS_HEAP].memcIndex = 0; /* graphics for main display is  on memc0 */
++         pSettings->heap[NEXUS_MEMC0_GRAPHICS_HEAP].subIndex = 0;
++         pSettings->heap[NEXUS_MEMC0_GRAPHICS_HEAP].size = 164*1024*1024; /*192+124+148 heap should be < 528 */
++         pSettings->heap[NEXUS_MEMC0_GRAPHICS_HEAP].memoryType = NEXUS_MemoryType_eApplication;
++ 
++         pSettings->heap[NEXUS_MEMC1_GRAPHICS_HEAP].memcIndex = 1;
++         pSettings->heap[NEXUS_MEMC1_GRAPHICS_HEAP].subIndex = 0;
++         pSettings->heap[NEXUS_MEMC1_GRAPHICS_HEAP].size = 384*1024*1024;
++         pSettings->heap[NEXUS_MEMC1_GRAPHICS_HEAP].memoryType = NEXUS_MemoryType_eApplication;
++ 		break;
++ 	case 4:
++ 	case 6:
++         pSettings->heap[NEXUS_MEMC0_GRAPHICS_HEAP].memcIndex = 0; /* graphics for main display is  on memc0 */
++         pSettings->heap[NEXUS_MEMC0_GRAPHICS_HEAP].subIndex = 0;
++         pSettings->heap[NEXUS_MEMC0_GRAPHICS_HEAP].size = 164*1024*1024; /*192+124+148 heap should be < 528 */
++         pSettings->heap[NEXUS_MEMC0_GRAPHICS_HEAP].memoryType = NEXUS_MemoryType_eApplication;
++ 
++         pSettings->heap[NEXUS_MEMC1_GRAPHICS_HEAP].memcIndex = 1;
++         pSettings->heap[NEXUS_MEMC1_GRAPHICS_HEAP].subIndex = 0;
++         pSettings->heap[NEXUS_MEMC1_GRAPHICS_HEAP].size = 384*1024*1024;
++         pSettings->heap[NEXUS_MEMC1_GRAPHICS_HEAP].memoryType = NEXUS_MemoryType_eApplication;
++         break;
++     case 5:
++         pSettings->heap[NEXUS_VIDEO_SECURE_HEAP].subIndex = 1;
++         pSettings->heap[NEXUS_MEMC0_PICTURE_BUFFER_HEAP].subIndex = 0;
++ 
++ 		pSettings->heap[NEXUS_MEMC0_GRAPHICS_HEAP].memcIndex = 0; /* graphics for main display is  on memc1 */
++ 		pSettings->heap[NEXUS_MEMC0_GRAPHICS_HEAP].subIndex = 0;
++ 		pSettings->heap[NEXUS_MEMC0_GRAPHICS_HEAP].size = 0;
++ 		pSettings->heap[NEXUS_MEMC0_GRAPHICS_HEAP].memoryType = NEXUS_MemoryType_eApplication;
++ 
++ 		pSettings->heap[NEXUS_MEMC1_GRAPHICS_HEAP].memcIndex = 1;
++ 		pSettings->heap[NEXUS_MEMC1_GRAPHICS_HEAP].subIndex = 0;
++ 		pSettings->heap[NEXUS_MEMC1_GRAPHICS_HEAP].size = 512*1024*1024;
++ 		pSettings->heap[NEXUS_MEMC1_GRAPHICS_HEAP].memoryType = NEXUS_MemoryType_eApplication;
++ 		break;
++ 	default:
++     case 0:
++         pSettings->heap[NEXUS_MEMC0_GRAPHICS_HEAP].memcIndex = 0;
++         pSettings->heap[NEXUS_MEMC0_GRAPHICS_HEAP].subIndex = 0;
++         pSettings->heap[NEXUS_MEMC0_GRAPHICS_HEAP].size = 0;
++         pSettings->heap[NEXUS_MEMC0_GRAPHICS_HEAP].memoryType = NEXUS_MemoryType_eApplication;
++ 
++         pSettings->heap[NEXUS_MEMC1_GRAPHICS_HEAP].memcIndex = 1;
++         pSettings->heap[NEXUS_MEMC1_GRAPHICS_HEAP].subIndex = 0;
++         pSettings->heap[NEXUS_MEMC1_GRAPHICS_HEAP].size = 512*1024*1024;
++         pSettings->heap[NEXUS_MEMC1_GRAPHICS_HEAP].memoryType = NEXUS_MemoryType_eApplication;
++         break;
++ 
++     }
++     pSettings->heap[NEXUS_SAGE_SECURE_HEAP].memcIndex = 1;
++     pSettings->heap[NEXUS_SAGE_SECURE_HEAP].subIndex = 0;
++     pSettings->heap[NEXUS_SAGE_SECURE_HEAP].size =  32*1024*1024; /*Sage Secure heap */
++     pSettings->heap[NEXUS_SAGE_SECURE_HEAP].alignment = 16*1024*1024;
++     pSettings->heap[NEXUS_SAGE_SECURE_HEAP].memoryType = NEXUS_MemoryType_eSecure;
++ 
++     pSettings->heap[NEXUS_MEMC1_PICTURE_BUFFER_HEAP].memcIndex = 1;
++     pSettings->heap[NEXUS_MEMC1_PICTURE_BUFFER_HEAP].subIndex = 0;
++     pSettings->heap[NEXUS_MEMC1_PICTURE_BUFFER_HEAP].size = 0; /* calculated */
++     pSettings->heap[NEXUS_MEMC1_PICTURE_BUFFER_HEAP].memoryType = managed | not_mapped;
++ 
++     pSettings->heap[NEXUS_MEMC1_DRIVER_HEAP].memcIndex = 1;
++     pSettings->heap[NEXUS_MEMC1_DRIVER_HEAP].subIndex = 0;
++     pSettings->heap[NEXUS_MEMC1_DRIVER_HEAP].size = 4*1024*1024;  /* RDC heap plus margin */
++     pSettings->heap[NEXUS_MEMC1_DRIVER_HEAP].memoryType = managed | NEXUS_MEMORY_TYPE_DRIVER_UNCACHED|NEXUS_MEMORY_TYPE_DRIVER_CACHED|NEXUS_MEMORY_TYPE_APPLICATION_CACHED;
++ }
++ 
++ /***************************************************************************
++ Summary:
++     Based on the RTS settings for each platform, framebuffer for each display
++     could be placed on any heaps. This API shall return the heap handle
++     for each frame buffer.
++ See Also:
++     NEXUS_Platform_P_GetFramebufferHeap
++  ***************************************************************************/
++ NEXUS_HeapHandle NEXUS_Platform_P_GetFramebufferHeap(unsigned displayIndex)
++ {
++     NEXUS_HeapHandle heapHandle=NULL;
++ 
++     switch (g_NEXUS_platformHandles.rtsSettings.boxMode) {
++     case 3:
++     case 1:
++         BDBG_WRN(("Box mode 1 & 3 are not supported on this platform"));
++         break;
++     case 2:
++         switch (displayIndex)
++         {
++         case 0: /* 7252 D0 */ /* HD Display */
++ 	    heapHandle = g_pCoreHandles->heap[NEXUS_MEMC0_GRAPHICS_HEAP].nexus;
++             break;
++ 	case 1: /* SD Display */
++         case NEXUS_OFFSCREEN_SURFACE:
++         case NEXUS_SECONDARY_OFFSCREEN_SURFACE:
++             heapHandle = g_pCoreHandles->heap[NEXUS_MEMC1_GRAPHICS_HEAP].nexus;
++         break;
++         default:
++             BDBG_ERR(("Invalid display index %d",displayIndex));
++         }
++         break;
++ 	case 4:
++     case 5:
++         heapHandle = g_pCoreHandles->heap[NEXUS_MEMC1_GRAPHICS_HEAP].nexus;
++         break;
++ 	case 6:
++ 	switch (displayIndex)
++ 		{
++ 		case 0: /* 7252 D0 */ /* HD Display */
++ 			heapHandle = g_pCoreHandles->heap[NEXUS_MEMC0_GRAPHICS_HEAP].nexus;
++ 			break;
++ 		case 1: /* Secondary Display Graphic */
++ 			heapHandle = g_pCoreHandles->heap[NEXUS_MEMC1_GRAPHICS_HEAP].nexus;
++ 			break;
++ 		case NEXUS_OFFSCREEN_SURFACE:
++ 		case NEXUS_SECONDARY_OFFSCREEN_SURFACE:
++ 			 heapHandle = g_pCoreHandles->heap[NEXUS_MEMC1_GRAPHICS_HEAP].nexus;
++ 			 break;
++ 	    case 3:
++ 		case 4: /* xcode Display aka 3rd and 4th Display */
++ 			heapHandle = g_pCoreHandles->heap[NEXUS_MEMC1_GRAPHICS_HEAP].nexus;
++ 			break;
++ 		default:
++ 			BDBG_ERR(("Invalid display index %d",displayIndex));
++ 		}
++ 		break;
++ 	default:
++     case 0: /* 7252 C0 */
++         switch (displayIndex)
++         {
++         case NEXUS_OFFSCREEN_SURFACE:
++         case NEXUS_SECONDARY_OFFSCREEN_SURFACE:
++         case 0: /* 7252 C0 */ /* HD Display */
++         case 1: /* SD Display */
++         case 2: /* SD1 display */
++             heapHandle = g_pCoreHandles->heap[NEXUS_MEMC1_GRAPHICS_HEAP].nexus;
++         break;
++         case 3: /* xcode3 Display aka 3rd Display*/
++         case 4: /* xcode2 Display aka 4th Display */
++             heapHandle = g_pCoreHandles->heap[NEXUS_MEMC1_GRAPHICS_HEAP].nexus;
++             break;
++         default:
++             BDBG_ERR(("Invalid display index %d",displayIndex));
++         }
++     }
++  return heapHandle;
++ }
++ 
++ NEXUS_Error NEXUS_Platform_P_InitBoard(void)
++ {
++     char* boxMode;
++     char* boardType;
++ 
++     switch (g_NEXUS_platformHandles.rtsSettings.boxMode) {
++     case 3:
++     case 1:
++         BDBG_WRN(("Box mode 1 & 3 are not supported on this platform"));
++         boxMode = "Unknown";
++         break;
++     case 2:
++         boxMode = "box2";
++         BDBG_WRN(("*** 97252D0 BoxMode 2:Display:UHD/SD, Video:UHD Main/HD PIP***"));
++         break;
++     case 4:
++         boxMode = "box4";
++         BDBG_WRN(("*** 97252D0 BoxMode 4:Display:UHD/SD, Video:UHD Main/HD PIP, Transcode:1080i50->720p25(Max)***"));
++         break;
++ 	case 5:
++ 		boxMode = "box5";
++ 		BDBG_WRN(("*** 97252D0 BoxMode 5:Display:UHD/SD, Video:UHD Main/HD NO-PIP, Transcode:1080i60->720p30(Max)***"));
++ 		break;
++ 	case 6:
++ 		boxMode = "box6";
++ 		BDBG_WRN(("*** 97252D0 BoxMode 6:Display:UHD/SD, Video:HD Main/HD NO-PIP, Dual Transcode:1080p60->720p60(Max)***"));
++ 		break;
++     default:
++     case 0: /* 7252 C0 */
++     #if NEXUS_PLATFORM_97252_4KSTB
++         boxMode = "4Kstb";
++     #elif NEXUS_PLATFORM_97252_4K1T
++         boxMode = "4K1t";
++     #elif NEXUS_PLATFORM_97252_1U2T
++         boxMode = "1U2t";
++     #else
++         boxMode = "Unknown";
++     #endif
++     break;
++     }
++ 
++ #if NEXUS_USE_7252_SV
++     boardType ="SV";
++ #elif NEXUS_USE_7252_C
++     boardType ="C";
++ #else
++     boardType ="Unknown";
++ #endif
++ 
++     BDBG_WRN(("*** Initializing 97252 %s board,sw box mode %s ***",boardType,boxMode));
++ 
++     return 0;
++ }
++ 
++ void NEXUS_Platform_P_UninitBoard(void)
++ {
++     return;
++ }
+diff -crBN Orig/nexus/platforms/97449/src/nexus_platform_frontend.c SeaChange/nexus/platforms/97449/src/nexus_platform_frontend.c
+*** Orig/nexus/platforms/97449/src/nexus_platform_frontend.c	1969-12-31 16:00:00.000000000 -0800
+--- SeaChange/nexus/platforms/97449/src/nexus_platform_frontend.c	2015-01-06 19:00:51.000000000 -0800
+***************
+*** 0 ****
+--- 1,767 ----
++  /***************************************************************************
++ *     (c)2004-2013 Broadcom Corporation
++ *
++ *  This program is the proprietary software of Broadcom Corporation and/or its licensors,
++ *  and may only be used, duplicated, modified or distributed pursuant to the terms and
++ *  conditions of a separate, written license agreement executed between you and Broadcom
++ *  (an "Authorized License").  Except as set forth in an Authorized License, Broadcom grants
++ *  no license (express or implied), right to use, or waiver of any kind with respect to the
++ *  Software, and Broadcom expressly reserves all rights in and to the Software and all
++ *  intellectual property rights therein.  IF YOU HAVE NO AUTHORIZED LICENSE, THEN YOU
++ *  HAVE NO RIGHT TO USE THIS SOFTWARE IN ANY WAY, AND SHOULD IMMEDIATELY
++ *  NOTIFY BROADCOM AND DISCONTINUE ALL USE OF THE SOFTWARE.
++ *
++ *  Except as expressly set forth in the Authorized License,
++ *
++ *  1.     This program, including its structure, sequence and organization, constitutes the valuable trade
++ *  secrets of Broadcom, and you shall use all reasonable efforts to protect the confidentiality thereof,
++ *  and to use this information only in connection with your use of Broadcom integrated circuit products.
++ *
++ *  2.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE SOFTWARE IS PROVIDED "AS IS"
++ *  AND WITH ALL FAULTS AND BROADCOM MAKES NO PROMISES, REPRESENTATIONS OR
++ *  WARRANTIES, EITHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE, WITH RESPECT TO
++ *  THE SOFTWARE.  BROADCOM SPECIFICALLY DISCLAIMS ANY AND ALL IMPLIED WARRANTIES
++ *  OF TITLE, MERCHANTABILITY, NONINFRINGEMENT, FITNESS FOR A PARTICULAR PURPOSE,
++ *  LACK OF VIRUSES, ACCURACY OR COMPLETENESS, QUIET ENJOYMENT, QUIET POSSESSION
++ *  OR CORRESPONDENCE TO DESCRIPTION. YOU ASSUME THE ENTIRE RISK ARISING OUT OF
++ *  USE OR PERFORMANCE OF THE SOFTWARE.
++ *
++ *  3.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL BROADCOM OR ITS
++ *  LICENSORS BE LIABLE FOR (i) CONSEQUENTIAL, INCIDENTAL, SPECIAL, INDIRECT, OR
++ *  EXEMPLARY DAMAGES WHATSOEVER ARISING OUT OF OR IN ANY WAY RELATING TO YOUR
++ *  USE OF OR INABILITY TO USE THE SOFTWARE EVEN IF BROADCOM HAS BEEN ADVISED OF
++ *  THE POSSIBILITY OF SUCH DAMAGES; OR (ii) ANY AMOUNT IN EXCESS OF THE AMOUNT
++ *  ACTUALLY PAID FOR THE SOFTWARE ITSELF OR U.S. $1, WHICHEVER IS GREATER. THESE
++ *  LIMITATIONS SHALL APPLY NOTWITHSTANDING ANY FAILURE OF ESSENTIAL PURPOSE OF
++ *  ANY LIMITED REMEDY.
++ *
++ * Module Description:
++ * $brcm_Workfile: $
++ * $brcm_Revision: $
++ * $brcm_Date: $
++ *
++ * API Description:
++ *   API name: Platform linuxuser
++ *    linuxuser OS routines
++ *
++ *
++ * Revision History:
++ *
++ * $brcm_Log: $
++ *
++ ***************************************************************************/
++ #include "nexus_types.h"
++ #include "nexus_platform.h"
++ #include "priv/nexus_core.h"
++ #include "nexus_platform_features.h"
++ #include "nexus_platform_priv.h"
++ #include "nexus_base.h"
++ #include "nexus_input_band.h"
++ #include "bchp_gio.h"
++ #if NEXUS_USE_7449_VMS_SFF || NEXUS_USE_7449_SV
++ #include "nexus_frontend_3128.h"
++ #elif NEXUS_USE_7449_C
++ #include "nexus_frontend_3461.h"
++ #endif
++ #include "bchp_sun_top_ctrl.h"
++ 
++ BDBG_MODULE(nexus_platform_frontend);
++ 
++ #if (NEXUS_USE_7449_VMS_SFF && NEXUS_HAS_GPIO) || (NEXUS_USE_7449_SV && BCHP_VER >= BCHP_VER_C0)
++ #if NEXUS_HAS_GPIO
++ static NEXUS_GpioHandle gpioHandle = NULL;
++ #endif
++ 
++ NEXUS_Error NEXUS_Platform_InitFrontend(void)
++ {
++     NEXUS_Error rc = NEXUS_SUCCESS;
++     NEXUS_PlatformConfiguration *pConfig = &g_NEXUS_platformHandles.config;
++     NEXUS_FrontendUserParameters userParams;
++     unsigned i = 0;
++     NEXUS_3128ProbeResults results;
++     NEXUS_Frontend3128Settings st3128Settings;
++     NEXUS_FrontendDevice3128OpenSettings st3128DeviceOpenSettings;
++ #if NEXUS_USE_7449_VMS_SFF
++     NEXUS_GpioSettings gpioSettings;
++ #endif
++     BREG_Handle hReg;
++ 
++     NEXUS_Frontend_GetDefault3128Settings(&st3128Settings);
++     NEXUS_FrontendDevice_GetDefault3128OpenSettings(&st3128DeviceOpenSettings);
++ 
++ #if NEXUS_USE_7449_VMS_SFF
++     NEXUS_Gpio_GetDefaultSettings(NEXUS_GpioType_eStandard, &gpioSettings);
++     gpioSettings.mode = NEXUS_GpioMode_eInput;
++     gpioSettings.interruptMode = NEXUS_GpioInterrupt_eFallingEdge;
++     gpioHandle = NEXUS_Gpio_Open(NEXUS_GpioType_eStandard,23, &gpioSettings);
++ 
++     if (NULL == gpioHandle)
++     {
++       BDBG_ERR(("Unable to open GPIO for 3128 frontend interrupt."));
++       return BERR_NOT_INITIALIZED;
++     }
++ #else
++     st3128DeviceOpenSettings.interruptMode = NEXUS_FrontendInterruptMode_ePolling;
++ #endif
++     st3128DeviceOpenSettings.gpioInterrupt = 0;
++     st3128DeviceOpenSettings.isrNumber = 0;
++ #if NEXUS_USE_7449_SV
++     st3128DeviceOpenSettings.i2cDevice = pConfig->i2c[3];    /* Onboard tuner/demod use BSC_M3.*/
++ #else
++     st3128DeviceOpenSettings.i2cDevice = pConfig->i2c[4];    /* Onboard tuner/demod use BSC_M4.*/
++ #endif
++     st3128DeviceOpenSettings.i2cAddr = 0x6c ;
++     st3128DeviceOpenSettings.outOfBand.ifFrequency = 0;
++     st3128DeviceOpenSettings.inBandOpenDrain=true;
++     st3128DeviceOpenSettings.loadAP = true;
++     st3128DeviceOpenSettings.configureWatchdog = false;
++     st3128DeviceOpenSettings.isMtsif = true;
++ 
++     hReg = g_pCoreHandles->reg;
++ 
++     st3128DeviceOpenSettings.pinmux.data[0] = BCHP_SUN_TOP_CTRL_PIN_MUX_CTRL_11;
++     st3128DeviceOpenSettings.pinmux.data[1] = (BREG_Read32(hReg, BCHP_SUN_TOP_CTRL_PIN_MUX_CTRL_11) | 0x10000);
++ 
++     st3128DeviceOpenSettings.pinmux.data[2] = BCHP_SUN_TOP_CTRL_PIN_MUX_CTRL_11;
++     st3128DeviceOpenSettings.pinmux.data[3] = (BREG_Read32(hReg, BCHP_SUN_TOP_CTRL_PIN_MUX_CTRL_11) | 0x20000);
++ 
++     NEXUS_Frontend_Probe3128(&st3128DeviceOpenSettings, &results);
++     BDBG_WRN(("familyId 0x%x, id 0x%x, version %d.%d", results.chip.familyId, results.chip.id, results.chip.version.major, results.chip.version.minor ));
++ 
++     st3128Settings.device = NEXUS_FrontendDevice_Open3128(0, &st3128DeviceOpenSettings);
++     if (NULL == st3128Settings.device)
++     {
++         BDBG_ERR(("Unable to open onboard 3128 tuner/demodulator device"));
++         rc = BERR_TRACE(BERR_NOT_INITIALIZED); goto done;
++     }
++ 
++     st3128Settings.type = NEXUS_3128ChannelType_eInBand;
++ 
++     for (i=0; i<(results.chip.id & 0xF); i++)
++     {
++         BDBG_MSG(("Waiting for onboard 3128 tuner/demodulator channel %d to initialize", i));
++         st3128Settings.channelNumber = i;
++         pConfig->frontend[i] = NEXUS_Frontend_Open3128(&st3128Settings);
++         if (NULL == pConfig->frontend[i])
++         {
++             BDBG_ERR(("Unable to open onboard 3128 tuner/demodulator channel %d", i));
++             continue;
++         }
++         NEXUS_Frontend_GetUserParameters(pConfig->frontend[i], &userParams);
++         userParams.param1 = st3128DeviceOpenSettings.isMtsif ? st3128Settings.channelNumber : NEXUS_InputBand_e0+i;
++         userParams.isMtsif = st3128DeviceOpenSettings.isMtsif;
++         userParams.chipId = 0x3128;
++         NEXUS_Frontend_SetUserParameters(pConfig->frontend[i], &userParams);
++         BDBG_MSG(("pConfig->frontend[%d] = %p", i, (void *)pConfig->frontend[i]));
++     }
++     BDBG_WRN(("opened %d channel(s)", i));
++ done:
++     return rc;
++ 
++ }
++ 
++ void NEXUS_Platform_UninitFrontend(void)
++ {
++     NEXUS_PlatformConfiguration *pConfig = &g_NEXUS_platformHandles.config;
++     unsigned i=0, j=0;
++     NEXUS_FrontendDeviceHandle tempHandle, deviceHandles[NEXUS_MAX_FRONTENDS];
++     bool handleFound = false;
++ 
++     BKNI_Memset(deviceHandles, 0, sizeof(deviceHandles));
++ 
++     for (i=0; i<NEXUS_MAX_FRONTENDS; i++)
++     {
++         handleFound = false;
++         if (pConfig->frontend[i])
++         {
++             tempHandle = NEXUS_Frontend_GetDevice(pConfig->frontend[i]);
++ 
++             if(tempHandle != NULL){
++                 for( j = 0; j<i; j++){
++                     if(tempHandle == deviceHandles[j])
++                     handleFound = true;
++                 }
++                 if(!handleFound)
++                     deviceHandles[j] = tempHandle;
++             }
++             NEXUS_Frontend_Close(pConfig->frontend[i]);
++             pConfig->frontend[i] = NULL;
++         }
++     }
++ 
++     for (i=0; i<NEXUS_MAX_FRONTENDS; i++)
++     {
++         if (deviceHandles[i])
++         {
++             NEXUS_FrontendDevice_Close(deviceHandles[i]);
++             deviceHandles[i] = NULL;
++         }
++     }
++ 
++ #if NEXUS_HAS_GPIO
++     if(gpioHandle)
++     {
++         NEXUS_Gpio_Close(gpioHandle);
++         gpioHandle = NULL;
++     }
++ #endif
++     return;
++ }
++ 
++ #elif NEXUS_USE_7449_C && NEXUS_USE_3461_FRONTEND_DAUGHTER_CARD
++ static NEXUS_GpioHandle gpioHandle = NULL;
++ NEXUS_Error NEXUS_Platform_InitFrontend(void)
++ {
++     NEXUS_Error rc = NEXUS_SUCCESS;
++     NEXUS_PlatformConfiguration *pConfig = &g_NEXUS_platformHandles.config;
++     NEXUS_3461Settings st3461Settings;
++     NEXUS_FrontendUserParameters userParams;
++     NEXUS_FrontendDeviceHandle parentDevice;
++     NEXUS_FrontendDevice3461OpenSettings deviceOpenSettings;
++     NEXUS_FrontendDevice3461Settings deviceSettings;
++     NEXUS_FrontendType type;
++     NEXUS_GpioSettings tunerGpioSettings;
++     NEXUS_3461ProbeResults results;
++ 
++     BDBG_WRN(("Waiting for 3461 Downstream frontend(97449C) to initialize"));
++     /* GPIO 109 is used instead of EXT_IRQ. */
++     NEXUS_Gpio_GetDefaultSettings(NEXUS_GpioType_eStandard, &tunerGpioSettings);
++ 
++     tunerGpioSettings.mode = NEXUS_GpioMode_eInput;
++     tunerGpioSettings.interruptMode = NEXUS_GpioInterrupt_eLow;
++ 
++     gpioHandle = NEXUS_Gpio_Open(NEXUS_GpioType_eStandard,109, &tunerGpioSettings);
++     if (NULL == gpioHandle)
++     {
++       BDBG_ERR(("Unable to open GPIO for tuner."));
++       return BERR_NOT_INITIALIZED;
++     }
++ 
++     if (!pConfig->i2c[3]) {
++             BDBG_ERR(("Frontend cannot be initialized without first initializing I2C."));
++             return BERR_NOT_INITIALIZED;
++     }
++     deviceOpenSettings.i2cDevice = pConfig->i2c[3];    /* Onboard tuner/demod use BSC_M3.*/
++     deviceOpenSettings.i2cAddr = 0x6c;
++     deviceOpenSettings.gpioInterrupt = gpioHandle;
++     deviceOpenSettings.isrNumber= 0;
++     deviceOpenSettings.loadAP = true;
++     deviceOpenSettings.externalFixedGain.total = 0;       /* These are platform specific values given by the board designer. */
++     deviceOpenSettings.externalFixedGain.bypassable = 0; /* These are platform specific values given by the board designer. */
++     deviceOpenSettings.crystalSettings.enableDaisyChain = false;
++ 
++     if(NEXUS_Frontend_Probe3461(&deviceOpenSettings, &results) != NEXUS_SUCCESS){
++         BDBG_ERR(("3461 tuner not found"));
++         rc = BERR_NOT_INITIALIZED; goto done;
++     }
++     BDBG_ERR(("chip.familyId = 0x%x", results.chip.familyId));
++     BDBG_ERR(("chip.id = 0x%x", results.chip.id));
++     BDBG_ERR(("version.major = 0x%x", results.chip.version.major ));
++     BDBG_ERR(("version.minor = 0x%x", results.chip.version.minor ));
++ 
++ 
++     parentDevice = NEXUS_FrontendDevice_Open3461(0, &deviceOpenSettings);
++     if (NULL == parentDevice)
++     {
++         BDBG_ERR(("Unable to open first 3461 tuner/demodulator device"));
++         rc = BERR_TRACE(BERR_NOT_INITIALIZED); goto done;
++     }
++     NEXUS_FrontendDevice_GetDefault3461Settings(&deviceSettings);
++     deviceSettings.rfDaisyChain = NEXUS_3461RfDaisyChain_eInternalLna;
++     deviceSettings.rfInput = NEXUS_3461TunerRfInput_eInternalLna;
++     deviceSettings.enableRfLoopThrough = false;
++     deviceSettings.terrestrial = true;
++     NEXUS_FrontendDevice_Set3461Settings(parentDevice, &deviceSettings);
++ 
++     NEXUS_Frontend_GetDefault3461Settings(&st3461Settings);
++     st3461Settings.device = parentDevice;
++     st3461Settings.type = NEXUS_3461ChannelType_eDvbt; /*REDUNDANT for now as there is only one instance of any demod running. */
++     st3461Settings.channelNumber = 0;                    /*REDUNDANT for now. */
++ 
++     pConfig->frontend[0] = NEXUS_Frontend_Open3461(&st3461Settings);
++     if (NULL == pConfig->frontend[0])
++     {
++         BDBG_ERR(("Unable to open first 3461 dvbt2 tuner/demodulator channel."));
++         rc = BERR_TRACE(BERR_NOT_INITIALIZED); goto done;
++     }
++ 
++     NEXUS_Frontend_GetType(pConfig->frontend[0], &type);
++     BDBG_ERR(("familyId = 0x%x", type.chip.familyId));
++     BDBG_ERR(("chipId = 0x%x", type.chip.id));
++     BDBG_ERR(("version.major = 0x%x", type.chip.version.major ));
++     BDBG_ERR(("version.major = 0x%x", type.chip.version.minor ));
++     BDBG_ERR(("version.buildType = 0x%x", type.chip.version.buildType ));
++     BDBG_ERR(("version.buildId = 0x%x", type.chip.version.buildId ));
++     BDBG_ERR(("bondoutOptions[0] = 0x%x", type.chip.bondoutOptions[0] ));
++     BDBG_ERR(("bondoutOptions[1] = 0x%x", type.chip.bondoutOptions[1] ));
++ 
++     BDBG_ERR(("firmwareVersion.major = 0x%x", type.firmwareVersion.major ));
++     BDBG_ERR(("firmwareVersion.major = 0x%x", type.firmwareVersion.minor ));
++     BDBG_ERR(("firmwareVersion.buildType = 0x%x", type.firmwareVersion.buildType ));
++     BDBG_ERR(("firmwareVersion.buildId = 0x%x", type.firmwareVersion.buildId ));
++ 
++     NEXUS_Frontend_GetUserParameters(pConfig->frontend[0], &userParams);
++     userParams.param1 = NEXUS_InputBand_e0;
++     userParams.pParam2 = NULL;
++     NEXUS_Frontend_SetUserParameters(pConfig->frontend[0], &userParams);
++ 
++ done:
++     return rc;
++ }
++ 
++ void NEXUS_Platform_UninitFrontend(void)
++ {
++     NEXUS_PlatformConfiguration *pConfig = &g_NEXUS_platformHandles.config;
++     unsigned i=0, j=0;
++     NEXUS_FrontendDeviceHandle tempHandle, deviceHandles[NEXUS_MAX_FRONTENDS];
++     bool handleFound = false;
++ 
++     BKNI_Memset(deviceHandles, 0, sizeof(deviceHandles));
++ 
++     for (i=0; i<NEXUS_MAX_FRONTENDS; i++)
++     {
++         handleFound = false;
++         if (pConfig->frontend[i])
++         {
++             tempHandle = NEXUS_Frontend_GetDevice(pConfig->frontend[i]);
++             if(tempHandle != NULL){
++                 for( j = 0; j<i; j++){
++                     if(tempHandle == deviceHandles[j])
++                     handleFound = true;
++                 }
++                 if(!handleFound)
++                     deviceHandles[j] = tempHandle;
++             }
++             NEXUS_Frontend_Close(pConfig->frontend[i]);
++             pConfig->frontend[i] = NULL;
++         }
++     }
++ 
++     for (i=0; i<NEXUS_MAX_FRONTENDS; i++)
++     {
++         if (deviceHandles[i])
++         {
++             NEXUS_FrontendDevice_Close(deviceHandles[i]);
++             deviceHandles[i] = NULL;
++         }
++     }
++     if(gpioHandle)
++     {
++         NEXUS_Gpio_Close(gpioHandle);
++         gpioHandle = NULL;
++     }
++ 
++     return;
++ }
++ #elif NEXUS_USE_7449_DBS
++ #include "nexus_frontend_4538.h"
++ #define ISL9492_CH0_I2C_ADDR 0x08
++ #define ISL9492_CH1_I2C_ADDR 0x09
++ static NEXUS_GpioHandle gpioHandle4538A = NULL;
++ static NEXUS_GpioHandle gpioHandle4538B = NULL;
++ static NEXUS_GpioHandle gpioHandleInt4538A = NULL;
++ static NEXUS_GpioHandle gpioHandleInt4538B = NULL;
++ /* Uncomment the following define in order to disable the i2c address search */
++ /*#define NEXUS_PLATFORM_BYPASS_I2C_ADDRESS_SEARCH 1*/
++ /* To debug asynchronous initialization, if defined, this skips the second chip */
++ /*#define SKIP_SECOND_4538_CHIP 1 */
++ 
++ #define I2C_4538_INDEX_1 4
++ #define I2C_4538_INDEX_2 4
++ 
++ #define NUM_4538_CHANNELS_PER 8
++ #define I2C_4538_ADDRESS_1 0x68
++ #define I2C_4538_ADDRESS_2 0x69
++ #define SPI_4538_ADDRESS_1 0x20
++ #define SPI_4538_ADDRESS_2 0x20
++ #define EXT_4538_GPIO_RESET_1 107
++ #define EXT_4538_GPIO_IRQ_1 23
++ #if (BCHP_VER >= BCHP_VER_C0)
++ /* schematic label says 104, trace says 96 */
++ #define EXT_4538_GPIO_IRQ_2 96
++ /* schematic label says 110, trace says 95 */
++ #define EXT_4538_GPIO_RESET_2 95
++ #define NEXUS_4538_USE_SPI 1
++ #else
++ #define EXT_4538_GPIO_RESET_2 71
++ #define EXT_4538_GPIO_IRQ_2 104
++ #endif
++ #define EXT_4538_IRQ_1 10
++ #define EXT_4538_IRQ_2 10
++ 
++ #if NEXUS_4538_USE_SPI
++ #include "nexus_spi.h"
++ static NEXUS_SpiHandle g_4538spi[NEXUS_NUM_SPI_CHANNELS];
++ #endif
++ 
++ NEXUS_Error NEXUS_Platform_InitFrontend(void)
++ {
++     NEXUS_PlatformConfiguration *pConfig = &g_NEXUS_platformHandles.config;
++     unsigned i=0;
++     NEXUS_FrontendDevice4538OpenSettings st4538Settings;
++     NEXUS_FrontendDevice4538OpenSettings st4538Settings2;
++     NEXUS_GpioSettings gpioSettings;
++     NEXUS_FrontendUserParameters userParams;
++     NEXUS_FrontendDeviceHandle device;
++     NEXUS_4538ProbeResults probeResults;
++ #if NEXUS_4538_USE_SPI
++     NEXUS_SpiSettings spiSettings;
++     uint16_t spiAddr = SPI_4538_ADDRESS_1;
++     uint16_t spiAddr2 = SPI_4538_ADDRESS_2;
++ #else
++     uint16_t i2cAddr = I2C_4538_ADDRESS_1;
++     uint16_t i2cAddr2 = I2C_4538_ADDRESS_2;
++ #endif
++ 
++     if (!pConfig->i2c[I2C_4538_INDEX_1]) {
++         BDBG_ERR(("Frontend cannot be initialized without first initializing I2C."));
++         return BERR_NOT_INITIALIZED;
++     }
++ 
++ #if NEXUS_4538_USE_SPI
++     /* Open SPI devices */
++     NEXUS_Spi_GetDefaultSettings(&spiSettings);
++     spiSettings.clockActiveLow = false;
++     spiSettings.baud = 6750000;
++     for (i=0; i < NEXUS_NUM_SPI_CHANNELS; i++) {
++         g_4538spi[i] = NEXUS_Spi_Open(i, &spiSettings);
++         if (!g_4538spi[i]) {
++             return BERR_TRACE(NEXUS_NOT_AVAILABLE);
++         }
++     }
++ #endif
++ 
++     /* Bring up first 4538 */
++ 
++     /* GPIO 107 is connected to the 4538A reset, so set it high to reset the first 4538 */
++     NEXUS_Gpio_GetDefaultSettings(NEXUS_GpioType_eStandard, &gpioSettings);
++     gpioSettings.mode = NEXUS_GpioMode_eOutputPushPull;
++     gpioSettings.value = NEXUS_GpioValue_eHigh;
++     gpioSettings.interruptMode = NEXUS_GpioInterrupt_eDisabled;
++     gpioSettings.interrupt.callback = NULL;
++     gpioHandle4538A = NEXUS_Gpio_Open(NEXUS_GpioType_eStandard, EXT_4538_GPIO_RESET_1, &gpioSettings);
++     BDBG_ASSERT(NULL != gpioHandle4538A);
++ 
++     NEXUS_FrontendDevice_GetDefault4538OpenSettings(&st4538Settings);
++ 
++ #if NEXUS_4538_USE_SPI
++     st4538Settings.i2cDevice = NULL;
++     st4538Settings.i2cAddr = I2C_4538_ADDRESS_1; /* used internally as an index */
++     st4538Settings.spiDevice = g_4538spi[0];
++     st4538Settings.spiAddr = SPI_4538_ADDRESS_1;
++     st4538Settings.diseqc.i2cDevice = pConfig->i2c[I2C_4538_INDEX_1];
++ #else
++     st4538Settings.i2cDevice = pConfig->i2c[I2C_4538_INDEX_1];
++     st4538Settings.i2cAddr = I2C_4538_ADDRESS_1;
++ #endif
++ 
++     NEXUS_Gpio_GetDefaultSettings(NEXUS_GpioType_eStandard, &gpioSettings);
++     gpioSettings.mode = NEXUS_GpioMode_eInput;
++     gpioSettings.interruptMode = NEXUS_GpioInterrupt_eLow;
++     gpioHandleInt4538A = NEXUS_Gpio_Open(NEXUS_GpioType_eStandard, EXT_4538_GPIO_IRQ_1, &gpioSettings);
++     BDBG_ASSERT(NULL != gpioHandleInt4538A);
++     st4538Settings.gpioInterrupt = gpioHandleInt4538A;
++ 
++ #if NEXUS_4538_USE_SPI
++     if (!NEXUS_Frontend_Probe4538(&st4538Settings, &probeResults)) {
++         if (probeResults.chip.familyId == 0x4538) {
++             BDBG_MSG(("Found 4538A at 0x%02x",SPI_4538_ADDRESS_1));
++         }
++     }
++     spiAddr = SPI_4538_ADDRESS_1;
++ #else
++     BDBG_MSG(("Checking i2c: 0x%02x",I2C_4538_ADDRESS_1));
++     if (!NEXUS_Frontend_Probe4538(&st4538Settings, &probeResults)) {
++         if (probeResults.chip.familyId == 0x4538) {
++             i2cAddr = I2C_4538_ADDRESS_1;
++             BDBG_MSG(("Found 4538A at 0x%02x",I2C_4538_ADDRESS_1));
++         }
++     } else {
++ #if NEXUS_PLATFORM_BYPASS_I2C_ADDRESS_SEARCH
++         BDBG_ERR(("Unable to locate 4538A at 0x%02x",I2C_4538_ADDRESS_1));
++         return BERR_TRACE(NEXUS_NOT_AVAILABLE);
++ #else
++         int ix;
++         for (ix=0x68; ix<=0x6f; ix++) {
++             BDBG_MSG(("Checking i2c: 0x%02x",ix));
++             st4538Settings.i2cAddr = ix;
++             if (ix != I2C_4538_ADDRESS_1) {
++                 if (!NEXUS_Frontend_Probe4538(&st4538Settings, &probeResults)) {
++                     if (probeResults.chip.familyId == 0x4538) {
++                         i2cAddr = ix;
++                         BDBG_MSG(("Found 4538A at 0x%02x",ix));
++                         break;
++                     }
++                 }
++             }
++         }
++         if (i2cAddr == I2C_4538_ADDRESS_1) {
++             BDBG_ERR(("Unable to locate 4538A"));
++             return BERR_TRACE(NEXUS_NOT_AVAILABLE);
++         }
++ #endif
++     }
++ #endif
++ 
++ #if !SKIP_SECOND_4538_CHIP
++     NEXUS_FrontendDevice_GetDefault4538OpenSettings(&st4538Settings2);
++ 
++     /* Due to asynchronous initialization, all probing has to complete before the device open. */
++     NEXUS_Gpio_GetDefaultSettings(NEXUS_GpioType_eStandard, &gpioSettings);
++     gpioSettings.mode = NEXUS_GpioMode_eInput;
++     gpioSettings.interruptMode = NEXUS_GpioInterrupt_eLow;
++     gpioHandleInt4538B = NEXUS_Gpio_Open(NEXUS_GpioType_eStandard, EXT_4538_GPIO_IRQ_2, &gpioSettings);
++     BDBG_ASSERT(NULL != gpioHandleInt4538B);
++     st4538Settings2.gpioInterrupt = gpioHandleInt4538B;
++ 
++     /* GPIO 110 is connected to the 4538B reset, so set it high to reset the second 4538 */
++     /* Note that for A0/B0, we're actually touching 71 here, because of the rework */
++     NEXUS_Gpio_GetDefaultSettings(NEXUS_GpioType_eStandard, &gpioSettings);
++     gpioSettings.mode = NEXUS_GpioMode_eOutputPushPull;
++     gpioSettings.value = NEXUS_GpioValue_eHigh;
++     gpioSettings.interruptMode = NEXUS_GpioInterrupt_eDisabled;
++     gpioSettings.interrupt.callback = NULL;
++     gpioHandle4538B = NEXUS_Gpio_Open(NEXUS_GpioType_eStandard, EXT_4538_GPIO_RESET_2, &gpioSettings);
++     BDBG_ASSERT(NULL != gpioHandle4538B);
++ 
++ #if NEXUS_4538_USE_SPI
++     st4538Settings2.i2cDevice = NULL;
++     st4538Settings2.i2cAddr = I2C_4538_ADDRESS_2; /* used internally as an index */
++     st4538Settings2.spiDevice = g_4538spi[2];
++     st4538Settings2.spiAddr = SPI_4538_ADDRESS_2;
++     st4538Settings2.diseqc.i2cDevice = pConfig->i2c[I2C_4538_INDEX_2];
++ #else
++     st4538Settings2.i2cDevice = pConfig->i2c[I2C_4538_INDEX_2];
++     st4538Settings2.i2cAddr = I2C_4538_ADDRESS_2;
++ #endif
++ 
++ #if NEXUS_4538_USE_SPI
++     if (!NEXUS_Frontend_Probe4538(&st4538Settings2, &probeResults)) {
++         if (probeResults.chip.familyId == 0x4538) {
++             BDBG_MSG(("Found 4538B at 0x%02x",SPI_4538_ADDRESS_2));
++         }
++     }
++     spiAddr2 = SPI_4538_ADDRESS_2;
++ #else
++     BDBG_MSG(("Checking i2c: 0x%02x",I2C_4538_ADDRESS_2));
++     if (!NEXUS_Frontend_Probe4538(&st4538Settings2, &probeResults)) {
++         if (probeResults.chip.familyId == 0x4538) {
++             i2cAddr2 = I2C_4538_ADDRESS_2;
++             BDBG_MSG(("Found 4538B at 0x%02x",I2C_4538_ADDRESS_2));
++         }
++     } else {
++ #if NEXUS_PLATFORM_BYPASS_I2C_ADDRESS_SEARCH
++         BDBG_ERR(("Unable to locate 4538B at 0x%02x",I2C_4538_ADDRESS_2));
++         return BERR_TRACE(NEXUS_NOT_AVAILABLE);
++ #else
++         int ix;
++         for (ix=i2cAddr+1; ix<=0x6F; ix++) {
++             BDBG_MSG(("Checking i2c: 0x%02x",ix));
++             st4538Settings2.i2cAddr = ix;
++             if (ix != I2C_4538_ADDRESS_2) {
++                 if (!NEXUS_Frontend_Probe4538(&st4538Settings2, &probeResults)) {
++                     if (probeResults.chip.familyId == 0x4538) {
++                         i2cAddr2 = ix;
++                         BDBG_MSG(("Found 4538B at 0x%02x on %d",ix,I2C_4538_INDEX_2));
++                         break;
++                     }
++                 }
++             }
++         }
++         if (i2cAddr2 == I2C_4538_ADDRESS_2) {
++             BDBG_ERR(("Unable to locate 4538B"));
++             return BERR_TRACE(NEXUS_NOT_AVAILABLE);
++         }
++ #endif
++     }
++ #endif
++ #endif
++ 
++ #if NEXUS_4538_USE_SPI
++     st4538Settings.spiAddr = spiAddr;
++ #else
++     st4538Settings.i2cAddr = i2cAddr;
++ #endif
++     device = NEXUS_FrontendDevice_Open4538(0, &st4538Settings);
++     if (device) {
++         for (i=0; i <  NUM_4538_CHANNELS_PER; i++)
++         {
++             NEXUS_4538Settings channelSettings;
++             channelSettings.device = device;
++             channelSettings.channelNumber = i;
++             pConfig->frontend[i] = NEXUS_Frontend_Open4538(&channelSettings);
++             if ( NULL == (pConfig->frontend[i]) )
++             {
++                 BDBG_ERR(("Unable to open onboard 4538A tuner/demodulator %d",i));
++             } else {
++                 BDBG_MSG(("Initialized 4538A[%d]",i));
++                 NEXUS_Frontend_GetUserParameters(pConfig->frontend[i], &userParams);
++                 userParams.isMtsif = true;
++                 userParams.param1 = userParams.isMtsif ? channelSettings.channelNumber : NEXUS_InputBand_e0 + i;
++                 userParams.pParam2 = NULL;
++                 NEXUS_Frontend_SetUserParameters(pConfig->frontend[i], &userParams);
++             }
++         }
++     }
++ 
++ #if !SKIP_SECOND_4538_CHIP
++     /* Bring up second 4538 */
++ #if NEXUS_4538_USE_SPI
++     st4538Settings2.spiAddr = spiAddr2;
++ #else
++     st4538Settings2.i2cDevice = pConfig->i2c[I2C_4538_INDEX_2];
++     st4538Settings2.i2cAddr = i2cAddr2;
++ #endif
++ 
++     device = NEXUS_FrontendDevice_Open4538(1, &st4538Settings2);
++     if (device) {
++         for (i=0; i <  NUM_4538_CHANNELS_PER; i++)
++         {
++             unsigned j = i + NUM_4538_CHANNELS_PER;
++             NEXUS_4538Settings channelSettings;
++             channelSettings.device = device;
++             channelSettings.channelNumber = i;
++             pConfig->frontend[j] = NEXUS_Frontend_Open4538(&channelSettings);
++             if ( NULL == (pConfig->frontend[j]) )
++             {
++                 BDBG_ERR(("Unable to open onboard 4538B tuner/demodulator %d",i));
++             } else {
++                 BDBG_MSG(("Initialized 4538B[%d](%d)",i,j));
++                 NEXUS_Frontend_GetUserParameters(pConfig->frontend[j], &userParams);
++                 userParams.isMtsif = true;
++                 userParams.param1 = userParams.isMtsif ? channelSettings.channelNumber : NEXUS_InputBand_e0 + j;
++                 userParams.pParam2 = NULL;
++                 NEXUS_Frontend_SetUserParameters(pConfig->frontend[j], &userParams);
++             }
++         }
++     }
++ #endif
++ 
++     return NEXUS_SUCCESS;
++ }
++ 
++ void NEXUS_Platform_UninitFrontend(void)
++ {
++     NEXUS_PlatformConfiguration *pConfig = &g_NEXUS_platformHandles.config;
++     unsigned i=0, j=0;
++     NEXUS_FrontendDeviceHandle tempHandle, deviceHandles[NEXUS_MAX_FRONTENDS];
++     bool handleFound = false;
++ 
++     BKNI_Memset(deviceHandles, 0, sizeof(deviceHandles));
++ 
++     for (i=0; i<NEXUS_MAX_FRONTENDS; i++)
++     {
++         handleFound = false;
++         if (pConfig->frontend[i]) {
++             tempHandle = NEXUS_Frontend_GetDevice(pConfig->frontend[i]);
++             if(tempHandle != NULL){
++                 for( j = 0; j<i; j++){
++                     if(tempHandle == deviceHandles[j])
++                         handleFound = true;
++                 }
++                 if(!handleFound)
++                     deviceHandles[j] = tempHandle;
++             }
++             NEXUS_Frontend_Close(pConfig->frontend[i]);
++             pConfig->frontend[i] = NULL;
++         }
++     }
++ 
++     for (i=0; i<NEXUS_MAX_FRONTENDS; i++)
++     {
++         if (deviceHandles[i])
++         {
++             NEXUS_FrontendDevice_Close(deviceHandles[i]);
++             deviceHandles[i] = NULL;
++         }
++     }
++ 
++     if(gpioHandleInt4538A)
++     {
++         NEXUS_Gpio_Close(gpioHandleInt4538A);
++         gpioHandleInt4538A = NULL;
++     }
++     if(gpioHandle4538A)
++     {
++         NEXUS_Gpio_Close(gpioHandle4538A);
++         gpioHandle4538A = NULL;
++     }
++     if(gpioHandleInt4538B)
++     {
++         NEXUS_Gpio_Close(gpioHandleInt4538B);
++         gpioHandleInt4538B = NULL;
++     }
++     if(gpioHandle4538B)
++     {
++         NEXUS_Gpio_Close(gpioHandle4538B);
++         gpioHandle4538B = NULL;
++     }
++ #if NEXUS_4538_USE_SPI
++     for (i=0; i<NEXUS_NUM_SPI_CHANNELS; i++)
++     {
++         if (g_4538spi[i])
++         {
++             NEXUS_Spi_Close(g_4538spi[i]);
++             g_4538spi[i] = NULL;
++         }
++     }
++ #endif
++ 
++     return;
++ }
++ #else
++ 
++ NEXUS_Error NEXUS_Platform_InitFrontend(void)
++ {
++     return BERR_SUCCESS;
++ }
++ 
++ void NEXUS_Platform_UninitFrontend(void)
++ {
++     return;
++ }
++ 
++ #endif
++ 
++ BTRC_MODULE(ChnChange_TuneStreamer, ENABLE);
++ 
++ NEXUS_Error
++ NEXUS_Platform_GetStreamerInputBand(unsigned index, NEXUS_InputBand *pInputBand)
++ {
++     BDBG_ASSERT(pInputBand);
++     if (index > 0) {
++         BDBG_ERR(("Only 1 streamer input available"));
++         return BERR_TRACE(BERR_INVALID_PARAMETER);
++     }
++     BTRC_TRACE(ChnChange_TuneStreamer, START);
++ #if NEXUS_USE_7449_SV
++ #if BCHP_VER >= BCHP_VER_C0
++     *pInputBand = NEXUS_InputBand_e0;
++ #else
++     *pInputBand = NEXUS_InputBand_e5;
++ #endif
++ #elif NEXUS_USE_7449_DBS
++ #if BCHP_VER >= BCHP_VER_C0
++     *pInputBand = NEXUS_InputBand_e0;
++ #else
++     *pInputBand = NEXUS_InputBand_e2;
++ #endif
++ #else
++    *pInputBand = NEXUS_InputBand_e0;
++ #endif
++     BTRC_TRACE(ChnChange_TuneStreamer, STOP);
++     return NEXUS_SUCCESS;
++ }
++ 
++ NEXUS_FrontendHandle NEXUS_Platform_OpenFrontend(
++     unsigned id /* platform assigned ID for this frontend. See NEXUS_FrontendUserParameters.id.
++                    See nexus_platform_frontend.c for ID assignment and/or see
++                    nexus_platform_features.h for possible platform-specific macros.
++                 */
++     )
++ {
++     NEXUS_Error errCode = BERR_TRACE(BERR_NOT_SUPPORTED);
++     BSTD_UNUSED(errCode);
++     BSTD_UNUSED(id);
++     return NULL;
++ }
+diff -crBN Orig/nexus/platforms/97449/src/nexus_platform_frontend_cable.c SeaChange/nexus/platforms/97449/src/nexus_platform_frontend_cable.c
+*** Orig/nexus/platforms/97449/src/nexus_platform_frontend_cable.c	1969-12-31 16:00:00.000000000 -0800
+--- SeaChange/nexus/platforms/97449/src/nexus_platform_frontend_cable.c	2015-01-06 19:00:51.000000000 -0800
+***************
+*** 0 ****
+--- 1,448 ----
++  /***************************************************************************
++ *     (c)2004-2014 Broadcom Corporation
++ *
++ *  This program is the proprietary software of Broadcom Corporation and/or its licensors,
++ *  and may only be used, duplicated, modified or distributed pursuant to the terms and
++ *  conditions of a separate, written license agreement executed between you and Broadcom
++ *  (an "Authorized License").  Except as set forth in an Authorized License, Broadcom grants
++ *  no license (express or implied), right to use, or waiver of any kind with respect to the
++ *  Software, and Broadcom expressly reserves all rights in and to the Software and all
++ *  intellectual property rights therein.  IF YOU HAVE NO AUTHORIZED LICENSE, THEN YOU
++ *  HAVE NO RIGHT TO USE THIS SOFTWARE IN ANY WAY, AND SHOULD IMMEDIATELY
++ *  NOTIFY BROADCOM AND DISCONTINUE ALL USE OF THE SOFTWARE.
++ *
++ *  Except as expressly set forth in the Authorized License,
++ *
++ *  1.     This program, including its structure, sequence and organization, constitutes the valuable trade
++ *  secrets of Broadcom, and you shall use all reasonable efforts to protect the confidentiality thereof,
++ *  and to use this information only in connection with your use of Broadcom integrated circuit products.
++ *
++ *  2.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE SOFTWARE IS PROVIDED "AS IS"
++ *  AND WITH ALL FAULTS AND BROADCOM MAKES NO PROMISES, REPRESENTATIONS OR
++ *  WARRANTIES, EITHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE, WITH RESPECT TO
++ *  THE SOFTWARE.  BROADCOM SPECIFICALLY DISCLAIMS ANY AND ALL IMPLIED WARRANTIES
++ *  OF TITLE, MERCHANTABILITY, NONINFRINGEMENT, FITNESS FOR A PARTICULAR PURPOSE,
++ *  LACK OF VIRUSES, ACCURACY OR COMPLETENESS, QUIET ENJOYMENT, QUIET POSSESSION
++ *  OR CORRESPONDENCE TO DESCRIPTION. YOU ASSUME THE ENTIRE RISK ARISING OUT OF
++ *  USE OR PERFORMANCE OF THE SOFTWARE.
++ *
++ *  3.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL BROADCOM OR ITS
++ *  LICENSORS BE LIABLE FOR (i) CONSEQUENTIAL, INCIDENTAL, SPECIAL, INDIRECT, OR
++ *  EXEMPLARY DAMAGES WHATSOEVER ARISING OUT OF OR IN ANY WAY RELATING TO YOUR
++ *  USE OF OR INABILITY TO USE THE SOFTWARE EVEN IF BROADCOM HAS BEEN ADVISED OF
++ *  THE POSSIBILITY OF SUCH DAMAGES; OR (ii) ANY AMOUNT IN EXCESS OF THE AMOUNT
++ *  ACTUALLY PAID FOR THE SOFTWARE ITSELF OR U.S. $1, WHICHEVER IS GREATER. THESE
++ *  LIMITATIONS SHALL APPLY NOTWITHSTANDING ANY FAILURE OF ESSENTIAL PURPOSE OF
++ *  ANY LIMITED REMEDY.
++ *
++ * Module Description:
++ * $brcm_Workfile: $
++ * $brcm_Revision: $
++ * $brcm_Date: $
++ *
++ * API Description:
++ *   API name: Platform linuxuser
++ *    linuxuser OS routines
++ *
++ *
++ * Revision History:
++ *
++ * $brcm_Log: $
++ *
++ ***************************************************************************/
++ #include "nexus_types.h"
++ #include "nexus_platform.h"
++ #include "priv/nexus_core.h"
++ #if NEXUS_HAS_FRONTEND
++ #include "nexus_frontend.h"
++ #endif
++ #include "nexus_platform_features.h"
++ #include "nexus_platform_priv.h"
++ #include "nexus_base.h"
++ #include "nexus_input_band.h"
++ #include "bchp_gio.h"
++ 
++ #include "nexus_docsis.h"
++ #include "nexus_frontend_3128.h"
++ 
++ #if NEXUS_USE_7449_VMS_SFF
++ #include "bchp_sun_top_ctrl.h"
++ 
++ static unsigned ltsidCount[NEXUS_MAX_FRONTENDS];
++ #endif
++ 
++ #define BCM3384_CONTROLLED_MOST_DS_CHANNEL_NUMBER   16
++ #define BCM3128_CONTROLLED_MOST_DS_CHANNEL_NUMBER   8
++ #define BCM3384_CONTROLLED_LEAST_DATA_CHANNEL_NUMBER 4
++ 
++ 
++ BDBG_MODULE(nexus_platform_frontend_cable);
++ 
++ 
++ static NEXUS_GpioHandle gpioHandle = NULL;
++ static NEXUS_FrontendDeviceHandle hDocsisDevice;
++ 
++ NEXUS_Error NEXUS_Platform_InitFrontend(void)
++ {
++     NEXUS_PlatformConfiguration *pConfig = &g_NEXUS_platformHandles.config;
++     NEXUS_GpioSettings tunerGpioSettings;
++     int i = 0;
++     unsigned docsisChannel;
++     NEXUS_DocsisOpenDeviceSettings docsisDeviceSettings;
++     NEXUS_DocsisOpenChannelSettings docsisChannelSettings;
++     NEXUS_DocsisDeviceCapabilities docsisDeviceCaps;
++ 
++ #if NEXUS_USE_7449_VMS_SFF
++             BREG_Handle hReg;
++     NEXUS_Error rc;
++             NEXUS_FrontendLTSIDParameters ltsidParams;
++ #endif
++ 
++     unsigned u3128ch;
++     NEXUS_3128ProbeResults results;
++     NEXUS_Frontend3128Settings st3128Settings;
++     NEXUS_FrontendDevice3128OpenSettings st3128DeviceOpenSettings;
++ #ifdef BCM3128_OOB_CABLECARD_SUPPORT
++     NEXUS_FrontendDevice3128Settings st3128DeviceSettings;
++ #endif
++ 
++     NEXUS_FrontendUserParameters userParams;
++ 
++     BDBG_MSG(("NEXUS_Platform_InitFrontend: NEXUS_MAX_FRONTENDS %u", NEXUS_MAX_FRONTENDS));
++ 
++     NEXUS_Docsis_GetDefaultOpenDeviceSettings(&docsisDeviceSettings);
++     docsisDeviceSettings.rpcTimeOut = 3000; /* units ms */
++     hDocsisDevice = NEXUS_Docsis_OpenDevice(0,&docsisDeviceSettings);
++     NEXUS_Docsis_GetDeviceCapabilities(hDocsisDevice,&docsisDeviceCaps);
++ 
++     BDBG_MSG(("CABLE frontend DOCSIS Capabilities : Total Channels %u QAM Channels %u Docsis Channels %u OOB %s",
++               docsisDeviceCaps.totalChannels,docsisDeviceCaps.numQamChannels,
++               docsisDeviceCaps.numDataChannels,docsisDeviceCaps.numOutOfBandChannels?"true":"false" ));
++ 
++     for (i=0, docsisChannel=0;
++          (docsisChannel<(docsisDeviceCaps.numDataChannels + docsisDeviceCaps.numQamChannels)) && (i<NEXUS_MAX_FRONTENDS-1);
++          docsisChannel++)
++     {
++         NEXUS_Docsis_GetDefaultOpenChannelSettings(&docsisChannelSettings);
++         if(docsisChannel >= docsisDeviceCaps.numDataChannels)
++         {
++             docsisChannelSettings.autoAcquire = true;
++             docsisChannelSettings.channelNum = docsisChannel;
++             docsisChannelSettings.channelType = NEXUS_DocsisChannelType_eQam;
++             docsisChannelSettings.fastAcquire = true;
++             BDBG_MSG(("Docsis frontend index %u Docsis QAM channel %u", i, docsisChannel));
++         }
++         else
++         {
++             BDBG_MSG(("Docsis data channel %u",docsisChannel));
++             continue;
++         }
++ 
++         pConfig->frontend[i] = NEXUS_Docsis_OpenChannel(hDocsisDevice,&docsisChannelSettings);
++         if (!pConfig->frontend[i])
++         {
++             BDBG_ERR(("Unable to open docsis channel frontendIndex %u channel %u",i,docsisChannel));
++             continue;
++         }
++         NEXUS_Frontend_GetUserParameters(pConfig->frontend[i], &userParams);
++         userParams.isMtsif = true; /*docsisDeviceCaps.isMtsif; always true for 3384*/
++         userParams.chipId = 0x3384;
++ 
++         if((docsisDeviceCaps.numDataChannels + docsisDeviceCaps.numQamChannels) > BCM3384_CONTROLLED_MOST_DS_CHANNEL_NUMBER ){
++             BDBG_MSG(("Total DS channel is %u, we do have 312x besides eCM",(docsisDeviceCaps.numDataChannels + docsisDeviceCaps.numQamChannels)));
++             /*if we do need to use eCM demod, we always use it first*/
++             if((int)(docsisDeviceCaps.numQamChannels - BCM3128_CONTROLLED_MOST_DS_CHANNEL_NUMBER) > i) /*to determine if we are using 3384 inputbands*/
++             {
++                 userParams.param1 = docsisChannel; /*input band index from 3384 start from the smallest available number*/
++                 BDBG_MSG(("eCM frontend input number %d",userParams.param1));
++                 /*docsisDeviceCaps.isMtsif ? docsisChannel : NEXUS_InputBand_e0+docsisChannel;*/
++             }
++             else {
++                 userParams.pParam2 = (void*) 1; /* this is used to indicate that this frontend's IB comes from 3128 */
++                 BDBG_ASSERT((i -(int)(docsisDeviceCaps.numQamChannels - BCM3128_CONTROLLED_MOST_DS_CHANNEL_NUMBER)) >= 0);
++                 userParams.param1 = i -(int)(docsisDeviceCaps.numQamChannels - BCM3128_CONTROLLED_MOST_DS_CHANNEL_NUMBER); /*input band index from 312x start from the smallest available number*/
++                 BDBG_MSG(("eCM controlled 312x frontend input number %d",userParams.param1));
++             }
++         }
++         else{
++             BDBG_MSG(("Total DS channel is %u, we do NOT have 312x besides eCM",(docsisDeviceCaps.numDataChannels + docsisDeviceCaps.numQamChannels)));
++             BDBG_ASSERT((int)(BCM3384_CONTROLLED_MOST_DS_CHANNEL_NUMBER - i -1) >= 0);
++             userParams.param1 = docsisChannel; /*input band index from 3384 start from the smallest available number*/
++             BDBG_MSG(("eCM frontend input number %d",userParams.param1));
++         }
++ 
++         NEXUS_Frontend_SetUserParameters(pConfig->frontend[i], &userParams);
++         i++;
++     }
++ 
++     if((docsisDeviceCaps.numDataChannels + docsisDeviceCaps.numQamChannels) > BCM3384_CONTROLLED_MOST_DS_CHANNEL_NUMBER){
++     /*3384 control 3128, host doesn't care 3128 init and how to use it*/
++     }
++     else
++     {
++         /* GPIO 28/82 is used instead of EXT_IRQ. */
++         NEXUS_Gpio_GetDefaultSettings(NEXUS_GpioType_eStandard, &tunerGpioSettings);
++ 
++         tunerGpioSettings.mode = NEXUS_GpioMode_eInput;
++         tunerGpioSettings.interruptMode = NEXUS_GpioInterrupt_eLow;
++ #ifdef NEXUS_USE_7449_VMS_SFF
++     gpioHandle = NEXUS_Gpio_Open(NEXUS_GpioType_eStandard,103, &tunerGpioSettings);
++ 
++     if (NULL == gpioHandle)
++     {
++       BDBG_ERR(("Unable to open GPIO for tuner %d", i));
++       return BERR_NOT_INITIALIZED;
++     }
++ #else
++ #if NEXUS_NUM_FRONTEND_CARD_SLOTS
++         gpioHandle = NEXUS_Gpio_Open(NEXUS_GpioType_eStandard,82, &tunerGpioSettings);
++ #else
++         gpioHandle = NEXUS_Gpio_Open(NEXUS_GpioType_eStandard,28, &tunerGpioSettings);
++ #endif
++ 
++         if (NULL == gpioHandle)
++         {
++           BDBG_ERR(("Unable to open GPIO for tuner %d", i));
++           return BERR_NOT_INITIALIZED;
++         }
++ #endif
++         NEXUS_Frontend_GetDefault3128Settings(&st3128Settings);
++ 
++         NEXUS_FrontendDevice_GetDefault3128OpenSettings(&st3128DeviceOpenSettings);
++         st3128DeviceOpenSettings.i2cDevice = pConfig->i2c[NEXUS_I2C_CHANNEL_DSTRM_TUNER];
++ #if NEXUS_USE_7449_VMS_SFF
++         st3128DeviceOpenSettings.i2cAddr = 0x6d;
++ #else
++         st3128DeviceOpenSettings.i2cAddr = 0x6c;
++ #endif
++         st3128DeviceOpenSettings.isrNumber = 0;
++         st3128DeviceOpenSettings.gpioInterrupt = gpioHandle;
++         st3128DeviceOpenSettings.inBandOpenDrain=true;
++         st3128DeviceOpenSettings.loadAP = true;
++         st3128DeviceOpenSettings.isMtsif = true;
++ 
++ #if NEXUS_USE_7449_VMS_SFF
++     hReg = g_pCoreHandles->reg;
++ 
++     /* 3128 MTSIF INC/RST on pin 30/31  */
++     st3128DeviceOpenSettings.pinmux.data[0] = BCHP_SUN_TOP_CTRL_PIN_MUX_CTRL_11;
++     st3128DeviceOpenSettings.pinmux.data[1] = (BREG_Read32(hReg, BCHP_SUN_TOP_CTRL_PIN_MUX_CTRL_11) | 0x10000);
++ 
++     st3128DeviceOpenSettings.pinmux.data[2] = BCHP_SUN_TOP_CTRL_PIN_MUX_CTRL_11;
++     st3128DeviceOpenSettings.pinmux.data[3] = (BREG_Read32(hReg, BCHP_SUN_TOP_CTRL_PIN_MUX_CTRL_11) | 0x100000);
++ 
++     rc = NEXUS_Frontend_Probe3128(&st3128DeviceOpenSettings, &results);
++     if(rc) return BERR_TRACE(BERR_NOT_INITIALIZED);
++ #endif
++ 
++         st3128Settings.device = NEXUS_FrontendDevice_Open3128(0, &st3128DeviceOpenSettings);
++         if (st3128Settings.device == NULL) {
++             BDBG_WRN(("Unable to open 3128 device, could be no 3128 exists or init failed"));
++         } else {
++             /*
++             * Open the BCM3128 InBand channels
++             */
++             st3128Settings.loadAP = true;
++             st3128Settings.type = NEXUS_3128ChannelType_eInBand;
++             st3128Settings.isMtsif = true;
++             for(u3128ch=0; ((i<NEXUS_MAX_FRONTENDS-1) && (u3128ch<(results.chip.id & 0xF))); u3128ch++)
++             {
++                 BDBG_MSG((" frontend index %u BCM3128 QAM channel %u", i, u3128ch));
++                 st3128Settings.channelNumber = u3128ch;
++                 pConfig->frontend[i] = NEXUS_Frontend_Open3128(&st3128Settings);
++                 if (NULL == pConfig->frontend[i])
++                 {
++                     BDBG_ERR(("Unable to open onboard 3128 tuner/demodulator channel %d", i));
++                     continue;
++                 }
++                 NEXUS_Frontend_GetUserParameters(pConfig->frontend[i], &userParams);
++                 userParams.param1 = st3128DeviceOpenSettings.isMtsif ? st3128Settings.channelNumber : NEXUS_InputBand_e0+u3128ch;
++                 userParams.isMtsif = st3128DeviceOpenSettings.isMtsif;
++                 userParams.chipId = 0x3128;
++                 NEXUS_Frontend_SetUserParameters(pConfig->frontend[i], &userParams);
++ 
++ #if NEXUS_USE_7449_VMS_SFF
++         NEXUS_Frontend_GetLTSID(pConfig->frontend[i], &ltsidParams);
++         ltsidParams.ltsidNum = userParams.param1;
++         ltsidParams.chipId = 0x3128;
++         ltsidParams.mtsifNum = 0;
++         ltsidParams.mtsifEnabled = true;
++         NEXUS_Frontend_SetLTSID(pConfig->frontend[i], &ltsidParams);
++         ltsidCount[ltsidParams.ltsidNum] += 1;
++ #endif
++                 i++;
++             }
++         }
++     }
++ 
++     if(i){
++         BDBG_MSG(("total %d inband channel initialized", i));
++     }
++     else
++         BDBG_WRN(("no inband channel initialized"));
++ 
++ #ifdef BCM3128_OOB_CABLECARD_SUPPORT
++     /*Open the BCM3128 OOB channel */
++     st3128Settings.type = NEXUS_3128ChannelType_eOutOfBand;
++     BDBG_WRN(("Waiting for onboard 3128 Oob channel %d to initialize", u3128ch));
++     st3128Settings.channelNumber = u3128ch;
++     pConfig->frontend[i] = NEXUS_Frontend_Open3128(&st3128Settings);
++     if (NULL == pConfig->frontend[i])
++     {
++         BDBG_ERR(("Unable to open onboard 3128 Oob channel %d", i));
++     }
++ 
++     NEXUS_Frontend_GetDefault3128ConfigSettings(&st3128DeviceSettings);
++     st3128DeviceSettings.outOfBand.outputMode = NEXUS_FrontendOutOfBandOutputMode_eDifferentialDecoder;
++     if(NEXUS_Frontend_3128_SetConfigSettings(pConfig->frontend[i], &st3128DeviceSettings))
++         return BERR_TRACE(BERR_NOT_INITIALIZED);
++ 
++     NEXUS_Frontend_GetUserParameters(pConfig->frontend[i], &userParams);
++     userParams.param1 = st3128DeviceOpenSettings.isMtsif ? st3128Settings.channelNumber : NEXUS_InputBand_e0+i;
++     userParams.isMtsif = st3128DeviceOpenSettings.isMtsif;
++     userParams.chipId = 0x3128;
++     NEXUS_Frontend_SetUserParameters(pConfig->frontend[i], &userParams);
++ #else
++     /*
++      * If OOB channel is present in the Docsis device, check for the channel number
++      */
++     if(docsisDeviceCaps.numOutOfBandChannels)
++     {
++         NEXUS_Docsis_GetDefaultOpenChannelSettings(&docsisChannelSettings);
++         docsisChannelSettings.channelType=NEXUS_DocsisChannelType_eOutOfBand;
++         docsisChannelSettings.channelNum = docsisDeviceCaps.numDataChannels + docsisDeviceCaps.numQamChannels;
++         pConfig->frontend[i] = NEXUS_Docsis_OpenChannel(hDocsisDevice,&docsisChannelSettings);
++         if(!pConfig->frontend[i])
++         {
++             BDBG_ERR(("DOCSIS OOB channel open failed"));
++         }
++         NEXUS_Frontend_GetUserParameters(pConfig->frontend[i], &userParams);
++         userParams.param1 = docsisChannelSettings.channelNum; /*docsisDeviceCaps.isMtsif ? docsisChannelSettings.channelNum : NEXUS_InputBand_e0+i;*/
++         userParams.isMtsif = docsisDeviceCaps.isMtsif;
++         userParams.chipId = 0x3384;
++         NEXUS_Frontend_SetUserParameters(pConfig->frontend[i], &userParams);
++ 
++ #if NEXUS_USE_7449_VMS_SFF
++         NEXUS_Frontend_GetLTSID(pConfig->frontend[i], &ltsidParams);
++         ltsidParams.ltsidNum = userParams.param1;
++         ltsidParams.chipId = 0x3384;
++         NEXUS_Frontend_SetLTSID(pConfig->frontend[i], &ltsidParams);
++         ltsidCount[ltsidParams.ltsidNum] += 1;
++ #endif
++         i++;
++     }
++     if(docsisDeviceCaps.numUpStreamChannels)
++     {
++         NEXUS_Docsis_GetDefaultOpenChannelSettings(&docsisChannelSettings);
++         docsisChannelSettings.channelType = NEXUS_DocsisChannelType_eUpstream;
++         docsisChannelSettings.channelNum = docsisDeviceCaps.numDataChannels + docsisDeviceCaps.numQamChannels +
++                                            docsisDeviceCaps.numOutOfBandChannels;
++         pConfig->frontend[i] = NEXUS_Docsis_OpenChannel(hDocsisDevice,&docsisChannelSettings);
++         if(!pConfig->frontend[i])
++         {
++             BDBG_ERR(("DOCSIS OOB channel open failed"));
++         }
++         NEXUS_Frontend_GetUserParameters(pConfig->frontend[i], &userParams);
++         userParams.param1 = docsisChannelSettings.channelNum; /*docsisDeviceCaps.isMtsif ? docsisChannelSettings.channelNum : NEXUS_InputBand_e0+i;*/
++         userParams.isMtsif = docsisDeviceCaps.isMtsif;
++         userParams.chipId = 0x3384;
++         NEXUS_Frontend_SetUserParameters(pConfig->frontend[i], &userParams);
++ 
++ #if NEXUS_USE_7449_VMS_SFF
++         NEXUS_Frontend_GetLTSID(pConfig->frontend[i], &ltsidParams);
++         ltsidParams.ltsidNum = userParams.param1;
++         ltsidParams.chipId = 0x3384;
++         NEXUS_Frontend_SetLTSID(pConfig->frontend[i], &ltsidParams);
++         ltsidCount[ltsidParams.ltsidNum] += 1;
++ #endif
++     }
++ 
++ 
++ #endif
++ 
++     #if 0
++     /*
++      * On platforms with DOCSIS and BCM3128 enabled, LNA device is shared between BCM3128 and DOCSIS,
++      * but LNA device is controlled by DOCSIS. This linking would be used for extracting the
++      * AGC val from DOCSIS device by the BCM3128 private APIs to program the AGC value into
++      * BCM3128 device.
++      */
++     NEXUS_FrontendDevice_Link(hDocsisDevice,st3128Settings.device, NULL);
++     #endif
++     return BERR_SUCCESS;
++ }
++ 
++ void NEXUS_Platform_UninitFrontend(void)
++ {
++     NEXUS_PlatformConfiguration *pConfig = &g_NEXUS_platformHandles.config;
++     unsigned i=0;
++ 
++     unsigned j=0;
++     NEXUS_FrontendDeviceHandle tempHandle, deviceHandles[NEXUS_MAX_FRONTENDS];
++     bool handleFound = false;
++     BKNI_Memset(deviceHandles, 0, sizeof(deviceHandles));
++     for (i=0; i<NEXUS_MAX_FRONTENDS; i++)
++     {
++         if (pConfig->frontend[i])
++         {
++             tempHandle = NEXUS_Frontend_GetDevice(pConfig->frontend[i]);
++             if(tempHandle != NULL){
++                 for( j = 0; j<i; j++){
++                     if(tempHandle == deviceHandles[j])
++                     handleFound = true;
++                 }
++                 if(!handleFound)
++                     deviceHandles[j] = tempHandle;
++             }
++             BDBG_MSG(("NEXUS_Platform_UninitFrontend frontend %u",i));
++             NEXUS_Frontend_Close(pConfig->frontend[i]);
++             pConfig->frontend[i] = NULL;
++         }
++     }
++ 
++     for (i=0; i<NEXUS_MAX_FRONTENDS; i++)
++     {
++         if (deviceHandles[i])
++         {
++             NEXUS_FrontendDevice_Close(deviceHandles[i]);
++             deviceHandles[i] = NULL;
++         }
++     }
++ 
++     if(gpioHandle)
++     {
++         NEXUS_Gpio_Close(gpioHandle);
++         gpioHandle = NULL;
++     }
++ 
++     return;
++ }
++ 
++ 
++ BTRC_MODULE(ChnChange_TuneStreamer, ENABLE);
++ 
++ NEXUS_Error NEXUS_Platform_GetStreamerInputBand(unsigned index, NEXUS_InputBand *pInputBand)
++ {
++     BDBG_ASSERT(pInputBand);
++     if (index > 0) {
++         BDBG_ERR(("Only 1 streamer input available"));
++         return BERR_TRACE(BERR_INVALID_PARAMETER);
++     }
++     BTRC_TRACE(ChnChange_TuneStreamer, START);
++     *pInputBand = NEXUS_InputBand_e5;
++     BTRC_TRACE(ChnChange_TuneStreamer, STOP);
++     return NEXUS_SUCCESS;
++ }
++ 
++ NEXUS_FrontendHandle NEXUS_Platform_OpenFrontend(
++ unsigned id /* platform assigned ID for this frontend. See NEXUS_FrontendUserParameters.id.
++ See nexus_platform_frontend.c for ID assignment and/or see
++ nexus_platform_features.h for possible platform-specific macros.
++ */
++ )
++ {
++     NEXUS_Error errCode = BERR_TRACE(BERR_NOT_SUPPORTED);
++     BSTD_UNUSED(errCode);
++     BSTD_UNUSED(id);
++     return NULL;
++ }
+diff -crBN Orig/nexus/platforms/97449/src/nexus_platform_pinmux.c SeaChange/nexus/platforms/97449/src/nexus_platform_pinmux.c
+*** Orig/nexus/platforms/97449/src/nexus_platform_pinmux.c	1969-12-31 16:00:00.000000000 -0800
+--- SeaChange/nexus/platforms/97449/src/nexus_platform_pinmux.c	2015-01-06 19:00:51.000000000 -0800
+***************
+*** 0 ****
+--- 1,69 ----
++ /***************************************************************************
++ *     (c)2004-2013 Broadcom Corporation
++ *
++ *  This program is the proprietary software of Broadcom Corporation and/or its licensors,
++ *  and may only be used, duplicated, modified or distributed pursuant to the terms and
++ *  conditions of a separate, written license agreement executed between you and Broadcom
++ *  (an "Authorized License").  Except as set forth in an Authorized License, Broadcom grants
++ *  no license (express or implied), right to use, or waiver of any kind with respect to the
++ *  Software, and Broadcom expressly reserves all rights in and to the Software and all
++ *  intellectual property rights therein.  IF YOU HAVE NO AUTHORIZED LICENSE, THEN YOU
++ *  HAVE NO RIGHT TO USE THIS SOFTWARE IN ANY WAY, AND SHOULD IMMEDIATELY
++ *  NOTIFY BROADCOM AND DISCONTINUE ALL USE OF THE SOFTWARE.
++ *
++ *  Except as expressly set forth in the Authorized License,
++ *
++ *  1.     This program, including its structure, sequence and organization, constitutes the valuable trade
++ *  secrets of Broadcom, and you shall use all reasonable efforts to protect the confidentiality thereof,
++ *  and to use this information only in connection with your use of Broadcom integrated circuit products.
++ *
++ *  2.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE SOFTWARE IS PROVIDED "AS IS"
++ *  AND WITH ALL FAULTS AND BROADCOM MAKES NO PROMISES, REPRESENTATIONS OR
++ *  WARRANTIES, EITHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE, WITH RESPECT TO
++ *  THE SOFTWARE.  BROADCOM SPECIFICALLY DISCLAIMS ANY AND ALL IMPLIED WARRANTIES
++ *  OF TITLE, MERCHANTABILITY, NONINFRINGEMENT, FITNESS FOR A PARTICULAR PURPOSE,
++ *  LACK OF VIRUSES, ACCURACY OR COMPLETENESS, QUIET ENJOYMENT, QUIET POSSESSION
++ *  OR CORRESPONDENCE TO DESCRIPTION. YOU ASSUME THE ENTIRE RISK ARISING OUT OF
++ *  USE OR PERFORMANCE OF THE SOFTWARE.
++ *
++ *  3.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL BROADCOM OR ITS
++ *  LICENSORS BE LIABLE FOR (i) CONSEQUENTIAL, INCIDENTAL, SPECIAL, INDIRECT, OR
++ *  EXEMPLARY DAMAGES WHATSOEVER ARISING OUT OF OR IN ANY WAY RELATING TO YOUR
++ *  USE OF OR INABILITY TO USE THE SOFTWARE EVEN IF BROADCOM HAS BEEN ADVISED OF
++ *  THE POSSIBILITY OF SUCH DAMAGES; OR (ii) ANY AMOUNT IN EXCESS OF THE AMOUNT
++ *  ACTUALLY PAID FOR THE SOFTWARE ITSELF OR U.S. $1, WHICHEVER IS GREATER. THESE
++ *  LIMITATIONS SHALL APPLY NOTWITHSTANDING ANY FAILURE OF ESSENTIAL PURPOSE OF
++ *  ANY LIMITED REMEDY.
++  *
++  * $brcm_Workfile: $
++  * $brcm_Revision: $
++  * $brcm_Date: $
++  *
++  * Module Description:
++  *
++  * Revision History:
++  *
++  * $brcm_Log: $
++  *
++  ***************************************************************************/
++ 
++ 
++ #include "nexus_platform.h"
++ #include "nexus_platform_priv.h"
++ #include "priv/nexus_core.h"
++ #include "bchp_sun_top_ctrl.h"
++ #include "bchp_aon_pin_ctrl.h"
++ 
++ BDBG_MODULE(nexus_platform_pinmux);
++ 
++ /***************************************************************************
++ Summary:
++     Configure pin muxes for the 97445 reference platform
++ Description:
++     The core module must be initialized for this to be called
++  ***************************************************************************/
++ 
++ NEXUS_Error NEXUS_Platform_P_InitPinmux(void)
++ {
++     return BERR_SUCCESS;
++ }
+diff -crBN Orig/nexus/platforms/97449/src/nexus_platform_pinmux_cable.c SeaChange/nexus/platforms/97449/src/nexus_platform_pinmux_cable.c
+*** Orig/nexus/platforms/97449/src/nexus_platform_pinmux_cable.c	1969-12-31 16:00:00.000000000 -0800
+--- SeaChange/nexus/platforms/97449/src/nexus_platform_pinmux_cable.c	2015-01-06 19:00:51.000000000 -0800
+***************
+*** 0 ****
+--- 1,70 ----
++ /***************************************************************************
++ *     (c)2004-2013 Broadcom Corporation
++ *
++ *  This program is the proprietary software of Broadcom Corporation and/or its licensors,
++ *  and may only be used, duplicated, modified or distributed pursuant to the terms and
++ *  conditions of a separate, written license agreement executed between you and Broadcom
++ *  (an "Authorized License").  Except as set forth in an Authorized License, Broadcom grants
++ *  no license (express or implied), right to use, or waiver of any kind with respect to the
++ *  Software, and Broadcom expressly reserves all rights in and to the Software and all
++ *  intellectual property rights therein.  IF YOU HAVE NO AUTHORIZED LICENSE, THEN YOU
++ *  HAVE NO RIGHT TO USE THIS SOFTWARE IN ANY WAY, AND SHOULD IMMEDIATELY
++ *  NOTIFY BROADCOM AND DISCONTINUE ALL USE OF THE SOFTWARE.
++ *
++ *  Except as expressly set forth in the Authorized License,
++ *
++ *  1.     This program, including its structure, sequence and organization, constitutes the valuable trade
++ *  secrets of Broadcom, and you shall use all reasonable efforts to protect the confidentiality thereof,
++ *  and to use this information only in connection with your use of Broadcom integrated circuit products.
++ *
++ *  2.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE SOFTWARE IS PROVIDED "AS IS"
++ *  AND WITH ALL FAULTS AND BROADCOM MAKES NO PROMISES, REPRESENTATIONS OR
++ *  WARRANTIES, EITHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE, WITH RESPECT TO
++ *  THE SOFTWARE.  BROADCOM SPECIFICALLY DISCLAIMS ANY AND ALL IMPLIED WARRANTIES
++ *  OF TITLE, MERCHANTABILITY, NONINFRINGEMENT, FITNESS FOR A PARTICULAR PURPOSE,
++ *  LACK OF VIRUSES, ACCURACY OR COMPLETENESS, QUIET ENJOYMENT, QUIET POSSESSION
++ *  OR CORRESPONDENCE TO DESCRIPTION. YOU ASSUME THE ENTIRE RISK ARISING OUT OF
++ *  USE OR PERFORMANCE OF THE SOFTWARE.
++ *
++ *  3.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL BROADCOM OR ITS
++ *  LICENSORS BE LIABLE FOR (i) CONSEQUENTIAL, INCIDENTAL, SPECIAL, INDIRECT, OR
++ *  EXEMPLARY DAMAGES WHATSOEVER ARISING OUT OF OR IN ANY WAY RELATING TO YOUR
++ *  USE OF OR INABILITY TO USE THE SOFTWARE EVEN IF BROADCOM HAS BEEN ADVISED OF
++ *  THE POSSIBILITY OF SUCH DAMAGES; OR (ii) ANY AMOUNT IN EXCESS OF THE AMOUNT
++ *  ACTUALLY PAID FOR THE SOFTWARE ITSELF OR U.S. $1, WHICHEVER IS GREATER. THESE
++ *  LIMITATIONS SHALL APPLY NOTWITHSTANDING ANY FAILURE OF ESSENTIAL PURPOSE OF
++ *  ANY LIMITED REMEDY.
++  *
++  * $brcm_Workfile: $
++  * $brcm_Revision: $
++  * $brcm_Date: $
++  *
++  * Module Description:
++  *
++  * Revision History:
++  *
++  * $brcm_Log: $
++  *
++  ***************************************************************************/
++ #include "nexus_platform.h"
++ #include "nexus_platform_priv.h"
++ #include "priv/nexus_core.h"
++ #include "bchp_sun_top_ctrl.h"
++ #include "bchp_aon_pin_ctrl.h"
++ 
++ BDBG_MODULE(nexus_platform_pinmux);
++ 
++ /***************************************************************************
++ Summary:
++     Configure pin muxes for the 97449 reference platform
++ Description:
++     The core module must be initialized for this to be called
++  ***************************************************************************/
++ 
++ /* pimux are now set in the bolt, for any change to the default pinmux
++    open a Bolt Jira.
++ */
++ NEXUS_Error NEXUS_Platform_P_InitPinmux(void)
++ {
++     return BERR_SUCCESS;
++ }
+diff -crBN Orig/nexus/platforms/97449/src/nexus_platform_standby_7445.c SeaChange/nexus/platforms/97449/src/nexus_platform_standby_7445.c
+*** Orig/nexus/platforms/97449/src/nexus_platform_standby_7445.c	1969-12-31 16:00:00.000000000 -0800
+--- SeaChange/nexus/platforms/97449/src/nexus_platform_standby_7445.c	2015-01-06 19:00:51.000000000 -0800
+***************
+*** 0 ****
+--- 1,77 ----
++ /******************************************************************************
++  *    (c)2012 Broadcom Corporation
++  *
++  * This program is the proprietary software of Broadcom Corporation and/or its licensors,
++  * and may only be used, duplicated, modified or distributed pursuant to the terms and
++  * conditions of a separate, written license agreement executed between you and Broadcom
++  * (an "Authorized License").  Except as set forth in an Authorized License, Broadcom grants
++  * no license (express or implied), right to use, or waiver of any kind with respect to the
++  * Software, and Broadcom expressly reserves all rights in and to the Software and all
++  * intellectual property rights therein.  IF YOU HAVE NO AUTHORIZED LICENSE, THEN YOU
++  * HAVE NO RIGHT TO USE THIS SOFTWARE IN ANY WAY, AND SHOULD IMMEDIATELY
++  * NOTIFY BROADCOM AND DISCONTINUE ALL USE OF THE SOFTWARE.
++  *
++  * Except as expressly set forth in the Authorized License,
++  *
++  * 1.     This program, including its structure, sequence and organization, constitutes the valuable trade
++  * secrets of Broadcom, and you shall use all reasonable efforts to protect the confidentiality thereof,
++  * and to use this information only in connection with your use of Broadcom integrated circuit products.
++  *
++  * 2.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE SOFTWARE IS PROVIDED "AS IS"
++  * AND WITH ALL FAULTS AND BROADCOM MAKES NO PROMISES, REPRESENTATIONS OR
++  * WARRANTIES, EITHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE, WITH RESPECT TO
++  * THE SOFTWARE.  BROADCOM SPECIFICALLY DISCLAIMS ANY AND ALL IMPLIED WARRANTIES
++  * OF TITLE, MERCHANTABILITY, NONINFRINGEMENT, FITNESS FOR A PARTICULAR PURPOSE,
++  * LACK OF VIRUSES, ACCURACY OR COMPLETENESS, QUIET ENJOYMENT, QUIET POSSESSION
++  * OR CORRESPONDENCE TO DESCRIPTION. YOU ASSUME THE ENTIRE RISK ARISING OUT OF
++  * USE OR PERFORMANCE OF THE SOFTWARE.
++  *
++  * 3.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL BROADCOM OR ITS
++  * LICENSORS BE LIABLE FOR (i) CONSEQUENTIAL, INCIDENTAL, SPECIAL, INDIRECT, OR
++  * EXEMPLARY DAMAGES WHATSOEVER ARISING OUT OF OR IN ANY WAY RELATING TO YOUR
++  * USE OF OR INABILITY TO USE THE SOFTWARE EVEN IF BROADCOM HAS BEEN ADVISED OF
++  * THE POSSIBILITY OF SUCH DAMAGES; OR (ii) ANY AMOUNT IN EXCESS OF THE AMOUNT
++  * ACTUALLY PAID FOR THE SOFTWARE ITSELF OR U.S. $1, WHICHEVER IS GREATER. THESE
++  * LIMITATIONS SHALL APPLY NOTWITHSTANDING ANY FAILURE OF ESSENTIAL PURPOSE OF
++  * ANY LIMITED REMEDY.
++  *
++  * $brcm_Workfile: $
++  * $brcm_Revision: $
++  * $brcm_Date: $
++  *
++  * Module Description:
++  *
++  * Revision History:
++  *
++  * $brcm_Log: $
++  *
++  *****************************************************************************/
++ 
++ #include "nexus_platform_standby.h"
++ 
++ #if NEXUS_POWER_MANAGEMENT
++ void NEXUS_Platform_P_ResetWakeupDevices(const NEXUS_PlatformStandbySettings *pSettings)
++ {
++     BSTD_UNUSED(pSettings);
++ }
++ 
++ void NEXUS_Platform_P_SetWakeupDevices(const NEXUS_PlatformStandbySettings *pSettings)
++ {
++     BSTD_UNUSED(pSettings);
++ }
++ 
++ void NEXUS_Platform_P_GetStandbyStatus(NEXUS_PlatformStandbyStatus *pStatus)
++ {
++     BSTD_UNUSED(pStatus);
++ }
++ 
++ void NEXUS_Platform_P_StandbyBoard(const NEXUS_PlatformStandbySettings *pSettings)
++ {
++     BSTD_UNUSED(pSettings);
++ }
++ 
++ void NEXUS_Platform_P_ResumeBoard(const NEXUS_PlatformStandbySettings *pSettings)
++ {
++     BSTD_UNUSED(pSettings);
++ }
++ #endif
+diff -crBN Orig/nexus/platforms/97449/src/nexus_platform_standby_7449.c SeaChange/nexus/platforms/97449/src/nexus_platform_standby_7449.c
+*** Orig/nexus/platforms/97449/src/nexus_platform_standby_7449.c	1969-12-31 16:00:00.000000000 -0800
+--- SeaChange/nexus/platforms/97449/src/nexus_platform_standby_7449.c	2015-01-06 19:00:51.000000000 -0800
+***************
+*** 0 ****
+--- 1,49 ----
++ /******************************************************************************
++  *    (c)2012 Broadcom Corporation
++  *
++  * This program is the proprietary software of Broadcom Corporation and/or its licensors,
++  * and may only be used, duplicated, modified or distributed pursuant to the terms and
++  * conditions of a separate, written license agreement executed between you and Broadcom
++  * (an "Authorized License").  Except as set forth in an Authorized License, Broadcom grants
++  * no license (express or implied), right to use, or waiver of any kind with respect to the
++  * Software, and Broadcom expressly reserves all rights in and to the Software and all
++  * intellectual property rights therein.  IF YOU HAVE NO AUTHORIZED LICENSE, THEN YOU
++  * HAVE NO RIGHT TO USE THIS SOFTWARE IN ANY WAY, AND SHOULD IMMEDIATELY
++  * NOTIFY BROADCOM AND DISCONTINUE ALL USE OF THE SOFTWARE.
++  *
++  * Except as expressly set forth in the Authorized License,
++  *
++  * 1.     This program, including its structure, sequence and organization, constitutes the valuable trade
++  * secrets of Broadcom, and you shall use all reasonable efforts to protect the confidentiality thereof,
++  * and to use this information only in connection with your use of Broadcom integrated circuit products.
++  *
++  * 2.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, THE SOFTWARE IS PROVIDED "AS IS"
++  * AND WITH ALL FAULTS AND BROADCOM MAKES NO PROMISES, REPRESENTATIONS OR
++  * WARRANTIES, EITHER EXPRESS, IMPLIED, STATUTORY, OR OTHERWISE, WITH RESPECT TO
++  * THE SOFTWARE.  BROADCOM SPECIFICALLY DISCLAIMS ANY AND ALL IMPLIED WARRANTIES
++  * OF TITLE, MERCHANTABILITY, NONINFRINGEMENT, FITNESS FOR A PARTICULAR PURPOSE,
++  * LACK OF VIRUSES, ACCURACY OR COMPLETENESS, QUIET ENJOYMENT, QUIET POSSESSION
++  * OR CORRESPONDENCE TO DESCRIPTION. YOU ASSUME THE ENTIRE RISK ARISING OUT OF
++  * USE OR PERFORMANCE OF THE SOFTWARE.
++  *
++  * 3.     TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL BROADCOM OR ITS
++  * LICENSORS BE LIABLE FOR (i) CONSEQUENTIAL, INCIDENTAL, SPECIAL, INDIRECT, OR
++  * EXEMPLARY DAMAGES WHATSOEVER ARISING OUT OF OR IN ANY WAY RELATING TO YOUR
++  * USE OF OR INABILITY TO USE THE SOFTWARE EVEN IF BROADCOM HAS BEEN ADVISED OF
++  * THE POSSIBILITY OF SUCH DAMAGES; OR (ii) ANY AMOUNT IN EXCESS OF THE AMOUNT
++  * ACTUALLY PAID FOR THE SOFTWARE ITSELF OR U.S. $1, WHICHEVER IS GREATER. THESE
++  * LIMITATIONS SHALL APPLY NOTWITHSTANDING ANY FAILURE OF ESSENTIAL PURPOSE OF
++  * ANY LIMITED REMEDY.
++  *
++  * $brcm_Workfile: $
++  * $brcm_Revision: $
++  * $brcm_Date: $
++  *
++  * Module Description:
++  *
++  * Revision History:
++  *
++  * $brcm_Log: $
++  *
++  *****************************************************************************/
++ #include "97445/src/nexus_platform_standby_7445.c"
+

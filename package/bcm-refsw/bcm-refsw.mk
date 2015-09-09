@@ -130,8 +130,8 @@ define BCM_REFSW_BUILD_CMDS
 	$(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/nexus/build all
 	
     if [ $(BR2_BCM_REFSW_VERSION_V15) = y ] || [ $(BR2_BCM_REFSW_VERSION_V15_2) = y ] ; then \
-       $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/middleware/v3d/driver -f V3DDriver.mk; \
-       $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/middleware/v3d/platform/nexus -f platform_nexus.mk; \
+       $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/middleware/${BCM_NEXUS_EGL_PACKAGE}/driver -f V3DDriver.mk; \
+       $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/middleware/${BCM_NEXUS_EGL_PACKAGE}/platform/nexus -f platform_nexus.mk; \
 	else \
        $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/middleware/v3d -f V3DDriver.mk; \
        $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/middleware/platform/nexus -f platform_nexus.mk; \
