@@ -1,0 +1,42 @@
+if BR2_arm
+
+config BR2_PACKAGE_GREENPEAK
+	bool "greenpeak"
+	help
+	  Greenpeak kernel drivers.
+
+if BR2_PACKAGE_GREENPEAK
+
+config BR2_PACKAGE_GREENPEAK_GP500
+  bool "GP500"
+  help
+    Chipset GP500
+
+config BR2_PACKAGE_GREENPEAK_GP501
+  bool "GP501"
+  help
+    Chipset GP501
+
+config BR2_PACKAGE_GREENPEAK_GP510
+  bool "GP510"
+  help
+    Chipset GP510
+
+config BR2_PACKAGE_GREENPEAK_GP710
+  bool "GP710"
+  help
+    Chipset GP710
+
+config BR2_PACKAGE_GREENPEAK_GP711
+  bool "GP711"
+  help
+    Chipset GP711
+
+config BR2_PACKAGE_GREENPEAK_GP712
+  bool "GP712"
+  help
+    Chipset GP712
+
+endif
+
+endif
