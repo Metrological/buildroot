@@ -1,42 +1,44 @@
-if BR2_arm
-
 config BR2_PACKAGE_GREENPEAK
 	bool "greenpeak"
+	depends on BR2_arm
 	help
 	  Greenpeak kernel drivers.
 
 if BR2_PACKAGE_GREENPEAK
 
-config BR2_PACKAGE_GREENPEAK_GP500
-  bool "GP500"
-  help
-    Chipset GP500
+choice
+	prompt "Greenpeak Type"
+	default BR2_PACKAGE_GREENPEAK_GP501
+	help
+	  Select the version of uClibc you wish to use.
 
-config BR2_PACKAGE_GREENPEAK_GP501
-  bool "GP501"
-  help
-    Chipset GP501
+	config BR2_PACKAGE_GREENPEAK_GP500
+		bool "GP500"
 
-config BR2_PACKAGE_GREENPEAK_GP510
-  bool "GP510"
-  help
-    Chipset GP510
+	config BR2_PACKAGE_GREENPEAK_GP501
+		bool "GP501"
 
-config BR2_PACKAGE_GREENPEAK_GP710
-  bool "GP710"
-  help
-    Chipset GP710
+	config BR2_PACKAGE_GREENPEAK_GP510
+		bool "GP510"
 
-config BR2_PACKAGE_GREENPEAK_GP711
-  bool "GP711"
-  help
-    Chipset GP711
+	config BR2_PACKAGE_GREENPEAK_GP710
+		bool "GP710"
 
-config BR2_PACKAGE_GREENPEAK_GP712
-  bool "GP712"
-  help
-    Chipset GP712
+	config BR2_PACKAGE_GREENPEAK_GP711
+		bool "GP711"
 
-endif
+	config BR2_PACKAGE_GREENPEAK_GP712
+		bool "GP712"
+
+endchoice
+
+config BR2_PACKAGE_GREENPEAK_TYPE
+	string
+	default GP500 if BR2_PACKAGE_GREENPEAK_GP500
+	default GP501 if BR2_PACKAGE_GREENPEAK_GP501
+	default GP510 if BR2_PACKAGE_GREENPEAK_GP510
+	default GP710 if BR2_PACKAGE_GREENPEAK_GP710
+	default GP711 if BR2_PACKAGE_GREENPEAK_GP711
+	default GP712 if BR2_PACKAGE_GREENPEAK_GP712
 
 endif
