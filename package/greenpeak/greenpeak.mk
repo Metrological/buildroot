@@ -3,7 +3,7 @@
 # greenpeak
 #
 ################################################################################
-GREENPEAK_VERSION = 790b82a314ad45bd14c2a4de13dbe97e770b82e7
+GREENPEAK_VERSION = 64bcdf7fca7bec238a27131d2639344d85db7888
 GREENPEAK_SITE_METHOD = git
 GREENPEAK_SITE = git@github.com:Metrological/greenpeak.git
 
@@ -16,7 +16,9 @@ GREENPEAK_EXTRA_CFLAGS = \
 	-fomit-frame-pointer \
 	-fno-strict-aliasing \
 	-fno-pic \
-	-ffreestanding
+	-ffreestanding \
+	-DGP_NVM_PATH=/root/gp \
+	-DGP_NVM_FILENAME=/root/gp/gpNvm.dat
 
 define GREENPEAK_BUILD_MODULE
 	GP_CHIP=$(GREENPEAK_CHIP) $(MAKE) -C $(LINUX_DIR) $(LINUX_MAKE_FLAGS) M=$(@D)/driver modules
@@ -32,7 +34,8 @@ define GREENPEAK_BUILD_CMDS
 endef
 
 define GREENPEAK_INSTALL_TARGET_CMDS
-	$(INSTALL) -D -m 0755 $(@D)/ZRCTarget_GP501_RPi/Work/ZRCTarget_GP501_RPi.elf $(TARGET_DIR)/usr/bin/zrcd
+	$(INSTALL) -D -m 0755 $(@D)/ZRCTarget_GP501_RPi/Work/ZRCTarget_GP501_RPi.elf $(TARGET_DIR)/usr/bin/zrc
+	$(INSTALL) -D -m 0755 package/greenpeak/S30greenpeak $(TARGET_DIR)/etc/init.d
 	$(GREENPEAK_INSTALL_MODULE)
 endef
 
