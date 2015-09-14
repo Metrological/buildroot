@@ -116,6 +116,9 @@ WPE_SHELL = Athol
 define WPE_INSTALL_AUTOSTART
 	$(INSTALL) -D -m 0755 package/wpe/wpe $(TARGET_DIR)/usr/bin
 	$(INSTALL) -D -m 0755 package/wpe/S90wpe $(TARGET_DIR)/etc/init.d
+	if [ -f package/wpe/wpe-update ]; then \
+		$(INSTALL) -D -m 0755 package/wpe/wpe-update $(TARGET_DIR)/usr/bin; \
+	fi
 endef
 else
 WPE_DEPENDENCIES += weston
