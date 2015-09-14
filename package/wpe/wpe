@@ -36,6 +36,12 @@ export WPE_NETWORK_PROCESS=1
 # Pointer support
 #export ATHOL_POINTER_EVENTS=1
 
+WPE_UPDATE="/usr/bin/wpe-update"
+if [ -e "$WPE_UPDATE" ];
+then
+	WPE_UPDATE_RESULT=$($WPE_UPDATE)
+fi
+
 export TZ=$(wget -qO- http://jsonip.metrological.com/ | sed -e 's/^.*"tz":"\([^"]*\)".*$/\1/')
 
 WPE_CONF_FILE="/boot/wpe.conf"
