@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-WEBBRIDGE_VERSION = ff371b96d4b388066ed1d6df8d976da36e65d316
+WEBBRIDGE_VERSION = a577b81fbe491f7de3b6aed05d9b797b79b9f147
 WEBBRIDGE_SITE_METHOD = git
 WEBBRIDGE_SITE = git@github.com:Metrological/webbridge.git
 WEBBRIDGE_INSTALL_STAGING = YES
@@ -89,6 +89,9 @@ define WEBBRIDGE_INSTALL_TARGET_CMDS
 	$(MAKE) -C $(@D)/WebBridgeSupport target
 	$(MAKE) -C $(@D)/WebBridge target
 	$(WEBBRIDGE_PLUGIN_INSTALL_TARGET)
+	$(INSTALL) -D -m 0755 package/webbridge/S80webbridge $(TARGET_DIR)/etc/init.d
+	rm -rf $(TARGET_DIR)/opt/webbridge/Controller/UI
+	ln -sf /boot/www $(TARGET_DIR)/opt/webbridge/Controller/UI
 endef
 
 $(eval $(generic-package))
