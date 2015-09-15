@@ -21,7 +21,7 @@ export WPE_SHELL_COOKIE_STORAGE=1
 export GST_GL_WINDOW=dummy
 
 # Use cairo noaa compositor
-export CAIRO_GL_COMPOSITOR=noaa
+#export CAIRO_GL_COMPOSITOR=noaa
 
 # Network Process
 export WPE_NETWORK_PROCESS=1
@@ -64,8 +64,8 @@ then
 	export HOME=/root
 	while true;
 	do
-		eval "WPE_SHELL_URL=\"$2\" $WPE_CONFIG $PREFIX athol"
+		cd /root && eval "WPE_SHELL_URL=\"$2\" $WPE_CONFIG $PREFIX athol"
 	done
 else
-	eval "WPE_SHELL_URL=\"$1\" $WPE_CONFIG $PREFIX athol"
+	cd /root && eval "WPE_SHELL_URL=\"$1\" $WPE_CONFIG $PREFIX athol"
 fi
