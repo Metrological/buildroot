@@ -3,7 +3,7 @@
 # greenpeak
 #
 ################################################################################
-GREENPEAK_VERSION = 63617dc544df30f887f261a324fe9f4d2a71cbef
+GREENPEAK_VERSION = d12def0ebb6da0aef88d3e287a0ef22a760b8bab
 GREENPEAK_SITE_METHOD = git
 GREENPEAK_SITE = git@github.com:Metrological/greenpeak.git
 
