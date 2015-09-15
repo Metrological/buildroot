@@ -5,7 +5,7 @@
 ################################################################################
 
 ifeq ($(BR2_PACKAGE_GSTREAMER1_GIT),y)
-GSTREAMER1_VERSION = ff9a78196c032588d75b99f6dfb74817bde196c2
+GSTREAMER1_VERSION = fcdfcbd618bf4235536122cd63856765827ff4ca
 endif
 GSTREAMER1_SOURCE = gstreamer-$(GSTREAMER1_VERSION).tar.gz
 GSTREAMER1_SITE = http://cgit.freedesktop.org/gstreamer/gstreamer/snapshot/
