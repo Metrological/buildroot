@@ -10,7 +10,7 @@ config BR2_TARGET_GENERIC_HOSTNAME
 	
 config BR2_TARGET_GENERIC_TIMESERVER
 	string "Time Server"
-	default "ntp.xs4all.nl"
+	default "time.nist.gov"
 	help
 	  Select a server that can be used to ask the time.
 
