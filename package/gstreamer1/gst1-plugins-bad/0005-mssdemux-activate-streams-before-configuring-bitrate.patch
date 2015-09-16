@@ -1,0 +1,82 @@
+From 9321e993f38261d9a5fe655c97b8544e9f7905af Mon Sep 17 00:00:00 2001
+From: Philippe Normand <philn@igalia.com>
+Date: Wed, 16 Sep 2015 12:13:11 +0200
+Subject: [PATCH] mssdemux: activate streams before configuring bitrate
+
+Doing the contrary has no effect and the consequence is that playback
+will start with the lowest bitrate even if we can already handle
+higher bitrate.
+---
+ ext/smoothstreaming/gstmssdemux.c | 31 ++++++++++++++++++++-----------
+ 1 file changed, 20 insertions(+), 11 deletions(-)
+
+diff --git a/ext/smoothstreaming/gstmssdemux.c b/ext/smoothstreaming/gstmssdemux.c
+index a515365..9c5b993 100644
+--- a/ext/smoothstreaming/gstmssdemux.c
++++ b/ext/smoothstreaming/gstmssdemux.c
+@@ -385,6 +385,7 @@ gst_mss_demux_setup_streams (GstAdaptiveDemux * demux)
+   GstMssDemux *mssdemux = GST_MSS_DEMUX_CAST (demux);
+   GSList *streams = gst_mss_manifest_get_streams (mssdemux->manifest);
+   GSList *iter;
++  GSList *active_streams = NULL;
+ 
+   if (streams == NULL) {
+     GST_INFO_OBJECT (mssdemux, "No streams found in the manifest");
+@@ -394,21 +395,11 @@ gst_mss_demux_setup_streams (GstAdaptiveDemux * demux)
+     return FALSE;
+   }
+ 
+-  GST_INFO_OBJECT (mssdemux, "Changing max bitrate to %u",
+-      demux->connection_speed);
+-  gst_mss_manifest_change_bitrate (mssdemux->manifest, demux->connection_speed);
+-
++  GST_INFO_OBJECT (mssdemux, "Activating streams");
+   for (iter = streams; iter; iter = g_slist_next (iter)) {
+     GstPad *srcpad = NULL;
+     GstMssDemuxStream *stream = NULL;
+     GstMssStream *manifeststream = iter->data;
+-    GstCaps *caps;
+-    const gchar *lang;
+-    const gchar *protection_system_id =
+-        gst_mss_manifest_get_protection_system_id (mssdemux->manifest);
+-    const gchar *protection_data =
+-        gst_mss_manifest_get_protection_data (mssdemux->manifest);
+-    gboolean protected = protection_system_id && protection_data;
+ 
+     srcpad = _create_pad (mssdemux, manifeststream);
+ 
+@@ -421,6 +412,23 @@ gst_mss_demux_setup_streams (GstAdaptiveDemux * demux)
+         srcpad);
+     stream->manifest_stream = manifeststream;
+     gst_mss_stream_set_active (manifeststream, TRUE);
++    active_streams = g_slist_prepend (active_streams, stream);
++  }
++
++  GST_INFO_OBJECT (mssdemux, "Changing max bitrate to %u",
++      demux->connection_speed);
++  gst_mss_manifest_change_bitrate (mssdemux->manifest, demux->connection_speed);
++
++  for (iter = active_streams; iter; iter = g_slist_next (iter)) {
++    GstMssDemuxStream *stream = iter->data;
++    GstCaps *caps;
++    const gchar *lang;
++    const gchar *protection_system_id =
++        gst_mss_manifest_get_protection_system_id (mssdemux->manifest);
++    const gchar *protection_data =
++        gst_mss_manifest_get_protection_data (mssdemux->manifest);
++    gboolean protected = protection_system_id && protection_data;
++
+     caps = gst_mss_stream_get_caps (stream->manifest_stream);
+ 
+     if (protected) {
+@@ -475,6 +483,7 @@ gst_mss_demux_setup_streams (GstAdaptiveDemux * demux)
+     }
+   }
+ 
++  g_slist_free (active_streams);
+   return TRUE;
+ }
+ 
+-- 
+2.5.0
+
