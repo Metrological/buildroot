@@ -3,7 +3,7 @@
 # greenpeak
 #
 ################################################################################
-GREENPEAK_VERSION = d12def0ebb6da0aef88d3e287a0ef22a760b8bab
+GREENPEAK_VERSION = a516039767340d53c4d975153bf7a8fe84c17a9f
 GREENPEAK_SITE_METHOD = git
 GREENPEAK_SITE = git@github.com:Metrological/greenpeak.git
 
@@ -35,7 +35,7 @@ endef
 
 define GREENPEAK_INSTALL_TARGET_CMDS
 	$(INSTALL) -D -m 0755 $(@D)/ZRCTarget_GP501_RPi/Work/ZRCTarget_GP501_RPi.elf $(TARGET_DIR)/usr/bin/zrc
-	$(INSTALL) -D -m 0755 package/greenpeak/S30greenpeak $(TARGET_DIR)/etc/init.d
+	$(INSTALL) -D -m 0755 package/greenpeak/S40greenpeak $(TARGET_DIR)/etc/init.d
 	$(GREENPEAK_INSTALL_MODULE)
 endef
 
