@@ -1,7 +1,7 @@
-From 19ed73249bf780935b3f9bdceef2cd38a8cc48af Mon Sep 17 00:00:00 2001
+From 54ade86e06b6963d80e53dc9dace16c653633748 Mon Sep 17 00:00:00 2001
 From: Philippe Normand <philn@igalia.com>
 Date: Thu, 10 Sep 2015 16:13:30 +0200
-Subject: [PATCH] mssdemux: improved live playback support
+Subject: [PATCH 4/6] mssdemux: improved live playback support
 
 When a MSS server hosts a live stream the fragments listed in the
 manifest usually don't have accurate timestamps and duration, except
@@ -40,7 +40,7 @@ index 5f331f3..80965e3 100644
 +	gstmssfragmentparser.h \
  	gstmssmanifest.h
 diff --git a/ext/smoothstreaming/gstmssdemux.c b/ext/smoothstreaming/gstmssdemux.c
-index f38d391..a515365 100644
+index f3b0ecb..1cc6345 100644
 --- a/ext/smoothstreaming/gstmssdemux.c
 +++ b/ext/smoothstreaming/gstmssdemux.c
 @@ -134,9 +134,16 @@ gst_mss_demux_stream_update_fragment_info (GstAdaptiveDemuxStream * stream);
@@ -74,7 +74,7 @@ index f38d391..a515365 100644
  
    GST_DEBUG_CATEGORY_INIT (mssdemux_debug, "mssdemux", 0, "mssdemux plugin");
  }
-@@ -621,6 +633,17 @@ gst_mss_demux_get_manifest_update_interval (GstAdaptiveDemux * demux)
+@@ -624,6 +636,17 @@ gst_mss_demux_get_manifest_update_interval (GstAdaptiveDemux * demux)
    return interval;
  }
  
@@ -92,7 +92,7 @@ index f38d391..a515365 100644
  static GstFlowReturn
  gst_mss_demux_update_manifest_data (GstAdaptiveDemux * demux,
      GstBuffer * buffer)
-@@ -632,3 +655,41 @@ gst_mss_demux_update_manifest_data (GstAdaptiveDemux * demux,
+@@ -635,3 +658,41 @@ gst_mss_demux_update_manifest_data (GstAdaptiveDemux * demux,
    gst_mss_manifest_reload_fragments (mssdemux->manifest, buffer);
    return GST_FLOW_OK;
  }

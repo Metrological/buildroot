@@ -1,29 +1,31 @@
-From 9321e993f38261d9a5fe655c97b8544e9f7905af Mon Sep 17 00:00:00 2001
+From 42d028e4c90d3413f86d84b2ccdd06768633d613 Mon Sep 17 00:00:00 2001
 From: Philippe Normand <philn@igalia.com>
-Date: Wed, 16 Sep 2015 12:13:11 +0200
-Subject: [PATCH] mssdemux: activate streams before configuring bitrate
+Date: Wed, 16 Sep 2015 12:50:46 +0200
+Subject: [PATCH 5/6] mssdemux: activate streams before configuring bitrate
 
 Doing the contrary has no effect and the consequence is that playback
 will start with the lowest bitrate even if we can already handle
 higher bitrate.
+
+https://bugzilla.gnome.org/show_bug.cgi?id=755108
 ---
- ext/smoothstreaming/gstmssdemux.c | 31 ++++++++++++++++++++-----------
- 1 file changed, 20 insertions(+), 11 deletions(-)
+ ext/smoothstreaming/gstmssdemux.c | 20 ++++++++++++++------
+ 1 file changed, 14 insertions(+), 6 deletions(-)
 
 diff --git a/ext/smoothstreaming/gstmssdemux.c b/ext/smoothstreaming/gstmssdemux.c
-index a515365..9c5b993 100644
+index 1cc6345..ac16281 100644
 --- a/ext/smoothstreaming/gstmssdemux.c
 +++ b/ext/smoothstreaming/gstmssdemux.c
-@@ -385,6 +385,7 @@ gst_mss_demux_setup_streams (GstAdaptiveDemux * demux)
-   GstMssDemux *mssdemux = GST_MSS_DEMUX_CAST (demux);
-   GSList *streams = gst_mss_manifest_get_streams (mssdemux->manifest);
-   GSList *iter;
+@@ -391,6 +391,7 @@ gst_mss_demux_setup_streams (GstAdaptiveDemux * demux)
+       gst_mss_manifest_get_protection_data (mssdemux->manifest);
+   gboolean protected = protection_system_id && protection_data;
+   const gchar *selected_system;
 +  GSList *active_streams = NULL;
  
    if (streams == NULL) {
      GST_INFO_OBJECT (mssdemux, "No streams found in the manifest");
-@@ -394,21 +395,11 @@ gst_mss_demux_setup_streams (GstAdaptiveDemux * demux)
-     return FALSE;
+@@ -414,16 +415,11 @@ gst_mss_demux_setup_streams (GstAdaptiveDemux * demux)
+     }
    }
  
 -  GST_INFO_OBJECT (mssdemux, "Changing max bitrate to %u",
@@ -37,15 +39,10 @@ index a515365..9c5b993 100644
      GstMssStream *manifeststream = iter->data;
 -    GstCaps *caps;
 -    const gchar *lang;
--    const gchar *protection_system_id =
--        gst_mss_manifest_get_protection_system_id (mssdemux->manifest);
--    const gchar *protection_data =
--        gst_mss_manifest_get_protection_data (mssdemux->manifest);
--    gboolean protected = protection_system_id && protection_data;
  
      srcpad = _create_pad (mssdemux, manifeststream);
  
-@@ -421,6 +412,23 @@ gst_mss_demux_setup_streams (GstAdaptiveDemux * demux)
+@@ -436,6 +432,17 @@ gst_mss_demux_setup_streams (GstAdaptiveDemux * demux)
          srcpad);
      stream->manifest_stream = manifeststream;
      gst_mss_stream_set_active (manifeststream, TRUE);
@@ -60,16 +57,10 @@ index a515365..9c5b993 100644
 +    GstMssDemuxStream *stream = iter->data;
 +    GstCaps *caps;
 +    const gchar *lang;
-+    const gchar *protection_system_id =
-+        gst_mss_manifest_get_protection_system_id (mssdemux->manifest);
-+    const gchar *protection_data =
-+        gst_mss_manifest_get_protection_data (mssdemux->manifest);
-+    gboolean protected = protection_system_id && protection_data;
-+
+ 
      caps = gst_mss_stream_get_caps (stream->manifest_stream);
  
-     if (protected) {
-@@ -475,6 +483,7 @@ gst_mss_demux_setup_streams (GstAdaptiveDemux * demux)
+@@ -478,6 +485,7 @@ gst_mss_demux_setup_streams (GstAdaptiveDemux * demux)
      }
    }
  
