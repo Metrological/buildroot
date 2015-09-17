@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-WEBBRIDGE_VERSION = 50b0c3d730591cfd4c8dfc48295e750579f28b1b
+WEBBRIDGE_VERSION = ff44841a1b057f439a06c5ef7a69bff9686d975d
 WEBBRIDGE_SITE_METHOD = git
 WEBBRIDGE_SITE = git@github.com:Metrological/webbridge.git
 WEBBRIDGE_INSTALL_STAGING = YES
@@ -73,6 +73,13 @@ ifeq ($(BR2_PACKAGE_PLUGIN_SURFACECOMPOSITOR),y)
 	WEBBRIDGE_DEPENDENCIES += bcm-refsw
 endif
 
+define WEBBRIDGE_CLEANUP
+	rm -rf $(TARGET_DIR)/opt/webbridge/Provisioning/UI
+	rm -rf $(TARGET_DIR)/opt/webbridge/Controller/UI
+	rm -rf $(TARGET_DIR)/opt/webbridge/DeviceInfo/UI
+	rm -rf $(TARGET_DIR)/opt/webbridge/Controller/UI
+endef
+
 define WEBBRIDGE_BUILD_CMDS
 	$(MAKE) CXX="$(TARGET_CXX)" -C $(@D)/WebBridgeSupport build
 	$(MAKE) CXX="$(TARGET_CXX)" $(WEBBRIDGE_APPLICATION_FLAGS) -C $(@D)/WebBridge build
@@ -86,11 +93,12 @@ define WEBBRIDGE_INSTALL_STAGING_CMDS
 endef
 
 define WEBBRIDGE_INSTALL_TARGET_CMDS
+	$(WEBBRIDGE_CLEANUP)
 	$(MAKE) -C $(@D)/WebBridgeSupport target
 	$(MAKE) -C $(@D)/WebBridge target
 	$(WEBBRIDGE_PLUGIN_INSTALL_TARGET)
 	$(INSTALL) -D -m 0755 package/webbridge/S80webbridge $(TARGET_DIR)/etc/init.d
-	rm -rf $(TARGET_DIR)/opt/webbridge/Controller/UI
+	$(WEBBRIDGE_CLEANUP)
 	ln -sf /boot/www $(TARGET_DIR)/opt/webbridge/Controller/UI
 endef
 
