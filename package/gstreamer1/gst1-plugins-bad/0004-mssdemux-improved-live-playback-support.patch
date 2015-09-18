@@ -1,4 +1,4 @@
-From 54ade86e06b6963d80e53dc9dace16c653633748 Mon Sep 17 00:00:00 2001
+From 4722780bad3a04b7f2152e1a140ab90dff0acad0 Mon Sep 17 00:00:00 2001
 From: Philippe Normand <philn@igalia.com>
 Date: Thu, 10 Sep 2015 16:13:30 +0200
 Subject: [PATCH 4/6] mssdemux: improved live playback support
@@ -16,11 +16,11 @@ https://bugzilla.gnome.org/show_bug.cgi?id=755036
  ext/smoothstreaming/gstmssdemux.c             |  61 ++++++
  ext/smoothstreaming/gstmssfragmentparser.c    | 255 ++++++++++++++++++++++++++
  ext/smoothstreaming/gstmssfragmentparser.h    |  84 +++++++++
- ext/smoothstreaming/gstmssmanifest.c          | 152 +++++++++++++--
+ ext/smoothstreaming/gstmssmanifest.c          | 155 ++++++++++++++--
  ext/smoothstreaming/gstmssmanifest.h          |   3 +
  gst-libs/gst/adaptivedemux/gstadaptivedemux.c |  20 +-
  gst-libs/gst/adaptivedemux/gstadaptivedemux.h |  14 ++
- 8 files changed, 574 insertions(+), 17 deletions(-)
+ 8 files changed, 577 insertions(+), 17 deletions(-)
  create mode 100644 ext/smoothstreaming/gstmssfragmentparser.c
  create mode 100644 ext/smoothstreaming/gstmssfragmentparser.h
 
@@ -486,7 +486,7 @@ index 0000000..6626358
 +
 +#endif /* __GST_MSS_FRAGMENT_PARSER_H__ */
 diff --git a/ext/smoothstreaming/gstmssmanifest.c b/ext/smoothstreaming/gstmssmanifest.c
-index 33dc76f..a47db27 100644
+index 33dc76f..9778090 100644
 --- a/ext/smoothstreaming/gstmssmanifest.c
 +++ b/ext/smoothstreaming/gstmssmanifest.c
 @@ -1,5 +1,7 @@
@@ -729,7 +729,7 @@ index 33dc76f..a47db27 100644
    return GST_FLOW_OK;
  }
  
-@@ -1358,3 +1441,44 @@ gst_mss_stream_get_lang (GstMssStream * stream)
+@@ -1358,3 +1441,47 @@ gst_mss_stream_get_lang (GstMssStream * stream)
  {
    return stream->lang;
  }
@@ -760,8 +760,11 @@ index 33dc76f..a47db27 100644
 +  for (guint8 index = 0; index < stream->fragment_parser.tfrf.entries_count;
 +      index++) {
 +    GstMssStreamFragment *last = g_queue_peek_tail (&stream->live_fragments);
-+    GstMssStreamFragment *fragment = g_new (GstMssStreamFragment, 1);
++    GstMssStreamFragment *fragment;
 +
++    if (last == NULL)
++        break;
++    fragment = g_new (GstMssStreamFragment, 1);
 +    fragment->number = last->number + 1;
 +    fragment->repetitions = 1;
 +    fragment->time = stream->fragment_parser.tfrf.entries[index].time;
