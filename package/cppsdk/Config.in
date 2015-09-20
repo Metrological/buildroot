@@ -49,6 +49,7 @@ config BR2_PACKAGE_CPPSDK_WEBSOCKET
   bool "websocket"
   select BR2_PACKAGE_CPPSDK_GENERICS
   select BR2_PACKAGE_CPPSDK_CRYPTALGO
+  select BR2_PACKAGE_ZLIB
   help
     Functionality to handle web communiciation and web socket
     communication.
