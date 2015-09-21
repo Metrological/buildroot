@@ -188,41 +188,58 @@ config BR2_PACKAGE_NRD_INPUT
 	default "null" if !BR2_PACKAGE_NRD_INPUT_DEVINPUT || !BR2_PACKAGE_NRD_INPUT_METROLOGICAL
 
 config BR2_PACKAGE_NRD_DRM_ENABLED
-	bool "playready"
-	depends on BR2_PACKAGE_DXDRM
-
-comment "playready support depends on dxdrm"
-	depends on !BR2_PACKAGE_DXDRM
+	bool "DRM"
 
 if BR2_PACKAGE_NRD_DRM_ENABLED
+choice
+	prompt "Which type of playready library:"
+config BR2_PACKAGE_NRD_DRM_INTERNAL
+	bool "internal drm"
+	help
+	  Build NRD with one of the built-in PLAYREADY libraries
 
+config BR2_PACKAGE_NRD_DRM_EXTERNAL
+	bool "external drm"
+	help
+	  Build NRD with an external DRM library
+comment "Currenlty the external interface is unsupported"
+#comment "external playready support depends on dxdrm"
+endchoice
+endif
+
+if BR2_PACKAGE_NRD_DRM_INTERNAL
 choice 
 	prompt "Which playready version should we use:"
 
 config BR2_PACKAGE_NRD_PLAYREADY
-	bool "playready 1.5"
+	bool "playready 1.2"
 	help
-	  Build NRD using the PlayReady version 1.5.
+	  Build NRD using the PlayReady version 1.2.
 
 config BR2_PACKAGE_NRD_PLAYREADY2
-	bool "playready 2"
+	bool "playready 2 ss"
 	help
-	  Build NRD using the PlayReady version 2.
+	  Build NRD using the PlayReady version 2 (ss).
 
 config BR2_PACKAGE_NRD_PLAYREADY25
-	bool "playready 2.5"
+	bool "playready 2.5 tee"
 	help
-	  Build NRD using the PlayReady version 2.5.
-
+	  Build NRD using the PlayReady version 2.5 (tee).
 endchoice
 
 endif
 
+if BR2_PACKAGE_NRD_DRM_EXTERNAL
+#	depends on !BR2_PACKAGE_DXDRM
+endif
+
+#   'playready1.2', 'playready2.0-ss', 'playready2.5tee', 'playready2.5-ss-tee
 config BR2_PACKAGE_NRD_DRM
 	string
-	default "playready" if BR2_PACKAGE_NRD_PLAYREADY
-	default "playready2" if BR2_PACKAGE_NRD_PLAYREADY2
-	default "playready2.5" if BR2_PACKAGE_NRD_PLAYREADY25
+	default "playready1.2" if BR2_PACKAGE_NRD_PLAYREADY
+	default "playready2.0-ss" if BR2_PACKAGE_NRD_PLAYREADY2
+	default "playready2.5-tee" if BR2_PACKAGE_NRD_PLAYREADY25
+#	default "playready2.5-ss-tee" if BR2_PACKAGE_NRD_PLAYREADY25
 	default "none" if !BR2_PACKAGE_NRD_PLAYREADY && !BR2_PACKAGE_NRD_PLAYREADY2 && !BR2_PACKAGE_NRD_PLAYREADY25
 
 
