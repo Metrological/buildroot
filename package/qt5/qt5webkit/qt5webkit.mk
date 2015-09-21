@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-QT5WEBKIT_VERSION = f4c76d5c99c04d84d2090ed55bd46b438efe0f11
+QT5WEBKIT_VERSION = 3761c40b327bc3cb9738e163e2d5f9919ddf43c4
 ifeq ($(BR2_QT5WEBKIT_USE_WEBRTC),y)
 QT5WEBKIT_VERSION = de07f58fb904c81794af37238e2c0c2989a59898
 endif
@@ -93,6 +93,10 @@ ifeq ($(BR2_QT5WEBKIT_USE_DXDRM_EME),y)
 QT5WEBKIT_DEPENDENCIES += dxdrm
 QT5WEBKIT_CONFIG += \
 	WEBKIT_CONFIG+=use_dxdrm
+        QT5WEBKIT_CONFIG+=LIBS+=-lDxDrm
+	ifeq ($(BR2_PACKAGE_DXDRM_EXTERNAL),y)
+		QT5WEBKIT_CONFIG+=LIBS+=-lprovisionproxy
+	endif
 endif
 
 ifeq ($(BR2_QT5WEBKIT_USE_ENCRYPTED_MEDIA),y)
