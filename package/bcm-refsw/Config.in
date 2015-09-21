@@ -115,6 +115,7 @@ config BR2_BCMREFSW_WAYLAND_SUPPORT_NEXUS
 	   Wayland support, implemented using the native NEXUS api.
 
 endchoice
+endif
 
 choice 
         prompt "Video graphics driver"
@@ -131,7 +132,7 @@ config BR2_BCMREFSW_VIDEODRIVER_VC5
 
 endchoice
 
-endif
+
 
 choice
         prompt "Software debug level "
