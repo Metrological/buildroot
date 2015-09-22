@@ -36,6 +36,11 @@ ifeq ($(BR2_PACKAGE_PLUGIN_WEBPROXY),y)
 	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/WebProxy target ;
 endif
 
+ifeq ($(BR2_PACKAGE_PLUGIN_REMOTECONTROL),y)
+	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX="$(TARGET_CXX)" -C $(@D)/Plugins/RemoteControl build ;
+	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/RemoteControl target ;
+endif
+
 ifeq ($(BR2_PACKAGE_PLUGIN_DEVICEINFO),y)
 	WEBBRIDGE_PLUGIN_BUILD += $(MAKE) CXX="$(TARGET_CXX)" -C $(@D)/Plugins/DeviceInfo build ;
 	WEBBRIDGE_PLUGIN_INSTALL_TARGET += $(MAKE) -C $(@D)/Plugins/DeviceInfo target ;

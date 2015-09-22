@@ -48,6 +48,18 @@ config BR2_PACKAGE_PLUGIN_WEBPROXY
   help
   Provide functionality to proxy WebSockets (initiative) to tcp connections. 
 
+config BR2_PACKAGE_PLUGIN_REMOTECONTROL
+  bool "remotecontrol"
+  depends on BR2_PACKAGE_GREENPEAK_GP501 || BR2_PACKAGE_GREENPEAK_GP711
+  help
+    A remote control implementation that translates keys coming in from a 
+    different source into the linux key system. 
+    Current implementations supprts:
+	GreeenPeak RF4CE chip (510) with RF4CE remotes.
+
+comment "remotecontrol requires the GreenPeak GP501 or GP711 to be selected."
+        depends on !BR2_PACKAGE_GREENPEAK || (!BR2_PACKAGE_GREENPEAK_GP501 && !BR2_PACKAGE_GREENPEAK_GP711)
+
 config BR2_PACKAGE_PLUGIN_I2CCONTROL
   bool "i2ccontrol"
   help
