@@ -20,10 +20,11 @@ MESA3D_CONF_OPT = \
 	--disable-glu \
 	--disable-glw \
 	--disable-glut \
-	--disable-gallium \
+	--enable-gallium \
 	--with-driver=dri \
 	--with-dri-drivers=swrast \
-	--disable-static
+	--disable-static \
+	--enable-xcb
 
 MESA3D_DEPENDENCIES = \
 	xproto_glproto \
