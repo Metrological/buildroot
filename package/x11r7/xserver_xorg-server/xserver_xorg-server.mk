@@ -189,4 +189,6 @@ XSERVER_XORG_SERVER_CONF_OPT += --with-sha1=libsha1
 XSERVER_XORG_SERVER_DEPENDENCIES += libsha1
 endif
 
+XSERVER_XORG_SERVER_CONF_OPT += --enable-xinerama
+
 $(eval $(autotools-package))
