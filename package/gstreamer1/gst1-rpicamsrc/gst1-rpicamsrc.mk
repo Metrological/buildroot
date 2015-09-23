@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-GST1_RPICAMSRC_VERSION = a06bbc87d997f73a5085f9c66b251e8d21f00a94
+GST1_RPICAMSRC_VERSION = a7ad56ebe6a0e5fc440abfc4b7a0cd65e9389425
 GST1_RPICAMSRC_SITE = $(call github,thaytan,gst-rpicamsrc,$(GST1_RPICAMSRC_VERSION))
 
 GST1_RPICAMSRC_LICENSE = LGPLv2.1
