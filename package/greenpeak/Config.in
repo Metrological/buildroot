@@ -6,6 +6,12 @@ config BR2_PACKAGE_GREENPEAK
 
 if BR2_PACKAGE_GREENPEAK
 
+config BR2_PACKAGE_GREENPEAK_USERLANDLIB
+	bool "userland library"
+	help
+	   Build a Rf4ce library for use by appplications working with the greenpeak chip in stead
+           of building an application that reads keys from an Rf4ce remote and ingest them into the 
+           linux input system.
 choice
 	prompt "Greenpeak Type"
 	default BR2_PACKAGE_GREENPEAK_GP501
