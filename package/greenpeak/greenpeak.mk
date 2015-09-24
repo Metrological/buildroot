@@ -3,7 +3,7 @@
 # greenpeak
 #
 ################################################################################
-GREENPEAK_VERSION = a516039767340d53c4d975153bf7a8fe84c17a9f
+GREENPEAK_VERSION = df4154e8a3db403236e122b1479d971df4761495
 GREENPEAK_SITE_METHOD = git
 GREENPEAK_SITE = git@github.com:Metrological/greenpeak.git
 GREENPEAK_DEPENDENCIES = linux
@@ -31,6 +31,7 @@ endef
 
 endif
 
+GREENPEAK_ARTIFACT = GP_APPLICATION=1
 GREENPEAK_EXTRA_CFLAGS = \
 	-std=gnu99 \
 	-fomit-frame-pointer \
