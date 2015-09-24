@@ -16,9 +16,10 @@ GREENPEAK_ARTIFACT = libRf4ce.a
 GREENPEAK_INSTALL_STAGING = YES
 
 define GREENPEAK_INSTALL_STAGING_CMDS
-	$(INSTALL) -d -m 755 $(STAGING_DIR)/usr/include/greenpeak;
-	$(INSTALL) -D -m 0644 $(@D)/ZRCTarget_GP501_RPi/libRf4ce.a $(STAGING_DIR)/usr/lib/;
+	$(INSTALL) -d -m 755 $(STAGING_DIR)/usr/include/greenpeak; 
+	$(INSTALL) -D -m 0644 $(@D)/ZRCTarget_GP501_RPi/libRf4ce.a $(STAGING_DIR)/usr/lib/; 
 	cp -r $(@D)/ZRCTarget_GP501_RPi/code/BaseComps/v2.4.5.2/comps/* $(STAGING_DIR)/usr/include/greenpeak;
+	cp -r $(@D)/ZRCTarget_GP501_RPi/code/BaseComps/v2.4.5.2/inc/* $(STAGING_DIR)/usr/include/greenpeak; 
 endef
 
 else
@@ -37,7 +38,7 @@ GREENPEAK_EXTRA_CFLAGS = \
 	-std=gnu99 \
 	-fomit-frame-pointer \
 	-fno-strict-aliasing \
-	-fno-pic \
+	-fPIC \
 	-ffreestanding \
 	-DGP_NVM_PATH=/root/gp \
 	-DGP_NVM_FILENAME=/root/gp/gpNvm.dat
@@ -53,12 +54,6 @@ endef
 define GREENPEAK_BUILD_CMDS
 	COMPILER=buildroot $(TARGET_MAKE_ENV) $(MAKE1) CC="$(TARGET_CC)" CFLAGS_COMPILER="$(TARGET_CFLAGS) $(GREENPEAK_EXTRA_CFLAGS)" -C $(@D)/ZRCTarget_$(GREENPEAK_CHIP)_RPi ${GREENPEAK_ARTIFACT}
 	$(GREENPEAK_BUILD_MODULE)
-endef
-
-define GREENPEAK_INSTALL_STAGING_CMDS
-	$(INSTALL) -d -m 755 $(STAGING_DIR)/usr/include/greenpeak;
-	$(INSTALL) -D -m 0644 $(@D)/ZRCTarget_GP501_RPi/libRf4ce.a $(STAGING_DIR)/usr/lib/;
-	cp -r $(@D)/ZRCTarget_GP501_RPi/code/BaseComps/v2.4.5.2/comps/* $(STAGING_DIR)/usr/include/greenpeak;
 endef
 
 $(eval $(generic-package))
