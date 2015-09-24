@@ -18,6 +18,8 @@ choice
 config BR2_PACKAGE_DXDRM_EXTERNAL
 	bool "external"
 	select BR2_PACKAGE_OPENSSL
+	select BR2_PACKAGE_CPPSDK
+	select BR2_PACKAGE_CPPSDK_GENERICS
 	help
 	  Device Credentials will be provisioned via an external system.
 
