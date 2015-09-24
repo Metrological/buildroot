@@ -23,6 +23,8 @@ endef
 
 else
 
+GREENPEAK_ARTIFACT = GP_APPLICATION=1
+
 define GREENPEAK_INSTALL_TARGET_CMDS
 	$(INSTALL) -D -m 0755 $(@D)/ZRCTarget_GP501_RPi/Work/ZRCTarget_GP501_RPi.elf $(TARGET_DIR)/usr/bin/zrc
 	$(INSTALL) -D -m 0755 package/greenpeak/S40greenpeak $(TARGET_DIR)/etc/init.d
@@ -31,7 +33,6 @@ endef
 
 endif
 
-GREENPEAK_ARTIFACT = GP_APPLICATION=1
 GREENPEAK_EXTRA_CFLAGS = \
 	-std=gnu99 \
 	-fomit-frame-pointer \
