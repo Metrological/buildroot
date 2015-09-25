@@ -181,7 +181,7 @@ ifeq ($(VERBOSE),1)
 endif
 
 define WPE_BUILD_CMDS
-	$(WPE_MAKE_ENV) $(HOST_DIR)/usr/bin/ninja -C $(WPE_BUILDDIR) $(WPE_NINJA_EXTRA_OPTIONS) libWPEWebKit.so libWPEWebInspectorResources.so WPE{Web,Network}Process
+	$(WPE_MAKE_ENV) $(HOST_DIR)/usr/bin/ninja -C $(WPE_BUILDDIR) $(WPE_NINJA_EXTRA_OPTIONS) libWPEWebKit.so libWPEWebInspectorResources.so WPE{Web,Network}Process WPELauncher
 endef
 
 define WPE_INSTALL_STAGING_CMDS
