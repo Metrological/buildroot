@@ -3,7 +3,7 @@
 # greenpeak
 #
 ################################################################################
-GREENPEAK_VERSION = df4154e8a3db403236e122b1479d971df4761495
+GREENPEAK_VERSION = b096a79bd5b3b9b3e70d0ea2f015212fbfc2a5a1
 GREENPEAK_SITE_METHOD = git
 GREENPEAK_SITE = git@github.com:Metrological/greenpeak.git
 GREENPEAK_DEPENDENCIES = linux
@@ -24,7 +24,7 @@ endef
 
 else
 
-GREENPEAK_ARTIFACT = GP_APPLICATION=1
+GREENPEAK_ARTIFACT = "GP_APPLICATION=1"
 
 define GREENPEAK_INSTALL_TARGET_CMDS
 	$(INSTALL) -D -m 0755 $(@D)/ZRCTarget_GP501_RPi/Work/ZRCTarget_GP501_RPi.elf $(TARGET_DIR)/usr/bin/zrc
