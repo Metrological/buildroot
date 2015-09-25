@@ -39,6 +39,8 @@ BCM_REFSW_LICENSE = PROPRIETARY
 BCM_REFSW_INSTALL_STAGING = YES
 BCM_REFSW_INSTALL_TARGET = YES
 
+BCM_REFSW_PLATFORM = $(call qstrip,${BR2_PACKAGE_BCM_REFSW_PLATFORM})
+
 BCM_MAKE_ENV = \
 	NEXUS_TOP=${BCM_REFSW_DIR}/nexus \
 	PLATFORM=$(call qstrip,${BR2_PACKAGE_BCM_REFSW_PLATFORM}) \
@@ -128,10 +130,13 @@ endef
 
 define BCM_REFSW_BUILD_CMDS
 	$(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/nexus/build all
-	
     if [ $(BR2_BCM_REFSW_VERSION_V15) = y ] || [ $(BR2_BCM_REFSW_VERSION_V15_2) = y ] ; then \
-       $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/middleware/${BCM_NEXUS_EGL_PACKAGE}/driver -f V3DDriver.mk; \
-       $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/middleware/${BCM_NEXUS_EGL_PACKAGE}/platform/nexus -f platform_nexus.mk; \
+       $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/middleware/${BCM_NEXUS_EGL_PACKAGE}/driver -f V3DDriver.mk \
+                    OBJDIR=$(@D)/obj.${BCM_REFSW_PLATFORM}/rockford/middleware/v3d/driver/obj_${BCM_REFSW_PLATFORM}_release \
+                    LIBDIR=$(@D)/obj.${BCM_REFSW_PLATFORM}/nexus/bin; \
+       $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/middleware/${BCM_NEXUS_EGL_PACKAGE}/platform/nexus -f platform_nexus.mk \
+                    OBJDIR=$(@D)/obj.${BCM_REFSW_PLATFORM}/rockford/middleware/v3d/platform/obj_${BCM_REFSW_PLATFORM}_release \
+                    LIBDIR=$(@D)/obj.${BCM_REFSW_PLATFORM}/nexus/bin; \
 	else \
        $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/middleware/v3d -f V3DDriver.mk; \
        $(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/rockford/middleware/platform/nexus -f platform_nexus.mk; \
