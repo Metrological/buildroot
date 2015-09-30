@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-NRD_VERSION = 4cbb0f2e19ce905cc97fc2f62eb2760c6822674a
+NRD_VERSION = 179d5bf82a976188dec2c721093bf10a6c6816b9
 NRD_SITE = git@github.com:Metrological/nrd.git
 NRD_SITE_METHOD = git
 NRD_LICENSE = PROPRIETARY
