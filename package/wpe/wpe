@@ -1,7 +1,7 @@
 #!/bin/sh
 if [ "$1" = "--loop" ];
 then
-	killall athol WPEWebProcess WPENetworkProcess &> /dev/null
+	killall athol WPELauncher WPEWebProcess WPENetworkProcess &> /dev/null
 else
 	/etc.init.d/S90wpe stop &> /dev/null
 fi
@@ -11,7 +11,7 @@ rm -rf $XDG_RUNTIME_DIR
 mkdir -p $XDG_RUNTIME_DIR
 chmod 0700 $XDG_RUNTIME_DIR
 
-export ATHOL_SHELL=/usr/lib/libWPEAtholShell.so
+#export ATHOL_SHELL=/usr/lib/libWPEAtholShell.so
 
 # Enable cookie persistent storage
 export WPE_SHELL_COOKIE_STORAGE=1
@@ -58,14 +58,14 @@ fi
 #mkdir -p /root/cores
 #ulimit -c unlimited
 
-# The PREFIX env var can be useful when debugging athol with gdbserver.
+# The PREFIX env var can be useful when debugging athol/WPELauncher with gdbserver.
 if [ "$1" = "--loop" ];
 then
 	export HOME=/root
 	while true;
 	do
-		cd /root && eval "WPE_SHELL_URL=\"$2\" $WPE_CONFIG $PREFIX athol"
+		cd /root && eval "WPE_SHELL_URL=\"$2\" $WPE_CONFIG $PREFIX WPELauncher"
 	done
 else
-	cd /root && eval "WPE_SHELL_URL=\"$1\" $WPE_CONFIG $PREFIX athol"
+	cd /root && eval "WPE_SHELL_URL=\"$1\" $WPE_CONFIG $PREFIX WPELauncher"
 fi
