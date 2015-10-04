@@ -18,8 +18,15 @@ GREENPEAK_INSTALL_STAGING = YES
 define GREENPEAK_INSTALL_STAGING_CMDS
 	$(INSTALL) -d -m 755 $(STAGING_DIR)/usr/include/greenpeak; 
 	$(INSTALL) -D -m 0644 $(@D)/ZRCTarget_GP501_RPi/libRf4ce.a $(STAGING_DIR)/usr/lib/; 
+	$(INSTALL) -D -m 0644 $(@D)/ZRCTarget_GP501_RPi/code/Work/ZRCTarget_GP501_RPi/libZRCTarget_GP501_RPi.a $(STAGING_DIR)/usr/lib/libGP501.a;
 	cp -r $(@D)/ZRCTarget_GP501_RPi/code/BaseComps/v2.4.5.2/comps/* $(STAGING_DIR)/usr/include/greenpeak;
 	cp -r $(@D)/ZRCTarget_GP501_RPi/code/BaseComps/v2.4.5.2/inc/* $(STAGING_DIR)/usr/include/greenpeak; 
+endef
+
+define GREENPEAK_INSTALL_TARGET_CMDS
+	$(INSTALL) -D -m 0755 package/greenpeak/S40greenpeak $(TARGET_DIR)/etc/init.d
+	$(GREENPEAK_INSTALL_MODULE)
+
 endef
 
 else

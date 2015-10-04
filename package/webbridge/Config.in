@@ -10,11 +10,20 @@ config BR2_PACKAGE_WEBBRIDGE
 
 if BR2_PACKAGE_WEBBRIDGE
 
+config BR2_PACKAGE_PLUGIN_MINIMIZED
+  bool "minimized"
+  help
+    If minimized is selected, no UI pages will be copied to the target.
+
 config BR2_PACKAGE_PLUGIN_FANCONTROL
   bool "fancontrol"
+  depends on BR2_PACKAGE_CPPSDK_DEVICES
   help
     An example plugin that shows the usage of the webbridge and
 	  actually controls a Fan in a household in Holland :-)
+
+comment "fancontrol needs the package cppsdk/devices."
+        depends on !BR2_PACKAGE_CPPSDK_DEVICES
 
 config BR2_PACKAGE_PLUGIN_TRACECONTROL
   bool "tracecontrol"
@@ -62,17 +71,25 @@ comment "remotecontrol requires the GreenPeak GP501 or GP711 to be selected and 
 
 config BR2_PACKAGE_PLUGIN_I2CCONTROL
   bool "i2ccontrol"
+  depends on BR2_PACKAGE_CPPSDK_DEVICES
   help
     An implementation of a i2c bridge to a web request. Using this plugin
     simple commands can be send from javascript to control a PCF8574 (8 
     bits I/O), a MCP23017 (16 bits I/O) or a DS1621 (temperature sensor).
 
+comment "i2ccontrol needs the package cppsdk/devices."
+        depends on !BR2_PACKAGE_CPPSDK_DEVICES
+
 config BR2_PACKAGE_PLUGIN_SPICONTROL
   bool "spicontrol"
+  depends on BR2_PACKAGE_CPPSDK_DEVICES
   help
     An implementation of a SPI bridge to a web request. Using this plugin
     simple commands can be send from javascript to control a MCP3002 (10 
     bits dual channel ADC).
+
+comment "spicontrol needs the package cppsdk/devices."
+        depends on !BR2_PACKAGE_CPPSDK_DEVICES
 
 config BR2_PACKAGE_PLUGIN_TEMPCONTROL
   bool "tempcontrol"
