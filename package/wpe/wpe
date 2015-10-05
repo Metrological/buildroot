@@ -64,8 +64,8 @@ then
 	export HOME=/root
 	while true;
 	do
-		cd /root && eval "WPE_SHELL_URL=\"$2\" $WPE_CONFIG $PREFIX WPELauncher"
+		cd /root && eval "$WPE_CONFIG $PREFIX WPELauncher $2"
 	done
 else
-	cd /root && eval "WPE_SHELL_URL=\"$1\" $WPE_CONFIG $PREFIX WPELauncher"
+	cd /root && eval "$WPE_CONFIG $PREFIX WPELauncher $1"
 fi
