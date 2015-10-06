@@ -1,17 +1,25 @@
 #!/bin/sh
 
+ZRC=/usr/bin/zrc
+
 start() {
 	echo -n "Starting Greenpeak: "
 	modprobe -q greenpeak_GP501_drv
 	MAJOR=`awk '$2=="GP501" {print $1}' /proc/devices`
 	mknod /dev/gpK5 c $MAJOR 0
-	start-stop-daemon -S -q -b -m -p /var/run/greenpeak.pid --exec /usr/bin/zrc -- >/dev/null 2>&1
+	if [ -e "$ZRC" ];
+	then
+		start-stop-daemon -S -q -b -m -p /var/run/greenpeak.pid --exec $ZRC -- >/dev/null 2>&1
+	fi
 	echo "OK"
 }
 
 stop() {
 	echo -n "Stopping Greenpeak: "
-	start-stop-daemon -K -q -p /var/run/greenpeak.pid
+	if [ -e "$ZRC" ];
+	then
+		start-stop-daemon -K -q -p /var/run/greenpeak.pid
+	fi
 	modprobe -r -q greenpeak_GP501_drv
 	rm -rf /dev/gpK5
 	echo "OK"
