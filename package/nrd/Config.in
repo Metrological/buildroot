@@ -202,8 +202,6 @@ config BR2_PACKAGE_NRD_DRM_EXTERNAL
 	bool "external drm"
 	help
 	  Build NRD with an external DRM library
-comment "Currenlty the external interface is unsupported"
-#comment "external playready support depends on dxdrm"
 endchoice
 endif
 
@@ -226,11 +224,15 @@ config BR2_PACKAGE_NRD_PLAYREADY25
 	help
 	  Build NRD using the PlayReady version 2.5 (tee).
 endchoice
-
 endif
 
 if BR2_PACKAGE_NRD_DRM_EXTERNAL
-#	depends on !BR2_PACKAGE_DXDRM
+config BR2_PACKAGE_NRD_PLAYREADY_DXDRM
+	bool "playready dxdrm"
+	help
+	  Build NRD using the PlayReady DxDrm.
+comment "external playready support depends on dxdrm"
+	depends on !BR2_PACKAGE_DXDRM
 endif
 
 #   'playready1.2', 'playready2.0-ss', 'playready2.5tee', 'playready2.5-ss-tee
@@ -238,9 +240,10 @@ config BR2_PACKAGE_NRD_DRM
 	string
 	default "playready1.2" if BR2_PACKAGE_NRD_PLAYREADY
 	default "playready2.0-ss" if BR2_PACKAGE_NRD_PLAYREADY2
-	default "playready2.5-tee" if BR2_PACKAGE_NRD_PLAYREADY25
+	default "playready2.5tee" if BR2_PACKAGE_NRD_PLAYREADY25
 #	default "playready2.5-ss-tee" if BR2_PACKAGE_NRD_PLAYREADY25
-	default "none" if !BR2_PACKAGE_NRD_PLAYREADY && !BR2_PACKAGE_NRD_PLAYREADY2 && !BR2_PACKAGE_NRD_PLAYREADY25
+	default "playready-dxdrm" if BR2_PACKAGE_NRD_PLAYREADY_DXDRM
+	default "none" if !BR2_PACKAGE_NRD_PLAYREADY && !BR2_PACKAGE_NRD_PLAYREADY2 && !BR2_PACKAGE_NRD_PLAYREADY25 && !BR2_PACKAGE_NRD_PLAYREADY_DXDRM
 
 
 config BR2_PACKAGE_NRD_NICE_THREADS
