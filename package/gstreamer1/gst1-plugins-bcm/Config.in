@@ -1,0 +1,65 @@
+menuconfig BR2_PACKAGE_GST1_PLUGINS_BCM
+        depends on BR2_PACKAGE_BCM_REFSW
+        select BR2_PACKAGE_GST1_PLUGINS_BASE
+        select BR2_PACKAGE_MPG123
+        select BR2_PACKAGE_LIBCURL
+        select BR2_PACKAGE_GST1_PLUGINS_BCM_PLUGIN_SYSTEMCLOCK
+	bool "gst1-plugins-bcm"
+	help
+	  Broadcom NEXUS G-Streamer 1.0 plugins
+
+if BR2_PACKAGE_GST1_PLUGINS_BCM
+
+comment "Broadcom Nexus specific plugins"
+
+config BR2_PACKAGE_GST1_PLUGINS_BCM_PLUGIN_AUDFILTER
+    bool "audfilter"
+    help 
+        Add BRCM libbrcmaudiofilter.so    
+   
+config BR2_PACKAGE_GST1_PLUGINS_BCM_PLUGIN_AUDIODECODE
+    bool "audiodecode"
+    help 
+        Add BRCM libbrcmaudiodecoder.so
+ 
+config BR2_PACKAGE_GST1_PLUGINS_BCM_PLUGIN_AUDIOSINK  
+    bool "audiosink"
+    help 
+        Add BRCM libbrcmaudiosink.so
+  
+config BR2_PACKAGE_GST1_PLUGINS_BCM_PLUGIN_GFXSINK
+    bool "gfxsink"
+    help 
+        Add BRCM libbrcmgfxsink.so
+       
+config BR2_PACKAGE_GST1_PLUGINS_BCM_PLUGIN_MP3SWDECODE
+    bool "mp3swdecode"
+    help 
+        Add BRCM libbrcmmp3swdecode.so
+       
+config BR2_PACKAGE_GST1_PLUGINS_BCM_PLUGIN_PCMSINK
+    bool "pcmsink"
+    help 
+        Add BRCM libbrcmpcmsink.so
+     
+config BR2_PACKAGE_GST1_PLUGINS_BCM_PLUGIN_PLAYERSINKBIN  
+    bool "playersinkbin"
+    help 
+        Add BRCM libgstplayersinkbin.so
+
+config BR2_PACKAGE_GST1_PLUGINS_BCM_PLUGIN_VIDEODECODE
+    bool "videodecode"
+    help 
+        Add BRCM libbrcmvideodecoder.so
+   
+config BR2_PACKAGE_GST1_PLUGINS_BCM_PLUGIN_VIDEOSINK     
+    bool "videosink"
+    help 
+        Add BRCM libbrcmvideosink.so
+  
+config BR2_PACKAGE_GST1_PLUGINS_BCM_PLUGIN_VIDFILTER      
+    bool "vidfilter"
+    help 
+        Add BRCM libbrcmvidfilter.so
+
+endif
