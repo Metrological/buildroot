@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-NRD_VERSION = daed28d6545042b4d4ab530bdc1be0134e78056d
+NRD_VERSION = 739295516c4cd5286f21ead1bf9fbebfa6b6fe6d
 NRD_SITE = git@github.com:Metrological/nrd.git
 NRD_SITE_METHOD = git
 NRD_LICENSE = PROPRIETARY
@@ -35,8 +35,7 @@ NRD_CMAKE_FLAGS += -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS_RELEASE="$(TARGET_
 endif
 
 ifeq ($(BR2_PACKAGE_RPI_USERLAND),y)
-#NRD_CMAKE_FLAGS += -DGIBBON_PLATFORM=rpi
-NRD_CMAKE_FLAGS += -DGIBBON_PLATFORM=posix
+NRD_CMAKE_FLAGS += -DGIBBON_PLATFORM=rpi
 else
 ifeq ($(BR2_PACKAGE_INTELCE),y)
 NRD_CMAKE_FLAGS += -DGIBBON_PLATFORM=intelce
