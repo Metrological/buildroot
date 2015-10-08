@@ -6,36 +6,14 @@ config BR2_PACKAGE_NRDPLUGIN
 	help
 	  plugin package for the nrd framework
 
-comment "nrd plugin requires nrd"
-depends on !BR2_PACKAGE_NRD
-
 if BR2_PACKAGE_NRDPLUGIN
 
 config BR2_PACKAGE_NRDPLUGIN_QT
 	depends on BR2_PACKAGE_QT5WEBKIT
-	select BR2_PACKAGE_NRDAPPLICATION if !BR2_PACKAGE_NRD_APPLICATION_EXECUTABLE
 	bool "nrd qt plugin"
 	help
 	  QT based plugin of the nrd framework. To be used, for example in WebKit environment
-
-config BR2_PACKAGE_NRDAPPLICATION
-	select BR2_PACKAGE_NRD_GRAPHICS_METROLOGICAL
-	select BR2_PACKAGE_NRD_PLAYER_METROLOGICAL
-	select BR2_PACKAGE_NRD_INPUT_METROLOGICAL
-	bool "nrd application"
-	help
-	  Application that turns the nrd SDK into a real executable application (could potentially be 
-	  controlled from the NRD Browser plugin.
-
-if BR2_PACKAGE_NRDAPPLICATION
-
-config BR2_PACKAGE_NRDAPPLICATION_DEBUG
-        bool "debug"
-        default n
-        help
-          Build the nrd application in debug mode. Always usefull to have a
-          partial enabled debug stack.
-
-endif
+comment "nrd plugin requires nrdwrapper"
+depends on !BR2_PACKAGE_NRDWRAPPER
 
 endif
