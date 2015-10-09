@@ -584,6 +584,7 @@ source "package/webkitgtk/Config.in"
 source "package/webkitgtk-shell/Config.in"
 source "package/webp/Config.in"
 source "package/wpe/Config.in"
+source "package/wpe-launcher/Config.in"
 source "package/zxing/Config.in"
 endmenu
 
