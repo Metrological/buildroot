@@ -116,14 +116,6 @@ WPE_FLAGS += \
 	-DENABLE_VIDEO=OFF -DENABLE_VIDEO_TRACK=OFF -DENABLE_WEB_AUDIO=OFF
 endif
 
-define WPE_INSTALL_AUTOSTART
-	$(INSTALL) -D -m 0755 package/wpe/wpe $(TARGET_DIR)/usr/bin
-	$(INSTALL) -D -m 0755 package/wpe/S90wpe $(TARGET_DIR)/etc/init.d
-	if [ -f package/wpe/wpe-update ]; then \
-		$(INSTALL) -D -m 0755 package/wpe/wpe-update $(TARGET_DIR)/usr/bin; \
-	fi
-endef
- 
 ifeq ($(BR2_ENABLE_DEBUG),y)
 BUILDTYPE = Debug
 WPE_FLAGS += \
@@ -211,7 +203,6 @@ define WPE_INSTALL_TARGET_CMDS
 	cp -d lib/libWPE* $(TARGET_DIR)/usr/lib/ && \
 	$(STRIPCMD) $(TARGET_DIR)/usr/lib/libWPEWebKit.so.0.0.1 && \
 	popd > /dev/null)
-	$(WPE_INSTALL_AUTOSTART)
 endef
 
 RSYNC_VCS_EXCLUSIONS += --exclude LayoutTests --exclude WebKitBuild
