@@ -61,5 +61,40 @@ config BR2_PACKAGE_GST1_PLUGINS_BCM_PLUGIN_VIDFILTER
     bool "vidfilter"
     help 
         Add BRCM libbrcmvidfilter.so
+        
+config BR2_PACKAGE_GST1_PLUGINS_BCM_PLUGIN_HTTPSRC     
+    bool "httpsrc"
+    help 
+        Add BRCM libbrcmhttpsrc.so
+
+config BR2_PACKAGE_GST1_PLUGINS_BCM_PLUGIN_TSDEMUX     
+    bool "tsdemux"
+    help 
+        Add BRCM libbrcmtsdemux.so
+        
+config BR2_PACKAGE_GST1_PLUGINS_BCM_PLUGIN_TSPARSE     
+    bool "tsparse"
+    help 
+        Add BRCM libbrcmtsparse.so
+        
+config BR2_PACKAGE_GST1_PLUGINS_BCM_PLUGIN_TRANSCODE     
+    bool "transcode"
+    help 
+        Add BRCM libbrcmtranscode.so
+        
+config BR2_PACKAGE_GST1_PLUGINS_BCM_PLUGIN_PLAYBACK     
+    bool "playback"
+    help 
+        Add BRCM libbrcmtplayback.so
+        
+config BR2_PACKAGE_GST1_PLUGINS_BCM_PLUGIN_MP4DEMUX     
+    bool "mp4demux"
+    help 
+        Add BRCM libbrcmmp4demux.so
+        
+config BR2_PACKAGE_GST1_PLUGINS_BCM_PLUGIN_PCMSINK     
+    bool "pcmsync"
+    help 
+        Add BRCM libbrcmpcmsync.so
 
 endif

@@ -204,7 +204,7 @@ define BCM_REFSW_INSTALL_STAGING_CMDS
 	$(INSTALL) -m 644 package/bcm-refsw/glesv2.pc $(STAGING_DIR)/usr/lib/pkgconfig/
 	$(INSTALL) -m 644 package/bcm-refsw/vg.pc $(STAGING_DIR)/usr/lib/pkgconfig/
 	$(INSTALL) -m 644 $(@D)$(BCM_OUTPUT)nexus/bin/include/*.h $(STAGING_DIR)/usr/include/refsw/
-	
+	$(INSTALL) -m 644 $(@D)/obj.$(call qstrip,${BR2_PACKAGE_BCM_REFSW_PLATFORM})/nexus/bin/include/platform_app.inc $(STAGING_DIR)/usr/include/; \
 	if [ "x$(BR2_BCM_REFSW_VERSION_V15)" = "xy" ] || [ "x$(BR2_BCM_REFSW_VERSION_V15_2)" = "xy" ] ; then \
 		$(INSTALL) -m 644 $(@D)/rockford/middleware/${BCM_NEXUS_EGL_PACKAGE}/platform/nexus/*.h $(STAGING_DIR)/usr/include/refsw/; \
 		$(INSTALL) -m 644 $(@D)/rockford/middleware/${BCM_NEXUS_EGL_PACKAGE}/driver/interface/khronos/include/GLES/*.h $(STAGING_DIR)/usr/include/GLES/; \

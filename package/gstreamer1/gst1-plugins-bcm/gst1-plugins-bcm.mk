@@ -3,6 +3,7 @@
 # gst1-plugins-bcm
 #
 ################################################################################
+GST1_PLUGINS_BCM_OVERRIDE_SRCDIR = /media/bram/Build/WebRTC/gstreamer-plugins-soc
 GST1_PLUGINS_BCM_VERSION = 726bbcf894a59aefdeee0a9179eb4927d7907bb3
 GST1_PLUGINS_BCM_SITE = git@github.com:Metrological/gstreamer-plugins-soc.git
 GST1_PLUGINS_BCM_SITE_METHOD = git
@@ -12,16 +13,23 @@ GST1_PLUGINS_BCM_DEPENDENCIES = gstreamer1 gst1-plugins-base mpg123 bcm-refsw li
 
 GST1_PLUGINS_BCM_AUTORECONF = YES
 
+GST1_PLUGINS_BCM_MAKE_ENV = PKG_CONFIG_SYSROOT_DIR=${STAGING_DIR} 
 # WARNING: dirty bcm-refsw dependencies because of the creative bcm build system.
 GST1_PLUGINS_BCM_NEXUS_TOP = ${BCM_REFSW_DIR}
-GST1_PLUGINS_BCM_MAKE_OPT += \
-  "CFLAGS = ${CFLAGS} \
-            -std=c99 \
-            -I${GST1_PLUGINS_BCM_NEXUS_TOP}/nexus/modules/audio/include \
-            -I${GST1_PLUGINS_BCM_NEXUS_TOP}/obj.${BR2_PACKAGE_BCM_REFSW_PLATFORM}/nexus/bin/include \
-            -I${GST1_PLUGINS_BCM_NEXUS_TOP}/BSEAV/api/include \
-            -I${GST1_PLUGINS_BCM_NEXUS_TOP}/BSEAV/lib/media \
-            -I${GST1_PLUGINS_BCM_NEXUS_TOP}/BSEAV/lib/bfile"
+
+GST1_PLUGINS_BCM_MAKE_OPT += "\
+   CFLAGS  = ${CFLAGS} \
+             -std=c99 \
+             -I${GST1_PLUGINS_BCM_NEXUS_TOP}/nexus/modules/audio/include \
+             -I${GST1_PLUGINS_BCM_NEXUS_TOP}/obj.$(call qstrip,${BR2_PACKAGE_BCM_REFSW_PLATFORM})/nexus/bin/include \
+             -I${GST1_PLUGINS_BCM_NEXUS_TOP}/BSEAV/api/include \
+             -I${GST1_PLUGINS_BCM_NEXUS_TOP}/BSEAV/lib/media \
+             -I${GST1_PLUGINS_BCM_NEXUS_TOP}/BSEAV/lib/bfile \
+             -I${GST1_PLUGINS_BCM_NEXUS_TOP}/nexus/lib/dtcp_ip/include \
+             -I${GST1_PLUGINS_BCM_NEXUS_TOP}/BSEAV/lib/mpeg2_ts_parse \
+             -I${GST1_PLUGINS_BCM_NEXUS_TOP}/nexus/lib/os/include \
+             -I${GST1_PLUGINS_BCM_NEXUS_TOP}/nexus/lib/os/include/linuxuser \
+             -I${GST1_PLUGINS_BCM_NEXUS_TOP}/magnum/commonutils/vlc"
 
 # Set default options found in rdk_build.sh
 GST1_PLUGINS_BCM_CONF_OPT = \
@@ -168,6 +176,5 @@ GST1_PLUGINS_BCM_CONF_OPT += --enable-playersinkbin
 else
 GST1_PLUGINS_BCM_CONF_OPT += --disable-playersinkbin
 endif
-
 
 $(eval $(autotools-package))
