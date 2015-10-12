@@ -12,11 +12,18 @@ HARFBUZZ_LICENSE_FILES = COPYING src/hb-ucdn/COPYING
 HARFBUZZ_INSTALL_STAGING = YES
 HARFBUZZ_LIBTOOL_PATCH = NO
 
-HARFBUZZ_CONF_OPT = --without-coretext --without-uniscribe --without-graphite2
+HARFBUZZ_CONF_OPT = --without-coretext --without-uniscribe
 
 ifeq ($(BR2_TOOLCHAIN_HAS_THREADS),y)
 # forgets to link test programs with -pthread breaking static link
 HARFBUZZ_CONF_ENV = LDFLAGS="$(TARGET_LDFLAGS) -pthread"
+endif
+
+ifeq ($(BR2_PACKAGE_GRAPHITE2),y)
+	HARFBUZZ_DEPENDENCIES += graphite2
+	HARFBUZZ_CONF_OPT += --with-graphite2=yes
+else
+	HARFBUZZ_CONF_OPT += --with-graphite2=no
 endif
 
 ifeq ($(BR2_PACKAGE_CAIRO),y)
