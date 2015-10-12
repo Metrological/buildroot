@@ -3,7 +3,6 @@
 # gst1-plugins-bcm
 #
 ################################################################################
-GST1_PLUGINS_BCM_OVERRIDE_SRCDIR = /media/bram/Build/WebRTC/gstreamer-plugins-soc
 GST1_PLUGINS_BCM_VERSION = 726bbcf894a59aefdeee0a9179eb4927d7907bb3
 GST1_PLUGINS_BCM_SITE = git@github.com:Metrological/gstreamer-plugins-soc.git
 GST1_PLUGINS_BCM_SITE_METHOD = git
