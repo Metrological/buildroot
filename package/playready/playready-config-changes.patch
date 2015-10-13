@@ -1,0 +1,15 @@
+--- playready/src/CMakeLists.txt	2015-10-13 13:15:12.437497335 +0200
++++ playready/src/CMakeLists.txt	2015-10-13 14:48:14.770201737 +0200
+@@ -49,9 +49,9 @@
+ include( "sources.cmake" )
+ 
+ #libplayready!
+-set (DEST_INC "include/playready2.5-ss-tee")
+-add_library( playready-2.5-ss-tee ${CPP_SRCS} )
+-install( TARGETS playready-2.5-ss-tee DESTINATION lib )
++set (DEST_INC "$ENV{STAGING_DIR}/usr/include/playready")
++add_library( playready ${CPP_SRCS} )
++install( TARGETS playready DESTINATION $ENV{STAGING_DIR}/usr/lib )
+ install( FILES "playready.cmake"  DESTINATION ${DEST_INC} )
+ install( DIRECTORY inc/           DESTINATION ${DEST_INC}     FILES_MATCHING PATTERN "*.h" )
+ install( DIRECTORY oem/           DESTINATION ${DEST_INC}/oem FILES_MATCHING PATTERN "*.h" )
