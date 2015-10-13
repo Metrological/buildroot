@@ -64,8 +64,8 @@ then
 	export HOME=/root
 	while true;
 	do
-		cd /root && eval "$WPE_CONFIG $PREFIX WPELauncher $2"
+		cd /root && eval "$WPE_CONFIG $PREFIX WPELauncher \"$2\""
 	done
 else
-	cd /root && eval "$WPE_CONFIG $PREFIX WPELauncher $1"
+	cd /root && eval "$WPE_CONFIG $PREFIX WPELauncher \"$1\""
 fi
