@@ -77,8 +77,8 @@ config BR2_PACKAGE_WPE_USE_DXDRM_EME
 	depends on BR2_PACKAGE_DXDRM
 	help
 	  Enable Discretix DRM Encrypted Media Extensions backend.
-comment "dxdrm-eme requires encrypted-media(-v2) and dxdrm"
-	depends on (!BR2_PACKAGE_WPE_USE_ENCRYPTED_MEDIA && !BR2_PACKAGE_WPE_USE_ENCRYPTED_MEDIA_V2) || !BR2_PACKAGE_DXDRM
+comment "dxdrm-eme requires gstreamer git-snapshot, encrypted-media(-v2) and dxdrm"
+	depends on (!BR2_PACKAGE_WPE_USE_ENCRYPTED_MEDIA && !BR2_PACKAGE_WPE_USE_ENCRYPTED_MEDIA_V2) || !BR2_PACKAGE_DXDRM || !BR2_PACKAGE_GSTREAMER1_GIT
 
 config BR2_PACKAGE_WPE_USE_MEDIA_SOURCE
 	bool "media-source"
