@@ -7,31 +7,51 @@
 #     !! WARING: This file has a direct dependency to gst1-plugins-bcm. !!
 #
 ################################################################################
-ifeq ($(BR2_BCM_REFSW_VERSION_V12), y)
+ifeq ($(BR2_BCM_REFSW_VERSION_V12),y)
 	BCM_REFSW_SITE = file://../bcm-refsw
 	BCM_REFSW_VERSION = 20121210
 	BCM_REFSW_SOURCE = refsw_release_unified_$(BCM_REFSW_VERSION).src.tar.xz
-	BCM_REFSW_EXTRA_DOWNLOADS = refsw_wayland.tar.gz
-else ifeq ($(BR2_BCM_REFSW_VERSION_V13), y)
+	ifeq ($(BR2_BCMREFSW_WAYLAND_SUPPORT_NONE),y)
+		BCM_REFSW_EXTRA_DOWNLOADS =
+	else
+		BCM_REFSW_EXTRA_DOWNLOADS = refsw_wayland.tar.gz
+	endif
+else ifeq ($(BR2_BCM_REFSW_VERSION_V13),y)
 	BCM_REFSW_SITE = file://../bcm-refsw
 	BCM_REFSW_VERSION = 20131218
 	BCM_REFSW_SOURCE = refsw_release_unified_$(BCM_REFSW_VERSION).src.tar.xz
-	BCM_REFSW_EXTRA_DOWNLOADS = refsw_wayland.tar.gz
-else ifeq ($(BR2_BCM_REFSW_VERSION_V14), y)
+	ifeq ($(BR2_BCMREFSW_WAYLAND_SUPPORT_NONE),y)
+		BCM_REFSW_EXTRA_DOWNLOADS =
+	else
+		BCM_REFSW_EXTRA_DOWNLOADS = refsw_wayland.tar.gz
+	endif
+else ifeq ($(BR2_BCM_REFSW_VERSION_V14),y)
 	BCM_REFSW_SITE = file://../bcm-refsw
 	BCM_REFSW_VERSION = 20141217
 	BCM_REFSW_SOURCE = refsw_release_unified_$(BCM_REFSW_VERSION).src.tar.xz
-	BCM_REFSW_EXTRA_DOWNLOADS = refsw_wayland.tar.gz
-else ifeq ($(BR2_BCM_REFSW_VERSION_V15), y)
+	ifeq ($(BR2_BCMREFSW_WAYLAND_SUPPORT_NONE),y)
+		BCM_REFSW_EXTRA_DOWNLOADS =
+	else
+		BCM_REFSW_EXTRA_DOWNLOADS = refsw_wayland.tar.gz
+	endif
+else ifeq ($(BR2_BCM_REFSW_VERSION_V15),y)
 	BCM_REFSW_SITE = file://../bcm-refsw
 	BCM_REFSW_VERSION = 20150326
 	BCM_REFSW_SOURCE = refsw_release_unified_$(BCM_REFSW_VERSION).src.tar.xz
-	BCM_REFSW_EXTRA_DOWNLOADS = refsw_wayland.tar.gz
-else ifeq ($(BR2_BCM_REFSW_VERSION_V15_2), y)
+	ifeq ($(BR2_BCMREFSW_WAYLAND_SUPPORT_NONE),y)
+		BCM_REFSW_EXTRA_DOWNLOADS =
+	else
+		BCM_REFSW_EXTRA_DOWNLOADS = refsw_wayland.tar.gz
+	endif
+else ifeq ($(BR2_BCM_REFSW_VERSION_V15_2),y)
 	BCM_REFSW_SITE = file://../bcm-refsw
 	BCM_REFSW_VERSION = 20150619
 	BCM_REFSW_SOURCE = refsw_release_unified_$(BCM_REFSW_VERSION).src.tar.xz
-	BCM_REFSW_EXTRA_DOWNLOADS = refsw_wayland.tar.gz
+	ifeq ($(BR2_BCMREFSW_WAYLAND_SUPPORT_NONE),y)
+		BCM_REFSW_EXTRA_DOWNLOADS =
+	else
+		BCM_REFSW_EXTRA_DOWNLOADS = refsw_wayland.tar.gz
+	endif
 else
 	BCM_REFSW_SITE = file:///
 	BCM_REFSW_VERSION = CUSTOM
@@ -69,20 +89,20 @@ BCM_MAKE_ENV += \
 	CDL_SUPPORT=n
 endif
 
-ifeq ($(BR2_BCMREFSW_WAYLAND_SUPPORT_EGL), y)
+ifeq ($(BR2_BCMREFSW_WAYLAND_SUPPORT_EGL),y)
 BCM_REFSW_DEPENDENCIES += wayland
 BCM_WAYLAND_SUPPORT = -lwayland-client -lwayland-egl
-else ifeq ($(BR2_BCMREFSW_WAYLAND_SUPPORT_NXPL), y)
+else ifeq ($(BR2_BCMREFSW_WAYLAND_SUPPORT_NXPL),y)
 BCM_REFSW_DEPENDENCIES += wayland
-else ifeq ($(BR2_BCMREFSW_WAYLAND_SUPPORT_NEXUS), y)
+else ifeq ($(BR2_BCMREFSW_WAYLAND_SUPPORT_NEXUS),y)
 BCM_REFSW_DEPENDENCIES += wayland
 endif
 
-ifeq ($(BR2_BCM_REFSW_DEBUG_LEVEL_OFF), y)
+ifeq ($(BR2_BCM_REFSW_DEBUG_LEVEL_OFF),y)
 BCM_MAKE_ENV += B_REFSW_DEBUG=n
 else 
 
-ifeq ($(BR2_BCM_REFSW_DEBUG_LEVEL_ERROR), y)
+ifeq ($(BR2_BCM_REFSW_DEBUG_LEVEL_ERROR),y)
 BCM_MAKE_ENV += B_REFSW_DEBUG_LEVEL=err
 else
 BCM_MAKE_ENV += B_REFSW_DEBUG_LEVEL=wrn
@@ -126,11 +146,18 @@ BCM_MAKEFLAGS += HOST_DIR="${HOST_DIR}"
 BCM_MAKEFLAGS += APPLIBS_TOP=${BCM_APPS_DIR}
 BCM_MAKEFLAGS += VCX=${BCM_NEXUS_EGL_PACKAGE}
 
+ifeq ($(BR2_BCMREFSW_WAYLAND_SUPPORT_NONE),y)
+define BCM_REFSW_EXTRACT_CMDS
+	xz -d -c $(DL_DIR)/$(BCM_REFSW_SOURCE) \
+	| $(TAR) --strip-components=0 -C $(@D) -xf -
+endef
+else
 define BCM_REFSW_EXTRACT_CMDS
     xz -d -c $(DL_DIR)/$(BCM_REFSW_SOURCE) \
         | $(TAR) --strip-components=0 -C $(@D) -xf -
     $(TAR) --strip-components=0 -C $(@D) -xf $(DL_DIR)/refsw_wayland.tar.gz
 endef
+endif
 
 define BCM_REFSW_BUILD_CMDS
 	$(BCM_MAKE_ENV) $(MAKE) $(BCM_MAKEFLAGS) -C $(@D)/nexus/build all
@@ -210,6 +237,7 @@ define BCM_REFSW_INSTALL_STAGING_CMDS
 		$(INSTALL) -m 644 $(@D)/rockford/middleware/${BCM_NEXUS_EGL_PACKAGE}/driver/interface/khronos/include/GLES/*.h $(STAGING_DIR)/usr/include/GLES/; \
 		$(INSTALL) -m 644 $(@D)/rockford/middleware/${BCM_NEXUS_EGL_PACKAGE}/driver/interface/khronos/include/GLES2/*.h $(STAGING_DIR)/usr/include/GLES2/; \
 		$(INSTALL) -m 644 $(@D)/rockford/middleware/${BCM_NEXUS_EGL_PACKAGE}/driver/interface/khronos/include/EGL/*.h $(STAGING_DIR)/usr/include/EGL/; \
+		$(INSTALL) -m 644 $(@D)/rockford/middleware/${BCM_NEXUS_EGL_PACKAGE}/driver/interface/khronos/include/VG/*.h $(STAGING_DIR)/usr/include/VG/; \
 		$(INSTALL) -m 644 -D $(@D)/rockford/middleware/${BCM_NEXUS_EGL_PACKAGE}/driver/interface/khronos/include/KHR/khrplatform.h $(STAGING_DIR)/usr/include/KHR/khrplatform.h; \
 	else \
 		$(INSTALL) -m 644 $(@D)/rockford/middleware/platform/nexus/*.h $(STAGING_DIR)/usr/include/refsw/; \
