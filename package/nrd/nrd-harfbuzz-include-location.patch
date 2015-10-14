@@ -1,0 +1,61 @@
+--- a/netflix/src/platform/gibbon/GraphicsEngine.org	2015-10-08 09:48:13.664473228 +0200
++++ b/netflix/src/platform/gibbon//GraphicsEngine.cpp	2015-10-08 09:48:27.724256041 +0200
+@@ -11,7 +11,7 @@
+ #include <TextLocale.h>
+ #include <GibbonFreetype.h>
+ #include <GibbonHarfbuzz.h>
+-#include <hb.h>
++#include <harfbuzz/hb.h>
+ 
+ #if defined(GIBBON_GRAPHICSENGINE_NOVA)
+     #include <GibbonApplication.h>
+--- a/netflix/src/platform/gibbon/text/TextClusterIterator.org	2015-10-08 10:10:51.820828791 +0200
++++ b/netflix/src/platform/gibbon/text/TextClusterIterator.h	2015-10-08 10:11:12.272471626 +0200
+@@ -11,7 +11,7 @@
+ #define TEXTCLUSTERITERATOR_H
+ 
+ #include <itemizer/TextItemizer.h>
+-#include <hb.h>
++#include <harfbuzz/hb.h>
+ #include <limits.h>
+ #include <assert.h>
+
+--- a/netflix/src/platform/gibbon/text/itemizer/TextItemizer.org	2015-10-08 09:50:16.146586904 +0200
++++ b/netflix/src/platform/gibbon/text/itemizer/TextItemizer.h	2015-10-08 10:08:13.599643212 +0200
+@@ -23,7 +23,7 @@
+ #include <Style.h>
+ #include <nrdbase/tr1.h>
+ 
+-#include <hb.h>
++#include <harfbuzz/hb.h>
+ #include <Debug.h>
+ #include <GibbonHarfbuzz.h>
+ #include <nrdbase/Backtrace.h>
+--- a/netflix/src/platform/gibbon/text/freetype/GibbonFreetype.org	2015-10-08 10:16:21.279210484 +0200
++++ b/netflix/src/platform/gibbon/text/freetype/GibbonFreetype.cpp	2015-10-08 10:16:43.738835961 +0200
+@@ -53,8 +53,8 @@
+ #include FT_STROKER_H
+ 
+ #include "GibbonHarfbuzz.h"
+-#include <hb.h>
+-#include <hb-ft.h>
++#include <harfbuzz/hb.h>
++#include <harfbuzz/hb-ft.h>
+ 
+ #if FREETYPE_MAJOR > 2 || (FREETYPE_MAJOR == 2 && FREETYPE_MINOR > 4) || (FREETYPE_MAJOR == 2 && FREETYPE_MINOR == 4 && FREETYPE_PATCH > 5)
+ #define FREETYPE_REREQUEST_METRICS
+--- a/netflix/src/platform/gibbon/text/freetype/GibbonHarfbuzz.org	2015-10-08 10:18:30.493066649 +0200
++++ b/netflix/src/platform/gibbon/text/freetype/GibbonHarfbuzz.cpp	2015-10-08 10:18:58.072612187 +0200
+@@ -10,8 +10,8 @@
+ #include "GibbonHarfbuzz.h"
+ #include <FontManager.h>
+ 
+-#include <hb.h>
+-#include <hb-ft.h>
++#include <harfbuzz/hb.h>
++#include <harfbuzz/hb-ft.h>
+ 
+ #include <nrdbase/Log.h>
+ #include <nrd/AppLog.h>
+
+

@@ -1,53 +1,28 @@
---- a/netflix/gibbondir/dpi/reference/CMakeLists.txt	2015-01-31 17:17:55.998626864 +0100
-+++ b/netflix/gibbondir/dpi/reference/CMakeLists.txt	2015-01-31 22:18:55.598800854 +0100
-@@ -14,6 +14,7 @@
- include_directories(${DPI_COMMON}/AudioMixerSoftware)
- include_directories(${DPI_COMMON}/ies)
- include_directories(${DPI_COMMON}/NTBA)
-+include_directories($ENV{STAGING_DIR}/usr/include/directfb)
- 
- add_definitions(-D__STDC_CONSTANT_MACROS)
- 
-@@ -108,28 +109,22 @@
-         x86/VideoDecoderNative.cpp
-         x86/VideoRendererDFB.cpp
-     )
--    include_directories(${TOOLCHAIN_DIRECTORY}/netflix/include/directfb)
- 
-     # We need to pass absolute library paths to override the linker search directories, that's how CMake works
-     get_environment_variable(TOOLCHAIN_DIRECTORY "Toolchain location" "")
- 
+--- a/netflix/gibbondir/dpi/reference/CMakeLists.txt	2015-10-08 12:31:50.847152241 +0200
++++ b/netflix/gibbondir/dpi/reference/CMakeLists.txt	2015-10-08 12:30:02.724924358 +0200
+@@ -213,20 +213,17 @@
+ else()
+     add_definitions("-DBUILD_FFMPEG_AUDIO_DECODER")
+     list(APPEND SOURCES x86/AudioDecoderNative.cpp)
 -    set(CMAKE_C_FLAGS "-I${TOOLCHAIN_DIRECTORY}/netflix/include/ffmpeg2 ${CMAKE_C_FLAGS}")
 -    set(CMAKE_CXX_FLAGS "-I${TOOLCHAIN_DIRECTORY}/netflix/include/ffmpeg2 ${CMAKE_CXX_FLAGS}")
 -    #include_directories(BEFORE ${TOOLCHAIN_DIRECTORY}/netflix/include/ffmpeg2)
--
      list(APPEND LIBRARIES
--        ${TOOLCHAIN_DIRECTORY}/netflix/lib/ffmpeg2/libavformat.a
 -        ${TOOLCHAIN_DIRECTORY}/netflix/lib/ffmpeg2/libavcodec.a
--        ${TOOLCHAIN_DIRECTORY}/netflix/lib/ffmpeg2/libswscale.a
 -        ${TOOLCHAIN_DIRECTORY}/netflix/lib/ffmpeg2/libswresample.a
--        ${TOOLCHAIN_DIRECTORY}/netflix/lib/ffmpeg2/libavutil.a)
-+        libavformat.a
+-        ${TOOLCHAIN_DIRECTORY}/netflix/lib/ffmpeg2/libavutil.a
 +        libavcodec.a
-+        libswscale.a
 +        libswresample.a
-+        libavutil.a)
-     list(APPEND LIBRARIES directfb direct fusion)
- 
-     if(VANGUARD_HEVC)
-         #list(APPEND LIBRARIES SDL)
-         add_definitions("-DBUILD_VANGUARD_HEVC")
-         list(APPEND SOURCES x86/VideoDecoderHEVC.cpp)
--        include_directories(${TOOLCHAIN_DIRECTORY}/netflix/include/hevc)
-         list(APPEND LIBRARIES hevc-enc-l32i hevc-dec-l32i hevc-cmn-l32i vpl-l32i imf svml irc)
++        libavutil.a
+     )
+     if(EXISTS ${TOOLCHAIN_DIRECTORY}/netflix/lib/ffmpeg2/libx264.a) # rpi :(
+         list(APPEND LIBRARIES ${TOOLCHAIN_DIRECTORY}/netflix/lib/ffmpeg2/libx264.a)
      endif()
- 
-@@ -181,7 +176,7 @@
- 
-         # Dolby library
+     if(EXISTS ${TOOLCHAIN_DIRECTORY}/netflix/lib/dcv_sub.a) # Dolby library
          add_library(ddplus STATIC IMPORTED)
 -        set_property(TARGET ddplus PROPERTY IMPORTED_LOCATION ${TOOLCHAIN_DIRECTORY}/netflix/lib/dcv_sub.a)
 +        set_property(TARGET ddplus PROPERTY IMPORTED_LOCATION $ENV{STAGING_DIR}/usr/lib/dcv_sub.a)
          list(APPEND LIBRARIES ddplus)
          add_definitions("-DHAVE_DDPLUS=1")
      endif()
+

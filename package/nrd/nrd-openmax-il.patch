@@ -1,0 +1,62 @@
+--- a/netflix/gibbondir/dpi/reference/openmax-il/ComponentOMXIL.h	2015-10-08 12:48:58.450249765 +0200
++++ b/netflix/gibbondir/dpi/reference/openmax-il/ComponentOMXIL.h	2015-10-08 12:46:14.660947677 +0200
+@@ -43,8 +43,8 @@
+ 
+ #include <string>
+ 
+-#include <OMX_Component.h>
+-#include <OMX_Core.h>
++#include <IL/OMX_Component.h>
++#include <IL/OMX_Core.h>
+ 
+ #include <nrdbase/Log.h>
+
+--- a/netflix/gibbondir/dpi/reference/openmax-il/VideoDecoderOMXIL.cpp	2015-10-08 12:49:04.630147958 +0200
++++ b/netflix/gibbondir/dpi/reference/openmax-il/VideoDecoderOMXIL.cpp	2015-10-08 12:47:17.635910448 +0200
+@@ -14,7 +14,7 @@
+ #include "../ReferenceClockNative.h"
+ 
+ #include "VideoDecoderOMXIL.h"
+-#include <OMX_Broadcom.h>
++#include <IL/OMX_Broadcom.h>
+ 
+ #include <nrdbase/Log.h>
+ #include <cstring>
+@@ -37,9 +37,11 @@
+ using namespace netflix::device::esplayer;
+ using namespace netflix;
+ 
++static uint32_t pipelineId = 0;
++
+ VideoDecoderOMXIL::VideoDecoderOMXIL(const VideoAttributes&, ReferenceClockNative& referenceClock,
+                                      const VideoRenderer::VideoRendererInfo& rendererInfo, bool&)
+-    : VideoDecoder(rendererInfo),
++    : VideoDecoder(rendererInfo, pipelineId++),
+       ComponentOMXIL(sConfiguration->omxilVideoDecoder, OMX_IndexParamVideoInit),
+       mFrames(0), mDroppedFrames(0), mDropFrames(false), mFrameWidth(0), mFrameHeight(0), mReferenceClock(referenceClock)
+ {
+--- a/netflix/gibbondir/dpi/reference/openmax-il/AudioDecoderOMXIL.cpp	2015-10-08 12:09:00.653502999 +0200
++++ b/netflix/gibbondir/dpi/reference/openmax-il/AudioDecoderOMXIL.cpp	2015-10-08 12:53:00.706233552 +0200
+@@ -12,7 +12,7 @@
+ #include "../MediaUtils.h"
+ #include <cstring>
+ 
+-#include <OMX_Broadcom.h>
++#include <IL/OMX_Broadcom.h>
+ 
+ #include <nrdbase/ScopedMutex.h>
+ #include <nrdbase/Endian.h>
+--- a/netflix/gibbondir/dpi/reference/openmax-il/AudioRendererOMXIL.cpp	2015-06-06 03:38:06.000000000 +0200
++++ b/netflix/gibbondir/dpi/reference/openmax-il/AudioRendererOMXIL.cpp	2015-10-08 12:55:02.420215645 +0200
+@@ -14,7 +14,7 @@
+ #include <nrdbase/Time.h>
+ #include <nrdbase/Exportable.h>
+ 
+-#include <OMX_Broadcom.h>
++#include <IL/OMX_Broadcom.h>
+ 
+ #include "../DeviceLibNative.h"
+ #include "../ReferenceClockNative.h"
+
+
+

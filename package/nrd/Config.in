@@ -16,6 +16,11 @@ config BR2_PACKAGE_NRD
 
 if BR2_PACKAGE_NRD
 
+config BR2_PACKAGE_NRD_IPV6_SUPPORT
+	bool "ipv6 support"
+	help
+	  Add IPV6 support in the netflix application.
+
 choice 
 	prompt "How should the NRD app be build:"
 
@@ -45,6 +50,7 @@ config BR2_PACKAGE_NRD_GRAPHICS_DIRECTFB
 	select BR2_PACKAGE_TREMOR
 	select BR2_PACKAGE_FFMPEG
 	select BR2_PACKAGE_PORTAUDIO
+	select BR2_PACKAGE_GRAPHITE2
 	depends on BR2_PACKAGE_DIRECTFB
 	help
 	  Use the DirectFB access layer.
@@ -61,8 +67,9 @@ config BR2_PACKAGE_NRD_GRAPHICS_GLES2
 	help
 	  Use the GLESV2 access layer.
 
-config BR2_PACKAGE_NRD_GRAPHICS_METROLOGICAL
-	bool "metrological"
+config BR2_PACKAGE_NRD_GRAPHICS_RPI
+	bool "rpi-egl"
+	depends on BR2_arm
 	depends on BR2_PACKAGE_HAS_OPENGL_ES
 	help
 	  Use the EGL access layer based on a plugin structure.
@@ -82,17 +89,17 @@ config BR2_PACKAGE_NRD_PLAYER_SKELETON
 	help
 	  Build NRD using a stubbed media playback skeleton from NRD.
 
+config BR2_PACKAGE_NRD_PLAYER_RPI
+	depends on BR2_arm
+	bool "rpi"
+	help
+	  Build NRD using a referenced playback skeleton from NRD (OMX-IL).
+
 config BR2_PACKAGE_NRD_PLAYER_X86
-	bool "reference"
+	bool "x86"
 	depends on BR2_i386
 	help
 	  Build NRD using the x86 media playback implementation
-
-config BR2_PACKAGE_NRD_PLAYER_METROLOGICAL
-	bool "metrological"
-	depends on BR2_i386 || BR2_arm || BR2_mips
-	help
-	  Build NRD using the Metrological media playback implementation
 
 endchoice
 
@@ -104,34 +111,31 @@ config BR2_PACKAGE_NRD_INPUT_DEVINPUT
 	help
 	  Build NRD using the device devinput
 
-config BR2_PACKAGE_NRD_INPUT_METROLOGICAL
-	bool "metrological"
+config BR2_PACKAGE_NRD_INPUT_NULL
+	bool "null"
 	help
-	  Build NRD using the interface MetrologicalInput to insert keys via this method.
+	  Build NRD using the NULL device
 
 endchoice
 
 config BR2_PACKAGE_NRD_DRM_ENABLED
 	bool "playready"
-	depends on BR2_PACKAGE_DXDRM
+	depends on BR2_PACKAGE_DXDRM || BR2_PACKAGE_PLAYREADY
 
 if BR2_PACKAGE_NRD_DRM_ENABLED
 
 choice 
 	prompt "Which playready version should we use:"
 
-config BR2_PACKAGE_NRD_PLAYREADY
-	bool "playready 1.5"
-	help
-	  Build NRD using the PlayReady version 1.5.
-
-config BR2_PACKAGE_NRD_PLAYREADY2
-	bool "playready 2"
-	help
-	  Build NRD using the PlayReady version 2.
-
 config BR2_PACKAGE_NRD_PLAYREADY25
-	bool "playready 2.5"
+	bool "microsoft 2.5"
+	depends on BR2_PACKAGE_PLAYREADY
+	help
+	  Build NRD using the PlayReady version 2.5.
+
+config BR2_PACKAGE_NRD_SANSASECURITY
+	bool "sansasecurity"
+	depends on BR2_PACKAGE_DXDRM
 	help
 	  Build NRD using the PlayReady version 2.5.
 

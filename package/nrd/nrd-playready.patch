@@ -1,0 +1,45 @@
+--- netflix/netflix/gibbondir/dpi/reference/drm.org	2015-10-13 15:03:01.826168028 +0200
++++ netflix/netflix/gibbondir/dpi/reference/drm.cmake	2015-10-14 10:05:05.415594055 +0200
+@@ -127,11 +127,11 @@
+     set(CMAKE_REQUIRED_DEFINITIONS "${CMAKE_REQUIRED_DEFINITIONS_SAVED}")
+ 
+ elseif(DPI_REFERENCE_DRM STREQUAL "playready2.5-ss-tee")
+-    set(PLAYREADY_INCLUDE "${TOOLCHAIN_DIRECTORY}/netflix/include/playready2.5-ss-tee")
++    set(PLAYREADY_INCLUDE "$ENV{STAGING_DIR}/usr/include/playready")
+ 
+     set(CMAKE_REQUIRED_INCLUDES_SAVED "${CMAKE_REQUIRED_INCLUDES}")
+     set(CMAKE_REQUIRED_DEFINITIONS_SAVED "${CMAKE_REQUIRED_DEFINITIONS}")
+-    set(CMAKE_REQUIRED_INCLUDES "${PLAYREADY_INCLUDE};${PLAYREADY_INCLUDE}/oem/inc;${PLAYREADY_INCLUDE}/oem/ansi/inc;${PLAYREADY_INCLUDE}/oem/common/inc;${PLAYREADY_INCLUDE}/oem/netflix/inc;${PLAYREADY_INCLUDE}/oem/netflix/trace")
++    set(CMAKE_REQUIRED_INCLUDES "${PLAYREADY_INCLUDE};${PLAYREADY_INCLUDE}/oem/inc;${PLAYREADY_INCLUDE}/oem/ansi/inc;${PLAYREADY_INCLUDE}/oem/common/inc")
+ 
+     add_definitions( -DPLAYREADY )
+     add_definitions( -DPLAYREADY2 )
+@@ -139,8 +139,9 @@
+     add_definitions( -DPLAYREADY2_5 )
+     add_definitions( -DPLAYREADY2_5_TEE )
+     add_definitions( -DPLAYREADY2_5_TEE_LDL )
+-    if (EXISTS "${PLAYREADY_INCLUDE}/playready.cmake")
+-        include("${PLAYREADY_INCLUDE}/playready.cmake")
++    if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/playready.cmake")
++    	message ( "Found playready config info !!!")
++        include("${CMAKE_CURRENT_SOURCE_DIR}/playready.cmake")
+     endif()
+     add_definitions(${CMAKE_REQUIRED_DEFINITIONS})
+ 
+@@ -148,13 +149,11 @@
+     include_directories(${PLAYREADY_INCLUDE}/oem/inc)
+     include_directories(${PLAYREADY_INCLUDE}/oem/ansi/inc)
+     include_directories(${PLAYREADY_INCLUDE}/oem/common/inc)
+-    include_directories(${PLAYREADY_INCLUDE}/oem/netflix/inc)
+-    include_directories(${PLAYREADY_INCLUDE}/oem/netflix/trace)
+ 
+     link_directories(${PLAYREADY_LIB})
+-    add_library(playready-2.5-ss-tee STATIC IMPORTED)
+-    set_property(TARGET playready-2.5-ss-tee PROPERTY IMPORTED_LOCATION ${TOOLCHAIN_DIRECTORY}/netflix/lib/libplayready-2.5-ss-tee.a)
+-    set_property(TARGET playready-2.5-ss-tee PROPERTY IMPORTED_LINK_DEPENDENT_LIBRARIES "nrddpi")
++    add_library(playready STATIC IMPORTED)
++    set_property(TARGET playready PROPERTY IMPORTED_LOCATION $ENV{STAGING_DIR}/usr/lib/libplayready.a)
++    set_property(TARGET playready PROPERTY IMPORTED_LINK_DEPENDENT_LIBRARIES "nrddpi")
+ 
+     target_link_libraries(nrddpi playready-2.5-ss-tee)
+ 

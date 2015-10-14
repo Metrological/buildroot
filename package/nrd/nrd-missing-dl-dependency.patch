@@ -1,0 +1,16 @@
+--- a/netflix/src/platform/gibbon/CMakeLists.org	2015-10-08 11:00:54.226054044 +0200
++++ b/netflix/src/platform/gibbon/CMakeLists.txt	2015-10-08 11:04:53.698134059 +0200
+@@ -640,11 +640,11 @@
+             endif()
+         endif()
+ 
+-        target_link_libraries(gibbon ${GIBBON_LIBS} nrd nrddpi pthread)
++        target_link_libraries(gibbon ${GIBBON_LIBS} nrd nrddpi pthread dl)
+ 
+     elseif(GIBBON_MODE STREQUAL "shared")
+         add_library(gibbon SHARED ${SOURCES})
+-        target_link_libraries(gibbon ${GIBBON_LIBS} nrd nrddpi pthread)
++        target_link_libraries(gibbon ${GIBBON_LIBS} nrd nrddpi pthread dl)
+ 
+     elseif(GIBBON_MODE STREQUAL "static")
+         add_library(gibbon STATIC ${SOURCES})
