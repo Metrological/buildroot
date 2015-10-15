@@ -106,12 +106,7 @@ define LIBGLIB2_REMOVE_DEV_FILES
 	rmdir --ignore-fail-on-non-empty $(TARGET_DIR)/usr/share/bash-completion
 endef
 
-define LIBGLIB2_ADD_GENERATED_FILES
-	$(INSTALL) -m 644 $(@D)/glib/glibconfig.h $(STAGING_DIR)/usr/include/glib-2.0/
-endef
-
 LIBGLIB2_POST_INSTALL_TARGET_HOOKS += LIBGLIB2_REMOVE_DEV_FILES
-LIBGLIB2_POST_INSTALL_STAGING_HOOKS += LIBGLIB2_ADD_GENERATED_FILES
 
 define LIBGLIB2_REMOVE_GDB_FILES
 	rm -rf $(TARGET_DIR)/usr/share/glib-2.0/gdb

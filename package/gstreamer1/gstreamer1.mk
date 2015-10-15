@@ -26,8 +26,4 @@ define GSTREAMER1_REMOVE_LA_FILES
 	rm -f $(TARGET_DIR)/usr/lib/libgst*.a $(TARGET_DIR)/usr/lib/gstreamer-1.0/*.a
 endef
 
-define GSTREAMER1_ADD_GENERATED_FILES
-	$(INSTALL) -m 644 $(@D)/gst/gstconfig.h $(STAGING_DIR)/usr/include/gstreamer-1.0/gst/
-endef
-
 include package/gstreamer1/*/*.mk
