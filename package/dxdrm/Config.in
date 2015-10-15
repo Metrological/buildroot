@@ -9,3 +9,25 @@ config BR2_PACKAGE_DXDRM
 	  Discretix PlayReady DRM implementation
 
 	  http://www.metrological.com
+
+if BR2_PACKAGE_DXDRM
+
+choice
+	prompt "Device/Model credential provisioning"
+
+config BR2_PACKAGE_DXDRM_EXTERNAL
+	bool "external"
+	select BR2_PACKAGE_OPENSSL
+	select BR2_PACKAGE_CPPSDK
+	select BR2_PACKAGE_CPPSDK_GENERICS
+	help
+	  Device Credentials will be provisioned via an external system.
+
+config BR2_PACKAGE_DXDRM_INTERNAL
+	bool "internal"
+	help
+	  Device credentials are provisioned from locally stored model credentials.
+
+endchoice
+
+endif
