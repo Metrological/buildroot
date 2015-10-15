@@ -89,11 +89,29 @@ config BR2_PACKAGE_NRD_PLAYER_SKELETON
 	help
 	  Build NRD using a stubbed media playback skeleton from NRD.
 
+config BR2_PACKAGE_NRD_PLAYER_GSTREAMER
+	bool "gstreamer"
+	depends on BR2_PACKAGE_GSTREAMER1
+	help
+	  Build NRD using a gstreamer playback device.
+
+config BR2_PACKAGE_NRD_PLAYER_NEXUS
+	depends on BR2_PACKAGE_BCM_REFSW
+	bool "nexus"
+	help
+	  Build NRD using a NEXUS playback device.
+
 config BR2_PACKAGE_NRD_PLAYER_RPI
 	depends on BR2_arm
 	bool "rpi"
 	help
-	  Build NRD using a referenced playback skeleton from NRD (OMX-IL).
+	  Build NRD using a raspberrypi playback skeleton.
+
+config BR2_PACKAGE_NRD_PLAYER_OPENMAX
+	depends on BR2_arm
+	bool "openmax"
+	help
+	  Build NRD using a openmax-IL playback device.
 
 config BR2_PACKAGE_NRD_PLAYER_X86
 	bool "x86"
