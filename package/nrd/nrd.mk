@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-NRD_VERSION = 739295516c4cd5286f21ead1bf9fbebfa6b6fe6d
+NRD_VERSION = b51c2e8f3a40e16aa86aa704aeae079be06738d2
 NRD_SITE = git@github.com:Metrological/nrd.git
 NRD_SITE_METHOD = git
 NRD_LICENSE = PROPRIETARY
@@ -13,6 +13,10 @@ NRD_DEPENDENCIES = freetype icu jpeg libpng libmng webp expat openssl c-ares lib
 NRD_INSTALL_STAGING = YES
 
 NRD_RUNTIMEDATA_LOCATION = /var/lib/netflix
+
+ifeq ($(BR2_PACKAGE_NRD_PLAYREADY_DXDRM),y)
+NRD_DEPENDENCIES += dxdrm
+endif
 
 ifeq ($(BR2_PACKAGE_NRD_BROWSER_PLUGIN_MODE),y)
 NRD_DEPENDENCIES += nrdwrapper
