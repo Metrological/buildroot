@@ -93,9 +93,16 @@ WPE_FLAGS = \
 	-DUSE_SYSTEM_MALLOC=OFF \
 	-DUSE_KEY_INPUT_HANDLING_LINUX_INPUT=ON
 
+WPE_EXTRA_CFLAGS=
+
 ifeq ($(BR2_mipsel),y)
 WPE_FLAGS += \
 	-DENABLE_JIT=OFF
+endif
+
+ifeq ($(BR2_TOOLCHAIN_USES_UCLIBC),y)
+WPE_EXTRA_CFLAGS += \
+	-D__UCLIBC__
 endif
 
 ifeq ($(BR2_PACKAGE_WAYLAND),y)
@@ -119,8 +126,8 @@ endif
 ifeq ($(BR2_ENABLE_DEBUG),y)
 BUILDTYPE = Debug
 WPE_FLAGS += \
-	-DCMAKE_C_FLAGS_DEBUG="-O0 -g -Wno-cast-align" \
-	-DCMAKE_CXX_FLAGS_DEBUG="-O0 -g -Wno-cast-align"
+	-DCMAKE_C_FLAGS_DEBUG="-O0 -g -Wno-cast-align $(WPE_EXTRA_CFLAGS)" \
+	-DCMAKE_CXX_FLAGS_DEBUG="-O0 -g -Wno-cast-align $(WPE_EXTRA_CFLAGS)"
 ifeq ($(BR2_BINUTILS_VERSION_2_25),y)
 WPE_FLAGS += \
 	-DDEBUG_FISSION=TRUE
@@ -128,8 +135,8 @@ endif
 else
 BUILDTYPE = Release
 WPE_FLAGS += \
-	-DCMAKE_C_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align" \
-	-DCMAKE_CXX_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align"
+	-DCMAKE_C_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align $(WPE_EXTRA_CFLAGS)" \
+	-DCMAKE_CXX_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align $(WPE_EXTRA_CFLAGS)"
 endif
 
 ifeq ($(BR2_PACKAGE_WPE_USE_GSTREAMER_GL),y)
