@@ -68,6 +68,7 @@ endif
 ifeq ($(BR2_PACKAGE_NRD_PLAYREADY25),y)
 	NRD_CMAKE_FLAGS += -DDPI_REFERENCE_DRM=playready2.5-ss-tee
 	NRD_PLAYREADY_CONFIG = $(INSTALL) -m 644  $(TOPDIR)/package/nrd/playready.cmake $(@D)/partner/dpi/reference;
+	NRD_DEPENDENCIES += playready
 else ifeq ($(BR2_PACKAGE_NRD_DXDRM),y)
 	NRD_CMAKE_FLAGS += -DDPI_REFERENCE_DRM=none
 else
