@@ -8,9 +8,11 @@ WPE_VERSION = ed3a21499800004062c063311ec1896bfae971f8
 WPE_SITE = $(call github,Metrological,WebKitForWayland,$(WPE_VERSION))
 
 WPE_INSTALL_STAGING = YES
+#WPE_DEPENDENCIES = host-flex host-bison host-gperf host-ruby host-ninja \
+#	host-pkgconf zlib pcre libgles libegl cairo freetype fontconfig \
+#	harfbuzz icu libxml2 libxslt sqlite libsoup jpeg webp wayland
 WPE_DEPENDENCIES = host-flex host-bison host-gperf host-ruby host-ninja \
-	host-pkgconf zlib pcre libgles libegl cairo freetype fontconfig \
-	harfbuzz icu libxml2 libxslt sqlite libinput libsoup jpeg webp
+	host-pkgconf zlib pcre icu sqlite 
 
 WPE_FLAGS = \
 	-DENABLE_ACCELERATED_2D_CANVAS=ON \
@@ -123,7 +125,7 @@ WPE_FLAGS += \
 	-DENABLE_VIDEO=OFF -DENABLE_VIDEO_TRACK=OFF -DENABLE_WEB_AUDIO=OFF
 endif
 
-ifeq ($(BR2_ENABLE_DEBUG),y)
+#ifeq ($(BR2_ENABLE_DEBUG),y)
 BUILDTYPE = Debug
 WPE_FLAGS += \
 	-DCMAKE_C_FLAGS_DEBUG="-O0 -g -Wno-cast-align $(WPE_EXTRA_CFLAGS)" \
@@ -132,12 +134,12 @@ ifeq ($(BR2_BINUTILS_VERSION_2_25),y)
 WPE_FLAGS += \
 	-DDEBUG_FISSION=TRUE
 endif
-else
-BUILDTYPE = Release
-WPE_FLAGS += \
-	-DCMAKE_C_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align $(WPE_EXTRA_CFLAGS)" \
-	-DCMAKE_CXX_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align $(WPE_EXTRA_CFLAGS)"
-endif
+#else
+#BUILDTYPE = Release
+#WPE_FLAGS += \
+#	-DCMAKE_C_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align $(WPE_EXTRA_CFLAGS)" \
+#	-DCMAKE_CXX_FLAGS_RELEASE="-O2 -DNDEBUG -Wno-cast-align $(WPE_EXTRA_CFLAGS)"
+#endif
 
 ifeq ($(BR2_PACKAGE_WPE_USE_GSTREAMER_GL),y)
 WPE_FLAGS += -DUSE_GSTREAMER_GL=ON
@@ -182,6 +184,8 @@ else
 WPE_FLAGS += -DENABLE_THREADED_COMPOSITOR=OFF
 endif
 
+WPE_FLAGS += --debug-output
+
 WPE_BUILDDIR = $(@D)/$(BUILDDIR_PREFIX)-$(BUILDTYPE)
 
 WPE_CONF_OPT = -DPORT=WPE -G $(WPE_NINJA_GENERATOR) \
@@ -193,22 +197,30 @@ ifeq ($(VERBOSE),1)
 	WPE_NINJA_EXTRA_OPTIONS += -v
 endif
 
+#define WPE_BUILD_CMDS
+#	$(WPE_MAKE_ENV) $(HOST_DIR)/usr/bin/ninja -C $(WPE_BUILDDIR) $(WPE_NINJA_EXTRA_OPTIONS) libWPEWebKit.so libWPEWebInspectorResources.so WPE{Web,Network}Process
+#endef
+
 define WPE_BUILD_CMDS
-	$(WPE_MAKE_ENV) $(HOST_DIR)/usr/bin/ninja -C $(WPE_BUILDDIR) $(WPE_NINJA_EXTRA_OPTIONS) libWPEWebKit.so libWPEWebInspectorResources.so WPE{Web,Network}Process
+	$(WPE_MAKE_ENV) $(HOST_DIR)/usr/bin/ninja -C $(WPE_BUILDDIR) $(WPE_NINJA_EXTRA_OPTIONS) jsc
 endef
 
 define WPE_INSTALL_STAGING_CMDS
 	(cd $(WPE_BUILDDIR) && \
-	cp bin/WPE{Network,Web}Process $(STAGING_DIR)/usr/bin/ && \
-	cp -d lib/libWPE* $(STAGING_DIR)/usr/lib/ )
-	DESTDIR=$(STAGING_DIR) $(HOST_DIR)/usr/bin/cmake -DCOMPONENT=Development -P $(WPE_BUILDDIR)/Source/WebKit2/cmake_install.cmake
+	cp bin/jsc $(STAGING_DIR)/usr/bin/ )
+	#cp bin/WPE{Network,Web}Process $(STAGING_DIR)/usr/bin/ && \
+	#cp -d lib/libWPE* $(STAGING_DIR)/usr/lib/ )
+	#DESTDIR=$(STAGING_DIR) $(HOST_DIR)/usr/bin/cmake -DCOMPONENT=Development -P $(WPE_BUILDDIR)/Source/WebKit2/cmake_install.cmake
 endef
+
+	#cp bin/WPE{Network,Web}Process $(TARGET_DIR)/usr/bin/ && \
+	#cp -d lib/libWPE* $(TARGET_DIR)/usr/lib/ && \
+	#$(STRIPCMD) $(TARGET_DIR)/usr/lib/libWPEWebKit.so.0.0.1 && \
 
 define WPE_INSTALL_TARGET_CMDS
 	(pushd $(WPE_BUILDDIR) > /dev/null && \
-	cp bin/WPE{Network,Web}Process $(TARGET_DIR)/usr/bin/ && \
-	cp -d lib/libWPE* $(TARGET_DIR)/usr/lib/ && \
-	$(STRIPCMD) $(TARGET_DIR)/usr/lib/libWPEWebKit.so.0.0.1 && \
+	cp bin/jsc $(TARGET_DIR)/usr/bin/ && \
+	$(STRIPCMD) $(TARGET_DIR)/usr/bin/jsc && \
 	popd > /dev/null)
 endef
 
