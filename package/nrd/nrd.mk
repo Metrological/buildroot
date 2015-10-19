@@ -240,7 +240,7 @@ define NRD_TARGET_SET_DEFINITION
 
 	# fixes
 	mkdir -p $(TARGET_DIR)/root/data/gibbon
-	cd $(TARGET_DIR) && ln -s $(NRD_RUNTIMEDATA_LOCATION)/fonts/ root/data/fonts
+	cd $(TARGET_DIR) && rm root/data/fonts && ln -s $(NRD_RUNTIMEDATA_LOCATION)/fonts/ root/data/fonts
 endef
 
 ifeq ($(BR2_PACKAGE_NRD_APPLICATION),y)
