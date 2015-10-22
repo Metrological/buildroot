@@ -101,4 +101,19 @@ config BR2_PACKAGE_WPE_GENERATE_ECLIPSE_PROJECT
 	help
 	  Generate .project file to manage the WPE source code in Eclipse
 
+config BR2_PACKAGE_WPE_USE_HOLE_PUNCH_GSTREAMER
+       bool "use hole punch, rendering performed by gstreamer"
+       default n
+       depends on BR2_PACKAGE_WPE_USE_GSTREAMER
+       help
+         Use hole punch for video rendering. Gstreamer performs the playback using a custom sink
+
+config BR2_PACKAGE_WPE_USE_HOLE_PUNCH_EXTERNAL
+       bool "use hole punch, rendering performed by external application"
+       default n
+       depends on !BR2_PACKAGE_WPE_USE_HOLE_PUNCH_GSTREAMER
+       help
+         Use hole punch for video rendering, and rely on an external application to perform the playback
+
+
 endmenu
