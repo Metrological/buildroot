@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-WEBBRIDGE_VERSION = ada456c749b863baab5f85a92df53822821f8b84
+WEBBRIDGE_VERSION = 9537cf18727ee03295915d3b874b028e56e1d355
 WEBBRIDGE_SITE_METHOD = git
 WEBBRIDGE_SITE = git@github.com:Metrological/webbridge.git
 WEBBRIDGE_INSTALL_STAGING = YES
@@ -75,4 +75,9 @@ ifneq ($(BR2_PACKAGE_PLUGIN_MINIMIZED),y)
     WEBBRIDGE_CONF_OPT += -DWEBBRIDGE_WEB_UI=OFF
 endif
 
+define WEBBRIDGE_POST_TARGET_INITD
+    $(INSTALL) -D -m 0755 package/webbridge/S80webbridge $(TARGET_DIR)/etc/init.d
+endef
+
+WEBBRIDGE_POST_INSTALL_TARGET_HOOKS += WEBBRIDGE_POST_TARGET_INITD
 $(eval $(cmake-package))
