@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-DXDRM_VERSION = 474837c846bfea260ff3f7b170cac305a7ad5e71
+DXDRM_VERSION = 0a0e23113a5517b84e3e4c81f99f29a04ab99440
 DXDRM_SITE_METHOD = git
 DXDRM_SITE = git@github.com:Metrological/dxdrm.git
 DXDRM_LICENSE = PROPRIETARY
@@ -27,6 +27,8 @@ define DXDRM_INSTALL_STAGING_CMDS
 	$(INSTALL) -m 755 $(@D)/$(DXDRM_LOCATOR)/$(call qstrip,$(BR2_ARCH))/release/libTrusted.so $(STAGING_DIR)/usr/lib/libTrusted.so
 	$(INSTALL) -d -m 755 $(STAGING_DIR)/usr/include/dxdrm
 	$(INSTALL) -m 644 $(@D)/$(DXDRM_LOCATOR)/include/*.h $(STAGING_DIR)/usr/include/dxdrm
+	$(INSTALL) -m 644 $(@D)/external/dxdrm.pc $(STAGING_DIR)/usr/lib/pkgconfig
+	
 	if [ "x$(BR2_PACKAGE_DXDRM_EXTERNAL)" = "xy" ] ; then \
 		$(INSTALL) -m 755 $(@D)/$(DXDRM_LOCATOR)/$(call qstrip,$(BR2_ARCH))/release/libprovision.so $(STAGING_DIR)/usr/lib/libprovision.so; \
 		$(INSTALL) -m 755 $(@D)/$(DXDRM_LOCATOR)/$(call qstrip,$(BR2_ARCH))/release/libprovisionproxy.so $(STAGING_DIR)/usr/lib/libprovisionproxy.so; \
@@ -34,6 +36,7 @@ define DXDRM_INSTALL_STAGING_CMDS
 		$(INSTALL) -m 644 $(@D)/$(DXDRM_LOCATOR)/include/rpc/*.h $(STAGING_DIR)/usr/include/rpc; \
 		$(INSTALL) -d -m 755 $(STAGING_DIR)/usr/include/provision; \
 		$(INSTALL) -m 644 $(@D)/$(DXDRM_LOCATOR)/include/provision/*.h $(STAGING_DIR)/usr/include/provision; \
+	    $(INSTALL) -m 644 $(@D)/external/provision.pc $(STAGING_DIR)/usr/lib/pkgconfig; \
 	fi
 endef
 
