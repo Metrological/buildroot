@@ -9,10 +9,16 @@ RPI_FIRMWARE_SITE = $(call github,raspberrypi,firmware,$(RPI_FIRMWARE_VERSION))
 RPI_FIRMWARE_LICENSE = BSD-3c
 RPI_FIRMWARE_LICENSE_FILES = boot/LICENCE.broadcom
 
+ifeq ($(BR2_TARGET_ROOTFS_INITRAMFS),y)
+RPI_FIRMWARE_CONF_DIR=boot
+else
+RPI_FIRMWARE_CONF_DIR=etc
+endif
+
 ifeq ($(BR2_PACKAGE_RPI_FIRMWARE_WIFI),y)
 define RPI_FIRMWARE_INSTALL_TARGET_WIFI
 	grep -q 'wlan0' $(TARGET_DIR)/etc/network/interfaces || \
-		echo -e '\nauto wlan0\niface wlan0 inet dhcp\nwpa-roam /etc/wpa_supplicant.conf\npre-up killall wpa_supplicant; wpa_supplicant -c /etc/wpa_supplicant.conf -i wlan0 -B -P /var/run/wpa_supplican' >> $(TARGET_DIR)/etc/network/interfaces
+		echo -e '\nauto wlan0\niface wlan0 inet dhcp\npre-up sleep 2 && wpa_supplicant -B w -D wext -i wlan0 -c /$(RPI_FIRMWARE_CONF_DIR)/wpa_supplicant.conf\npost-down killall -q wpa_supplicant' >> $(TARGET_DIR)/etc/network/interfaces
 endef
 endif
 
