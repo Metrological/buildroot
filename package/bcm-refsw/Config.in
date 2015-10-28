@@ -152,6 +152,11 @@ config BR2_BCM_REFSW_DEBUG_LEVEL_WARNING
 
 endchoice
 
+config BR2_BCM_REFSW_INSTALL_NXSERVER
+	bool "nxserver"
+	help
+	  Install the nxserver as compositor.
+
 endif
 
 comment "bcm-refsw needs a toolchain w/ C++, largefile, threads"
