@@ -114,6 +114,10 @@ ifeq ($(BR2_PACKAGE_RPI_USERLAND),y)
 WPE_DEPENDENCIES += rpi-userland
 endif
 
+ifeq ($(BR2_PACKAGE_BCM_REFSW),y)
+WPE_DEPENDENCIES += bcm-refsw
+endif
+
 ifeq ($(BR2_PACKAGE_WPE_USE_GSTREAMER),y)
 WPE_DEPENDENCIES += \
 	gstreamer1 gst1-plugins-base gst1-plugins-good gst1-plugins-bad
