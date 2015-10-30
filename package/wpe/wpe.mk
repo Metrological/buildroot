@@ -5,6 +5,9 @@
 ################################################################################
 
 WPE_VERSION = 91343ff6a01fbece61de6b00399d46fce60d889b
+ifeq ($(BR2_PACKAGE_BCM_REFSW),y)
+WPE_VERSION = 8875dcec4e6b432577ffe862e267f099a586c467
+endif
 WPE_SITE = $(call github,Metrological,WebKitForWayland,$(WPE_VERSION))
 
 WPE_INSTALL_STAGING = YES
