@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-WPE_VERSION = 91343ff6a01fbece61de6b00399d46fce60d889b
+WPE_VERSION = 0160418acff3c25beecaf0139bf68ca09a8d43e6
 ifeq ($(BR2_PACKAGE_BCM_REFSW),y)
 WPE_VERSION = 8875dcec4e6b432577ffe862e267f099a586c467
 endif
