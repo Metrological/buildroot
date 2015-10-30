@@ -4,10 +4,15 @@
 #
 ################################################################################
 
-WPE_LAUNCHER_VERSION = 77d057cb0345b0cf7118d4f1b492798251a78c21
+WPE_LAUNCHER_VERSION = f132809dbab52977aacd0ee903f1ff8854c858df
 WPE_LAUNCHER_SITE = $(call github,Metrological,wpe-launcher,$(WPE_LAUNCHER_VERSION))
 
-WPE_LAUNCHER_DEPENDENCIES = wpe rpi-userland
+WPE_LAUNCHER_DEPENDENCIES = wpe libglib2
+
+ifeq ($(BR2_PACKAGE_RPI_USERLAND),y)
+WPE_LAUNCHER_DEPENDENCIES += rpi-userland
+WPE_LAUNCHER_MAKE_OPT = -DTARGET_RPI=1
+endif
 
 define WPE_LAUNCHER_AUTOSTART
 	$(INSTALL) -D -m 0755 package/wpe-launcher/wpe $(TARGET_DIR)/usr/bin
