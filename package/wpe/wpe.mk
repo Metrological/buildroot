@@ -119,6 +119,8 @@ endif
 
 ifeq ($(BR2_PACKAGE_BCM_REFSW),y)
 WPE_DEPENDENCIES += bcm-refsw
+WPE_FLAGS += \
+	-DUSE_LD_GOLD=OFF
 endif
 
 ifeq ($(BR2_PACKAGE_WPE_USE_GSTREAMER),y)
