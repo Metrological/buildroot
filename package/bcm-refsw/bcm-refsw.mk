@@ -269,12 +269,13 @@ define BCM_REFSW_INSTALL_TARGET_CMDS
 		$(INSTALL) -m 644 -D $(@D)$(BCM_OUTPUT)nexus/bin/bcmdriver.ko $(TARGET_DIR)/lib/modules/bcmdriver.ko; \
 	else \
 		$(INSTALL) -m 644 -D $(@D)$(BCM_OUTPUT)nexus/bin/nexus.ko $(TARGET_DIR)/lib/modules/nexus.ko; \
+	    $(INSTALL) -m 644 -D $(@D)$(BCM_OUTPUT)nexus/bin/wakeup_drv.ko $(TARGET_DIR)/lib/modules/wakeup_drv.ko; \
 		$(INSTALL) -D -m 755 package/bcm-refsw/S11nexus $(TARGET_DIR)/etc/init.d/S11nexus; \
+		$(INSTALL) -D -m 755 package/bcm-refsw/S11wakeup $(TARGET_DIR)/etc/init.d/S11wakeup; \
 	fi
     if [ "x$(BR2_BCM_REFSW_INSTALL_NXSERVER)" = "xy" ] ; then \
        $(INSTALL) -m 750 -D $(@D)$(BCM_OUTPUT)nexus/bin/nxserver $(TARGET_DIR)/bin/nxserver ; \
        $(INSTALL) -D -m 755 package/bcm-refsw/S70nxserver $(TARGET_DIR)/etc/init.d/S70nxserver; \
-	   $(INSTALL) -m 644 -D $(@D)$(BCM_OUTPUT)nexus/bin/wakeup_drv.ko $(TARGET_DIR)/lib/modules/wakeup_drv.ko; \
     fi
 	
 	$(call BCM_REFSW_INSTALL_LIBS,$(TARGET_DIR))

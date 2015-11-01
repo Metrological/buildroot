@@ -1,9 +1,6 @@
 #!/bin/sh
 
 start() {
-	echo -n "Starting display wakeup driver"
-	insmod /lib/modules/wakeup_drv.ko
-	[ $? == 0 ] && echo "OK" || echo "FAIL"
 	echo -n "Starting nxserver: "
 	start-stop-daemon -S -q -b -m -p /var/run/nxserver.pid -x /bin/nxserver -- -display_format 720p >/dev/null 2>&1
 	[ $? == 0 ] && echo "OK" || echo "FAIL"
@@ -11,9 +8,6 @@ start() {
 stop() {
     echo -n "Stopping nxserver: "
     start-stop-daemon -K -q -p /var/run/nxserver.pid
-    [ $? == 0 ] && echo "OK" || echo "FAIL"
-	echo -n "Stopping display wakeup driver"
-    rmmod /lib/modules/wakeup_drv.ko
     [ $? == 0 ] && echo "OK" || echo "FAIL"
     rm -rf /var/run/nxserver.pid
 }
