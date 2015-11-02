@@ -6,7 +6,7 @@
 
 WPE_VERSION = fb754add992e04a36d3fcc55d080d0e01b949b0a
 ifeq ($(BR2_PACKAGE_BCM_REFSW),y)
-WPE_VERSION = 8875dcec4e6b432577ffe862e267f099a586c467
+WPE_VERSION = a3512f343c25354ba0771f1e2bbab2c6f0f62c54
 endif
 WPE_SITE = $(call github,Metrological,WebKitForWayland,$(WPE_VERSION))
 
