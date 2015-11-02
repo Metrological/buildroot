@@ -53,6 +53,11 @@ choice
 		select BR2_GCC_NEEDS_MPC
 		bool "gcc 4.8.x"
 
+	config BR2_GCC_VERSION_4_9_X
+		depends on !BR2_microblaze && !BR2_arc && !BR2_avr32 && !BR2_bfin && !BR2_sparc_sparchfleon && !BR2_sparc_sparchfleonv8 && !BR2_sparc_sparcsfleon && !BR2_sparc_sparcsfleonv8
+		select BR2_GCC_NEEDS_MPC
+		bool "gcc 4.9.x"
+
 	config BR2_GCC_VERSION_4_8_ARC
 		depends on BR2_arc
 		select BR2_GCC_NEEDS_MPC
@@ -96,6 +101,7 @@ config BR2_GCC_VERSION
 	default "4.6.4"     if BR2_GCC_VERSION_4_6_X
 	default "4.7.4"     if BR2_GCC_VERSION_4_7_X
 	default "4.8.4"     if BR2_GCC_VERSION_4_8_X
+	default "4.9.3"     if BR2_GCC_VERSION_4_9_X
 	default "7466697995233cc3aab5b9427bf843e3c7fabd80" if BR2_GCC_VERSION_4_8_ARC
 	default "b93bb009e021aba64dd4b8cdb0bbc5a176c55543" if BR2_GCC_VERSION_4_9_MICROBLAZE
 	default BR2_GCC_SNAP_DATE if BR2_GCC_VERSION_SNAP
