@@ -118,7 +118,8 @@ QT5BASE_CONFIGURE_OPTS += \
  	-no-xcursor \
  	-no-xfixes \
  	-no-xrandr \
- 	-no-xrender
+ 	-no-xrender \
+ 	-no-use-gold-linker
 endif
 
 ifeq ($(BR2_TARGET_GENERIC_CABUNDLE),)
