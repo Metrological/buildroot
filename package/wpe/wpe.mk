@@ -97,11 +97,6 @@ WPE_FLAGS = \
 
 WPE_EXTRA_CFLAGS=
 
-ifeq ($(BR2_mipsel),y)
-WPE_FLAGS += \
-	-DENABLE_JIT=OFF
-endif
-
 ifeq ($(BR2_TOOLCHAIN_USES_UCLIBC),y)
 WPE_EXTRA_CFLAGS += \
 	-D__UCLIBC__
