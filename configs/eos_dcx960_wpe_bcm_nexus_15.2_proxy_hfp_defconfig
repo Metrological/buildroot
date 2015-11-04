@@ -1,6 +1,5 @@
 BR2_arm=y
 BR2_cortex_a15=y
-BR2_ARM_EABIHF=y
 BR2_ARM_FPU_NEON_VFPV4=y
 BR2_ARM_INSTRUCTIONS_THUMB2=y
 BR2_CCACHE=y
@@ -17,7 +16,7 @@ BR2_GCC_VERSION_4_8_X=y
 BR2_TOOLCHAIN_BUILDROOT_CXX=y
 BR2_ENABLE_LOCALE_PURGE=y
 BR2_ENABLE_LOCALE_WHITELIST="C en_US"
-BR2_TARGET_OPTIMIZATION="-pipe -mhard-float -mfloat-abi=hard -mfpu=neon-vfpv4 -march=armv7-a -mtune=cortex-a7 -fsigned-char"
+BR2_TARGET_OPTIMIZATION="-pipe -mfpu=neon-vfpv4 -march=armv7-a -mtune=cortex-a7 -fsigned-char"
 BR2_TARGET_GENERIC_HOSTNAME="eos"
 BR2_TARGET_GENERIC_ISSUE="eos"
 BR2_ROOTFS_DEVICE_CREATION_DYNAMIC_UDEV=y
