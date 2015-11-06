@@ -27,7 +27,8 @@ case "$1" in
 	fi
 
 	echo -n "Starting $DESC: $NAME"
-	start-stop-daemon -S -q -x $DAEMON
+	# don't stop on panic thresholdi, allow a large step threshold
+	start-stop-daemon -S -q -x $DAEMON -- -g -x
 	echo "."
 	;;
   stop) echo -n "Stopping $DESC: $NAME"

@@ -1,6 +1,0 @@
-#!/bin/sh
-
-if  [ `rdate -s __NTP_SERVER__` ]; then
-	echo "rdate: success"
-fi
-
