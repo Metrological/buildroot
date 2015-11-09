@@ -1,0 +1,15 @@
+diff --git a/src/gui/opengl/qopenglfunctions.cpp b/src/gui/opengl/qopenglfunctions.cpp
+index d561e65..7597c58 100644
+--- a/src/gui/opengl/qopenglfunctions.cpp
++++ b/src/gui/opengl/qopenglfunctions.cpp
+@@ -410,8 +410,8 @@ static int qt_gl_resolve_extensions()
+         if (extensionMatcher.match("GL_OES_element_index_uint"))
+             extensions |= QOpenGLExtensions::ElementIndexUint;
+         // We don't match GL_APPLE_texture_format_BGRA8888 here because it has different semantics.
+-        if (extensionMatcher.match("GL_IMG_texture_format_BGRA8888") || extensionMatcher.match("GL_EXT_texture_format_BGRA8888"))
+-            extensions |= QOpenGLExtensions::BGRATextureFormat;
++        // if (extensionMatcher.match("GL_IMG_texture_format_BGRA8888") || extensionMatcher.match("GL_EXT_texture_format_BGRA8888"))
++            // extensions |= QOpenGLExtensions::BGRATextureFormat;
+     } else {
+         extensions |= QOpenGLExtensions::ElementIndexUint | QOpenGLExtensions::MapBuffer;
+ 
