@@ -1,0 +1,11 @@
+config BR2_PACKAGE_QTWEBDRIVER
+	bool "qtwebdriver"
+	select BR2_PACKAGE_PYTHON
+	depends on BR2_PACKAGE_QT_WEBKIT || BR2_PACKAGE_QT5WEBKIT
+	help
+	  Cisco's qtwebdriver implementation
+	  https://github.com/cisco-open-source/qtwebdriver
+
+comment "qtwebdriver needs qtwebkit or qt5webkit"
+	depends on !BR2_PACKAGE_QT_WEBKIT
+	depends on !BR2_PACKAGE_QT5WEBKIT
