@@ -26,12 +26,12 @@ define QTWEBDRIVER_BUILD_CMDS
 endef
 
 define QTWEBDRIVER_INSTALL_STAGING_CMDS
-	cp -ru $(@D)/inc $(STAGING_DIR)/usr/include/qt5/QtWebDriver
-	cp -u $(@D)/out/bin/mips/Release/* $(STAGING_DIR)/usr/lib
+	cp -dpfru $(@D)/inc $(STAGING_DIR)/usr/include/qt5/QtWebDriver
+	cp -dpfu $(@D)/out/bin/mips/Release/* $(STAGING_DIR)/usr/lib
 endef
 
 define QTWEBDRIVER_INSTALL_TARGET_CMDS
-#	$(INSTALL) -D -m 0755 $(@D)/qtbrowser $(TARGET_DIR)/usr/bin
+	$(INSTALL) -D -m 0755 $(@D)/out/bin/mips/Release/*.so $(TARGET_DIR)/usr/lib
 endef
 
 define QTWEBDRIVER_UNINSTALL_TARGET_CMDS
