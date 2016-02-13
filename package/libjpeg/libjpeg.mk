@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-LIBJPEG_VERSION = 8d
+LIBJPEG_VERSION = 8c
 LIBJPEG_SITE = http://www.ijg.org/files/
 LIBJPEG_SOURCE = jpegsrc.v$(LIBJPEG_VERSION).tar.gz
 LIBJPEG_INSTALL_STAGING = YES

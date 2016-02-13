@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-FREETYPE_VERSION = 2.5.2
+FREETYPE_VERSION = 2.4.3
 FREETYPE_SOURCE = freetype-$(FREETYPE_VERSION).tar.bz2
 FREETYPE_SITE = http://downloads.sourceforge.net/project/freetype/freetype2/$(FREETYPE_VERSION)
 FREETYPE_INSTALL_STAGING = YES
@@ -59,10 +59,6 @@ FREETYPE_POST_INSTALL_STAGING_HOOKS += FREETYPE_FIX_CONFIG_FILE_LIBS
 
 # Version 2.5.1 reorganized headers out of freetype2/freetype
 # It's unexpected for some packages so symlink it until it spreads upstream
-define FREETYPE_FIX_FREETYPE_INCLUDE
-	ln -sf . $(STAGING_DIR)/usr/include/freetype2/freetype
-endef
-FREETYPE_POST_INSTALL_STAGING_HOOKS += FREETYPE_FIX_FREETYPE_INCLUDE
 define HOST_FREETYPE_FIX_FREETYPE_INCLUDE
 	ln -sf . $(HOST_DIR)/usr/include/freetype2/freetype
 endef
