@@ -1,0 +1,13 @@
+diff --git a/src/platformsupport/fontdatabases/fontconfig/qfontconfigdatabase.cpp b/src/platformsupport/fontdatabases/fontconfig/qfontconfigdatabase.cpp
+index b8da972..a6a5468 100644
+--- a/src/platformsupport/fontdatabases/fontconfig/qfontconfigdatabase.cpp
++++ b/src/platformsupport/fontdatabases/fontconfig/qfontconfigdatabase.cpp
+@@ -559,7 +559,7 @@ QFontEngineFT::HintStyle defaultHintStyleFromMatch(QFont::HintingPreference hint
+     return QFontEngineFT::HintFull;
+ }
+ 
+-QFontEngineFT::SubpixelAntialiasingType subpixelTypeFromMatch(FcPattern *match)
++QFontEngineFT::SubpixelAntialiasingType __attribute__((optimize("O1"))) subpixelTypeFromMatch(FcPattern *match)
+ {
+     int subpixel = FC_RGBA_UNKNOWN;
+     FcPatternGetInteger(match, FC_RGBA, 0, &subpixel);
