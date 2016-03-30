@@ -1,22 +1,27 @@
-#!/bin/bash
+#!/bin/sh
 
-rm -f $TARGET_DIR/usr/bin/{icuinfo,derb,genbrk,gencfu,gencnval,gendict,genrb,makeconv,pkgdata,uconv}
-rm -f $TARGET_DIR/usr/bin/fc-{cache,cat,list,match,pattern,query,scan,validate}
-rm -f $TARGET_DIR/usr/bin/xml{lint,catalog}
-rm -f $TARGET_DIR/usr/bin/xsltproc
-rm -f $TARGET_DIR/usr/bin/glib-compile-{schemas,resources}
-rm -f $TARGET_DIR/usr/bin/g{dbus,dbus-codegen,io-querymodules,settings,resource,application}
-rm -f $TARGET_DIR/usr/bin/pcre{test,grep}
-rm -f $TARGET_DIR/usr/bin/faad
-rm -f $TARGET_DIR/usr/bin/sqlite3
-rm -f $TARGET_DIR/usr/bin/{sexp,pkcs1}-conv
-rm -f $TARGET_DIR/usr/bin/nettle-{lfib-stream,hash}
-rm -f $TARGET_DIR/usr/bin/mtdev-test
-rm -f $TARGET_DIR/usr/sbin/icupkg
-rm -f $TARGET_DIR/usr/sbin/gen{sprep,norm2,cmn,ccode}
-rm -rf $TARGET_DIR/usr/share/{glib-2.0,fontconfig,xml,icu}
-rm -rf $TARGET_DIR/usr/lib/*.sh
-rm -rf $TARGET_DIR/usr/lib/*.py
-rm -rf $TARGET_DIR/usr/lib/libffi-*
-rm -rf $TARGET_DIR/usr/lib/libxslt-plugins
-rm -rf $TARGET_DIR/usr/lib/icu
+BOARD_DIR="$(dirname $0)"
+
+# Mark the kernel as DT-enabled
+mkdir -p "${BINARIES_DIR}/kernel-marked"
+${HOST_DIR}/usr/bin/mkknlimg "${BINARIES_DIR}/zImage" \
+	"${BINARIES_DIR}/kernel-marked/zImage"
+
+echo "Updating the config and cmdline files"
+cp -af ${BOARD_DIR}/config.txt ${BINARIES_DIR}/rpi-firmware/
+cp -af ${BOARD_DIR}/cmdline.txt ${BINARIES_DIR}/rpi-firmware/
+
+INITRAMFS="$(grep ^BR2_TARGET_ROOTFS_INITRAMFS=y ${BR2_CONFIG})"
+ROOTFS_CPIO="$(grep ^BR2_TARGET_ROOTFS_CPIO=y ${BR2_CONFIG})"
+
+if [ "x${INITRAMFS}" = "x" ] && [ "x${ROOTFS_CPIO}" != "x" ];
+then
+sed -i /\#initramfs/initramfs/ ${BINARIES_DIR}/rpi-firmware/config.txt
+CPIO_XZ=$(grep ^BR2_TARGET_ROOTFS_CPIO_XZ=y ${BR2_CONFIG})
+CPIO_GZIP=$(grep ^BR2_TARGET_ROOTFS_CPIO_GZIP=y ${BR2_CONFIG})
+if [ "x${CPIO_XZ}" != "x" ]; then
+sed -i /rootfs.cpio/rootfs.cpio.xz/ ${BINARIES_DIR}/rpi-firmware/config.txt
+elif [ "x${CPIO_GZIP}" != "x" ]; then
+sed -i /rootfs.cpio/rootfs.cpio.gz/ ${BINARIES_DIR}/rpi-firmware/config.txt
+fi
+fi
