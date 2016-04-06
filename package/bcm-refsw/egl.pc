@@ -3,8 +3,8 @@ exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include
 
-Name: vg
-Description: Broadcom implementation of OpenVG
-Version: 1.0
-Libs: -L${libdir} -lv3ddriver
+Name: egl
+Description: Broadcom implementation of EGL
+Version: 1
+Libs: -L${libdir} -lrt -lnexus -lnxclient -lnxpl -lv3ddriver
 Cflags: -I${includedir} -I${includedir}/refsw
