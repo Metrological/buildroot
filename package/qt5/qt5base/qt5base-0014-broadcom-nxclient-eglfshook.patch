@@ -1,170 +1,167 @@
-*** b	1969-12-31 16:00:00.000000000 -0800
---- qeglfshooks_bcm_dawn.cpp	2016-04-06 13:32:27.589871979 -0700
-***************
-*** 0 ****
---- 1,165 ----
-+ #include "qeglfshooks.h"
-+ 
-+ #include <QtDebug>
-+ 
-+ #include <QtPlatformSupport/private/qeglconvenience_p.h>
-+ #include <QtPlatformSupport/private/qeglplatformcontext_p.h>
-+ 
-+ #include <refsw/nexus_config.h>
-+ #include <refsw/nxclient.h>
-+ #include <refsw/nexus_platform_client.h>
-+ 
-+ #include <refsw/default_nexus.h>
-+ 
-+ #ifdef __cplusplus
-+   extern "C"
-+   {
-+ #endif //__cplusplus
-+ 
-+ static unsigned int         gs_requested_screen_width  = static_cast<unsigned int>(~0);
-+ static unsigned int         gs_requested_screen_height = static_cast<unsigned int>(~0);
-+ static NEXUS_DisplayHandle  gs_nexus_display = 0;
-+ static NEXUS_SurfaceClient* gs_native_window = 0;
-+ static NXPL_PlatformHandle  nxpl_handle = 0;
-+ 
-+ static NxClient_AllocResults allocResults;
-+ 
-+ bool InitPlatform ( void )
-+ {
-+      NxClient_AllocSettings allocSettings;
-+      NxClient_JoinSettings joinSettings;
-+ 
-+      NxClient_GetDefaultJoinSettings(&joinSettings);
-+      snprintf(joinSettings.name, NXCLIENT_MAX_NAME, "%s", "qtbrowser");
-+      printf ("NxClient_Join...\n");
-+      if (NxClient_Join(&joinSettings))
-+      {
-+         qFatal("Err: NxClient_Join() failed");
-+         return false;
-+      }
-+ 
-+     //FIXME
-+     gs_requested_screen_width = 1280;
-+     gs_requested_screen_height = 720;
-+ 
-+     NxClient_GetDefaultAllocSettings(&allocSettings);
-+     allocSettings.surfaceClient = 1;
-+     if (NxClient_Alloc(&allocSettings, &allocResults))
+--- a/mkspecs/devices/linux-mipsel-broadcom-97425-g++/qeglfshooks_bcm_nxclient.cpp
+--- b/mkspecs/devices/linux-mipsel-broadcom-97425-g++/qeglfshooks_bcm_nxclient.cpp
+@@ -0,0 +1,164 @@
++#include "qeglfshooks.h"
++
++#include <QtDebug>
++
++#include <QtPlatformSupport/private/qeglconvenience_p.h>
++#include <QtPlatformSupport/private/qeglplatformcontext_p.h>
++
++#include <refsw/nexus_config.h>
++#include <refsw/nxclient.h>
++#include <refsw/nexus_platform_client.h>
++
++#include <refsw/default_nexus.h>
++
++#ifdef __cplusplus
++  extern "C"
++  {
++#endif //__cplusplus
++
++static unsigned int         gs_requested_screen_width  = static_cast<unsigned int>(~0);
++static unsigned int         gs_requested_screen_height = static_cast<unsigned int>(~0);
++static NEXUS_DisplayHandle  gs_nexus_display = 0;
++static NEXUS_SurfaceClient* gs_native_window = 0;
++static NXPL_PlatformHandle  nxpl_handle = 0;
++
++static NxClient_AllocResults allocResults;
++
++bool InitPlatform ( void )
++{
++     NxClient_AllocSettings allocSettings;
++     NxClient_JoinSettings joinSettings;
++
++     NxClient_GetDefaultJoinSettings(&joinSettings);
++     snprintf(joinSettings.name, NXCLIENT_MAX_NAME, "%s", "qtbrowser");
++     printf ("NxClient_Join...\n");
++     if (NxClient_Join(&joinSettings))
 +     {
-+         qFatal("Err: NxClient_Alloc() failed");
-+         return false;
++        qFatal("Err: NxClient_Join() failed");
++        return false;
 +     }
-+     else
++
++    //FIXME
++    gs_requested_screen_width = 1280;
++    gs_requested_screen_height = 720;
++
++    NxClient_GetDefaultAllocSettings(&allocSettings);
++    allocSettings.surfaceClient = 1;
++    if (NxClient_Alloc(&allocSettings, &allocResults))
++    {
++        qFatal("Err: NxClient_Alloc() failed");
++        return false;
++    }
++    else
++    {
++        NXPL_RegisterNexusDisplayPlatform(&nxpl_handle, gs_nexus_display);
++        return true;
++    }
++    return true;
++}
++
++
++void DeInitPlatform ( void )
++{
++     NXPL_UnregisterNexusDisplayPlatform ( nxpl_handle );
++     NEXUS_SurfaceClient_Release ( gs_native_window );
++     NxClient_Free(&allocResults);
++     NxClient_Uninit();
++}
++
++#ifdef __cplusplus
++  }
++#endif
++
++QT_BEGIN_NAMESPACE
++
++class QEglFSBCMHooks : public QEglFSHooks
++{
++  public:
++     virtual void platformInit ();
++     virtual void platformDestroy ();
++     virtual EGLNativeDisplayType platformDisplay () const;
++     virtual QSize screenSize () const;
++     virtual EGLNativeWindowType createNativeWindow ( QPlatformWindow* window, const QSize &size, const QSurfaceFormat &format );
++     virtual void destroyNativeWindow ( EGLNativeWindowType window );
++     virtual bool hasCapability ( QPlatformIntegration::Capability cap ) const;
++     virtual QSurfaceFormat surfaceFormatFor ( const QSurfaceFormat &inputFormat ) const;
++};
++
++void QEglFSBCMHooks::platformInit ()
++{
++     InitPlatform ();
++}
++
++EGLNativeDisplayType QEglFSBCMHooks::platformDisplay () const
++{
++     return EGL_DEFAULT_DISPLAY;
++}
++
++void QEglFSBCMHooks::platformDestroy ()
++{
++     DeInitPlatform ();
++}
++
++QSize QEglFSBCMHooks::screenSize() const
++{
++     return QSize ( gs_requested_screen_width, gs_requested_screen_height);
++}
++
++EGLNativeWindowType QEglFSBCMHooks::createNativeWindow ( QPlatformWindow *window, const QSize &size, const QSurfaceFormat &format )
++{
++     Q_UNUSED(window)
++     Q_UNUSED(size)
++     Q_UNUSED(format);
++
++     NXPL_NativeWindowInfo win_info;
++
++     win_info.x        = 0;
++     win_info.y        = 0;
++     win_info.width    = gs_requested_screen_width;
++     win_info.height   = gs_requested_screen_height;
++     win_info.stretch  = true;
++     win_info.clientID = 0; //FIXME hardcoding
++
++     printf ("Creating native window. Width (%d) x Height (%d)\n", gs_requested_screen_width, gs_requested_screen_height);
++     gs_native_window = static_cast<NEXUS_SurfaceClient*> (NXPL_CreateNativeWindow ( &win_info ));
++     return ( EGLNativeWindowType ) gs_native_window;
++}
++
++void QEglFSBCMHooks::destroyNativeWindow ( EGLNativeWindowType window )
++{
++     Q_UNUSED ( window )
++     NXPL_DestroyNativeWindow ( gs_native_window );
++}
++
++bool QEglFSBCMHooks::hasCapability(QPlatformIntegration::Capability cap) const
++{
++     switch ( cap )
 +     {
-+         NXPL_RegisterNexusDisplayPlatform(&nxpl_handle, gs_nexus_display);
-+         return true;
++        case QPlatformIntegration::ThreadedPixmaps      :
++        case QPlatformIntegration::OpenGL               :
++        case QPlatformIntegration::ThreadedOpenGL       :
++        case QPlatformIntegration::BufferQueueingOpenGL :
++           return true;
++        default                                         :
++           return false;
 +     }
-+     return true;
-+ }
-+ 
-+ 
-+ void DeInitPlatform ( void )
-+ {
-+      NXPL_UnregisterNexusDisplayPlatform ( nxpl_handle );
-+      NEXUS_SurfaceClient_Release ( gs_native_window );
-+      NxClient_Free(&allocResults);
-+      NxClient_Uninit();
-+ }
-+ 
-+ #ifdef __cplusplus
-+   }
-+ #endif
-+ 
-+ QT_BEGIN_NAMESPACE
-+ 
-+ class QEglFSBCMHooks : public QEglFSHooks
-+ {
-+   public:
-+      virtual void platformInit ();
-+      virtual void platformDestroy ();
-+      virtual EGLNativeDisplayType platformDisplay () const;
-+      virtual QSize screenSize () const;
-+      virtual EGLNativeWindowType createNativeWindow ( QPlatformWindow* window, const QSize &size, const QSurfaceFormat &format );
-+      virtual void destroyNativeWindow ( EGLNativeWindowType window );
-+      virtual bool hasCapability ( QPlatformIntegration::Capability cap ) const;
-+      virtual QSurfaceFormat surfaceFormatFor ( const QSurfaceFormat &inputFormat ) const;
-+ };
-+ 
-+ void QEglFSBCMHooks::platformInit ()
-+ {
-+      InitPlatform ();
-+ }
-+ 
-+ EGLNativeDisplayType QEglFSBCMHooks::platformDisplay () const
-+ {
-+      return EGL_DEFAULT_DISPLAY;
-+ }
-+ 
-+ void QEglFSBCMHooks::platformDestroy ()
-+ {
-+      DeInitPlatform ();
-+ }
-+ 
-+ QSize QEglFSBCMHooks::screenSize() const
-+ {
-+      return QSize ( gs_requested_screen_width, gs_requested_screen_height);
-+ }
-+ 
-+ EGLNativeWindowType QEglFSBCMHooks::createNativeWindow ( QPlatformWindow *window, const QSize &size, const QSurfaceFormat &format )
-+ {
-+      Q_UNUSED(window)
-+      Q_UNUSED(size)
-+      Q_UNUSED(format);
-+ 
-+      NXPL_NativeWindowInfo win_info;
-+ 
-+      win_info.x        = 0;
-+      win_info.y        = 0;
-+      win_info.width    = gs_requested_screen_width;
-+      win_info.height   = gs_requested_screen_height;
-+      win_info.stretch  = true;
-+      win_info.clientID = 0; //FIXME hardcoding
-+ 
-+      printf ("Creating native window. Width (%d) x Height (%d)\n", gs_requested_screen_width, gs_requested_screen_height);
-+      gs_native_window = static_cast<NEXUS_SurfaceClient*> (NXPL_CreateNativeWindow ( &win_info ));
-+      return ( EGLNativeWindowType ) gs_native_window;
-+ }
-+ 
-+ void QEglFSBCMHooks::destroyNativeWindow ( EGLNativeWindowType window )
-+ {
-+      Q_UNUSED ( window )
-+      NXPL_DestroyNativeWindow ( gs_native_window );
-+ }
-+ 
-+ bool QEglFSBCMHooks::hasCapability(QPlatformIntegration::Capability cap) const
-+ {
-+      switch ( cap )
-+      {
-+         case QPlatformIntegration::ThreadedPixmaps      :
-+         case QPlatformIntegration::OpenGL               :
-+         case QPlatformIntegration::ThreadedOpenGL       :
-+         case QPlatformIntegration::BufferQueueingOpenGL :
-+            return true;
-+         default                                         :
-+            return false;
-+      }
-+ }
-+ 
-+ QSurfaceFormat QEglFSBCMHooks::surfaceFormatFor ( const QSurfaceFormat &inputFormat ) const
-+ {
-+      QSurfaceFormat format = inputFormat;
-+      format.setDepthBufferSize(24);
-+      format.setStencilBufferSize(8);
-+      format.setRedBufferSize(8);
-+      format.setGreenBufferSize(8);
-+      format.setBlueBufferSize(8);
-+      format.setAlphaBufferSize(8);
-+ 
-+      return format;
-+ }
-+ 
-+ QEglFSBCMHooks eglFSBCMHooks;
-+ QEglFSHooks* platformHooks = &eglFSBCMHooks;
-+ 
-+ QT_END_NAMESPACE
-+ 
++}
++
++QSurfaceFormat QEglFSBCMHooks::surfaceFormatFor ( const QSurfaceFormat &inputFormat ) const
++{
++     QSurfaceFormat format = inputFormat;
++     format.setDepthBufferSize(24);
++     format.setStencilBufferSize(8);
++     format.setRedBufferSize(8);
++     format.setGreenBufferSize(8);
++     format.setBlueBufferSize(8);
++     format.setAlphaBufferSize(8);
++
++     return format;
++}
++
++QEglFSBCMHooks eglFSBCMHooks;
++QEglFSHooks* platformHooks = &eglFSBCMHooks;
++
++QT_END_NAMESPACE
