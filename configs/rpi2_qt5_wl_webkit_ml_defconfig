@@ -10,7 +10,7 @@ BR2_OPTIMIZE_2=y
 
 BR2_CCACHE=y
 
-BR2_GCC_VERSION_4_8_X=y
+BR2_GCC_VERSION_4_9_X=y
 BR2_TARGET_OPTIMIZATION="-pipe -mhard-float -mfloat-abi=hard -mfpu=neon-vfpv4 -march=armv7-a -mtune=cortex-a7 -fsigned-char"
 
 BR2_TOOLCHAIN_BUILDROOT_EGLIBC=y
@@ -36,8 +36,6 @@ BR2_PACKAGE_RPI_FIRMWARE=y
 BR2_PACKAGE_RPI_USERLAND=y
 
 BR2_PACKAGE_OPENSSL=y
-
-BR2_PACKAGE_DXDRM=y
 
 BR2_PACKAGE_ORC=y
 
