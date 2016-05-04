@@ -1,0 +1,11 @@
+--- qtbrowser-2.0.11/qtbrowser.pro	2015-10-08 12:46:40.000000000 +0200
++++ qtbrowser-current/qtbrowser.pro	2015-10-22 09:38:22.295365657 +0200
+@@ -21,7 +21,7 @@
+ } else {
+    warning("OpenGL support is not available, qtbrowser might work but supported features and performance are limited.")
+ }
+-
++DEFINES += QT_BUILD_WITH_SYSLOG
+ #contains(QT_CONFIG, opengles1) {}
+ #contains(QT_CONFIG, opengles2) {}
+ #contains(QT_CONFIG, egl) {}
