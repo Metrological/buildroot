@@ -71,14 +71,14 @@ QT5WEBKIT_CONFIG += \
 	WEBKIT_CONFIG-=build_qttestsupport
 endif
 
-QT5WEBKIT_CONFIG += \
-	WEBKIT_CONFIG+=page_visibility_api \
-	WEBKIT_CONFIG+=css_variables \
-	WEBKIT_CONFIG+=css_image_orientation \
-	WEBKIT_CONFIG+=css3_text \
-	WEBKIT_CONFIG+=css3_text_line_break \
-	WEBKIT_CONFIG+=mathml \
-	WEBKIT_CONFIG+=microdata
+#QT5WEBKIT_CONFIG += \
+#	WEBKIT_CONFIG+=page_visibility_api \
+#	WEBKIT_CONFIG+=css_variables \
+#	WEBKIT_CONFIG+=css_image_orientation \
+#	WEBKIT_CONFIG+=css3_text \
+#	WEBKIT_CONFIG+=css3_text_line_break \
+#	WEBKIT_CONFIG+=mathml \
+#	WEBKIT_CONFIG+=microdata
 
 ifeq ($(BR2_QT5WEBKIT_USE_GSTREAMER),y)
 QT5WEBKIT_DEPENDENCIES += gstreamer1 gst1-plugins-base gst1-plugins-good gst1-plugins-bad

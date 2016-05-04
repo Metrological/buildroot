@@ -1,0 +1,11 @@
+--- ./Source/WebCore/page/Settings.in	2015-06-26 09:18:44.000000000 +0200
++++ ./Source/WebCore/page/Settings.in	2015-08-14 16:12:37.938471279 +0200
+@@ -22,7 +22,7 @@
+ # widely used for stylized fonts. Anti-aliasing text in hardware at that
+ # scale is generally slower. So below a certain size it is better to
+ # draw canvas in software.
+-minimumAccelerated2dCanvasSize type=int, initial=275*256
++minimumAccelerated2dCanvasSize type=int, initial=257*256
+ 
+ layoutFallbackWidth type=int, initial=980
+ maximumDecodedImageSize type=size_t, initial=numeric_limits<size_t>::max()

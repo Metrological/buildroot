@@ -1,0 +1,12 @@
+--- a/Source/WebCore/platform/graphics/Font.cpp
++++ b/Source/WebCore/platform/graphics/Font.cpp
+@@ -191,7 +191,8 @@ static void makeFontGlyphsCacheKey(FontGlyphsCacheKey& key, const FontDescriptio
+     key.fontDescriptionCacheKey = FontDescriptionFontDataCacheKey(description);
+     for (unsigned i = 0; i < description.familyCount(); ++i)
+         key.families.append(description.familyAt(i).lower());
+-    key.fontSelectorId = fontSelector ? fontSelector->uniqueId() : 0;
++    //key.fontSelectorId = fontSelector ? fontSelector->uniqueId() : 0;
++    key.fontSelectorId = 0;
+     key.fontSelectorVersion = fontSelector ? fontSelector->version() : 0;
+     key.fontSelectorFlags = fontSelector && fontSelector->resolvesFamilyFor(description) ? makeFontSelectorFlags(description) : 0;
+ }
