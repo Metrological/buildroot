@@ -25,6 +25,9 @@ UDEV_CONF_OPT =			\
 
 UDEV_DEPENDENCIES = host-gperf host-pkgconf util-linux kmod
 
+
+UDEV_CUSTOM_RULES= $(call qstrip,$(BR2_UDEV_CUSTOM_RULES))
+
 ifeq ($(BR2_PACKAGE_UDEV_RULES_GEN),y)
 UDEV_CONF_OPT += --enable-rule_generator
 endif
@@ -45,6 +48,14 @@ endif
 define UDEV_INSTALL_INITSCRIPT
 	$(INSTALL) -m 0755 package/udev/S10udev $(TARGET_DIR)/etc/init.d/S10udev
 endef
+
+ifneq ($(UDEV_CUSTOM_RULES)x,x)
+define UDEV_INSTALL_CUSTOM_RULES
+     cp -f $(TOPDIR)/$(UDEV_CUSTOM_RULES)/*.rules $(TARGET_DIR)/etc/udev/rules.d/
+endef
+
+UDEV_POST_INSTALL_TARGET_HOOKS += UDEV_INSTALL_CUSTOM_RULES
+endif
 
 UDEV_POST_INSTALL_TARGET_HOOKS += UDEV_INSTALL_INITSCRIPT
 
