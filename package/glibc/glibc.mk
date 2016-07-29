@@ -86,13 +86,24 @@ endif
 # Note that as mentionned in
 # http://patches.openembedded.org/patch/38849/, eglibc/glibc must be
 # built with -O2, so we pass our own CFLAGS and CXXFLAGS below.
+
+ifeq ($(BR2_PACKAGE_VALGRIND)x,yx)
+$(warning "Valgrind requires certain function (symbols) to be present in order to redirect them. The option -O2 optimizes them away. We will use -O or -O1 instead! Inaddition, Do not strip the resulting binary code, e.g. library!)
+GLIBC_OPTIMIZATION_FLAG = -O
+#crude but effective
+GLIBC_STRIP_EXCLUDE_FILES+="ld-$(shell echo $(GLIBC_VERSION) | sed 's/-\([[:print:]]\)*//').so"
+BR2_STRIP_EXCLUDE_FILES+=$(GLIBC_STRIP_EXCLUDE_FILES)
+else
+GLIBC_OPTIMIZATION_FLAG = -O2
+endif
+
 define GLIBC_CONFIGURE_CMDS
 	mkdir -p $(@D)/build
 	# Do the configuration
 	(cd $(@D)/build; \
 		$(TARGET_CONFIGURE_OPTS) \
-		CFLAGS="-O2 $(GLIBC_EXTRA_CFLAGS)" CPPFLAGS="" \
-		CXXFLAGS="-O2 $(GLIBC_EXTRA_CFLAGS)" \
+		CFLAGS="$(GLIBC_OPTIMIZATION_FLAG) $(GLIBC_EXTRA_CFLAGS)" CPPFLAGS="" \
+		CXXFLAGS="$(GLIBC_OPTIMIZATION_FLAG) $(GLIBC_EXTRA_CFLAGS)" \
 		$(SHELL) $(@D)/$(GLIBC_SRC_SUBDIR)/configure \
 		ac_cv_path_BASH_SHELL=/bin/bash \
 		$(GLIBC_CONF_OPTIONS) \
