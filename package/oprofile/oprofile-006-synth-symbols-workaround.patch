@@ -1,0 +1,22 @@
+--- a/configure
++++ b/configure
+@@ -18542,7 +18542,7 @@
+ 	$CC conftest.$ac_ext $CFLAGS $LDFLAGS $LIBS -o  test-for-synth > /dev/null 2>&1
+ 	if test -f test-for-synth; then
+ 		echo "yes"
+-		SYNTHESIZE_SYMBOLS='1'
++		SYNTHESIZE_SYMBOLS='0'
+ 	else
+ 		echo "no"
+ 		SYNTHESIZE_SYMBOLS='0'
+--- a/m4/binutils.m4
++++ b/m4/binutils.m4
+@@ -39,7 +39,7 @@
+ 	$CC conftest.$ac_ext $CFLAGS $LDFLAGS $LIBS -o  test-for-synth > /dev/null 2>&1
+ 	if test -f test-for-synth; then
+ 		echo "yes"
+-		SYNTHESIZE_SYMBOLS='1'
++		SYNTHESIZE_SYMBOLS='0'
+ 	else
+ 		echo "no"
+ 		SYNTHESIZE_SYMBOLS='0'
