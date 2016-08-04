@@ -1,0 +1,56 @@
+--- a/Source/WebCore/loader/cache/CachedResourceLoader.cpp
++++ b/Source/WebCore/loader/cache/CachedResourceLoader.cpp
+@@ -69,6 +69,8 @@
+ #include "Performance.h"
+ #endif
+ 
++#include "Options.h"
++
+ #define PRELOAD_DEBUG 0
+ 
+ namespace WebCore {
+@@ -773,8 +775,10 @@
+         frame()->loader()->loadDone();
+     performPostLoadActions();
+ 
+-    if (!m_garbageCollectDocumentResourcesTimer.isActive())
+-        m_garbageCollectDocumentResourcesTimer.startOneShot(0);
++    if (m_garbageCollectDocumentResourcesTimer.isActive())
++        m_garbageCollectDocumentResourcesTimer.stop();
++
++    m_garbageCollectDocumentResourcesTimer.startRepeating(JSC::Options::repeatCollectDocumentResources());
+ }
+ 
+ // Garbage collecting m_documentResources is a workaround for the
+--- a/Source/JavaScriptCore/runtime/Options.h
++++ b/Source/JavaScriptCore/runtime/Options.h
+@@ -169,7 +169,8 @@
+     v(unsigned, gcMaxHeapSize, 0) \
+     v(bool, recordGCPauseTimes, false) \
+     v(bool, logHeapStatisticsAtExit, false) \
+-    v(bool, showAllocationBacktraces, false)
++    v(bool, showAllocationBacktraces, false) \
++    v(unsigned, repeatCollectDocumentResources, 0)
+ 
+ class Options {
+ public:
+--- a/Source/JavaScriptCore/runtime/Options.cpp
++++ b/Source/JavaScriptCore/runtime/Options.cpp
+@@ -41,6 +41,8 @@
+ #include <sys/sysctl.h>
+ #endif
+ 
++//#include <iostream>
++
+ namespace JSC {
+ 
+ static bool parse(const char* string, bool& value)
+@@ -189,6 +191,8 @@
+     logHeapStatisticsAtExit() = gcMaxHeapSize() || recordGCPauseTimes();
+ #endif
+ 
++    repeatCollectDocumentResources() = getenv("JSCrepeatCollectDocumentResources") ? strtol(getenv("JSCrepeatCollectDocumentResources"), nullptr, 10) : 0;
++
+     // Allow environment vars to override options if applicable.
+     // The evn var should be the name of the option prefixed with
+     // "JSC_".
