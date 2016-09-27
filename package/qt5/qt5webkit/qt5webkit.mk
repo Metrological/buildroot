@@ -4,7 +4,7 @@
 #
 ################################################################################
 
-QT5WEBKIT_VERSION = dbe38a7d1c588c41573bc31ec55ed1a06b957119
+QT5WEBKIT_VERSION = dcacbc49ccc91789a6c50dbd2c11e3052109dbf6
 ifeq ($(BR2_QT5WEBKIT_USE_WEBRTC),y)
 QT5WEBKIT_VERSION = de07f58fb904c81794af37238e2c0c2989a59898
 endif
