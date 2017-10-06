@@ -115,7 +115,7 @@ HOST_GCC_COMMON_CONF_OPT = \
 	--with-sysroot=$(STAGING_DIR) \
 	--disable-__cxa_atexit \
 	--with-gnu-ld \
-	--disable-libssp \
+	--enable-libssp \
 	--disable-multilib \
 	--with-gmp=$(HOST_DIR)/usr \
 	--with-mpfr=$(HOST_DIR)/usr
@@ -138,6 +138,10 @@ endif
 # gcc 4.6.x quadmath requires wchar
 ifneq ($(BR2_TOOLCHAIN_BUILDROOT_WCHAR),y)
 HOST_GCC_COMMON_CONF_OPT += --disable-libquadmath
+endif
+
+ifeq ($(BR2_GCC_USE_OLD_ABI_BY_DEFAULT),y)
+HOST_GCC_COMMON_CONF_OPT += --with-default-libstdcxx-abi=gcc4-compatible
 endif
 
 ifeq ($(BR2_GCC_ENABLE_TLS),y)
@@ -180,6 +184,11 @@ endif
 ifeq ($(BR2_GCC_NEEDS_CLOOG),y)
 HOST_GCC_COMMON_DEPENDENCIES += host-cloog
 HOST_GCC_COMMON_CONF_OPT += --with-cloog=$(HOST_DIR)/usr --enable-cloog-backend=isl
+endif
+
+ifeq ($(BR2_TOOLCHAIN_GCC_AT_LEAST_5),)
+HOST_GCC_COMMON_DEPENDENCIES += host-cloog
+HOST_GCC_COMMON_CONF_OPTS += --with-cloog=$(HOST_DIR)/usr
 endif
 
 ifeq ($(BR2_arc),y)

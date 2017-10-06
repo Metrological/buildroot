@@ -68,6 +68,19 @@ choice
 		select BR2_GCC_NEEDS_MPC
 		bool "gcc 4.9-microblaze"
 
+	config BR2_GCC_VERSION_5_X
+		bool "gcc 5.x"
+		# Broken or unsupported architectures
+		depends on !BR2_arc && !BR2_bfin && !BR2_or1k
+		# musl ppc64 unsupported
+		depends on !(BR2_TOOLCHAIN_USES_MUSL && (BR2_powerpc64 || BR2_powerpc64le))
+		# Unsupported MIPS cores
+		depends on !BR2_mips_interaptiv && !BR2_mips_m5150 && \
+			!BR2_mips_m6250 && !BR2_mips_i6400 && !BR2_mips_p6600
+		# musl mips64 unsupported
+		depends on !(BR2_TOOLCHAIN_USES_MUSL && (BR2_mips64 || BR2_mips64el))
+		select BR2_TOOLCHAIN_GCC_AT_LEAST_5
+
 	config BR2_GCC_VERSION_SNAP
 		depends on !BR2_microblaze && !BR2_arc && !BR2_avr32 && !BR2_sparc_sparchfleon && !BR2_sparc_sparchfleonv8 && !BR2_sparc_sparcsfleon && !BR2_sparc_sparcsfleonv8
 		select BR2_GCC_NEEDS_MPC
@@ -101,7 +114,8 @@ config BR2_GCC_VERSION
 	default "4.6.4"     if BR2_GCC_VERSION_4_6_X
 	default "4.7.4"     if BR2_GCC_VERSION_4_7_X
 	default "4.8.4"     if BR2_GCC_VERSION_4_8_X
-	default "4.9.3"     if BR2_GCC_VERSION_4_9_X
+	default "4.9.4"     if BR2_GCC_VERSION_4_9_X
+	default "5.4.0"     if BR2_GCC_VERSION_5_X
 	default "7466697995233cc3aab5b9427bf843e3c7fabd80" if BR2_GCC_VERSION_4_8_ARC
 	default "b93bb009e021aba64dd4b8cdb0bbc5a176c55543" if BR2_GCC_VERSION_4_9_MICROBLAZE
 	default BR2_GCC_SNAP_DATE if BR2_GCC_VERSION_SNAP
@@ -219,6 +233,14 @@ config BR2_GCC_NEEDS_CLOOG
 
 config BR2_GCC_NEEDS_ISL
 	bool
+	
+config BR2_GCC_ENABLE_GRAPHITE
+	bool "Enable compiler graphite support"
+	depends on BR2_GCC_VERSION_4_8_X || BR2_GCC_VERSION_SNAP
+	select BR2_GCC_NEEDS_CLOOG
+	select BR2_GCC_NEEDS_ISL
+	help
+	  Enable graphite support for the compiler	
 
 config BR2_GCC_ENABLE_GRAPHITE
 	bool "Enable compiler graphite support"
@@ -234,3 +256,13 @@ config BR2_GCC_ENABLE_LTO
 	help
 	  Enable Link Time Optimization support for the compiler
 	  Need libelf v0.8.12 or newer installed on host system
+	  
+config BR2_GCC_USE_OLD_ABI_BY_DEFAULT
+	bool "Use de GCC 4 ABI by default"
+	depends on BR2_GCC_VERSION_5_X 
+	help
+	  Set the default value for the _GLIBCXX_USE_CXX11_ABI macro 
+	  (see Macros). The default is OPTION=new which sets the macro to 1,
+	  use OPTION=gcc4-compatible to set it to 0. This option does not 
+	  change the library ABI.
+
