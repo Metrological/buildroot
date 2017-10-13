@@ -1,0 +1,44 @@
+diff -Naur a/extra/scripts/unifdef.c b/extra/scripts/unifdef.c
+--- a/extra/scripts/unifdef.c	2008-04-28 01:10:00.000000000 +0200
++++ b/extra/scripts/unifdef.c	2017-10-10 19:48:22.551532939 +0200
+@@ -206,7 +206,7 @@
+ static void             error(const char *);
+ static int              findsym(const char *);
+ static void             flushline(bool);
+-static Linetype         getline(void);
++static Linetype         get_line(void);
+ static Linetype         ifeval(const char **);
+ static void             ignoreoff(void);
+ static void             ignoreon(void);
+@@ -512,7 +512,7 @@
+ 
+ 	for (;;) {
+ 		linenum++;
+-		lineval = getline();
++		lineval = get_line();
+ 		trans_table[ifstate[depth]][lineval]();
+ 		debug("process %s -> %s depth %d",
+ 		    linetype_name[lineval],
+@@ -526,7 +526,7 @@
+  * help from skipcomment().
+  */
+ static Linetype
+-getline(void)
++get_line(void)
+ {
+ 	const char *cp;
+ 	int cursym;
+@@ -596,8 +596,11 @@
+ 				linestate = LS_DIRTY;
+ 		}
+ 		/* skipcomment should have changed the state */
+-		if (linestate == LS_HASH)
+-			abort(); /* bug */
++// Hmm hppens sometimes on valid files
++//		if (linestate == LS_HASH) {
++//			debug("bug at line %d", __LINE__);
++//			abort(); /* bug */
++//		}
+ 	}
+ 	if (linestate == LS_DIRTY) {
+ 		while (*cp != '\0')

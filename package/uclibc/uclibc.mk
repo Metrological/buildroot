@@ -6,16 +6,27 @@
 
 UCLIBC_VERSION = $(call qstrip,$(BR2_UCLIBC_VERSION_STRING))
 UCLIBC_SOURCE ?= uClibc-$(UCLIBC_VERSION).tar.bz2
+UCLIBC_CONFIG_FILE_NAME = .config
 
 ifeq ($(BR2_UCLIBC_VERSION_SNAPSHOT),y)
 UCLIBC_SITE = http://www.uclibc.org/downloads/snapshots
+
 else ifeq ($(BR2_arc),y)
 UCLIBC_SITE = $(call github,foss-for-synopsys-dwc-arc-processors,uClibc,$(UCLIBC_VERSION))
 UCLIBC_SOURCE = uClibc-$(UCLIBC_VERSION).tar.gz
+
 else ifeq ($(BR2_UCLIBC_VERSION_XTENSA_GIT),y)
 UCLIBC_SITE = git://git.busybox.net/uClibc
 UCLIBC_SOURCE = uClibc-$(UCLIBC_VERSION).tar.gz
-else
+
+else ifeq ($(BR2_UCLIBC_VERSION_OLD),y)
+UCLIBC_SITE = http://www.uclibc.org/downloads/old-releases
+UCLIBC_CONFIG_FILE_NAME = Config
+
+else ifeq ($(BR2_UCLIBC_VERSION_BZ2),y)
+UCLIBC_SITE = http://www.uclibc.org/downloads
+UCLIBC_SOURCE = uClibc-$(UCLIBC_VERSION).tar.bz2
+else 
 UCLIBC_SITE = http://www.uclibc.org/downloads
 UCLIBC_SOURCE = uClibc-$(UCLIBC_VERSION).tar.xz
 endif
@@ -29,7 +40,7 @@ UCLIBC_DEPENDENCIES = host-gcc-initial linux-headers
 # Before uClibc is built, we must have the second stage cross-compiler
 uclibc-build: host-gcc-intermediate
 
-# specifying UCLIBC_CONFIG_FILE on the command-line overrides the .config
+# specifying UCLIBC_CONFIG_FILE on the command-line overrides the ${UCLIBC_CONFIG_FILE_NAME}
 # setting.
 ifndef UCLIBC_CONFIG_FILE
 UCLIBC_CONFIG_FILE = $(call qstrip,$(BR2_UCLIBC_CONFIG))
@@ -51,13 +62,13 @@ endif
 #
 
 define UCLIBC_OPT_SET
-	$(SED) '/$(1)/d' $(3)/.config
-	echo '$(1)=$(2)' >> $(3)/.config
+	$(SED) '/$(1)/d' $(3)/${UCLIBC_CONFIG_FILE_NAME}
+	echo '$(1)=$(2)' >> $(3)/${UCLIBC_CONFIG_FILE_NAME}
 endef
 
 define UCLIBC_OPT_UNSET
-	$(SED) '/$(1)/d' $(2)/.config
-	echo '# $(1) is not set' >> $(2)/.config
+	$(SED) '/$(1)/d' $(2)/${UCLIBC_CONFIG_FILE_NAME}
+	echo '# $(1) is not set' >> $(2)/${UCLIBC_CONFIG_FILE_NAME}
 endef
 
 #
@@ -69,12 +80,12 @@ UCLIBC_ARM_TYPE = CONFIG_$(call qstrip,$(BR2_UCLIBC_ARM_TYPE))
 
 define UCLIBC_ARM_TYPE_CONFIG
 	$(SED) 's/^\(CONFIG_[^_]*[_]*ARM[^=]*\)=.*/# \1 is not set/g' \
-		$(@D)/.config
+		$(@D)/${UCLIBC_CONFIG_FILE_NAME}
 	$(call UCLIBC_OPT_SET,$(UCLIBC_ARM_TYPE),y,$(@D))
 endef
 
 define UCLIBC_ARM_ABI_CONFIG
-	$(SED) '/CONFIG_ARM_.ABI/d' $(@D)/.config
+	$(SED) '/CONFIG_ARM_.ABI/d' $(@D)/${UCLIBC_CONFIG_FILE_NAME}
 	$(call UCLIBC_OPT_SET,CONFIG_ARM_EABI,y,$(@D))
 endef
 
@@ -102,13 +113,13 @@ endif # arm
 ifeq ($(UCLIBC_TARGET_ARCH),mips)
 UCLIBC_MIPS_ABI = CONFIG_MIPS_$(call qstrip,$(BR2_UCLIBC_MIPS_ABI))_ABI
 define UCLIBC_MIPS_ABI_CONFIG
-	$(SED) '/CONFIG_MIPS_[NO].._ABI/d' $(@D)/.config
+	$(SED) '/CONFIG_MIPS_[NO].._ABI/d' $(@D)/${UCLIBC_CONFIG_FILE_NAME}
 	$(call UCLIBC_OPT_SET,$(UCLIBC_MIPS_ABI),y,$(@D))
 endef
 
 UCLIBC_MIPS_ISA = CONFIG_MIPS_ISA_$(call qstrip,$(BR2_UCLIBC_MIPS_ISA))
 define UCLIBC_MIPS_ISA_CONFIG
-	$(SED) '/CONFIG_MIPS_ISA_.*/d' $(@D)/.config
+	$(SED) '/CONFIG_MIPS_ISA_.*/d' $(@D)/${UCLIBC_CONFIG_FILE_NAME}
 	$(call UCLIBC_OPT_SET,$(UCLIBC_MIPS_ISA),y,$(@D))
 endef
 endif # mips
@@ -120,7 +131,7 @@ endif # mips
 ifeq ($(UCLIBC_TARGET_ARCH),sh)
 UCLIBC_SH_TYPE = CONFIG_$(call qstrip,$(BR2_UCLIBC_SH_TYPE))
 define UCLIBC_SH_TYPE_CONFIG
-	$(SED) '/CONFIG_SH[234A]*/d' $(@D)/.config
+	$(SED) '/CONFIG_SH[234A]*/d' $(@D)/${UCLIBC_CONFIG_FILE_NAME}
 	$(call UCLIBC_OPT_SET,$(UCLIBC_SH_TYPE),y,$(@D))
 endef
 endif # sh
@@ -133,7 +144,7 @@ ifeq ($(UCLIBC_TARGET_ARCH),sparc)
 UCLIBC_SPARC_TYPE = CONFIG_SPARC_$(call qstrip,$(BR2_UCLIBC_SPARC_TYPE))
 define UCLIBC_SPARC_TYPE_CONFIG
 	$(SED) 's/^\(CONFIG_[^_]*[_]*SPARC[^=]*\)=.*/# \1 is not set/g' \
-		 $(@D)/.config
+		 $(@D)/${UCLIBC_CONFIG_FILE_NAME}
 	$(call UCLIBC_OPT_SET,$(UCLIBC_SPARC_TYPE),y,$(@D))
 endef
 endif # sparc
@@ -414,7 +425,7 @@ UCLIBC_MAKE_FLAGS = \
 	HOSTCC="$(HOSTCC)"
 
 define UCLIBC_SETUP_DOT_CONFIG
-	$(INSTALL) -m 0644 $(UCLIBC_CONFIG_FILE) $(@D)/.config
+	$(INSTALL) -m 0644 $(UCLIBC_CONFIG_FILE) $(@D)/${UCLIBC_CONFIG_FILE_NAME}
 	$(call UCLIBC_OPT_SET,CROSS_COMPILER_PREFIX,"$(TARGET_CROSS)",$(@D))
 	$(call UCLIBC_OPT_SET,TARGET_$(UCLIBC_TARGET_ARCH),y,$(@D))
 	$(call UCLIBC_OPT_SET,TARGET_ARCH,"$(UCLIBC_TARGET_ARCH)",$(@D))
@@ -453,6 +464,26 @@ define UCLIBC_SETUP_DOT_CONFIG
 		oldconfig
 endef
 
+ifeq ($(BR2_UCLIBC_VERSION_0_9_11),y)
+define UCLIBC_CONFIGURE_CMDS
+	$(@D)/extra/Configs/uClibc_config_fix.pl \
+		--arch=$(ARCH) \
+		$(CROSSARG) --c99_math=true \
+		--devel_prefix=$(STAGING_DIR) \
+		--float=true \
+		--kernel_dir=$(LINUX_DIR)headers-2.6.28/ \
+		--large_file=$(BR2_TOOLCHAIN_BUILDROOT_LARGEFILE) \
+		--ldso_path="/lib" \
+		--long_long=true \
+		--rpc_support=true \
+		--shadow=true \
+		--shared_support=true \
+		--threads=true \
+		--debug=false \
+		--file=$(UCLIBC_DIR)/extra/Configs/Config.$(ARCH) \
+		> $(@D)/Config;
+endef
+else
 define UCLIBC_CONFIGURE_CMDS
 	$(UCLIBC_SETUP_DOT_CONFIG)
 	$(MAKE1) -C $(UCLIBC_DIR) \
@@ -467,6 +498,8 @@ define UCLIBC_CONFIGURE_CMDS
 	$(TARGET_CROSS)gcc -nostdlib \
 		-nostartfiles -shared -x c /dev/null -o $(STAGING_DIR)/usr/lib/libm.so
 endef
+endif
+
 
 ifeq ($(BR2_UCLIBC_INSTALL_TEST_SUITE),y)
 define UCLIBC_BUILD_TEST_SUITE
@@ -497,7 +530,7 @@ define UCLIBC_INSTALL_TEST_SUITE
 	mkdir -p $(TARGET_DIR)/root/uClibc
 	cp -rdpf $(@D)/test $(TARGET_DIR)/root/uClibc
 	$(INSTALL) -D -m 0644 $(@D)/Rules.mak $(TARGET_DIR)/root/uClibc/Rules.mak
-	$(INSTALL) -D -m 0644 $(@D)/.config $(TARGET_DIR)/root/uClibc/.config
+	$(INSTALL) -D -m 0644 $(@D)/${UCLIBC_CONFIG_FILE_NAME} $(TARGET_DIR)/root/uClibc/${UCLIBC_CONFIG_FILE_NAME}
 endef
 endif
 

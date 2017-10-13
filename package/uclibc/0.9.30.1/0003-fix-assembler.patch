@@ -1,0 +1,19 @@
+diff -Naur a/libc/sysdeps/linux/i386/crtn.S b/libc/sysdeps/linux/i386/crtn.S
+--- a/libc/sysdeps/linux/i386/crtn.S	2005-07-07 00:22:22.000000000 +0200
++++ b/libc/sysdeps/linux/i386/crtn.S	2017-10-10 19:48:29.618820498 +0200
+@@ -6,7 +6,6 @@
+ 	popl	%ebx
+ 	popl	%ebp
+ 	ret
+-.size _init,.-_init
+ 
+ 
+ 
+@@ -16,7 +15,6 @@
+ 	popl	%ebx
+ 	popl	%ebp
+ 	ret
+-.size _fini,.-_fini
+ 
+ 
+ 
