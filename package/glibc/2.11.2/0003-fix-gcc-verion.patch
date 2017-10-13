@@ -1,0 +1,24 @@
+diff -Naur glibc-2.11.2/configure glibc-edit/configure
+--- glibc-2.11.2/configure	2017-10-12 20:55:14.650136797 +0200
++++ glibc-edit/configure	2017-10-12 20:53:56.513668971 +0200
+@@ -5045,7 +5045,7 @@
+   ac_prog_version=`$CC -v 2>&1 | sed -n 's/^.*version \([egcygnustpi-]*[0-9.]*\).*$/\1/p'`
+   case $ac_prog_version in
+     '') ac_prog_version="v. ?.??, bad"; ac_verc_fail=yes;;
+-    3.4* | 4.[0-9]* )
++    3.4* | 4.[0-9]* | 5.[0-9]* )
+        ac_prog_version="$ac_prog_version, ok"; ac_verc_fail=no;;
+     *) ac_prog_version="$ac_prog_version, bad"; ac_verc_fail=yes;;
+ 
+diff -Naur glibc-2.11.2/configure.in glibc-edit/configure.in
+--- glibc-2.11.2/configure.in	2017-10-12 20:55:14.650136797 +0200
++++ glibc-edit/configure.in	2017-10-12 20:53:56.513668971 +0200
+@@ -933,7 +933,7 @@
+ # These programs are version sensitive.
+ AC_CHECK_TOOL_PREFIX
+ AC_CHECK_PROG_VER(CC, ${ac_tool_prefix}gcc ${ac_tool_prefix}cc, -v,
+-  [version \([egcygnustpi-]*[0-9.]*\)], [3.4* | 4.[0-9]* ],
++  [version \([egcygnustpi-]*[0-9.]*\)], [3.4* | 4.[0-9]* | 5.[0-9]*],
+   critic_missing="$critic_missing gcc")
+ AC_CHECK_PROG_VER(MAKE, gnumake gmake make, --version,
+   [GNU Make[^0-9]*\([0-9][0-9.]*\)],

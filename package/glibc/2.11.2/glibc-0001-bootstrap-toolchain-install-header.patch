@@ -1,0 +1,20 @@
+--- a/stdio-common/Makefile
++++ b/stdio-common/Makefile
+@@ -21,7 +21,7 @@
+ #
+ subdir	:= stdio-common
+ 
+-headers	:= stdio_ext.h printf.h bits/printf-ldbl.h
++headers	:= stdio_ext.h printf.h bits/printf-ldbl.h bits/stdio_lim.h
+ 
+ routines	:=							      \
+ 	ctermid cuserid							      \
+@@ -40,8 +40,6 @@
+ 	isoc99_vsscanf							      \
+ 	psiginfo
+ 
+-install-others = $(inst_includedir)/bits/stdio_lim.h
+-
+ include ../Makeconfig
+ 
+ aux	:= errlist siglist printf-parsemb printf-parsewc fxprintf

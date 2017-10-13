@@ -36,6 +36,11 @@ ifeq ($(findstring 2.13,$(GLIBC_VERSION)),2.13)
 GLIBC_CONF_OPTIONS += libc_cv_c_cleanup=yes
 endif
 
+ifeq ($(findstring 2.11,$(GLIBC_VERSION)),2.11)
+GLIBC_CONF_OPTIONS += libc_cv_c_cleanup=yes
+GLIBC_EXTRA_CFLAGS += -U__i686
+endif
+
 # Before (e)glibc is configured, we must have the first stage
 # cross-compiler and the kernel headers
 GLIBC_DEPENDENCIES = host-gcc-initial linux-headers host-gawk
@@ -63,6 +68,8 @@ GLIBC_EXTRA_CFLAGS += -mabi=64
 else ifeq ($(BR2_MIPS_OABI32),y)
 GLIBC_EXTRA_CFLAGS += -mabi=32
 endif
+
+
 
 # The stubs.h header is not installed by install-headers, but is
 # needed for the gcc build. An empty stubs.h will work, as explained
@@ -106,6 +113,7 @@ define GLIBC_CONFIGURE_CMDS
 		--without-cvs \
 		--disable-profile \
 		--without-gd \
+		--enable-kernel=2.6.28             \
 		--enable-obsolete-rpc \
 		--with-headers=$(STAGING_DIR)/usr/include)
 	# Install headers and start files
