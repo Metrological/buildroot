@@ -115,7 +115,7 @@ HOST_GCC_COMMON_CONF_OPT = \
 	--with-sysroot=$(STAGING_DIR) \
 	--disable-__cxa_atexit \
 	--with-gnu-ld \
-	--enable-libssp \
+	--disable-libssp \
 	--disable-multilib \
 	--with-gmp=$(HOST_DIR)/usr \
 	--with-mpfr=$(HOST_DIR)/usr
@@ -148,6 +148,10 @@ ifeq ($(BR2_GCC_ENABLE_TLS),y)
 HOST_GCC_COMMON_CONF_OPT += --enable-tls
 else
 HOST_GCC_COMMON_CONF_OPT += --disable-tls
+endif
+
+ifeq ($(shell expr $(BR2_UCLIBC_VERSION_STRING) \<= 0.9.32.0), 1)
+   HOST_GCC_COMMON_CONF_OPT += --disable-libsanitizer 
 endif
 
 ifeq ($(BR2_GCC_ENABLE_LIBMUDFLAP),y)
