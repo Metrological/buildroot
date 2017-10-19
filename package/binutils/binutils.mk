@@ -54,11 +54,22 @@ HOST_BINUTILS_DEPENDENCIES += host-texinfo
 endif
 
 # We need to specify host & target to avoid breaking ARM EABI
-BINUTILS_CONF_OPT = --disable-multilib --disable-werror \
-		--host=$(GNU_TARGET_NAME) \
-		--target=$(GNU_TARGET_NAME) \
-		--enable-install-libiberty \
-		$(BINUTILS_EXTRA_CONFIG_OPTIONS)
+# they also contain the gdb sources, but gdb shouldn't be built, so we
+# disable it.
+BINUTILS_DISABLE_GDB_CONF_OPTS = \
+	--disable-sim \
+	--disable-gdb
+
+# We need to specify host & target to avoid breaking ARM EABI
+BINUTILS_CONF_OPT = \
+	--disable-multilib  \
+	--disable-werror \
+	--host=$(GNU_TARGET_NAME) \
+	--target=$(GNU_TARGET_NAME) \
+	--enable-install-libiberty \
+	--enable-build-warnings=no \
+	$(BINUTILS_DISABLE_GDB_CONF_OPTS) \
+	$(BINUTILS_EXTRA_CONFIG_OPTIONS)
 
 # Install binutils after busybox to prefer full-blown utilities
 ifeq ($(BR2_PACKAGE_BUSYBOX),y)
@@ -67,11 +78,17 @@ endif
 
 # "host" binutils should actually be "cross"
 # We just keep the convention of "host utility" for now
-HOST_BINUTILS_CONF_OPT = --disable-multilib --disable-werror \
-			--target=$(GNU_TARGET_NAME) --enable-gold \
-			--disable-shared --enable-static \
-			--with-sysroot=$(STAGING_DIR) \
-			$(BINUTILS_EXTRA_CONFIG_OPTIONS)
+HOST_BINUTILS_CONF_OPT = \
+	--disable-multilib \
+	--disable-werror \
+	--target=$(GNU_TARGET_NAME) \
+	--enable-gold \
+	--disable-shared \
+	--enable-static \
+	--with-sysroot=$(STAGING_DIR) \
+	--enable-poison-system-directories \
+	$(BINUTILS_DISABLE_GDB_CONF_OPTS) \
+	$(BINUTILS_EXTRA_CONFIG_OPTIONS)
 
 # We just want libbfd and libiberty, not the full-blown binutils in staging
 define BINUTILS_INSTALL_STAGING_CMDS
@@ -95,6 +112,10 @@ define BINUTILS_XTENSA_PRE_PATCH
 endef
 BINUTILS_PRE_PATCH_HOOKS += BINUTILS_XTENSA_PRE_PATCH
 HOST_BINUTILS_PRE_PATCH_HOOKS += BINUTILS_XTENSA_PRE_PATCH
+endif
+
+ifeq ($(BR2_BINUTILS_ENABLE_LTO),y)
+HOST_BINUTILS_CONF_OPTS += --enable-plugins --enable-lto
 endif
 
 $(eval $(autotools-package))
