@@ -61,7 +61,14 @@ comment "(e)glibc only available with shared lib support"
 
 endchoice
 
+config BR2_TOOLCHAIN_BUILDROOT_LIBC_EXTERNAL
+	bool "Pre-built C library"
+	default n
+	help
+	    If selected, use pre-built binaries
+
 config BR2_TOOLCHAIN_BUILDROOT_LIBC
+	depends on !BR2_TOOLCHAIN_BUILDROOT_LIBC_EXTERNAL
 	string
 	default "uclibc" if BR2_TOOLCHAIN_BUILDROOT_UCLIBC
 	# Both glibc and eglibc are handled by the package called

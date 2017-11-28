@@ -364,7 +364,11 @@ config BR2_GCC_TARGET_CPU
 	default "xscale"	if BR2_xscale
 	default "iwmmxt"	if BR2_iwmmxt
 
+
+# gcc configuration is searching either BR2_GCC_TARGET_CPU or BR2_GCC_TARGET_ARCH/BR2_GCC_TARGET_TUNE
+# cpu and arch together causes configuration issue
 config BR2_GCC_TARGET_ARCH
+	depends on 0
 	default "armv4t"	if BR2_arm7tdmi
 	default "armv4t"	if BR2_arm720t
 	default "armv4t"	if BR2_arm920t
